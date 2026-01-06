@@ -1,0 +1,78 @@
+# albums
+
+A command line tool to help manage a library of music albums. Focuses on albums, not individual
+tracks. An album is a folder with music files, either all by the same artist or a compilation.
+
+Currently, the main uses for this tool are:
+ - Mark a subset of a music library to be copied to a digital audio player or phone
+ - Sync selected albums with destination (add, update if changed, remove)
+ - Report on problems with tags and organization in the library
+
+Possible future enhancements include fixing metadata problems, supporting other file types, using
+other metadata tools.
+
+`albums` makes a database of album folders, tracks and metadata. It can quickly rescan the library
+to detect changes and update the database. Other operations can be performed without rescanning the
+library every time. In addition to data gathered from the scan, albums may be tagged with arbitrary
+"collection" names.
+
+## Requirements
+
+Prerequisites: `exiftool` must be installed and on the path.
+
+With `poetry` installed, run `make` to install Python dependencies, lint, test and build.
+
+Developed and tested only on Linux. Probably works on MacOS and Windows.
+
+## Configuration
+
+The tool needs to know where your albums are stored.
+
+Create `config.ini` file with `[library]` section specifying where to find albums. See example in
+[./sample/config.ini](sample/config.ini).
+
+`albums` is a list of "glob" path patterns each separated by `|` character, relative to the library
+root. For example, if albums are arranged in folders like `Artists/artist-name/album-name` and
+compilations are in `Various/album-name` then you could use `albums=Artists/*/*|Various/*`.
+The setting `albums=**` will find everything but it's slower because it matches all files too.
+
+`subalbum_depth` enables recursively searching under matching folders for more albums. This can be
+used to handle cases where albums/discs are organized under a single folder.
+
+In the `[checks]` section, you may configure options to check albums for issues with tags.
+
+## Usage
+
+Scan the library and create the album database with `albums scan`. The first time it runs, it will
+read metadata from every track which may take a long time. When the library is changed, you should
+run `albums scan` again.
+
+List albums matching a path with a command like `albums --match partial --path "Freezepop" list`
+Regular expressions can be used with `--match re`.
+
+Albums can be in sets called "collections". You could create a collection named "DAP" for albums to
+sync to a Digital Audio Player: `albums --m partial --p "Freezepop" --collection DAP add`
+
+List the albums in the collection with `albums --collection DAP list`
+
+Sync selected albums to an SD card. Add, update or remove files under destination folder:
+`albums -c DAP sync /mnt/sdcard --delete`
+
+Check and report on possible issues with `albums exceptions` and filter with `-c` or `-p` options.
+
+Try `albums --help` or e.g. `albums sync --help`.
+
+## Future
+
+ - Select albums based on track tags, recently accessed, other
+ - Remove `exiftool` requirement, support Python libraries and/or other metadata tools
+ - Support additional file formats
+ - Interactively fix metadata problems detected by checks with suggested solutions
+ - More checks/fixes:
+   - album art (missing, not in desired format, not the same on all tracks, too small/too large)
+   - track numbering issues (missing tag, missing track, filename doesn't start with track number, etc)
+   - missing track-total
+   - not all tracks encoded the same (file type or kbps target)
+   - track filename doesn't match title
+   - album folder doesn't match album name
+   - parent folder doesn't match artist if using artist/album

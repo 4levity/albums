@@ -1,0 +1,97 @@
+import click
+import datetime
+import humanize
+import logging
+import os
+from pathlib import Path
+import shutil
+import time
+from albums import tools
+
+
+logger = logging.getLogger(__name__)
+
+
+@click.command("sync", help="sync selected albums with destination")
+@click.argument("destination")
+@click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
+@click.option("--force", is_flag=True, help="skip confirmation when deleting files")
+@click.pass_context
+def sync(ctx: click.Context, destination, delete, force):
+    dest = Path(destination)
+    albums: list[dict] = ctx.obj["SELECT_ALBUMS"]()
+    tracks = []
+    total_size = 0
+    if not dest.exists() or not dest.is_dir():
+        logger.error(f"not a directory: {dest}")
+        return
+
+    existing_dest_paths = set(dest.rglob("*"))
+    skipped_tracks = 0
+    for album in albums:
+        for track in album["tracks"]:
+            # remove in-use dirs from destination set if present
+            dest_path = dest / Path(album["path"])
+            while dest_path.relative_to(dest).name != "":
+                if dest_path.exists() and not dest_path.is_dir():
+                    logger.error(f"destination {str(dest_path)} exists, but is not a directory. Aborting.")
+                    return
+                existing_dest_paths.discard(dest_path)
+                dest_path = dest_path.parent
+
+            dest_file: Path = dest / album["path"] / track["SourceFile"]
+            if dest_file.exists():
+                if not dest_file.is_file():
+                    logger.error(f"destination {str(dest_file)} exists, but is not a file. Aborting.")
+                    return
+                existing_dest_paths.remove(dest_file)
+                stat = dest_file.stat()
+                dest_last_modified = datetime.datetime.fromtimestamp(stat.st_mtime)
+                source_last_modified = datetime.datetime.fromisoformat(track["FileModifyDate"])
+                # treat last-modified within one second as identical due to rounding errors and file system differences
+                different_last_modified = 1 < abs((dest_last_modified - source_last_modified).total_seconds())
+                copy_track = stat.st_size != track["FileSize"] or different_last_modified
+                skipped_tracks += 0 if copy_track else 1
+            else:
+                copy_track = True
+            if copy_track:
+                total_size += track["FileSize"]
+                source_file = ctx.obj["LIBRARY_ROOT"] / album["path"] / track["SourceFile"]
+                tracks.append((source_file, dest_file, track["FileSize"]))
+
+    if delete and len(existing_dest_paths) > 0:
+        click.echo(f"will delete {len(existing_dest_paths)} paths from {dest}")
+        if force or click.confirm("are you sure you want to delete?"):
+            click.echo("deleting files from destination")
+            for delete_path in sorted(existing_dest_paths, reverse=True):
+                if delete_path.is_dir():
+                    delete_path.rmdir()
+                else:
+                    delete_path.unlink()
+        else:
+            click.echo("skipped deleting files from destination")
+
+    elif len(existing_dest_paths) > 0:
+        logger.warning(f"not deleting {len(existing_dest_paths)} paths from {dest}")
+
+    skipped = f"(skipped {skipped_tracks})" if skipped_tracks > 0 else ""
+    if len(tracks) > 0:
+        click.echo(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {dest} {skipped}")
+        copied_bytes = 0
+        start_time = time.perf_counter()
+
+        def get_progress():
+            rate = copied_bytes / (max(0.001, time.perf_counter() - start_time))
+            mm, ss = divmod((total_size - copied_bytes) / rate, 60) if rate > 0 else (0, 0)
+            return f" Copied {humanize.naturalsize(copied_bytes)} ({humanize.naturalsize(rate)}/sec) {int(mm)}:{int(ss):02d} left "
+
+        for track in tools.progress_bar(sorted(tracks, key=lambda t: t[1]), get_progress):
+            source_file = track[0]
+            dest_file = track[1]
+            size = track[2]
+            os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+            logger.debug(f"copying to {dest_file}")
+            shutil.copy2(source_file, dest_file)
+            copied_bytes += size
+    else:
+        click.echo(f"no tracks to copy {skipped}")

@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "albums"
+version = "0.1.0"
+description = ""
+authors = ["Ivan Cooper <ivan@4levity.net>"]
+license = "GPL-3.0-or-later"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+humanize = "^4.15.0"
+click = "^8.3.1"
+platformdirs = "^4.5.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.14.10"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^9.0.2"
+
+[tool.poetry.scripts]
+albums = "albums.__main__:albums"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 150
+
+[tool.ruff]
+line-length = 150

@@ -1,0 +1,12 @@
+# build
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.log
+.vscode/
+
+# application/misc
+/albums.db
+/config.ini
+*.db.bak
