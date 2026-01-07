@@ -21,9 +21,9 @@ def list_albums(ctx: click.Context, details):
         click.echo("no matching albums")
 
 
-@click.command("exceptions", help="list exceptions found in selected albums")
+@click.command(help="report on metadata issues in selected albums")
 @click.pass_context
-def list_exceptions(ctx: click.Context):
+def check(ctx: click.Context):
     checks_enabled = ctx.obj["CONFIG"].get("checks", {})
     albums = ctx.obj["SELECT_ALBUMS"]()
     issues = []

@@ -65,7 +65,7 @@ def albums(ctx: click.Context, collections: list[str], paths: list[str], match: 
 
 
 albums.add_command(actions.list_albums)
-albums.add_command(actions.list_exceptions)
+albums.add_command(actions.check)
 albums.add_command(actions.add_to_collections)
 albums.add_command(actions.remove_from_collections)
 albums.add_command(library.scan)

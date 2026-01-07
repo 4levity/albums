@@ -1,15 +1,15 @@
 # albums
 
 A command line tool to help manage a library of music albums. Focuses on albums, not individual
-tracks. An album is a folder with music files, either all by the same artist or a compilation.
+tracks. To this tool, an album is a folder with music files whhich are either by the same artist
+or a compilation.
 
-Currently, the main uses for this tool are:
+This tool can:
  - Mark a subset of a music library to be copied to a digital audio player or phone
  - Sync selected albums with destination (add, update if changed, remove)
  - Report on problems with tags and organization in the library
 
-Possible future enhancements include fixing metadata problems, supporting other file types, using
-other metadata tools.
+See section below for future ideas.
 
 `albums` makes a database of album folders, tracks and metadata. It can quickly rescan the library
 to detect changes and update the database. Other operations can be performed without rescanning the
@@ -28,7 +28,7 @@ Developed and tested only on Linux. Probably works on MacOS and Windows.
 
 The tool needs to know where your albums are stored.
 
-Create `config.ini` file with `[library]` section specifying where to find albums. See example in
+Create a `config.ini` file with `[library]` section specifying where to find albums. See example in
 [./sample/config.ini](sample/config.ini).
 
 `albums` is a list of "glob" path patterns each separated by `|` character, relative to the library
