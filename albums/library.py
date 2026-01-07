@@ -63,6 +63,7 @@ def find_paths_in_library(library_root: Path, glob_specs: list[str]):
             full_path = library_root / path_str
             if full_path.is_dir():
                 album_paths.append(full_path)
+    return album_paths
 
 
 @click.command(help="scan and update database")
@@ -87,7 +88,7 @@ def scan(ctx: click.Context, known_only):
     else:
         glob_specs = (locations["albums"] if "albums" in locations else "**").split("|")
         album_paths = find_paths_in_library(library_root, glob_specs)
-        subalbum_depth = int(ctx.obj["CONFIG"].get("locations", {"subalbum_depth": 0}))
+        subalbum_depth = int(ctx.obj["CONFIG"].get("locations", {}).get("subalbum_depth", 0))
         logger.info(f"scanning {len(album_paths)} dirs for albums")
 
     scan_albums = {}
