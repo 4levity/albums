@@ -12,22 +12,11 @@ from albums import tools
 logger = logging.getLogger(__name__)
 
 
-@click.command("sync", help="sync selected albums with destination")
-@click.argument("destination")
-@click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
-@click.option("--force", is_flag=True, help="skip confirmation when deleting files")
-@click.pass_context
-def sync(ctx: click.Context, destination, delete, force):
-    dest = Path(destination)
-    albums: list[dict] = ctx.obj["SELECT_ALBUMS"]()
-    tracks = []
-    total_size = 0
-    if not dest.exists() or not dest.is_dir():
-        logger.error(f"not a directory: {dest}")
-        return
-
+def do_sync(albums: list[dict], dest: Path, library_root: Path, delete, force):
     existing_dest_paths = set(dest.rglob("*"))
     skipped_tracks = 0
+    total_size = 0
+    tracks = []
     for album in albums:
         for track in album["tracks"]:
             # remove in-use dirs from destination set if present
@@ -56,7 +45,7 @@ def sync(ctx: click.Context, destination, delete, force):
                 copy_track = True
             if copy_track:
                 total_size += track["FileSize"]
-                source_file = ctx.obj["LIBRARY_ROOT"] / album["path"] / track["SourceFile"]
+                source_file = library_root / album["path"] / track["SourceFile"]
                 tracks.append((source_file, dest_file, track["FileSize"]))
 
     if delete and len(existing_dest_paths) > 0:

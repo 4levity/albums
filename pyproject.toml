@@ -19,7 +19,7 @@ ruff = "^0.14.10"
 pytest = "^9.0.2"
 
 [tool.poetry.scripts]
-albums = "albums.__main__:albums"
+albums = "albums.cli.entry_point:albums"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

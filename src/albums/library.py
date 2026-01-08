@@ -66,29 +66,17 @@ def find_paths_in_library(library_root: Path, glob_specs: list[str]):
     return album_paths
 
 
-@click.command(help="scan and update database")
-@click.option("--known-only", is_flag=True, help="only scan previously-scanned folders")
-@click.pass_context
-def scan(ctx: click.Context, known_only):
-    if ctx.obj.get("SCAN_DONE", False):
-        logger.info("scan already done, not scanning again")
-        return
-
+def do_scan(db: sqlite3.Connection, albums: dict, library_root: Path, album_globs: list[str], known_only: bool):
     start_time = time.perf_counter()
-
-    db: sqlite3.Connection = ctx.obj["DB_CONNECTION"]
-    albums: dict = ctx.obj["ALBUMS_CACHE"]
-    library_root: Path = ctx.obj["LIBRARY_ROOT"]
-    locations = ctx.obj["CONFIG"].get("locations", {})
 
     if known_only:
         album_paths = [Path(library_root / p) for p in albums.keys()]
         subalbum_depth = 0
         logger.info(f"rescanning {len(album_paths)} known album folders")
     else:
-        glob_specs = (locations["albums"] if "albums" in locations else "**").split("|")
+        glob_specs = (album_globs["albums"] if "albums" in album_globs else "**").split("|")
         album_paths = find_paths_in_library(library_root, glob_specs)
-        subalbum_depth = int(ctx.obj["CONFIG"].get("locations", {}).get("subalbum_depth", 0))
+        subalbum_depth = int(album_globs.get("subalbum_depth", 0))
         logger.info(f"scanning {len(album_paths)} dirs for albums")
 
     scan_albums = {}

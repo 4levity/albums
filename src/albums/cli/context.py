@@ -1,28 +1,16 @@
-#!/usr/bin/env python
-
-
-import os
 import click
 import configparser
 import logging
+import os
 from pathlib import Path
-from albums import actions, database, library, selector, synchronizer, tools
+from .. import database, library, selector, tools
 
 
 logger = logging.getLogger(__name__)
 
 
-@click.group()
-@click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
-@click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
-@click.option("--match", "-m", type=click.Choice(selector.MatchType, case_sensitive=False), default="EXACT", help="type of match for album paths")
-@click.option("--config-file", help="specify path to config.ini")
-@click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
-@click.pass_context
-def albums(ctx: click.Context, collections: list[str], paths: list[str], match: selector.MatchType, config_file: str, verbose: int):
-    tools.setup_logging(verbose)
+def setup(ctx: click.Context, collections: list[str], paths: list[str], match: selector.MatchType, config_file: str):
     logger.info("starting albums")
-
     config = configparser.ConfigParser()
     config_files = [str(tools.platform_dirs.site_config_path / "config.ini"), str(tools.platform_dirs.user_config_path / "config.ini"), "config.ini"]
     if config_file:
@@ -62,15 +50,3 @@ def albums(ctx: click.Context, collections: list[str], paths: list[str], match: 
     if config.getboolean("options", "always_scan", fallback=False):
         ctx.invoke(library.scan)
         ctx.obj["SCAN_DONE"] = True
-
-
-albums.add_command(actions.list_albums)
-albums.add_command(actions.check)
-albums.add_command(actions.add_to_collections)
-albums.add_command(actions.remove_from_collections)
-albums.add_command(library.scan)
-albums.add_command(synchronizer.sync)
-
-
-if __name__ == "__main__":
-    albums()
