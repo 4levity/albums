@@ -1,4 +1,4 @@
-from cli.entry_point import albums
+from .cli.entry_point import albums
 
 
 if __name__ == "__main__":

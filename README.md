@@ -33,11 +33,12 @@ Create a `config.ini` file with `[library]` section specifying where to find alb
 
 `albums` is a list of "glob" path patterns each separated by `|` character, relative to the library
 root. For example, if albums are arranged in folders like `Artists/artist-name/album-name` and
-compilations are in `Various/album-name` then you could use `albums=Artists/*/*|Various/*`.
-The setting `albums=**` will find everything but it's slower because it matches all files too.
+compilations are in `Various/album-name` then you could use `albums=Artists/*/*/|Various/*/`.
+Default `albums=**/` will search all folders.
 
-`subalbum_depth` enables recursively searching under matching folders for more albums. This can be
-used to handle cases where albums/discs are organized under a single folder.
+If using more specific glob patterns, the option `subalbum_depth` enables recursively searching
+for more albums, only under matching folders to a limited depth. This can be used to find albums
+organized under a single folder (e.g. if multiple discs are stored one per subfolder).
 
 In the `[checks]` section, you may configure options to check albums for issues with tags.
 

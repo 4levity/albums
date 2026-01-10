@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS track (
     metadata TEXT,
     FOREIGN KEY(album_id) REFERENCES album(album_id)
 );
+CREATE INDEX IF NOT EXISTS idx_track_album_id ON track (album_id);
 """
 
 SQL_MIGRATION_SCRIPTS = []
@@ -53,7 +54,7 @@ def migrate(db: sqlite3.Connection):
 
 def open(filename: str):
     db = sqlite3.connect(filename)
-    db.executescript(SQL_INIT_SCHEMA)
+    db.executescript(SQL_INIT_SCHEMA) # TODO only do this when creating database
     migrate(db)
     db.executescript(SQL_CLEANUP)
     return db
@@ -63,6 +64,15 @@ def close(con: sqlite3.Connection):
     con.commit()
     con.close()
     logger.debug("closed database")
+
+
+def load_tracks(con: sqlite3.Connection, album_id: int):
+    tracks = []
+    for source_file, file_size, modify_date, metadata in con.execute(
+        "SELECT source_file, file_size, modify_date, metadata FROM track WHERE album_id = ? ORDER BY source_file ASC;", (album_id,)
+    ):
+        tracks.append(json.loads(metadata) | {"SourceFile": source_file, "FileSize": file_size, "FileModifyDate": modify_date})
+    return tracks
 
 
 def load(con: sqlite3.Connection):
@@ -78,7 +88,6 @@ def load(con: sqlite3.Connection):
         albums[row[0]]["collections"].append(collections[str(row[1])])
 
     # todo ignores
-
     for row in con.execute(
         "SELECT path, source_file, file_size, modify_date, metadata FROM track JOIN album ON album.album_id = track.album_id ORDER BY source_file ASC;"
     ):

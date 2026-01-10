@@ -20,4 +20,4 @@ def scan(ctx: click.Context, known_only):
     albums: dict = ctx.obj["ALBUMS_CACHE"]
     library_root: Path = ctx.obj["LIBRARY_ROOT"]
     locations = ctx.obj["CONFIG"].get("locations", {})
-    library.do_scan(db, albums, library_root, locations, known_only)
+    library.scan(db, albums, library_root, locations, known_only)
