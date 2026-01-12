@@ -43,7 +43,8 @@ def scan(db: sqlite3.Connection, library_root: Path):
             found_tracks.append({"source_file": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
         album_id = unchecked_albums.get(path_str)
         if album_id is None:
-            album = tags.with_track_metadata(library_root, {"path": path_str, "tracks": found_tracks})
+            tags.load_track_metadata(library_root, path_str, found_tracks)
+            album = {"path": path_str, "tracks": found_tracks}
             logger.debug(f"add album {album}")
             database.add(db, album)
             return "added"
@@ -54,8 +55,8 @@ def scan(db: sqlite3.Connection, library_root: Path):
         stored_album = database.load_album(db, album_id, check_for_missing_metadata)
         modified = track_files_modified(stored_album["tracks"], found_tracks)
         if modified or (check_for_missing_metadata and missing_metadata(stored_album["tracks"])):
-            album = tags.with_track_metadata(library_root, stored_album | {"tracks": found_tracks})
-            database.update(db, album)
+            tags.load_track_metadata(library_root, path_str, found_tracks)
+            database.update_tracks(db, album_id, found_tracks)
             return "updated"
 
         return "unchanged"

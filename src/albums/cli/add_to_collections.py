@@ -6,7 +6,7 @@ from .. import database
 @click.argument("collection_names", nargs=-1)
 @click.pass_context
 def add_to_collections(ctx: click.Context, collection_names):
-    for album in ctx.obj["SELECT_ALBUMS"](True):
+    for album in ctx.obj["SELECT_ALBUMS"](False):
         path = album["path"]
         changed = False
         for target_collection in collection_names:
@@ -17,4 +17,4 @@ def add_to_collections(ctx: click.Context, collection_names):
                 click.echo(f"added album {path} to collection {target_collection}")
                 changed = True
         if changed:
-            database.update(ctx.obj["DB_CONNECTION"], album)
+            database.update_collections(ctx.obj["DB_CONNECTION"], album["album_id"], album["collections"])

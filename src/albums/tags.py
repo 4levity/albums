@@ -68,16 +68,15 @@ def get_exif_data(cwd: str, filepaths: list[str]):
     return json.loads(stdout)
 
 
-def with_track_metadata(library_root: Path, album: dict):
-    metadata = get_exif_data(library_root / album["path"], [track["source_file"] for track in album["tracks"]])
-    if len(album["tracks"]) == len(metadata):
-        for index, track in enumerate(album["tracks"]):
+def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
+    metadata = get_exif_data(library_root / album_path, [track["source_file"] for track in tracks])
+    if len(tracks) == len(metadata):
+        for index, track in enumerate(tracks):
             if track["source_file"] == metadata[index]["SourceFile"]:
-                album["tracks"][index]["metadata"] = metadata[index]
+                tracks[index]["metadata"] = metadata[index]
             else:
                 logger.warning(
-                    f"track metadata out of order at index {index}: {track['source_file']} != {metadata[index]['source_file']} -- in album {album['path']}"
+                    f"track metadata out of order at index {index}: {track['source_file']} != {metadata[index]['source_file']} -- in album {album_path}"
                 )
     else:
-        logger.warning(f"track count {len(album['tracks'])} does not match metadata count {len(metadata)} for album {album['path']}")
-    return album
+        logger.warning(f"track count {len(tracks)} does not match metadata count {len(metadata)} for album {album_path}")

@@ -122,16 +122,14 @@ def load_album(con: sqlite3.Connection, album_id: int, load_track_metadata=True)
     tracks = load_tracks(con, album_id, load_track_metadata)
 
     # todo ignores
-    return {"path": path, "collections": collections, "tracks": tracks}
+    return {"album_id": album_id, "path": path, "collections": collections, "tracks": tracks}
 
 
 def get_collection_id(con: sqlite3.Connection, collection_name: str):
     row = con.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,)).fetchone()
-    if row is not None:
-        (collection_id,) = row
-    else:
-        (collection_id,) = con.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,))
-    return collection_id
+    if row is None:
+        row = con.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,)).fetchone()
+    return row[0]
 
 
 def get_album_id(con: sqlite3.Connection, path: str):
@@ -140,12 +138,8 @@ def get_album_id(con: sqlite3.Connection, path: str):
     return album_id
 
 
-def insert_album_details(con: sqlite3.Connection, album: dict):
-    album_id = get_album_id(con, album["path"])
-    for collection_name in album["collections"]:
-        collection_id = get_collection_id(con, collection_name)
-        con.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
-    for track in album["tracks"]:
+def insert_tracks(con: sqlite3.Connection, album_id: int, tracks: list[dict]):
+    for track in tracks:
         (track_id,) = con.execute(
             "INSERT INTO track (album_id, source_file, file_size, modify_timestamp) VALUES (?, ?, ?, ?) RETURNING track_id",
             (album_id, track["source_file"], track["file_size"], track["modify_timestamp"]),
@@ -154,25 +148,30 @@ def insert_album_details(con: sqlite3.Connection, album: dict):
             con.execute("INSERT INTO track_metadata (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
 
 
+def insert_collections(con: sqlite3.Connection, album_id: int, collections: list[str]):
+    for collection_name in collections:
+        collection_id = get_collection_id(con, collection_name)
+        con.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
+
+
 def add(con: sqlite3.Connection, album: dict):
-    con.execute("INSERT INTO album (path) VALUES (?);", (album["path"],))
-    insert_album_details(con, album)
-
-
-def delete_album_details(con: sqlite3.Connection, album_id: int):
-    con.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
-    con.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
-    con.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
+    (album_id,) = con.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album["path"],)).fetchone()
+    insert_collections(con, album_id, album.get("collections", []))
+    insert_tracks(con, album_id, album["tracks"])
+    return album_id
 
 
 def remove(con: sqlite3.Connection, album_id: int):
-    delete_album_details(con, album_id)
     cur = con.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
     if cur.rowcount == 0:
         logger.warning(f"didn't delete album, not found: {album_id}")
 
 
-def update(con: sqlite3.Connection, album: dict):
-    album_id = get_album_id(con, album["path"])
-    delete_album_details(con, album_id)
-    insert_album_details(con, album)
+def update_collections(con: sqlite3.Connection, album_id: int, collections: list[str]):
+    con.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
+    insert_collections(con, album_id, collections)
+
+
+def update_tracks(con: sqlite3.Connection, album_id: int, tracks: list[dict]):
+    con.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
+    insert_tracks(con, album_id, tracks)
