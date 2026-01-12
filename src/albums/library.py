@@ -1,11 +1,9 @@
+import click
 import glob
 import logging
-import os
 from pathlib import Path
 import sqlite3
 import time
-
-import click
 from albums import database
 from albums import tags
 from albums import tools
@@ -13,43 +11,6 @@ from albums import tools
 
 logger = logging.getLogger(__name__)
 TRACK_SUFFIXES = [".flac", ".mp3", ".m4a"]
-
-
-def fast_scan(library_root: Path, album_path: Path, subalbum_depth=0, scanned_folders: set[str] = set()):
-    """
-    Scan a folder for an album.
-
-    :param library_root: Description
-    :type library_root: Path
-    :param album_path: Description
-    :type album_path: Path
-    :param subalbum_depth: Search depth for subfolders with more albums, default 0 disables
-    :param scanned_folders: Folders to skip. Every folder examined will be added to this set.
-    :type scanned_folders: set[str]
-    """
-    scan_path = str(album_path.relative_to(library_root))
-    if scan_path in scanned_folders:
-        return {}
-    scanned_folders.add(scan_path)
-    # if not album_path.exists() or not album_path.is_dir():
-    #     return {}
-
-    album = {"path": str(album_path.relative_to(library_root)), "tracks": []}
-    track_files: list[Path] = []
-    albums = {}
-    for entry in album_path.iterdir():
-        if entry.is_file() and entry.suffix in TRACK_SUFFIXES:
-            track_files.append(entry)
-        elif subalbum_depth > 0 and entry.is_dir():
-            albums |= fast_scan(library_root, entry, subalbum_depth - 1, scanned_folders)
-
-    if len(track_files) > 0:
-        for track_file in sorted(track_files):
-            stat = track_file.stat()
-            mtime = tools.format_file_timestamp(stat.st_mtime)
-            album["tracks"].append({"SourceFile": track_file.name, "FileSize": stat.st_size, "FileModifyDate": mtime})
-        albums[album["path"]] = album
-    return albums
 
 
 def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
@@ -62,100 +23,53 @@ def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
     return False
 
 
-def has_metadata(tracks: list[dict]):
-    for track in tracks:
-        if "FileType" not in track:
-            return False
-    return True
-
-
-def is_dir(path: Path):
-    return path.exists() and path.is_dir()
-
-
-def scan(db: sqlite3.Connection, albums_cache: dict, library_root: Path, locations: list[str], known_only: bool):
+def scan(db: sqlite3.Connection, library_root: Path):
     start_time = time.perf_counter()
 
-    if known_only:
-        album_paths = [path for (path,) in db.execute("SELECT path FROM album;") if is_dir(library_root / path)]
-        subalbum_depth = 0
-        logger.info(f"rescanning {len(album_paths)} known album folders")
-    else:
-        glob_specs = (locations["albums"] if "albums" in locations else "**/").split("|")
-        # album_paths = find_paths_in_library(library_root, glob_specs)
-        album_paths: list[str] = []
-        for glob_spec in glob_specs:
-            click.echo(f"searching {library_root}{os.sep}{glob_spec}\033[K\r", nl=False)
-            for path_str in glob.iglob(glob_spec, root_dir=library_root, recursive=True):
-                full_path = library_root / path_str
-                if full_path.is_dir():
-                    album_paths.append(path_str)
-        click.echo("\033[K", nl=False)
-        subalbum_depth = int(locations.get("subalbum_depth", 0))
-        logger.info(f"scanning {len(album_paths)} dirs for albums")
+    unchecked_albums = dict(((path, album_id) for (path, album_id) in db.execute("SELECT path, album_id FROM album;")))
 
-    scanned_albums = {}
-    scanned_paths = set()
-    for album_path_str in tools.progress_bar(sorted(album_paths), lambda: " Scanning "):
-        album_path = library_root / album_path_str
-        logger.debug(f"scanning for albums at {album_path}")
-        scanned_albums |= fast_scan(library_root, album_path, subalbum_depth, scanned_paths)
-    logger.info(f"Scanned library {library_root} in {int(time.perf_counter() - start_time)} seconds.")
+    def scan_album(path_str: str, track_files: list[Path]):
+        nonlocal unchecked_albums
+        found_tracks = []
+        for track_file in sorted(track_files):
+            stat = track_file.stat()
+            mtime = tools.format_file_timestamp(stat.st_mtime)
+            found_tracks.append({"SourceFile": track_file.name, "FileSize": stat.st_size, "FileModifyDate": mtime})
+        album_id = unchecked_albums.get(path_str)
+        if album_id is None:
+            album = tags.with_track_metadata(library_root, {"path": path_str, "tracks": found_tracks})
+            logger.info(f"add album {album}")
+            database.add(db, album)
+            return "added"
 
-    start_time = time.perf_counter()
-    albums_to_remove: list[str] = []
-    changed_albums: list[dict] = []
-    missing_metadata_albums: list[str] = []
-    unchanged = 0
-    for album_id, path in db.execute("SELECT album_id, path FROM album;"):
-        if path in scanned_albums:
-            rescanned_album = scanned_albums[path]
-            stored_tracks = database.load_tracks(db, album_id)
-            if track_files_modified(stored_tracks, rescanned_album["tracks"]):
-                changed_albums.append(rescanned_album)
-            elif not has_metadata(stored_tracks):
-                missing_metadata_albums.append(path)
-            else:
-                unchanged += 1
-        else:
-            albums_to_remove.append(path)
-    logger.info(f"Checked metadata in {int(time.perf_counter() - start_time)} seconds.")
+        del unchecked_albums[path_str]
+        stored_album = database.load_album(db, album_id)
+        if track_files_modified(stored_album["tracks"], found_tracks):
+            album = tags.with_track_metadata(library_root, stored_album | {"tracks": found_tracks})
+            database.update(db, album)
+            return "updated"
 
-    new_albums: list[dict] = [scan_album for scan_album in scanned_albums.values() if scan_album["path"] not in albums_cache]
+        return "unchanged"
 
-    # remove albums
-    for remove_album_path in albums_to_remove:
-        logger.info(f"remove album {remove_album_path}")
-        del albums_cache[remove_album_path]
-        database.remove(db, remove_album_path)
+    stats = {"scanned": 0, "added": 0, "removed": 0, "updated": 0, "unchanged": 0}
+    try:
+        paths = glob.iglob("**/", root_dir=library_root, recursive=True)
+        # preload the list of paths in order to show a progress bar
+        paths = tools.progress_bar(list(paths), lambda: " Scan ")  # TODO skip if configured to save memory
+        for path_str in paths:
+            album_path = library_root / path_str
+            logger.debug(f"checking {album_path}")
+            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and entry.suffix in TRACK_SUFFIXES]
+            stats["scanned"] += 1
+            if len(track_files) > 0:
+                stats[scan_album(path_str, track_files)] += 1
+    except KeyboardInterrupt:
+        logger.error("\scan interrupted, exiting")
 
-    # add albums
-    for new_album in new_albums:
-        logger.info(f"add album {new_album}")
-        albums_cache[new_album["path"]] = new_album
-        database.add(db, new_album)
+    # remaining entries in unchecked_albums are apparently no longer in the library
+    for album_id in unchecked_albums.values():
+        logger.info(f"remove album {album_id}")
+        database.remove(db, album_id)
+        stats["removed"] += 1
 
-    # replace track data on changed albums
-    for changes in changed_albums:
-        albums_cache[changes["path"]] |= changes
-        database.update(db, albums_cache[changes["path"]])
-
-    logger.info(
-        f"Albums removed = {len(albums_to_remove)} / added = {len(new_albums)} / changed = {len(changed_albums)} / unchanged = {unchanged} / missing-metadata = {len(missing_metadata_albums)}"
-    )
-
-    albums_needing_metadata_paths = (
-        [album["path"] for album in changed_albums if len(album["tracks"]) > 0]
-        + missing_metadata_albums
-        + [album["path"] for album in new_albums if len(album["tracks"]) > 0]
-    )
-    if len(albums_needing_metadata_paths) > 0:
-        click.echo(f"Loading metadata for {len(albums_needing_metadata_paths)} albums using {tags.check_metadata_tool()}")
-        start_time = time.perf_counter()
-        try:  # this may take a long time, save progress if interrupted
-            for album_path in tools.progress_bar(albums_needing_metadata_paths, lambda: " Loading "):
-                albums_cache[album_path] = tags.with_track_metadata(library_root, albums_cache[album_path])
-                database.update(db, albums_cache[album_path])
-        except KeyboardInterrupt:
-            logger.error("\nloading interrupted, exiting")
-        logger.info(f"Updated track metadata in {int(time.perf_counter() - start_time)} seconds.")
+    click.echo(f"scanned {library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")

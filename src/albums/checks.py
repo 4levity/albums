@@ -1,17 +1,7 @@
-import bisect
-import os
+import sqlite3
 
 
-def count_matching_prefixes(sorted_list: list[str], search_prefix: str):
-    index = bisect.bisect_left(sorted_list, search_prefix)
-    matches = 0
-    while index < len(sorted_list) and sorted_list[index].startswith(search_prefix):
-        matches += 1
-        index += 1
-    return matches
-
-
-def check(album: dict, checks_enabled: dict, albums_cache: dict):
+def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
     albumartists = {}
     artists = {}
     missing_required_tags = {}
@@ -60,7 +50,15 @@ def check(album: dict, checks_enabled: dict, albums_cache: dict):
         [{"message": f"tracks missing required tags ({missing_required_tags}"}],
     )
     if enabled("album_under_album"):
-        matches = count_matching_prefixes(sorted(albums_cache.keys()), f"{album['path']}{os.sep}")
+        path = album["path"]
+        like_path = path.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        (matches,) = db.execute(
+            "SELECT COUNT(*) FROM album WHERE path != ? AND path LIKE ? ESCAPE '\\';",
+            (
+                path,
+                like_path,
+            ),
+        ).fetchone()
         if matches > 0:
             issues.append({"message": f"there are {matches} albums in directories under album {album['path']}"})
 

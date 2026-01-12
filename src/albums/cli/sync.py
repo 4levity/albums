@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def sync(ctx: click.Context, destination, delete, force):
     dest = Path(destination)
-    albums: list[dict] = ctx.obj["SELECT_ALBUMS"]()
+    albums = ctx.obj["SELECT_ALBUMS"]()
     if not dest.exists() or not dest.is_dir():
         logger.error(f"not a directory: {dest}")
         return

@@ -1,5 +1,5 @@
 import click
-from .. import selector, tools
+from .. import tools
 from . import context
 from .add_to_collections import add_to_collections
 from .check import check
@@ -12,13 +12,13 @@ from .sync import sync
 @click.group()
 @click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
 @click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
-@click.option("--match", "-m", type=click.Choice(selector.MatchType, case_sensitive=False), default="EXACT", help="type of match for album paths")
+@click.option("--regex", "-r", is_flag=True, help="type of match for album paths")
 @click.option("--config-file", help="specify path to config.ini")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
 @click.pass_context
-def albums(ctx: click.Context, collections: list[str], paths: list[str], match: selector.MatchType, config_file: str, verbose: int):
+def albums(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
     tools.setup_logging(verbose)
-    context.setup(ctx, collections, paths, match, config_file)
+    context.setup(ctx, collections, paths, regex, config_file)
 
 
 albums.add_command(add_to_collections)

@@ -6,10 +6,9 @@ from .. import checks
 @click.pass_context
 def check(ctx: click.Context):
     checks_enabled = ctx.obj["CONFIG"].get("checks", {})
-    albums = ctx.obj["SELECT_ALBUMS"]()
     issues = []
-    for album in albums:
-        album_issues = checks.check(album, checks_enabled, ctx.obj["ALBUMS_CACHE"])
+    for album in ctx.obj["SELECT_ALBUMS"]():
+        album_issues = checks.check(ctx.obj["DB_CONNECTION"], album, checks_enabled)
         issues.extend([issue | {"path": album["path"]} for issue in album_issues])
     if len(issues) > 0:
         for issue in sorted(issues, key=lambda i: i["path"]):

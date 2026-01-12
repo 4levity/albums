@@ -1,38 +1,42 @@
-import enum
 import re
+import sqlite3
+from albums import database
 
 
-class MatchType(enum.Enum):
-    EXACT = enum.auto()
-    PARTIAL = enum.auto()
-    RE = enum.auto()
+def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool):
+    path_placeholders = ",".join(["?"] * len(match_paths))
+    collection_placeholders = ",".join(["?"] * len(collection_names))
+    if len(match_paths) == 0 or match_path_regex:  # no path filter
+        if len(collection_names) == 0:
+            cursor = db.execute("SELECT album_id, path FROM album ORDER BY path;")
+        else:
+            cursor = db.execute(
+                "SELECT album_id, path FROM album "
+                "WHERE album_id IN "
+                "(SELECT album_id FROM album_collection ac JOIN collection c ON ac.collection_id=c.collection_id "
+                f"WHERE collection_name IN ({collection_placeholders})) "
+                "ORDER BY path;",
+                collection_names,
+            )
+    else:  # with path filter
+        if len(collection_names) == 0:
+            cursor = db.execute(f"SELECT album_id, path FROM album WHERE path IN ({path_placeholders}) ORDER BY path;", match_paths)
+        else:
+            cursor = db.execute(
+                "SELECT album_id, path FROM album "
+                f"WHERE path IN ({path_placeholders}) AND album_id IN "
+                "(SELECT album_id FROM album_collection ac JOIN collection c ON ac.collection_id=c.collection_id "
+                f"WHERE collection_name IN {collection_placeholders}) "
+                "ORDER BY path;",
+                match_paths + collection_names,
+            )
 
+    def path_match_when_regex(path: str):
+        if len(match_paths) == 0 or not match_path_regex:
+            return True
+        for pattern in match_paths:
+            if re.search(pattern, path):
+                return True
+        return False
 
-def select_albums(albums: dict, match_paths: list[str], collections: list[str], match_type: MatchType):
-    def album_filter(album: dict):
-        def match_param(target, candidate):
-            if match_type == MatchType.RE:
-                return re.search(target, candidate) is not None
-            elif match_type == MatchType.PARTIAL:
-                return target in candidate
-            elif match_type == MatchType.EXACT:
-                return target == candidate
-            raise ValueError("unknown MatchType")
-
-        if len(match_paths) > 0:
-            match = False
-            for album_match in match_paths:
-                if match_param(album_match, album["path"]):
-                    match = True
-            if not match:
-                return False
-        if len(collections) > 0:
-            match = False
-            for target_collection in collections:
-                if target_collection in album.get("collections", []):
-                    match = True
-            if not match:
-                return False
-        return True
-
-    return sorted(filter(album_filter, albums.values()), key=lambda a: a["path"])
+    yield from (database.load_album(db, album_id) for (album_id, path) in cursor if path_match_when_regex(path))

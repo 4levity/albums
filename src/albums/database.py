@@ -53,8 +53,9 @@ def migrate(db: sqlite3.Connection):
 
 
 def open(filename: str):
+    # TODO reconsider transaction control, use Python 3.12 and autocommit=False?
     db = sqlite3.connect(filename)
-    db.executescript(SQL_INIT_SCHEMA) # TODO only do this when creating database
+    db.executescript(SQL_INIT_SCHEMA)  # TODO only do this when creating database
     migrate(db)
     db.executescript(SQL_CLEANUP)
     return db
@@ -95,6 +96,25 @@ def load(con: sqlite3.Connection):
     return albums
 
 
+def load_album(con: sqlite3.Connection, album_id: int):
+    row = con.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
+    if row is None:
+        return None
+
+    (path,) = row
+    collections = [
+        name
+        for (name,) in con.execute(
+            "SELECT collection_name FROM collection AS c JOIN album_collection AS ac ON c.collection_id = ac.collection_id WHERE ac.album_id = ?;",
+            (album_id,),
+        )
+    ]
+    tracks = load_tracks(con, album_id)
+
+    # todo ignores
+    return {"path": path, "collections": collections, "tracks": tracks}
+
+
 def get_collection_id(con: sqlite3.Connection, collection_name: str):
     cur = con.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,))
     found = cur.fetchone()
@@ -131,20 +151,21 @@ def add(con: sqlite3.Connection, album: dict):
     insert_album_details(con, album)
 
 
-def delete_album_details(con: sqlite3.Connection, path: str):
-    album_id = get_album_id(con, path)
+def delete_album_details(con: sqlite3.Connection, album_id: int):
     con.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
     con.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
     con.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
 
 
-def remove(con: sqlite3.Connection, path: str):
-    delete_album_details(con, path)
-    cur = con.execute("DELETE FROM album WHERE path = ?;", (path,))
+def remove(con: sqlite3.Connection, album_id: int):
+    delete_album_details(con, album_id)
+    # TODO explicitly remove collections, ignores, tracks or cascade
+    cur = con.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
     if cur.rowcount == 0:
-        logger.warning(f"didn't delete album, not found: {path}")
+        logger.warning(f"didn't delete album, not found: {album_id}")
 
 
 def update(con: sqlite3.Connection, album: dict):
-    delete_album_details(con, album["path"])
+    album_id = get_album_id(con, album["path"])
+    delete_album_details(con, album_id)
     insert_album_details(con, album)

@@ -1,4 +1,5 @@
 import click
+from collections.abc import Iterator
 import datetime
 import humanize
 import logging
@@ -12,7 +13,7 @@ from albums import tools
 logger = logging.getLogger(__name__)
 
 
-def do_sync(albums: list[dict], dest: Path, library_root: Path, delete, force):
+def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, force):
     existing_dest_paths = set(dest.rglob("*"))
     skipped_tracks = 0
     total_size = 0

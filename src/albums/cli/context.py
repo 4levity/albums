@@ -9,7 +9,7 @@ from .. import database, library, selector, tools
 logger = logging.getLogger(__name__)
 
 
-def setup(ctx: click.Context, collections: list[str], paths: list[str], match: selector.MatchType, config_file: str):
+def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str):
     logger.info("starting albums")
     config = configparser.ConfigParser()
     config_files = [str(tools.platform_dirs.site_config_path / "config.ini"), str(tools.platform_dirs.user_config_path / "config.ini"), "config.ini"]
@@ -38,14 +38,10 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], match: s
     ctx.call_on_close(lambda: database.close(db))
     ctx.ensure_object(dict)
 
-    # load the entire database - currently the cache is scanned by every command
-    albums_cache = database.load(db)
-    logger.info(f"loaded info for {len(albums_cache)} albums from {album_db_file}")
-    ctx.obj["ALBUMS_CACHE"] = albums_cache
     ctx.obj["CONFIG"] = {section: dict(config.items(section)) for section in config.sections()}
     ctx.obj["DB_CONNECTION"] = db
     ctx.obj["LIBRARY_ROOT"] = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
-    ctx.obj["SELECT_ALBUMS"] = lambda: selector.select_albums(albums_cache, paths, collections, match)
+    ctx.obj["SELECT_ALBUMS"] = lambda: selector.select_albums(db, collections, paths, regex)
 
     if config.getboolean("options", "always_scan", fallback=False):
         ctx.invoke(library.scan)

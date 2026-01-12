@@ -6,9 +6,8 @@ from .. import database
 @click.argument("collection_names", nargs=-1)
 @click.pass_context
 def remove_from_collections(ctx: click.Context, collection_names):
-    albums = ctx.obj["SELECT_ALBUMS"]()
     db = ctx.obj["DB_CONNECTION"]
-    for album in albums:
+    for album in ctx.obj["SELECT_ALBUMS"]():
         path = album["path"]
         album_collections = album.get("collections", [])
         changed = False
