@@ -1,5 +1,5 @@
 import click
-from .. import checks
+from ..library import checks
 
 
 @click.command(help="report on metadata issues in selected albums")

@@ -1,5 +1,6 @@
 import click
-from .. import tools
+
+from ..tools import setup_logging
 from . import context
 from .add_to_collections import add_to_collections
 from .check import check
@@ -17,7 +18,7 @@ from .sync import sync
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
 @click.pass_context
 def albums(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
-    tools.setup_logging(verbose)
+    setup_logging(verbose)
     context.setup(ctx, collections, paths, regex, config_file)
 
 

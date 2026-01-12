@@ -39,6 +39,4 @@ def select_albums(db: sqlite3.Connection, collection_names: list[str], match_pat
                 return True
         return False
 
-    yield from (
-        operations.load_album(db, album_id, load_track_metadata) for (album_id, path) in cursor if path_match_when_regex(path)
-    )
+    yield from (operations.load_album(db, album_id, load_track_metadata) for (album_id, path) in cursor if path_match_when_regex(path))

@@ -1,7 +1,8 @@
 import click
 import logging
 from pathlib import Path
-from .. import synchronizer
+
+from ..library import synchronizer
 
 
 logger = logging.getLogger(__name__)

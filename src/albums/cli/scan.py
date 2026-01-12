@@ -1,6 +1,6 @@
 import click
 import logging
-from .. import library
+from ..library import scanner
 
 
 logger = logging.getLogger(__name__)
@@ -13,4 +13,4 @@ def scan(ctx: click.Context):
         logger.info("scan already done, not scanning again")
         return
 
-    library.scan(ctx.obj["DB_CONNECTION"], ctx.obj["LIBRARY_ROOT"])
+    scanner.scan(ctx.obj["DB_CONNECTION"], ctx.obj["LIBRARY_ROOT"])

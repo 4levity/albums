@@ -1,4 +1,4 @@
-from albums import checks
+from albums.library import checks
 from albums.database import connection, operations
 
 

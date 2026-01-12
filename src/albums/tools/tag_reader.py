@@ -1,6 +1,5 @@
 import json
 import logging
-from pathlib import Path
 import subprocess
 import sys
 
@@ -66,17 +65,3 @@ def get_exif_data(cwd: str, filepaths: list[str]):
         logger.error(f"{METADATA_TOOL_NAME} error: {stderr}")
         sys.exit(1)
     return json.loads(stdout)
-
-
-def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
-    metadata = get_exif_data(library_root / album_path, [track["source_file"] for track in tracks])
-    if len(tracks) == len(metadata):
-        for index, track in enumerate(tracks):
-            if track["source_file"] == metadata[index]["SourceFile"]:
-                tracks[index]["metadata"] = metadata[index]
-            else:
-                logger.warning(
-                    f"track metadata out of order at index {index}: {track['source_file']} != {metadata[index]['source_file']} -- in album {album_path}"
-                )
-    else:
-        logger.warning(f"track count {len(tracks)} does not match metadata count {len(metadata)} for album {album_path}")

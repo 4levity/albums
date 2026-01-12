@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 import shutil
 import time
-from . import tools
+
+from ..tools import progress_bar
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
             mm, ss = divmod((total_size - copied_bytes) / rate, 60) if rate > 0 else (0, 0)
             return f" Copied {humanize.naturalsize(copied_bytes)} ({humanize.naturalsize(rate)}/sec) {int(mm)}:{int(ss):02d} left "
 
-        for track in tools.progress_bar(sorted(tracks, key=lambda t: t[1]), get_progress):
+        for track in progress_bar(sorted(tracks, key=lambda t: t[1]), get_progress):
             source_file = track[0]
             dest_file = track[1]
             size = track[2]

@@ -4,7 +4,8 @@ import logging
 import os
 from pathlib import Path
 
-from .. import library, tools
+from ..tools import platform_dirs
+from ..library import scanner
 import albums.database.connection
 import albums.database.selector
 
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str):
     logger.info("starting albums")
     config = configparser.ConfigParser()
-    config_files = [str(tools.platform_dirs.site_config_path / "config.ini"), str(tools.platform_dirs.user_config_path / "config.ini"), "config.ini"]
+    config_files = [str(platform_dirs.site_config_path / "config.ini"), str(platform_dirs.user_config_path / "config.ini"), "config.ini"]
     if config_file:
         specified_config_path = Path(config_file)
         if specified_config_path.exists() and specified_config_path.is_file():
@@ -33,9 +34,9 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: b
     if config.has_option("locations", "database"):
         album_db_file = config["locations"]["database"]
     else:
-        album_db_file = str((tools.platform_dirs.user_config_path / "albums.db"))
+        album_db_file = str((platform_dirs.user_config_path / "albums.db"))
         logger.warning(f"no database file specified, using {album_db_file}")
-        os.makedirs(tools.platform_dirs.user_config_dir, exist_ok=True)
+        os.makedirs(platform_dirs.user_config_dir, exist_ok=True)
 
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))
@@ -47,5 +48,5 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: b
     ctx.obj["SELECT_ALBUMS"] = lambda load_track_metadata: albums.database.selector.select_albums(db, collections, paths, regex, load_track_metadata)
 
     if config.getboolean("options", "always_scan", fallback=False):
-        ctx.invoke(library.scan)
+        ctx.invoke(scanner.scan)
         ctx.obj["SCAN_DONE"] = True
