@@ -1,5 +1,5 @@
 import click
-from .. import database
+import albums.database.operations
 
 
 @click.command("remove", help="remove selected albums from collections")
@@ -20,4 +20,4 @@ def remove_from_collections(ctx: click.Context, collection_names):
                 click.echo(f"album {path} was not in collection {target_collection}")  # filter may prevent this
         if changed:
             album["collections"] = album_collections
-            database.update_collections(db, album["album_id"], album["collections"])
+            albums.database.operations.update_collections(db, album["album_id"], album["collections"])

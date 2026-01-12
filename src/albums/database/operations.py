@@ -1,0 +1,93 @@
+import json
+import logging
+import sqlite3
+
+
+logger = logging.getLogger(__name__)
+
+
+def load_tracks(db: sqlite3.Connection, album_id: int, load_metadata=True):
+    tracks = []
+    for track_id, source_file, file_size, modify_timestamp in db.execute(
+        "SELECT track_id, source_file, file_size, modify_timestamp FROM track WHERE album_id = ? ORDER BY source_file ASC;", (album_id,)
+    ):
+        if load_metadata:
+            metadata = dict(
+                ((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_metadata WHERE track_id = ?;", (track_id,)))
+            )
+        else:
+            metadata = {}
+        track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "metadata": metadata}
+        tracks.append(track)
+    return tracks
+
+
+def load_album(db: sqlite3.Connection, album_id: int, load_track_metadata=True):
+    row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
+    if row is None:
+        return None
+
+    (path,) = row
+    collections = [
+        name
+        for (name,) in db.execute(
+            "SELECT collection_name FROM collection AS c JOIN album_collection AS ac ON c.collection_id = ac.collection_id WHERE ac.album_id = ?;",
+            (album_id,),
+        )
+    ]
+    tracks = load_tracks(db, album_id, load_track_metadata)
+
+    # todo ignores
+    return {"album_id": album_id, "path": path, "collections": collections, "tracks": tracks}
+
+
+def get_collection_id(db: sqlite3.Connection, collection_name: str):
+    row = db.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,)).fetchone()
+    if row is None:
+        row = db.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,)).fetchone()
+    return row[0]
+
+
+def get_album_id(db: sqlite3.Connection, path: str):
+    cur = db.execute("SELECT album_id FROM album WHERE path = ?;", (path,))
+    album_id = cur.fetchone()[0]
+    return album_id
+
+
+def insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
+    for track in tracks:
+        (track_id,) = db.execute(
+            "INSERT INTO track (album_id, source_file, file_size, modify_timestamp) VALUES (?, ?, ?, ?) RETURNING track_id",
+            (album_id, track["source_file"], track["file_size"], track["modify_timestamp"]),
+        ).fetchone()
+        for name, value in track["metadata"].items():
+            db.execute("INSERT INTO track_metadata (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
+
+
+def insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
+    for collection_name in collections:
+        collection_id = get_collection_id(db, collection_name)
+        db.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
+
+
+def add(db: sqlite3.Connection, album: dict):
+    (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album["path"],)).fetchone()
+    insert_collections(db, album_id, album.get("collections", []))
+    insert_tracks(db, album_id, album["tracks"])
+    return album_id
+
+
+def remove(db: sqlite3.Connection, album_id: int):
+    cur = db.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
+    if cur.rowcount == 0:
+        logger.warning(f"didn't delete album, not found: {album_id}")
+
+
+def update_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
+    db.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
+    insert_collections(db, album_id, collections)
+
+
+def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
+    db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
+    insert_tracks(db, album_id, tracks)

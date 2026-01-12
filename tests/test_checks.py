@@ -1,4 +1,5 @@
-from albums import checks, database
+from albums import checks
+from albums.database import connection, operations
 
 
 class TestChecks:
@@ -145,11 +146,11 @@ class TestChecks:
             {"path": "foo/bar", "tracks": [{"source_file": "1.flac", "file_size": 1, "modify_timestamp": 0, "metadata": {}}]},
             {"path": "foo", "tracks": [{"source_file": "1.flac", "file_size": 1, "modify_timestamp": 0, "metadata": {}}]},
         ]
-        con = database.open(":memory:")
-        database.add(con, albums[0])
-        database.add(con, albums[1])
+        db = connection.open(":memory:")
+        operations.add(db, albums[0])
+        operations.add(db, albums[1])
         checks_enabled = {"album_under_album": "true"}
-        result = checks.check(con, albums[1], checks_enabled)
+        result = checks.check(db, albums[1], checks_enabled)
         assert result == [{"message": "there are 1 albums in directories under album foo"}]
-        result = checks.check(con, albums[0], checks_enabled)
+        result = checks.check(db, albums[0], checks_enabled)
         assert result == []

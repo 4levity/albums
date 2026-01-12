@@ -1,5 +1,5 @@
 import click
-from .. import database
+import albums.database.operations
 
 
 @click.command("add", help="add selected albums to collections")
@@ -17,4 +17,4 @@ def add_to_collections(ctx: click.Context, collection_names):
                 click.echo(f"added album {path} to collection {target_collection}")
                 changed = True
         if changed:
-            database.update_collections(ctx.obj["DB_CONNECTION"], album["album_id"], album["collections"])
+            albums.database.operations.update_collections(ctx.obj["DB_CONNECTION"], album["album_id"], album["collections"])

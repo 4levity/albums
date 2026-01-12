@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 import sqlite3
 import time
-from . import database
-from . import tags
+import albums.database.operations
+from . import tag_reader
 from . import tools
 
 
@@ -43,20 +43,20 @@ def scan(db: sqlite3.Connection, library_root: Path):
             found_tracks.append({"source_file": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
         album_id = unchecked_albums.get(path_str)
         if album_id is None:
-            tags.load_track_metadata(library_root, path_str, found_tracks)
+            tag_reader.load_track_metadata(library_root, path_str, found_tracks)
             album = {"path": path_str, "tracks": found_tracks}
             logger.debug(f"add album {album}")
-            database.add(db, album)
+            albums.database.operations.add(db, album)
             return "added"
 
         del unchecked_albums[path_str]
 
         check_for_missing_metadata = True  # TODO add setting to disable for faster scan
-        stored_album = database.load_album(db, album_id, check_for_missing_metadata)
+        stored_album = albums.database.operations.load_album(db, album_id, check_for_missing_metadata)
         modified = track_files_modified(stored_album["tracks"], found_tracks)
         if modified or (check_for_missing_metadata and missing_metadata(stored_album["tracks"])):
-            tags.load_track_metadata(library_root, path_str, found_tracks)
-            database.update_tracks(db, album_id, found_tracks)
+            tag_reader.load_track_metadata(library_root, path_str, found_tracks)
+            albums.database.operations.update_tracks(db, album_id, found_tracks)
             return "updated"
 
         return "unchanged"
@@ -79,7 +79,7 @@ def scan(db: sqlite3.Connection, library_root: Path):
         # remaining entries in unchecked_albums are apparently no longer in the library
         for album_id in unchecked_albums.values():
             logger.info(f"remove album {album_id}")
-            database.remove(db, album_id)
+            albums.database.operations.remove(db, album_id)
             stats["removed"] += 1
     except KeyboardInterrupt:
         logger.error("\scan interrupted, exiting")

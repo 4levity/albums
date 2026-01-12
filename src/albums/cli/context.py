@@ -3,7 +3,10 @@ import configparser
 import logging
 import os
 from pathlib import Path
-from .. import database, library, selector, tools
+
+from .. import library, tools
+import albums.database.connection
+import albums.database.selector
 
 
 logger = logging.getLogger(__name__)
@@ -34,14 +37,14 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: b
         logger.warning(f"no database file specified, using {album_db_file}")
         os.makedirs(tools.platform_dirs.user_config_dir, exist_ok=True)
 
-    db = database.open(album_db_file)
-    ctx.call_on_close(lambda: database.close(db))
+    db = albums.database.connection.open(album_db_file)
+    ctx.call_on_close(lambda: albums.database.connection.close(db))
     ctx.ensure_object(dict)
 
     ctx.obj["CONFIG"] = {section: dict(config.items(section)) for section in config.sections()}
     ctx.obj["DB_CONNECTION"] = db
     ctx.obj["LIBRARY_ROOT"] = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
-    ctx.obj["SELECT_ALBUMS"] = lambda load_track_metadata: selector.select_albums(db, collections, paths, regex, load_track_metadata)
+    ctx.obj["SELECT_ALBUMS"] = lambda load_track_metadata: albums.database.selector.select_albums(db, collections, paths, regex, load_track_metadata)
 
     if config.getboolean("options", "always_scan", fallback=False):
         ctx.invoke(library.scan)
