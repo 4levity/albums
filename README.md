@@ -31,15 +31,6 @@ The tool needs to know where your albums are stored.
 Create a `config.ini` file with `[library]` section specifying where to find albums. See example in
 [./sample/config.ini](sample/config.ini).
 
-`albums` is a list of "glob" path patterns each separated by `|` character, relative to the library
-root. For example, if albums are arranged in folders like `Artists/artist-name/album-name` and
-compilations are in `Various/album-name` then you could use `albums=Artists/*/*/|Various/*/`.
-Default `albums=**/` will search all folders.
-
-If using more specific glob patterns, the option `subalbum_depth` enables recursively searching
-for more albums, only under matching folders to a limited depth. This can be used to find albums
-organized under a single folder (e.g. if multiple discs are stored one per subfolder).
-
 In the `[checks]` section, you may configure options to check albums for issues with tags.
 
 ## Usage
@@ -48,18 +39,17 @@ Scan the library and create the album database with `albums scan`. The first tim
 read metadata from every track which may take a long time. When the library is changed, you should
 run `albums scan` again.
 
-List albums matching a path with a command like `albums --match partial --path "Freezepop" list`
-Regular expressions can be used with `--match re`.
+List albums matching a path with a command like `albums --regex --path "Freezepop" list`.
 
 Albums can be in sets called "collections". You could create a collection named "DAP" for albums to
-sync to a Digital Audio Player: `albums --m partial --p "Freezepop" --collection DAP add`
+sync to a Digital Audio Player: `albums --regex --p "Freezepop" add DAP`
 
 List the albums in the collection with `albums --collection DAP list`
 
 Sync selected albums to an SD card. Add, update or remove files under destination folder:
 `albums -c DAP sync /mnt/sdcard --delete`
 
-Check and report on possible issues with `albums exceptions` and filter with `-c` or `-p` options.
+Check and report on possible issues with `albums check` and filter with `-c` or `-p` options.
 
 Try `albums --help` or e.g. `albums sync --help`.
 

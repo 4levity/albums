@@ -1,5 +1,5 @@
-import datetime
 import logging
+import math
 import os
 from platformdirs import PlatformDirs
 
@@ -17,7 +17,7 @@ def progress_bar(iterable, get_prefix=lambda: ""):
         except OSError:
             width = 80
         fill = int(width * iteration // item_count) if item_count > 0 else width
-        percent = ("{0:.0f}").format(100 * (iteration / float(item_count))) if item_count > 0 else "100"
+        percent = math.floor(100 * (iteration / float(item_count))) if item_count > 0 else "100"
         print(f"\r{prefix}[{'#' * fill + '.' * (width - fill)}] {percent}%", end="\r")
 
     show(0)
@@ -26,10 +26,6 @@ def progress_bar(iterable, get_prefix=lambda: ""):
         show(i + 1)
 
     print()
-
-
-def format_file_timestamp(timestamp: float):
-    return datetime.datetime.fromtimestamp(timestamp).isoformat(sep=" ", timespec="seconds")
 
 
 def setup_logging(verbose: int):

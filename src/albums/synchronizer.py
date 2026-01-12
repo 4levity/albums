@@ -1,13 +1,12 @@
 import click
 from collections.abc import Iterator
-import datetime
 import humanize
 import logging
 import os
 from pathlib import Path
 import shutil
 import time
-from albums import tools
+from . import tools
 
 
 logger = logging.getLogger(__name__)
@@ -29,25 +28,23 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
                 existing_dest_paths.discard(dest_path)
                 dest_path = dest_path.parent
 
-            dest_file: Path = dest / album["path"] / track["SourceFile"]
+            dest_file: Path = dest / album["path"] / track["source_file"]
             if dest_file.exists():
                 if not dest_file.is_file():
                     logger.error(f"destination {str(dest_file)} exists, but is not a file. Aborting.")
                     return
                 existing_dest_paths.remove(dest_file)
                 stat = dest_file.stat()
-                dest_last_modified = datetime.datetime.fromtimestamp(stat.st_mtime)
-                source_last_modified = datetime.datetime.fromisoformat(track["FileModifyDate"])
                 # treat last-modified within one second as identical due to rounding errors and file system differences
-                different_last_modified = 1 < abs((dest_last_modified - source_last_modified).total_seconds())
-                copy_track = stat.st_size != track["FileSize"] or different_last_modified
+                different_timestamp = abs(int(stat.st_mtime) - track["modify_timestamp"]) > 1
+                copy_track = stat.st_size != track["file_size"] or different_timestamp
                 skipped_tracks += 0 if copy_track else 1
             else:
                 copy_track = True
             if copy_track:
-                total_size += track["FileSize"]
-                source_file = library_root / album["path"] / track["SourceFile"]
-                tracks.append((source_file, dest_file, track["FileSize"]))
+                total_size += track["file_size"]
+                source_file = library_root / album["path"] / track["source_file"]
+                tracks.append((source_file, dest_file, track["file_size"]))
 
     if delete and len(existing_dest_paths) > 0:
         click.echo(f"will delete {len(existing_dest_paths)} paths from {dest}")

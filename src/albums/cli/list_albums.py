@@ -7,12 +7,12 @@ import humanize
 @click.option("--details", is_flag=True, help="print all details of each album")
 @click.pass_context
 def list_albums(ctx: click.Context, details):
-    formatter = (lambda a, sz: a) if details else (lambda a, sz: f"album: {a['path']} ({sz})")
+    formatter = (lambda a, sz: a) if details else (lambda a, sz: f"album: {a['path']} ({humanize.naturalsize(sz, binary=True)})")
     total_size = 0
     count = 0
-    for album in ctx.obj["SELECT_ALBUMS"]():
-        tracks_size = reduce(lambda sum, track: sum + track["FileSize"], album["tracks"], 0)
-        click.echo(formatter(album, humanize.naturalsize(tracks_size, binary=True)))
+    for album in ctx.obj["SELECT_ALBUMS"](details):
+        tracks_size = reduce(lambda sum, track: sum + track["file_size"], album["tracks"], 0)
+        click.echo(formatter(album, tracks_size))
         total_size += tracks_size
         count += 1
     if count > 0:

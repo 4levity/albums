@@ -1,10 +1,9 @@
 import re
 import sqlite3
-from albums import database
+from . import database
 
 
-def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool):
-    path_placeholders = ",".join(["?"] * len(match_paths))
+def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_metadata=True):
     collection_placeholders = ",".join(["?"] * len(collection_names))
     if len(match_paths) == 0 or match_path_regex:  # no path filter
         if len(collection_names) == 0:
@@ -19,6 +18,7 @@ def select_albums(db: sqlite3.Connection, collection_names: list[str], match_pat
                 collection_names,
             )
     else:  # with path filter
+        path_placeholders = ",".join(["?"] * len(match_paths))
         if len(collection_names) == 0:
             cursor = db.execute(f"SELECT album_id, path FROM album WHERE path IN ({path_placeholders}) ORDER BY path;", match_paths)
         else:
@@ -39,4 +39,4 @@ def select_albums(db: sqlite3.Connection, collection_names: list[str], match_pat
                 return True
         return False
 
-    yield from (database.load_album(db, album_id) for (album_id, path) in cursor if path_match_when_regex(path))
+    yield from (database.load_album(db, album_id, load_track_metadata) for (album_id, path) in cursor if path_match_when_regex(path))

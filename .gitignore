@@ -7,6 +7,7 @@ dist/
 .vscode/
 
 # application/misc
-/albums.db
-/config.ini
+*.db
+*.db-journal
 *.db.bak
+/config.ini

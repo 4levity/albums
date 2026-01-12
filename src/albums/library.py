@@ -4,9 +4,9 @@ import logging
 from pathlib import Path
 import sqlite3
 import time
-from albums import database
-from albums import tags
-from albums import tools
+from . import database
+from . import tags
+from . import tools
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,14 @@ def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
         return True
     for index, t1 in enumerate(tracks1):
         t2 = tracks2[index]
-        if t1["SourceFile"] != t2["SourceFile"] or t1["FileSize"] != t2["FileSize"] or t1["FileModifyDate"] != t2["FileModifyDate"]:
+        if t1["source_file"] != t2["source_file"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
+            return True
+    return False
+
+
+def missing_metadata(tracks: list[dict]):
+    for track in tracks:
+        if track["metadata"] == {}:
             return True
     return False
 
@@ -33,18 +40,20 @@ def scan(db: sqlite3.Connection, library_root: Path):
         found_tracks = []
         for track_file in sorted(track_files):
             stat = track_file.stat()
-            mtime = tools.format_file_timestamp(stat.st_mtime)
-            found_tracks.append({"SourceFile": track_file.name, "FileSize": stat.st_size, "FileModifyDate": mtime})
+            found_tracks.append({"source_file": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
         album_id = unchecked_albums.get(path_str)
         if album_id is None:
             album = tags.with_track_metadata(library_root, {"path": path_str, "tracks": found_tracks})
-            logger.info(f"add album {album}")
+            logger.debug(f"add album {album}")
             database.add(db, album)
             return "added"
 
         del unchecked_albums[path_str]
-        stored_album = database.load_album(db, album_id)
-        if track_files_modified(stored_album["tracks"], found_tracks):
+
+        check_for_missing_metadata = True  # TODO add setting to disable for faster scan
+        stored_album = database.load_album(db, album_id, check_for_missing_metadata)
+        modified = track_files_modified(stored_album["tracks"], found_tracks)
+        if modified or (check_for_missing_metadata and missing_metadata(stored_album["tracks"])):
             album = tags.with_track_metadata(library_root, stored_album | {"tracks": found_tracks})
             database.update(db, album)
             return "updated"
@@ -55,21 +64,23 @@ def scan(db: sqlite3.Connection, library_root: Path):
     try:
         paths = glob.iglob("**/", root_dir=library_root, recursive=True)
         # preload the list of paths in order to show a progress bar
-        paths = tools.progress_bar(list(paths), lambda: " Scan ")  # TODO skip if configured to save memory
+        click.echo(f"finding folders in {library_root}", nl=False)
+        paths = tools.progress_bar(list(paths), lambda: " Scan ")  # TODO add setting to disable progress bar and save memory
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
             track_files = [entry for entry in album_path.iterdir() if entry.is_file() and entry.suffix in TRACK_SUFFIXES]
             stats["scanned"] += 1
             if len(track_files) > 0:
-                stats[scan_album(path_str, track_files)] += 1
+                result = scan_album(path_str, track_files)
+                stats[result] += 1
+
+        # remaining entries in unchecked_albums are apparently no longer in the library
+        for album_id in unchecked_albums.values():
+            logger.info(f"remove album {album_id}")
+            database.remove(db, album_id)
+            stats["removed"] += 1
     except KeyboardInterrupt:
         logger.error("\scan interrupted, exiting")
-
-    # remaining entries in unchecked_albums are apparently no longer in the library
-    for album_id in unchecked_albums.values():
-        logger.info(f"remove album {album_id}")
-        database.remove(db, album_id)
-        stats["removed"] += 1
 
     click.echo(f"scanned {library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")

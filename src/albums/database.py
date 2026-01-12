@@ -1,45 +1,62 @@
 import json
 import logging
+from pathlib import Path
 import sqlite3
 
 
 logger = logging.getLogger(__name__)
 
 SQL_INIT_SCHEMA = """
-CREATE TABLE IF NOT EXISTS _schema (
+CREATE TABLE _schema (
     version INTEGER UNIQUE NOT NULL
 );
-INSERT INTO _schema (version) VALUES (1) ON CONFLICT DO NOTHING;
+INSERT INTO _schema (version) VALUES (1);
 
-CREATE TABLE IF NOT EXISTS album (
+CREATE TABLE album (
     album_id INTEGER PRIMARY KEY,
     path TEXT UNIQUE NOT NULL
 );
-CREATE TABLE IF NOT EXISTS collection (
+
+CREATE TABLE collection (
     collection_id INTEGER PRIMARY KEY,
-    collection_name TEXT
+    collection_name TEXT UNIQUE NOT NULL
 );
-CREATE TABLE IF NOT EXISTS album_collection (
-    album_id INTEGER,
-    collection_id INTEGER,
-    FOREIGN KEY(album_id) REFERENCES album(album_id),
-    FOREIGN KEY(collection_id) REFERENCES collection(collection_id)
+
+CREATE TABLE album_collection (
+    album_collection_id INTEGER PRIMARY KEY,
+    album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    collection_id REFERENCES collection(collection_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS album_ignore_check (
-    album_id INTEGER,
-    check_name TEXT,
-    FOREIGN KEY(album_id) REFERENCES album(album_id)
+CREATE INDEX idx_collection_by_album_id ON album_collection(album_id);
+CREATE INDEX idx_collection_by_collection_id ON album_collection(collection_id);
+
+CREATE TABLE album_ignore_check (
+    album_ignore_check_id INTEGER PRIMARY KEY,
+    album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    check_name TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS track (
+CREATE INDEX idx_ignore_check_album_id ON album_ignore_check(album_id);
+
+CREATE TABLE track (
     track_id INTEGER PRIMARY KEY,
-    album_id INTEGER NOT NULL,
+    album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
     source_file TEXT NOT NULL,
     file_size INTEGER NOT NULL,
-    modify_date TEXT NOT NULL,
-    metadata TEXT,
-    FOREIGN KEY(album_id) REFERENCES album(album_id)
+    modify_timestamp INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_track_album_id ON track (album_id);
+CREATE INDEX idx_track_album_id ON track(album_id);
+
+CREATE TABLE track_metadata (
+    track_metdata_id INTEGER PRIMARY KEY,
+    track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    value_json TEXT NOT NULL
+);
+CREATE INDEX idx_metadata_track_id ON track_metadata(track_id);
+"""
+
+SQL_INIT_CONNECTION = """
+PRAGMA foreign_keys = ON;
 """
 
 SQL_MIGRATION_SCRIPTS = []
@@ -53,9 +70,15 @@ def migrate(db: sqlite3.Connection):
 
 
 def open(filename: str):
-    # TODO reconsider transaction control, use Python 3.12 and autocommit=False?
+    new_database = filename == ":memory:" or not Path(filename).exists()
+
+    # TODO switch to explicit transactions
     db = sqlite3.connect(filename)
-    db.executescript(SQL_INIT_SCHEMA)  # TODO only do this when creating database
+    db.executescript(SQL_INIT_CONNECTION)
+    if new_database:
+        print(f"creating database {filename}")
+        db.executescript(SQL_INIT_SCHEMA)
+
     migrate(db)
     db.executescript(SQL_CLEANUP)
     return db
@@ -67,36 +90,23 @@ def close(con: sqlite3.Connection):
     logger.debug("closed database")
 
 
-def load_tracks(con: sqlite3.Connection, album_id: int):
+def load_tracks(con: sqlite3.Connection, album_id: int, load_metadata=True):
     tracks = []
-    for source_file, file_size, modify_date, metadata in con.execute(
-        "SELECT source_file, file_size, modify_date, metadata FROM track WHERE album_id = ? ORDER BY source_file ASC;", (album_id,)
+    for track_id, source_file, file_size, modify_timestamp in con.execute(
+        "SELECT track_id, source_file, file_size, modify_timestamp FROM track WHERE album_id = ? ORDER BY source_file ASC;", (album_id,)
     ):
-        tracks.append(json.loads(metadata) | {"SourceFile": source_file, "FileSize": file_size, "FileModifyDate": modify_date})
+        if load_metadata:
+            metadata = dict(
+                ((k, json.loads(v)) for (k, v) in con.execute("SELECT name, value_json FROM track_metadata WHERE track_id = ?;", (track_id,)))
+            )
+        else:
+            metadata = {}
+        track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "metadata": metadata}
+        tracks.append(track)
     return tracks
 
 
-def load(con: sqlite3.Connection):
-    collections = {}
-    for collection_row in con.execute("SELECT collection_id, collection_name FROM collection;"):
-        collections[str(collection_row[0])] = collection_row[1]
-
-    albums = {}
-    for album_row in con.execute("SELECT path FROM album ORDER BY path;"):
-        albums |= {album_row[0]: {"path": album_row[0], "tracks": [], "collections": []}}
-
-    for row in con.execute("SELECT path, collection_id FROM album_collection AS ac JOIN album ON album.album_id = ac.album_id;"):
-        albums[row[0]]["collections"].append(collections[str(row[1])])
-
-    # todo ignores
-    for row in con.execute(
-        "SELECT path, source_file, file_size, modify_date, metadata FROM track JOIN album ON album.album_id = track.album_id ORDER BY source_file ASC;"
-    ):
-        albums[row[0]]["tracks"].append(json.loads(row[4]) | {"SourceFile": row[1], "FileSize": row[2], "FileModifyDate": row[3]})
-    return albums
-
-
-def load_album(con: sqlite3.Connection, album_id: int):
+def load_album(con: sqlite3.Connection, album_id: int, load_track_metadata=True):
     row = con.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
     if row is None:
         return None
@@ -109,41 +119,39 @@ def load_album(con: sqlite3.Connection, album_id: int):
             (album_id,),
         )
     ]
-    tracks = load_tracks(con, album_id)
+    tracks = load_tracks(con, album_id, load_track_metadata)
 
     # todo ignores
     return {"path": path, "collections": collections, "tracks": tracks}
 
 
 def get_collection_id(con: sqlite3.Connection, collection_name: str):
-    cur = con.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,))
-    found = cur.fetchone()
-    if found is not None:
-        return found[0]
+    row = con.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,)).fetchone()
+    if row is not None:
+        (collection_id,) = row
     else:
-        cur = con.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,))
-        return cur.fetchone()[0]
+        (collection_id,) = con.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,))
+    return collection_id
 
 
 def get_album_id(con: sqlite3.Connection, path: str):
-    cur = con.execute("SELECT album_id FROM album WHERE path = ?", (path,))
+    cur = con.execute("SELECT album_id FROM album WHERE path = ?;", (path,))
     album_id = cur.fetchone()[0]
     return album_id
 
 
 def insert_album_details(con: sqlite3.Connection, album: dict):
     album_id = get_album_id(con, album["path"])
-    collection_ids = {}
-    for collection_name in album.get("collections", []):
-        if collection_name not in collection_ids:
-            collection_ids[collection_name] = get_collection_id(con, collection_name)
-        con.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_ids[collection_name]))
+    for collection_name in album["collections"]:
+        collection_id = get_collection_id(con, collection_name)
+        con.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
     for track in album["tracks"]:
-        metadata = {key: value for key, value in track.items() if key not in ["SourceFile", "FileSize", "FileModifyDate"]}
-        con.execute(
-            "INSERT INTO track (album_id, source_file, file_size, modify_date, metadata) VALUES (?, ?, ?, ?, ?);",
-            (album_id, track["SourceFile"], track["FileSize"], track["FileModifyDate"], json.dumps(metadata)),
-        )
+        (track_id,) = con.execute(
+            "INSERT INTO track (album_id, source_file, file_size, modify_timestamp) VALUES (?, ?, ?, ?) RETURNING track_id",
+            (album_id, track["source_file"], track["file_size"], track["modify_timestamp"]),
+        ).fetchone()
+        for name, value in track["metadata"].items():
+            con.execute("INSERT INTO track_metadata (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
 
 
 def add(con: sqlite3.Connection, album: dict):
@@ -159,7 +167,6 @@ def delete_album_details(con: sqlite3.Connection, album_id: int):
 
 def remove(con: sqlite3.Connection, album_id: int):
     delete_album_details(con, album_id)
-    # TODO explicitly remove collections, ignores, tracks or cascade
     cur = con.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
     if cur.rowcount == 0:
         logger.warning(f"didn't delete album, not found: {album_id}")

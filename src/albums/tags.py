@@ -34,7 +34,8 @@ def get_exif_data(cwd: str, filepaths: list[str]):
         "-All",  # include all metadata except fields excluded below
         "--FileName",
         "--FileInodeChangeDate",
-        "--FileModifyDate--Directory",
+        "--FileModifyDate",
+        "--Directory",
         "--FileAccessDate",
         "--FilePermissions",
         "--Directory",
@@ -68,14 +69,14 @@ def get_exif_data(cwd: str, filepaths: list[str]):
 
 
 def with_track_metadata(library_root: Path, album: dict):
-    metadata = get_exif_data(library_root / album["path"], [track["SourceFile"] for track in album["tracks"]])
+    metadata = get_exif_data(library_root / album["path"], [track["source_file"] for track in album["tracks"]])
     if len(album["tracks"]) == len(metadata):
         for index, track in enumerate(album["tracks"]):
-            if track["SourceFile"] == metadata[index]["SourceFile"]:
-                album["tracks"][index] = metadata[index] | album["tracks"][index]
+            if track["source_file"] == metadata[index]["SourceFile"]:
+                album["tracks"][index]["metadata"] = metadata[index]
             else:
                 logger.warning(
-                    f"track metadata out of order at index {index}: {track['SourceFile']} != {metadata[index]['SourceFile']} -- in album {album['path']}"
+                    f"track metadata out of order at index {index}: {track['source_file']} != {metadata[index]['source_file']} -- in album {album['path']}"
                 )
     else:
         logger.warning(f"track count {len(album['tracks'])} does not match metadata count {len(metadata)} for album {album['path']}")

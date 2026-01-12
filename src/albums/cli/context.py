@@ -41,7 +41,7 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: b
     ctx.obj["CONFIG"] = {section: dict(config.items(section)) for section in config.sections()}
     ctx.obj["DB_CONNECTION"] = db
     ctx.obj["LIBRARY_ROOT"] = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
-    ctx.obj["SELECT_ALBUMS"] = lambda: selector.select_albums(db, collections, paths, regex)
+    ctx.obj["SELECT_ALBUMS"] = lambda load_track_metadata: selector.select_albums(db, collections, paths, regex, load_track_metadata)
 
     if config.getboolean("options", "always_scan", fallback=False):
         ctx.invoke(library.scan)

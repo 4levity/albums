@@ -11,26 +11,26 @@ def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
     def enabled(opt):
         return opt in checks_enabled and str(checks_enabled[opt]).upper() != "FALSE"
 
-    for track in sorted(album["tracks"], key=lambda track: track["SourceFile"]):
-        if "Artist" in track:
-            artist = f"{track['Artist']}"  # possibly a list
+    for track in sorted(album["tracks"], key=lambda track: track["source_file"]):
+        if "Artist" in track["metadata"]:
+            artist = f"{track['metadata']['Artist']}"  # possibly a list
             artists[artist] = artists.get(artist, 0) + 1
 
-        if "Albumartist" in track and "Band" in track:
+        if "Albumartist" in track["metadata"] and "Band" in track["metadata"]:
             albumartist_and_band = True
 
-        if "Albumartist" in track:
-            albumartists[track["Albumartist"]] = albumartists.get(track["Albumartist"], 0) + 1
-        elif "Band" in track:
-            albumartists[track["Band"]] = albumartists.get(track["Band"], 0) + 1
+        if "Albumartist" in track["metadata"]:
+            albumartists[track["metadata"]["Albumartist"]] = albumartists.get(track["metadata"]["Albumartist"], 0) + 1
+        elif "Band" in track["metadata"]:
+            albumartists[track["metadata"]["Band"]] = albumartists.get(track["metadata"]["Band"], 0) + 1
         else:
             albumartists[""] = albumartists.get("", 0) + 1
 
         for tag in checks_enabled.get("required_tags", "").split("|"):
-            if tag != "" and tag not in track:
+            if tag != "" and tag not in track["metadata"]:
                 missing_required_tags[tag] = missing_required_tags.get(tag, 0) + 1
-        if "Warning" in track and track["Warning"] not in metadata_warnings:
-            metadata_warnings.append(track["Warning"])
+        if "Warning" in track["metadata"] and track["metadata"]["Warning"] not in metadata_warnings:
+            metadata_warnings.append(track["metadata"]["Warning"])
 
     issues = []
     issues += filter(lambda _: enabled("albumartist_and_band") and albumartist_and_band, [{"message": "albumartist and band tags both present"}])
