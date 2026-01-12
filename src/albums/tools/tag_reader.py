@@ -29,7 +29,6 @@ def get_exif_data(cwd: str, filepaths: list[str]):
         METADATA_TOOL_NAME,
         "-q",  # no status output
         "-j",  # json to stdout
-        "-FileSize#",  # specify file size in bytes
         "-All",  # include all metadata except fields excluded below
         "--FileName",
         "--FileInodeChangeDate",
@@ -37,6 +36,7 @@ def get_exif_data(cwd: str, filepaths: list[str]):
         "--Directory",
         "--FileAccessDate",
         "--FilePermissions",
+        "--FileSize",
         "--Directory",
         "--FileTypeExtension",
         "--MIMEType",
