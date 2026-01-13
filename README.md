@@ -18,9 +18,8 @@ library every time. In addition to data gathered from the scan, albums may be ta
 
 ## Requirements
 
-Prerequisites: `exiftool` must be installed and on the path.
-
-With `poetry` installed, run `make` to install Python dependencies, lint, test and build.
+With [poetry](https://python-poetry.org/) installed, run `make` to install Python dependencies,
+lint, test and build. Or use `poetry` directly (refer to [Makefile](./Makefile) to see commands).
 
 Developed and tested only on Linux. Probably works on MacOS and Windows.
 
@@ -29,7 +28,7 @@ Developed and tested only on Linux. Probably works on MacOS and Windows.
 The tool needs to know where your albums are stored.
 
 Create a `config.ini` file with `[library]` section specifying where to find albums. See example in
-[./sample/config.ini](sample/config.ini).
+[sample/config.ini](sample/config.ini).
 
 In the `[checks]` section, you may configure options to check albums for issues with tags.
 
@@ -56,7 +55,6 @@ Try `albums --help` or e.g. `albums sync --help`.
 ## Future
 
  - Select albums based on track tags, recently accessed, other
- - Remove `exiftool` requirement, support Python libraries and/or other metadata tools
  - Support additional file formats
  - Interactively fix metadata problems detected by checks with suggested solutions
  - More checks/fixes:

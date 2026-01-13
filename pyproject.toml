@@ -10,6 +10,7 @@ python = "^3.10"
 humanize = "^4.15.0"
 click = "^8.3.1"
 platformdirs = "^4.5.1"
+mutagen = "^1.47.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.10"

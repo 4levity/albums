@@ -1,67 +1,40 @@
-import json
 import logging
-import subprocess
-import sys
+import mutagen
+from mutagen.easyid3 import EasyID3
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
 
 
-METADATA_TOOL_NAME = "exiftool"
+def make_tag_serializable(value):
+    # TODO this is a hack! actually need to handle multi-value, images
+    if isinstance(value, list) and len(value) > 0:
+        return make_tag_serializable(value[0])
+    elif hasattr(value, "pprint"):
+        return value.pprint()
+    else:
+        return str(value)
 
 
-def check_metadata_tool():
-    try:
-        process = subprocess.Popen(args=[METADATA_TOOL_NAME, "-ver"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    except FileNotFoundError:
-        logger.error(f"{METADATA_TOOL_NAME} is not available")
-        sys.exit(1)
+def get_metadata(cwd: str, relpaths: list[str]):
+    tags = []
+    for relpath in relpaths:
+        path = Path(cwd) / relpath
+        suffix = str.lower(path.suffix)
+        if suffix == ".flac":
+            file = FLAC(path)
+        elif suffix == ".mp3":
+            file = MP3(path, ID3=EasyID3)  # limited tags, converted to canonical names
+        else:
+            file = mutagen.File(path)
 
-    stdout, stderr = process.communicate()
-    if stderr:
-        logger.error(f"{METADATA_TOOL_NAME} error: {stderr}")
-        sys.exit(1)
-    return f"{METADATA_TOOL_NAME} version {stdout.strip()}"
-
-
-def get_exif_data(cwd: str, filepaths: list[str]):
-    args = [
-        METADATA_TOOL_NAME,
-        "-q",  # no status output
-        "-j",  # json to stdout
-        "-All",  # include all metadata except fields excluded below
-        "--FileName",
-        "--FileInodeChangeDate",
-        "--FileModifyDate",
-        "--Directory",
-        "--FileAccessDate",
-        "--FilePermissions",
-        "--FileSize",
-        "--Directory",
-        "--FileTypeExtension",
-        "--MIMEType",
-        "--BlockSizeMin",
-        "--BlockSizeMax",
-        "--FrameSizeMin",
-        "--FrameSizeMax",
-        "--TotalSamples",
-        "--MD5Signature",
-        "--Vendor",
-        "--MPEGAudioVersion",
-        "--AudioLayer",
-        "--ChannelMode",
-        "--MSStereo",
-        "--IntensityStereo",
-        "--CopyrightFlag",
-        "--OriginalMedia",
-        "--Emphasis",
-        "--ID3Size",
-    ]
-    args.extend(filepaths)
-    process = subprocess.Popen(args=args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd=cwd)
-    stdout, stderr = process.communicate()
-
-    if stderr:
-        logger.error(f"{METADATA_TOOL_NAME} error: {stderr}")
-        sys.exit(1)
-    return json.loads(stdout)
+        if file is not None:
+            item = {"SourceFile": relpath}
+            for name, value in file.tags.items():
+                # TODO filter useless tags
+                item[name] = make_tag_serializable(value)
+            tags.append(item)
+    return tags

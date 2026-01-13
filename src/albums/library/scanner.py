@@ -5,7 +5,7 @@ from pathlib import Path
 import sqlite3
 import time
 import albums.database.operations
-from ..tools import progress_bar, get_exif_data
+from ..tools import progress_bar, get_metadata
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def scan(db: sqlite3.Connection, library_root: Path):
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
-            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and entry.suffix in TRACK_SUFFIXES]
+            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and str.lower(entry.suffix) in TRACK_SUFFIXES]
             stats["scanned"] += 1
             if len(track_files) > 0:
                 result = scan_album(path_str, track_files)
@@ -86,10 +86,11 @@ def scan(db: sqlite3.Connection, library_root: Path):
 
 
 def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
-    metadata = get_exif_data(library_root / album_path, [track["source_file"] for track in tracks])
+    metadata = get_metadata(library_root / album_path, [track["source_file"] for track in tracks])
     if len(tracks) == len(metadata):
         for index, track in enumerate(tracks):
             if track["source_file"] == metadata[index]["SourceFile"]:
+                del metadata[index]["SourceFile"]
                 tracks[index]["metadata"] = metadata[index]
             else:
                 logger.warning(

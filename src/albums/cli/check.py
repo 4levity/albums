@@ -7,7 +7,7 @@ from ..library import checks
 def check(ctx: click.Context):
     checks_enabled = ctx.obj["CONFIG"].get("checks", {})
     issues = []
-    for album in ctx.obj["SELECT_ALBUMS"]():
+    for album in ctx.obj["SELECT_ALBUMS"](True):
         album_issues = checks.check(ctx.obj["DB_CONNECTION"], album, checks_enabled)
         issues.extend([issue | {"path": album["path"]} for issue in album_issues])
     if len(issues) > 0:

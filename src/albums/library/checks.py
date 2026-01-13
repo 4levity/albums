@@ -12,15 +12,15 @@ def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
         return opt in checks_enabled and str(checks_enabled[opt]).upper() != "FALSE"
 
     for track in sorted(album["tracks"], key=lambda track: track["source_file"]):
-        if "Artist" in track["metadata"]:
-            artist = f"{track['metadata']['Artist']}"  # possibly a list
+        if "artist" in track["metadata"]:
+            artist = f"{track['metadata']['artist']}"  # possibly a list
             artists[artist] = artists.get(artist, 0) + 1
 
-        if "Albumartist" in track["metadata"] and "Band" in track["metadata"]:
+        if "albumartist" in track["metadata"] and "Band" in track["metadata"]:
             albumartist_and_band = True
 
-        if "Albumartist" in track["metadata"]:
-            albumartists[track["metadata"]["Albumartist"]] = albumartists.get(track["metadata"]["Albumartist"], 0) + 1
+        if "albumartist" in track["metadata"]:
+            albumartists[track["metadata"]["albumartist"]] = albumartists.get(track["metadata"]["albumartist"], 0) + 1
         elif "Band" in track["metadata"]:
             albumartists[track["metadata"]["Band"]] = albumartists.get(track["metadata"]["Band"], 0) + 1
         else:

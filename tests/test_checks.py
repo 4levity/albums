@@ -7,9 +7,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1.flac", "metadata": {"Artist": "A"}},
-                {"source_file": "2.flac", "metadata": {"Artist": "B"}},
-                {"source_file": "3.flac", "metadata": {"Artist": "B"}},
+                {"source_file": "1.flac", "metadata": {"artist": "A"}},
+                {"source_file": "2.flac", "metadata": {"artist": "B"}},
+                {"source_file": "3.flac", "metadata": {"artist": "B"}},
             ],
         }
         checks_enabled = {"needs_albumartist_band": "true"}
@@ -21,9 +21,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "Foo"}},
-                {"source_file": "2", "metadata": {"Artist": "B", "Albumartist": "Foo"}},
-                {"source_file": "3", "metadata": {"Artist": "B"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "Foo"}},
+                {"source_file": "2", "metadata": {"artist": "B", "albumartist": "Foo"}},
+                {"source_file": "3", "metadata": {"artist": "B"}},
             ],
         }
         checks_enabled = {"needs_albumartist_band": "true"}
@@ -34,9 +34,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "Foo"}},
-                {"source_file": "2", "metadata": {"Artist": "B", "Albumartist": "Foo"}},
-                {"source_file": "3", "metadata": {"Artist": "B", "Albumartist": "Bar"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "Foo"}},
+                {"source_file": "2", "metadata": {"artist": "B", "albumartist": "Foo"}},
+                {"source_file": "3", "metadata": {"artist": "B", "albumartist": "Bar"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -47,8 +47,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "Foo"}},
-                {"source_file": "2", "metadata": {"Artist": "A", "Albumartist": "Bar"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "Foo"}},
+                {"source_file": "2", "metadata": {"artist": "A", "albumartist": "Bar"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -59,8 +59,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "Foo"}},
-                {"source_file": "2", "metadata": {"Artist": "A"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "Foo"}},
+                {"source_file": "2", "metadata": {"artist": "A"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -71,8 +71,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "Foo", "Band": "Foo"}},
-                {"source_file": "2", "metadata": {"Artist": "B", "Albumartist": "Foo", "Band": "Foo"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "Foo", "Band": "Foo"}},
+                {"source_file": "2", "metadata": {"artist": "B", "albumartist": "Foo", "Band": "Foo"}},
             ],
         }
         checks_enabled = {"albumartist_and_band": "true"}
@@ -83,8 +83,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "metadata": {"Artist": "A", "Albumartist": "A"}},
-                {"source_file": "2", "metadata": {"Artist": "B", "Albumartist": "A"}},
+                {"source_file": "1", "metadata": {"artist": "A", "albumartist": "A"}},
+                {"source_file": "2", "metadata": {"artist": "B", "albumartist": "A"}},
             ],
         }
         checks_enabled = {"albumartist_and_band": "true", "multiple_albumartist_band": "true", "needs_albumartist_band": "true"}
@@ -92,7 +92,7 @@ class TestChecks:
         assert result == []
 
         # different artists, all albumartist the same
-        album["tracks"][1]["Artist"] = "A"
+        album["tracks"][1]["artist"] = "A"
         result = checks.check(None, album, checks_enabled)
         assert result == []
 
@@ -100,8 +100,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1.flac", "metadata": {"Artist": "Alice", "Warning": "WARNING 1"}},
-                {"source_file": "2.flac", "metadata": {"Artist": "Alice"}},
+                {"source_file": "1.flac", "metadata": {"artist": "Alice", "Warning": "WARNING 1"}},
+                {"source_file": "2.flac", "metadata": {"artist": "Alice"}},
             ],
         }
         checks_enabled = {"metadata_warnings": "true"}
@@ -122,16 +122,16 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1.flac", "metadata": {"Artist": "Alice"}},
+                {"source_file": "1.flac", "metadata": {"artist": "Alice"}},
                 {"source_file": "2.flac", "metadata": {}},
             ],
         }
-        checks_enabled = {"required_tags": "Artist|Title"}
+        checks_enabled = {"required_tags": "artist|Title"}
         result = checks.check(None, album, checks_enabled)
-        assert result == [{"message": "tracks missing required tags ({'Title': 2, 'Artist': 1}"}]
+        assert result == [{"message": "tracks missing required tags ({'Title': 2, 'artist': 1}"}]
 
         # one tag missing from both
-        album["tracks"][1]["metadata"]["Artist"] = "Alice"
+        album["tracks"][1]["metadata"]["artist"] = "Alice"
         result = checks.check(None, album, checks_enabled)
         assert result == [{"message": "tracks missing required tags ({'Title': 2}"}]
 
