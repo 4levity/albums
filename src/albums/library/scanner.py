@@ -16,7 +16,6 @@ DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES):
     start_time = time.perf_counter()
-    track_suffixes = [str.lower(suffix) for suffix in supported_file_types]
     unchecked_albums = dict(((path, album_id) for (path, album_id) in db.execute("SELECT path, album_id FROM album;")))
 
     def scan_album(path_str: str, track_files: list[Path]):
@@ -46,6 +45,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         return "unchanged"
 
     stats = {"scanned": 0, "added": 0, "removed": 0, "updated": 0, "unchanged": 0}
+    track_suffixes = [str.lower(suffix) for suffix in supported_file_types]
     skipped_file_types = {}
     try:
         paths = glob.iglob("**/", root_dir=library_root, recursive=True)

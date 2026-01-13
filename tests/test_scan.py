@@ -1,18 +1,24 @@
-from pathlib import Path
 from albums.database import connection, selector
 from albums.library.scanner import scan
+from .create_library import create_library
 
 
 class TestScanner:
-    test_data_path = Path(__file__).resolve().parent / "data"
-
     def test_scan(self):
         db = connection.open(":memory:")
 
         result = list(selector.select_albums(db, [], [], False))
         assert result == []
 
-        scan(db, self.test_data_path / "albums_1")
+        library = create_library(
+            "albums_2",
+            [
+                {"path": "bar/", "tracks": [{"source_file": "1.flac"}, {"source_file": "2.flac"}, {"source_file": "3.flac"}]},
+                {"path": "foo/", "tracks": [{"source_file": "1.flac"}, {"source_file": "2.flac"}]},
+            ],
+        )
+
+        scan(db, library)
 
         result = list(selector.select_albums(db, [], [], False))
         assert len(result) == 2

@@ -5,6 +5,7 @@ __pycache__/
 dist/
 *.log
 .vscode/
+/tests/libraries/
 
 # application/misc
 *.db
