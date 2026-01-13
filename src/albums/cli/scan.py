@@ -13,4 +13,5 @@ def scan(ctx: click.Context):
         logger.info("scan already done, not scanning again")
         return
 
-    scanner.scan(ctx.obj["DB_CONNECTION"], ctx.obj["LIBRARY_ROOT"])
+    file_types = ctx.obj["CONFIG"].get("locations", {}).get("supported_file_types", "|".join(scanner.DEFAULT_SUPPORTED_FILE_TYPES)).split("|")
+    scanner.scan(ctx.obj["DB_CONNECTION"], ctx.obj["LIBRARY_ROOT"], file_types)

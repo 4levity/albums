@@ -1,8 +1,10 @@
-SQL_INIT_SCHEMA = """
+CURRENT_SCHEMA_VERSION = 1
+
+SQL_INIT_SCHEMA = f"""
 CREATE TABLE _schema (
     version INTEGER UNIQUE NOT NULL
 );
-INSERT INTO _schema (version) VALUES (1);
+INSERT INTO _schema (version) VALUES ({CURRENT_SCHEMA_VERSION});
 
 CREATE TABLE album (
     album_id INTEGER PRIMARY KEY,
@@ -34,15 +36,19 @@ CREATE TABLE track (
     album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
     source_file TEXT NOT NULL,
     file_size INTEGER NOT NULL,
-    modify_timestamp INTEGER NOT NULL
+    modify_timestamp INTEGER NOT NULL,
+    stream_bitrate INTEGER NOT NULL,
+    stream_channels INTEGER NOT NULL,
+    stream_length REAL NOT NULL,
+    stream_sample_rate INTEGER NOT NULL
 );
 CREATE INDEX idx_track_album_id ON track(album_id);
 
-CREATE TABLE track_metadata (
+CREATE TABLE track_tag (
     track_metdata_id INTEGER PRIMARY KEY,
     track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
     name TEXT NOT NULL,
     value_json TEXT NOT NULL
 );
-CREATE INDEX idx_metadata_track_id ON track_metadata(track_id);
+CREATE INDEX idx_metadata_track_id ON track_tag(track_id);
 """

@@ -18,6 +18,32 @@ def make_tag_serializable(value):
         return str(value)
 
 
+def stream_info(file: FLAC | MP3 | mutagen.FileType):
+    info = {}
+    # maybe this isn't necessary but I don't think there's a guarantee that these attributes exist
+    try:
+        info |= {"length": file.info.length}
+    except AttributeError:
+        logger.warning(f"couldn't determine stream length in {file.filename}")
+
+    try:
+        info |= {"bitrate": file.info.bitrate}
+    except AttributeError:
+        logger.warning(f"couldn't determine stream bitrate in {file.filename}")
+
+    try:
+        info |= {"channels": file.info.channels}
+    except AttributeError:
+        logger.warning(f"couldn't determine stream channels in {file.filename}")
+
+    try:
+        info |= {"sample_rate": file.info.sample_rate}
+    except AttributeError:
+        logger.warning(f"couldn't determine stream sample rate in {file.filename}")
+
+    return info
+
+
 def get_metadata(path: str):
     suffix = str.lower(path.suffix)
     if suffix == ".flac":
@@ -28,7 +54,7 @@ def get_metadata(path: str):
         file = mutagen.File(path)
 
     if file is not None:
-        item = dict(((k, make_tag_serializable(v)) for k, v in file.tags.items()))
-        return item
+        tags = dict(((k, make_tag_serializable(v)) for k, v in file.tags.items()))
+        return (tags, stream_info(file))
 
-    return {}
+    return None

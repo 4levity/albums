@@ -3,7 +3,7 @@ import sqlite3
 from . import operations
 
 
-def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_metadata=True):
+def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_tag=True):
     collection_placeholders = ",".join(["?"] * len(collection_names))
     if len(match_paths) == 0 or match_path_regex:  # no path filter
         if len(collection_names) == 0:
@@ -39,4 +39,4 @@ def select_albums(db: sqlite3.Connection, collection_names: list[str], match_pat
                 return True
         return False
 
-    yield from (operations.load_album(db, album_id, load_track_metadata) for (album_id, path) in cursor if path_match_when_regex(path))
+    yield from (operations.load_album(db, album_id, load_track_tag) for (album_id, path) in cursor if path_match_when_regex(path))

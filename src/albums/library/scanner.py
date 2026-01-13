@@ -11,7 +11,7 @@ from .metadata import get_metadata
 
 
 logger = logging.getLogger(__name__)
-TRACK_SUFFIXES = [".flac", ".mp3", ".m4a"]
+DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a"]
 
 
 def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
@@ -26,14 +26,14 @@ def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
 
 def missing_metadata(tracks: list[dict]):
     for track in tracks:
-        if track["metadata"] == {}:
+        if track["tags"] == {} or track["stream"] == {}:
             return True
     return False
 
 
-def scan(db: sqlite3.Connection, library_root: Path):
+def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES):
     start_time = time.perf_counter()
-
+    track_suffixes = [str.lower(suffix) for suffix in supported_file_types]
     unchecked_albums = dict(((path, album_id) for (path, album_id) in db.execute("SELECT path, album_id FROM album;")))
 
     def scan_album(path_str: str, track_files: list[Path]):
@@ -72,7 +72,7 @@ def scan(db: sqlite3.Connection, library_root: Path):
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
-            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and str.lower(entry.suffix) in TRACK_SUFFIXES]
+            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and str.lower(entry.suffix) in track_suffixes]
             stats["scanned"] += 1
             if len(track_files) > 0:
                 result = scan_album(path_str, track_files)
@@ -83,7 +83,7 @@ def scan(db: sqlite3.Connection, library_root: Path):
             logger.info(f"remove album {album_id}")
             stats["removed"] += 1
     except KeyboardInterrupt:
-        logger.error("\scan interrupted, exiting")
+        logger.error("scan interrupted, exiting")
 
     click.echo(f"scanned {library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")
 
@@ -91,8 +91,12 @@ def scan(db: sqlite3.Connection, library_root: Path):
 def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
     for track in tracks:
         path = library_root / album_path / track["source_file"]
-        metadata = get_metadata(path)
-        if metadata is not None:
-            track["metadata"] = metadata
+        (tags, stream_info) = get_metadata(path)
+        if tags is not None:
+            track["tags"] = tags
         else:
-            logger.warning(f"couldn't read metadata for {path}")
+            logger.warning(f"couldn't read tags for {path}")
+        if stream_info is not None:
+            track["stream"] = stream_info
+        else:
+            logger.warning(f"couldn't read stream info for {path}")

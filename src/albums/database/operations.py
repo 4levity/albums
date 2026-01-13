@@ -6,23 +6,24 @@ import sqlite3
 logger = logging.getLogger(__name__)
 
 
-def load_tracks(db: sqlite3.Connection, album_id: int, load_metadata=True):
+def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
     tracks = []
-    for track_id, source_file, file_size, modify_timestamp in db.execute(
-        "SELECT track_id, source_file, file_size, modify_timestamp FROM track WHERE album_id = ? ORDER BY source_file ASC;", (album_id,)
+    for track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate in db.execute(
+        "SELECT track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate "
+        "FROM track WHERE album_id = ? ORDER BY source_file ASC;",
+        (album_id,),
     ):
-        if load_metadata:
-            metadata = dict(
-                ((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_metadata WHERE track_id = ?;", (track_id,)))
-            )
+        if load_tags:
+            tags = dict(((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_tag WHERE track_id = ?;", (track_id,))))
         else:
-            metadata = {}
-        track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "metadata": metadata}
+            tags = {}
+        stream = {"bitrate": stream_bitrate, "channels": stream_channels, "length": stream_length, "sample_rate": stream_sample_rate}
+        track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "stream": stream, "tags": tags}
         tracks.append(track)
     return tracks
 
 
-def load_album(db: sqlite3.Connection, album_id: int, load_track_metadata=True):
+def load_album(db: sqlite3.Connection, album_id: int, load_track_tag=True):
     row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
     if row is None:
         return None
@@ -35,7 +36,7 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_metadata=True):
             (album_id,),
         )
     ]
-    tracks = load_tracks(db, album_id, load_track_metadata)
+    tracks = load_tracks(db, album_id, load_track_tag)
 
     # todo ignores
     return {"album_id": album_id, "path": path, "collections": collections, "tracks": tracks}
@@ -57,11 +58,22 @@ def get_album_id(db: sqlite3.Connection, path: str):
 def insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
     for track in tracks:
         (track_id,) = db.execute(
-            "INSERT INTO track (album_id, source_file, file_size, modify_timestamp) VALUES (?, ?, ?, ?) RETURNING track_id",
-            (album_id, track["source_file"], track["file_size"], track["modify_timestamp"]),
+            "INSERT INTO track ("
+            "album_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
+            (
+                album_id,
+                track["source_file"],
+                track["file_size"],
+                track["modify_timestamp"],
+                track.get("stream", {}).get("bitrate", 0),
+                track.get("stream", {}).get("channels", 0),
+                track.get("stream", {}).get("length", 0),
+                track.get("stream", {}).get("sample_rate", 0),
+            ),
         ).fetchone()
-        for name, value in track["metadata"].items():
-            db.execute("INSERT INTO track_metadata (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
+        for name, value in track["tags"].items():
+            db.execute("INSERT INTO track_tag (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
 
 
 def insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
