@@ -4,8 +4,10 @@ import logging
 from pathlib import Path
 import sqlite3
 import time
+
 import albums.database.operations
-from ..tools import progress_bar, get_metadata
+from ..tools import progress_bar
+from .metadata import get_metadata
 
 
 logger = logging.getLogger(__name__)
@@ -63,9 +65,10 @@ def scan(db: sqlite3.Connection, library_root: Path):
     stats = {"scanned": 0, "added": 0, "removed": 0, "updated": 0, "unchanged": 0}
     try:
         paths = glob.iglob("**/", root_dir=library_root, recursive=True)
-        # preload the list of paths in order to show a progress bar
-        click.echo(f"finding folders in {library_root}", nl=False)
-        paths = progress_bar(list(paths), lambda: " Scan ")  # TODO add setting to disable progress bar and save memory
+        preload_paths = True  # TODO add setting to disable progress bar and save memory
+        if preload_paths:
+            click.echo(f"finding folders in {library_root}", nl=False)
+            paths = progress_bar(list(paths), lambda: " Scan ")
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
@@ -86,15 +89,10 @@ def scan(db: sqlite3.Connection, library_root: Path):
 
 
 def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
-    metadata = get_metadata(library_root / album_path, [track["source_file"] for track in tracks])
-    if len(tracks) == len(metadata):
-        for index, track in enumerate(tracks):
-            if track["source_file"] == metadata[index]["SourceFile"]:
-                del metadata[index]["SourceFile"]
-                tracks[index]["metadata"] = metadata[index]
-            else:
-                logger.warning(
-                    f"track metadata out of order at index {index}: {track['source_file']} != {metadata[index]['source_file']} -- in album {album_path}"
-                )
-    else:
-        logger.warning(f"track count {len(tracks)} does not match metadata count {len(metadata)} for album {album_path}")
+    for track in tracks:
+        path = library_root / album_path / track["source_file"]
+        metadata = get_metadata(path)
+        if metadata is not None:
+            track["metadata"] = metadata
+        else:
+            logger.warning(f"couldn't read metadata for {path}")
