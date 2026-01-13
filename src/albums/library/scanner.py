@@ -11,24 +11,7 @@ from .metadata import get_metadata
 
 
 logger = logging.getLogger(__name__)
-DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a"]
-
-
-def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
-    if len(tracks1) != len(tracks2):
-        return True
-    for index, t1 in enumerate(tracks1):
-        t2 = tracks2[index]
-        if t1["source_file"] != t2["source_file"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
-            return True
-    return False
-
-
-def missing_metadata(tracks: list[dict]):
-    for track in tracks:
-        if track["tags"] == {} or track["stream"] == {}:
-            return True
-    return False
+DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
 def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES):
@@ -63,6 +46,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         return "unchanged"
 
     stats = {"scanned": 0, "added": 0, "removed": 0, "updated": 0, "unchanged": 0}
+    skipped_file_types = {}
     try:
         paths = glob.iglob("**/", root_dir=library_root, recursive=True)
         preload_paths = True  # TODO add setting to disable progress bar and save memory
@@ -72,20 +56,29 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
-            track_files = [entry for entry in album_path.iterdir() if entry.is_file() and str.lower(entry.suffix) in track_suffixes]
+            track_files = []
+            for entry in album_path.iterdir():
+                suffix = str.lower(entry.suffix)
+                if entry.is_file():
+                    if suffix in track_suffixes:
+                        track_files.append(entry)
+                    else:
+                        skipped_file_types[suffix] = skipped_file_types.get(suffix, 0) + 1
             stats["scanned"] += 1
             if len(track_files) > 0:
                 result = scan_album(path_str, track_files)
                 stats[result] += 1
 
         # remaining entries in unchecked_albums are apparently no longer in the library
-        for album_id in unchecked_albums.values():
-            logger.info(f"remove album {album_id}")
+        for path, album_id in unchecked_albums.items():
+            logger.info(f"remove album {album_id} {path}")
+            albums.database.operations.remove(db, album_id)
             stats["removed"] += 1
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
     click.echo(f"scanned {library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")
+    logger.info(f"did not scan files with these extensions: {skipped_file_types}")
 
 
 def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
@@ -100,3 +93,20 @@ def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict])
             track["stream"] = stream_info
         else:
             logger.warning(f"couldn't read stream info for {path}")
+
+
+def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
+    if len(tracks1) != len(tracks2):
+        return True
+    for index, t1 in enumerate(tracks1):
+        t2 = tracks2[index]
+        if t1["source_file"] != t2["source_file"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
+            return True
+    return False
+
+
+def missing_metadata(tracks: list[dict]):
+    for track in tracks:
+        if track["tags"] == {} or track["stream"] == {}:
+            return True
+    return False

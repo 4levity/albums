@@ -55,6 +55,13 @@ def get_metadata(path: str):
 
     if file is not None:
         tags = dict(((k, make_tag_serializable(v)) for k, v in file.tags.items()))
+
+        # extract tracktotal from ID3 tags
+        if str.count(tags.get("tracknumber", ""), "/") == 1:
+            [tracknumber, tracktotal] = tags["tracknumber"].split("/")
+            tags["tracknumber"] = tracknumber
+            tags["tracktotal"] = tracktotal
+
         return (tags, stream_info(file))
 
     return None
