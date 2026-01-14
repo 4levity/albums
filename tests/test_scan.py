@@ -1,7 +1,7 @@
 import shutil
 from mutagen.flac import FLAC
 from albums.database import connection, selector
-from albums.library.scanner import scan
+from albums.library.scanner import scan, DEFAULT_SUPPORTED_FILE_TYPES
 from .create_library import create_album_in_library, create_library
 
 
@@ -97,3 +97,19 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
             assert result[0]["path"] == "foo/"
+
+    def test_scan_filtered(self):
+        with connection.open(connection.MEMORY) as db:
+            library = create_library("test_scan_filtered", self.sample_library)
+            scan(db, library)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 2
+
+            delete_album = result[0]["path"]
+            shutil.rmtree(library / result[0]["path"], ignore_errors=True)
+            scan(db, library, DEFAULT_SUPPORTED_FILE_TYPES, lambda: [(result[1]["path"], result[1]["album_id"])])
+
+            # deleted path was not scanned, so album is still there
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 2
+            assert result[0]["path"] == delete_album

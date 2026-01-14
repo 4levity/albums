@@ -14,9 +14,14 @@ logger = logging.getLogger(__name__)
 DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
-def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES):
+def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES, path_selector=None, reread=False):
     start_time = time.perf_counter()
-    unchecked_albums = dict(((path, album_id) for (path, album_id) in db.execute("SELECT path, album_id FROM album;")))
+
+    if path_selector is not None:
+        stored_paths = path_selector()
+    else:
+        stored_paths = db.execute("SELECT path, album_id FROM album;")
+    unchecked_albums = dict(((path, album_id) for (path, album_id) in stored_paths))
 
     def scan_album(path_str: str, track_files: list[Path]):
         nonlocal unchecked_albums
@@ -36,8 +41,11 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
 
         check_for_missing_metadata = True  # TODO add setting to disable for faster scan
         stored_album = albums.database.operations.load_album(db, album_id, check_for_missing_metadata)
-        modified = track_files_modified(stored_album["tracks"], found_tracks)
-        if modified or (check_for_missing_metadata and missing_metadata(stored_album["tracks"])):
+        if (
+            reread
+            or track_files_modified(stored_album["tracks"], found_tracks)
+            or (check_for_missing_metadata and missing_metadata(stored_album["tracks"]))
+        ):
             load_track_metadata(library_root, path_str, found_tracks)
             albums.database.operations.update_tracks(db, album_id, found_tracks)
             return "updated"
@@ -48,16 +56,20 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
     track_suffixes = [str.lower(suffix) for suffix in supported_file_types]
     skipped_file_types = {}
     try:
-        paths = glob.iglob("**/", root_dir=library_root, recursive=True)
+        if path_selector is not None:
+            paths = list(unchecked_albums.keys())
+        else:
+            click.echo(f"finding folders in {library_root}", nl=False)
+            paths = glob.iglob("**/", root_dir=library_root, recursive=True)
         preload_paths = True  # TODO add setting to disable progress bar and save memory
         if preload_paths:
-            click.echo(f"finding folders in {library_root}", nl=False)
             paths = progress_bar(list(paths), lambda: " Scan ")
+
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
             track_files = []
-            for entry in album_path.iterdir():
+            for entry in album_path.iterdir() if path_selector is None or album_path.exists() else []:
                 suffix = str.lower(entry.suffix)
                 if entry.is_file():
                     if suffix in track_suffixes:
