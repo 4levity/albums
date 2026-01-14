@@ -25,10 +25,9 @@ Developed and tested only on Linux. Probably works on MacOS and Windows.
 
 ## Configuration
 
-The tool needs to know where your albums are stored.
-
-Create a `config.ini` file with `[library]` section specifying where to find albums. See example in
-[sample/config.ini](sample/config.ini).
+The tool needs to know where your albums are. The default is the operating-system defined user's
+music directory. To use a library in another location, create a `config.ini` file with `[library]`
+section specifying where to find albums. See example in [sample/config.ini](sample/config.ini).
 
 In the `[checks]` section, you may configure options to check albums for issues with tags.
 

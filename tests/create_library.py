@@ -80,6 +80,13 @@ def create_album_in_library(library_path: Path, album: dict):
 def create_library(library_name: str, albums: list[dict]):
     library_path = test_data_path / library_name
     shutil.rmtree(library_path, ignore_errors=True)
+    os.makedirs(library_path, exist_ok=True)
     for album in albums:
         create_album_in_library(library_path, album)
+    with open(library_path / "config.ini", "w") as config_file:  # create a config.ini for cli invocation
+        config_file.write(f"""
+[locations]
+library={library_path}
+database={library_path / "albums.db"}
+""")
     return library_path
