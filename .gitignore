@@ -6,6 +6,7 @@ dist/
 *.log
 .vscode/
 /tests/libraries/
+docs/database_diagram.png
 
 # application/misc
 *.db

@@ -52,7 +52,7 @@ empty_mp3_file_data = bytearray([
 
 
 def create_file(path: Path, spec: dict):
-    filename: Path = path / spec["source_file"]
+    filename: Path = path / spec["filename"]
     with open(filename, "wb") as file:
         if filename.suffix == ".flac":
             file.write(empty_flac_file_data)

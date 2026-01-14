@@ -19,7 +19,7 @@ def check(db: sqlite3.Connection, album: dict, check_config: dict):
     def enabled(opt):
         return opt in check_config and str(check_config[opt]).upper() != "FALSE"
 
-    for track in sorted(album["tracks"], key=lambda track: track["source_file"]):
+    for track in sorted(album["tracks"], key=lambda track: track["filename"]):
         if "artist" in track["tags"]:
             artist = f"{track['tags']['artist']}"  # possibly a list
             artists[artist] = artists.get(artist, 0) + 1

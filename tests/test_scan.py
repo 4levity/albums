@@ -10,12 +10,12 @@ class TestScanner:
         {
             "path": "bar/",
             "tracks": [
-                {"source_file": "1.flac", "tags": {"title": "1"}},
-                {"source_file": "2.flac", "tags": {"title": "2"}},
-                {"source_file": "3.flac", "tags": {"title": "3"}},
+                {"filename": "1.flac", "tags": {"title": "1"}},
+                {"filename": "2.flac", "tags": {"title": "2"}},
+                {"filename": "3.flac", "tags": {"title": "3"}},
             ],
         },
-        {"path": "foo/", "tracks": [{"source_file": "1.mp3", "tags": {"title": "1"}}, {"source_file": "2.mp3", "tags": {"title": "2"}}]},
+        {"path": "foo/", "tracks": [{"filename": "1.mp3", "tags": {"title": "1"}}, {"filename": "2.mp3", "tags": {"title": "2"}}]},
     ]
 
     def test_initial_scan(self):
@@ -57,7 +57,7 @@ class TestScanner:
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
 
-            assert result[0]["tracks"][0]["source_file"] == "1.flac"
+            assert result[0]["tracks"][0]["filename"] == "1.flac"
             assert result[0]["tracks"][0]["tags"]["title"] == "1"
 
             file = FLAC(library / result[0]["path"] / "1.flac")

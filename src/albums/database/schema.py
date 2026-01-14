@@ -34,7 +34,7 @@ CREATE INDEX idx_ignore_check_album_id ON album_ignore_check(album_id);
 CREATE TABLE track (
     track_id INTEGER PRIMARY KEY,
     album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
-    source_file TEXT NOT NULL,
+    filename TEXT NOT NULL,
     file_size INTEGER NOT NULL,
     modify_timestamp INTEGER NOT NULL,
     stream_bitrate INTEGER NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE track (
 CREATE INDEX idx_track_album_id ON track(album_id);
 
 CREATE TABLE track_tag (
-    track_metdata_id INTEGER PRIMARY KEY,
+    track_tag_id INTEGER PRIMARY KEY,
     track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
     name TEXT NOT NULL,
     value_json TEXT NOT NULL

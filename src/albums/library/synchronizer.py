@@ -29,13 +29,13 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
                 existing_dest_paths.discard(dest_path)
                 dest_path = dest_path.parent
 
-            dest_file: Path = dest / album["path"] / track["source_file"]
-            if dest_file.exists():
-                if not dest_file.is_file():
-                    logger.error(f"destination {str(dest_file)} exists, but is not a file. Aborting.")
+            dest_tracK_path: Path = dest / album["path"] / track["filename"]
+            if dest_tracK_path.exists():
+                if not dest_tracK_path.is_file():
+                    logger.error(f"destination {str(dest_tracK_path)} exists, but is not a file. Aborting.")
                     return
-                existing_dest_paths.remove(dest_file)
-                stat = dest_file.stat()
+                existing_dest_paths.remove(dest_tracK_path)
+                stat = dest_tracK_path.stat()
                 # treat last-modified within one second as identical due to rounding errors and file system differences
                 different_timestamp = abs(int(stat.st_mtime) - track["modify_timestamp"]) > 1
                 copy_track = stat.st_size != track["file_size"] or different_timestamp
@@ -44,8 +44,8 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
                 copy_track = True
             if copy_track:
                 total_size += track["file_size"]
-                source_file = library_root / album["path"] / track["source_file"]
-                tracks.append((source_file, dest_file, track["file_size"]))
+                source_track_path = library_root / album["path"] / track["filename"]
+                tracks.append((source_track_path, dest_tracK_path, track["file_size"]))
 
     if delete and len(existing_dest_paths) > 0:
         click.echo(f"will delete {len(existing_dest_paths)} paths from {dest}")
@@ -74,12 +74,12 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
             return f" Copied {humanize.naturalsize(copied_bytes)} ({humanize.naturalsize(rate)}/sec) {int(mm)}:{int(ss):02d} left "
 
         for track in progress_bar(sorted(tracks, key=lambda t: t[1]), get_progress):
-            source_file = track[0]
-            dest_file = track[1]
+            source_tracK_path = track[0]
+            dest_tracK_path = track[1]
             size = track[2]
-            os.makedirs(os.path.dirname(dest_file), exist_ok=True)
-            logger.debug(f"copying to {dest_file}")
-            shutil.copy2(source_file, dest_file)
+            os.makedirs(os.path.dirname(dest_tracK_path), exist_ok=True)
+            logger.debug(f"copying to {dest_tracK_path}")
+            shutil.copy2(source_tracK_path, dest_tracK_path)
             copied_bytes += size
     else:
         click.echo(f"no tracks to copy {skipped}")

@@ -7,9 +7,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1.flac", "tags": {"artist": "A"}},
-                {"source_file": "2.flac", "tags": {"artist": "B"}},
-                {"source_file": "3.flac", "tags": {"artist": "B"}},
+                {"filename": "1.flac", "tags": {"artist": "A"}},
+                {"filename": "2.flac", "tags": {"artist": "B"}},
+                {"filename": "3.flac", "tags": {"artist": "B"}},
             ],
         }
         checks_enabled = {"needs_albumartist_band": "true"}
@@ -21,9 +21,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
-                {"source_file": "2", "tags": {"artist": "B", "albumartist": "Foo"}},
-                {"source_file": "3", "tags": {"artist": "B"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
+                {"filename": "2", "tags": {"artist": "B", "albumartist": "Foo"}},
+                {"filename": "3", "tags": {"artist": "B"}},
             ],
         }
         checks_enabled = {"needs_albumartist_band": "true"}
@@ -34,9 +34,9 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
-                {"source_file": "2", "tags": {"artist": "B", "albumartist": "Foo"}},
-                {"source_file": "3", "tags": {"artist": "B", "albumartist": "Bar"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
+                {"filename": "2", "tags": {"artist": "B", "albumartist": "Foo"}},
+                {"filename": "3", "tags": {"artist": "B", "albumartist": "Bar"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -47,8 +47,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
-                {"source_file": "2", "tags": {"artist": "A", "albumartist": "Bar"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
+                {"filename": "2", "tags": {"artist": "A", "albumartist": "Bar"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -59,8 +59,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
-                {"source_file": "2", "tags": {"artist": "A"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "Foo"}},
+                {"filename": "2", "tags": {"artist": "A"}},
             ],
         }
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -71,8 +71,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "Foo", "Band": "Foo"}},
-                {"source_file": "2", "tags": {"artist": "B", "albumartist": "Foo", "Band": "Foo"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "Foo", "Band": "Foo"}},
+                {"filename": "2", "tags": {"artist": "B", "albumartist": "Foo", "Band": "Foo"}},
             ],
         }
         checks_enabled = {"albumartist_and_band": "true"}
@@ -83,8 +83,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1", "tags": {"artist": "A", "albumartist": "A"}},
-                {"source_file": "2", "tags": {"artist": "B", "albumartist": "A"}},
+                {"filename": "1", "tags": {"artist": "A", "albumartist": "A"}},
+                {"filename": "2", "tags": {"artist": "B", "albumartist": "A"}},
             ],
         }
         checks_enabled = {"albumartist_and_band": "true", "multiple_albumartist_band": "true", "needs_albumartist_band": "true"}
@@ -100,8 +100,8 @@ class TestChecks:
         album = {
             "path": "",
             "tracks": [
-                {"source_file": "1.flac", "tags": {"artist": "Alice"}},
-                {"source_file": "2.flac", "tags": {}},
+                {"filename": "1.flac", "tags": {"artist": "Alice"}},
+                {"filename": "2.flac", "tags": {}},
             ],
         }
         checks_enabled = {"required_tags": "artist|Title"}
@@ -122,9 +122,9 @@ class TestChecks:
     def test_album_under_album(self):
         track_template = {"file_size": 1, "modify_timestamp": 0, "stream": {"length": 1.5}, "tags": {}}
         albums = [
-            {"path": "foo/bar/", "tracks": [track_template | {"source_file": "1.flac"}]},
-            {"path": "foo/", "tracks": [track_template | {"source_file": "1.flac"}]},
-            {"path": "foobar/", "tracks": [track_template | {"source_file": "1.flac"}]},
+            {"path": "foo/bar/", "tracks": [track_template | {"filename": "1.flac"}]},
+            {"path": "foo/", "tracks": [track_template | {"filename": "1.flac"}]},
+            {"path": "foobar/", "tracks": [track_template | {"filename": "1.flac"}]},
         ]
 
         with connection.open(connection.MEMORY) as db:

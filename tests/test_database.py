@@ -11,8 +11,8 @@ class TestDatabase:
     def test_operations(self):
         track_template = {"file_size": 1, "modify_timestamp": 0, "stream": {"codec": "FLAC", "length": 1.5}, "tags": {}}
         albums = [
-            {"path": "foo/", "tracks": [track_template | {"source_file": "1.flac"}]},
-            {"path": "bar/", "collections": ["test"], "tracks": [track_template | {"source_file": "1.flac"}]},
+            {"path": "foo/", "tracks": [track_template | {"filename": "1.flac"}]},
+            {"path": "bar/", "collections": ["test"], "tracks": [track_template | {"filename": "1.flac"}]},
         ]
         with connection.open(connection.MEMORY) as db:
             result = list(selector.select_albums(db, [], [], False))
@@ -47,7 +47,7 @@ class TestDatabase:
             assert result[0]["path"] == "foo/"
 
             assert len(result[0]["tracks"]) == 1
-            albums[0]["tracks"].append(track_template | {"source_file": "2.flac"})
+            albums[0]["tracks"].append(track_template | {"filename": "2.flac"})
             operations.update_tracks(db, albums[0]["album_id"], albums[0]["tracks"])
             result = list(selector.select_albums(db, [], [], False))
             assert len(result[0]["tracks"]) == 2

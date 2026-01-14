@@ -19,7 +19,7 @@ library every time. In addition to data gathered from the scan, albums may be ta
 ## Requirements
 
 With [poetry](https://python-poetry.org/) installed, run `make` to install Python dependencies,
-lint, test and build. Or use `poetry` directly (refer to [Makefile](./Makefile) to see commands).
+lint, test and build. Or use `poetry` directly.
 
 Developed and tested only on Linux. Probably works on MacOS and Windows.
 
@@ -51,6 +51,13 @@ Check and report on possible issues with `albums check` and filter with `-c` or 
 
 Try `albums --help` or e.g. `albums sync --help`.
 
+## Developing
+
+Refer to [Makefile](./Makefile).
+
+After scanning a collection, use the `sqlite3` command line tool with the database file to explore
+via SQL. Install [GraphViz](https://graphviz.org/) and `make diagram` for a reference diagram. 
+
 ## Future
 
  - Select albums based on track tags, recently accessed, other
@@ -62,5 +69,5 @@ Try `albums --help` or e.g. `albums sync --help`.
    - missing track-total
    - not all tracks encoded the same (file type or kbps target)
    - track filename doesn't match title
-   - album folder doesn't match album name
+   - album folder doesn't match album name  
    - parent folder doesn't match artist if using artist/album

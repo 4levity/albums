@@ -9,8 +9,8 @@ from .create_library import create_library, test_data_path
 
 
 albums = [
-    {"path": "foo/", "tracks": [{"source_file": "1.mp3", "tags": {"title": "1"}}]},
-    {"path": "bar/", "tracks": [{"source_file": "1.flac", "tags": {"title": "1"}}, {"source_file": "2.flac", "tags": {"title": "2"}}]},
+    {"path": "foo/", "tracks": [{"filename": "1.mp3", "tags": {"title": "1"}}]},
+    {"path": "bar/", "tracks": [{"filename": "1.flac", "tags": {"title": "1"}}, {"filename": "2.flac", "tags": {"title": "2"}}]},
 ]
 
 
@@ -60,7 +60,7 @@ database={TestCli.library / "albums.db"}
         assert len(result_json) == 2
         assert result_json[1]["path"] == "foo/"
         assert len(result_json[1]["tracks"]) == 1
-        assert result_json[1]["tracks"][0]["source_file"] == "1.mp3"
+        assert result_json[1]["tracks"][0]["filename"] == "1.mp3"
 
     def test_filter_path_regex(self):
         result = self.run(["-r", "-p", ".oo", "list", "--json"])

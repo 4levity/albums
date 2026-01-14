@@ -23,7 +23,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         found_tracks = []
         for track_file in sorted(track_files):
             stat = track_file.stat()
-            found_tracks.append({"source_file": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
+            found_tracks.append({"filename": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
         album_id = unchecked_albums.get(path_str)
         if album_id is None:
             load_track_metadata(library_root, path_str, found_tracks)
@@ -83,7 +83,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
 
 def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
     for track in tracks:
-        path = library_root / album_path / track["source_file"]
+        path = library_root / album_path / track["filename"]
         (tags, stream_info) = get_metadata(path)
         if tags is not None:
             track["tags"] = tags
@@ -100,7 +100,7 @@ def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
         return True
     for index, t1 in enumerate(tracks1):
         t2 = tracks2[index]
-        if t1["source_file"] != t2["source_file"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
+        if t1["filename"] != t2["filename"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
             return True
     return False
 

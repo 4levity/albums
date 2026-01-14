@@ -10,7 +10,7 @@ def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
     tracks = []
     for (
         track_id,
-        source_file,
+        filename,
         file_size,
         modify_timestamp,
         stream_bitrate,
@@ -19,8 +19,8 @@ def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
         stream_length,
         stream_sample_rate,
     ) in db.execute(
-        "SELECT track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate "
-        "FROM track WHERE album_id = ? ORDER BY source_file ASC;",
+        "SELECT track_id, filename, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate "
+        "FROM track WHERE album_id = ? ORDER BY filename ASC;",
         (album_id,),
     ):
         if load_tags:
@@ -34,7 +34,7 @@ def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
             "length": stream_length,
             "sample_rate": stream_sample_rate,
         }
-        track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "stream": stream, "tags": tags}
+        track = {"filename": filename, "file_size": file_size, "modify_timestamp": modify_timestamp, "stream": stream, "tags": tags}
         tracks.append(track)
     return tracks
 
@@ -75,11 +75,11 @@ def insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
     for track in tracks:
         (track_id,) = db.execute(
             "INSERT INTO track ("
-            "album_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate"
+            "album_id, filename, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate"
             ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
             (
                 album_id,
-                track["source_file"],
+                track["filename"],
                 track["file_size"],
                 track["modify_timestamp"],
                 track.get("stream", {}).get("bitrate", 0),
