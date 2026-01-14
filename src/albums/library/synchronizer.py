@@ -56,11 +56,12 @@ def do_sync(albums: Iterator[dict], dest: Path, library_root: Path, delete, forc
                     delete_path.rmdir()
                 else:
                     delete_path.unlink()
+                logger.info(f"deleting {delete_path}")
         else:
             click.echo("skipped deleting files from destination")
 
     elif len(existing_dest_paths) > 0:
-        logger.warning(f"not deleting {len(existing_dest_paths)} paths from {dest}")
+        logger.warning(f"not deleting {len(existing_dest_paths)} paths from {dest}: {list(existing_dest_paths)[:2]}")
 
     skipped = f"(skipped {skipped_tracks})" if skipped_tracks > 0 else ""
     if len(tracks) > 0:

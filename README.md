@@ -62,11 +62,15 @@ via SQL. Install [GraphViz](https://graphviz.org/) and `make diagram` for a refe
 
  - Select albums based on track tags, recently accessed, other
  - Support additional file formats
+   - Comprehend standard tags (artist, album, title. track)
+   - For MP4 (M4A, M4B, M4P) and other files
+   - Add other extensions to scan
  - Interactively fix metadata problems detected by checks with suggested solutions
  - More checks/fixes:
    - album art (missing, not in desired format, not the same on all tracks, too small/too large)
    - track numbering issues (missing tag, missing track, filename doesn't start with track number, etc)
    - missing track-total
+   - low bitrate or suboptimal codec
    - not all tracks encoded the same (file type or kbps target)
    - track filename doesn't match title
    - album folder doesn't match album name  
