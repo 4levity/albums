@@ -1,6 +1,6 @@
 POETRY := poetry
 
-.PHONY: build install lint fix test package
+.PHONY: build install lint fix test package clean
 
 build: install lint test package
 	@echo "build complete"
@@ -22,3 +22,7 @@ test: ## Run tests using pytest
 package:
 	$(POETRY) build
 
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf dist
+	rm -rf tests/libraries
