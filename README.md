@@ -40,7 +40,7 @@ run `albums scan` again.
 List albums matching a path with a command like `albums --regex --path "Freezepop" list`.
 
 Albums can be in sets called "collections". You could create a collection named "DAP" for albums to
-sync to a Digital Audio Player: `albums --regex --p "Freezepop" add DAP`
+sync to a Digital Audio Player: `albums -r -p "Freezepop" add DAP`
 
 List the albums in the collection with `albums --collection DAP list`
 

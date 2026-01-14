@@ -106,12 +106,12 @@ class TestChecks:
         }
         checks_enabled = {"required_tags": "artist|Title"}
         result = checks.check(None, album, checks_enabled)
-        assert result == [{"message": "tracks missing required tags ({'Title': 2, 'artist': 1}"}]
+        assert result == [{"message": "tracks missing required tags {'Title': 2, 'artist': 1}"}]
 
         # one tag missing from both
         album["tracks"][1]["tags"]["artist"] = "Alice"
         result = checks.check(None, album, checks_enabled)
-        assert result == [{"message": "tracks missing required tags ({'Title': 2}"}]
+        assert result == [{"message": "tracks missing required tags {'Title': 2}"}]
 
         # no tags missing
         album["tracks"][0]["tags"]["Title"] = "one"

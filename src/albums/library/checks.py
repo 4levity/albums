@@ -1,14 +1,23 @@
 import sqlite3
 
 
-def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
+ALL_CHECKS_DEFAULT = {
+    "album_under_album": "true",
+    "albumartist_and_band": "true",
+    "multiple_albumartist_band": "true",
+    "needs_albumartist_band": "true",
+    "required_tags": "artist|title",
+}
+
+
+def check(db: sqlite3.Connection, album: dict, check_config: dict):
     albumartists = {}
     artists = {}
     missing_required_tags = {}
     albumartist_and_band = False
 
     def enabled(opt):
-        return opt in checks_enabled and str(checks_enabled[opt]).upper() != "FALSE"
+        return opt in check_config and str(check_config[opt]).upper() != "FALSE"
 
     for track in sorted(album["tracks"], key=lambda track: track["source_file"]):
         if "artist" in track["tags"]:
@@ -25,7 +34,7 @@ def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
         else:
             albumartists[""] = albumartists.get("", 0) + 1
 
-        for tag in checks_enabled.get("required_tags", "").split("|"):
+        for tag in check_config.get("required_tags", "").split("|"):
             if tag != "" and tag not in track["tags"]:
                 missing_required_tags[tag] = missing_required_tags.get(tag, 0) + 1
 
@@ -43,7 +52,7 @@ def check(db: sqlite3.Connection, album: dict, checks_enabled: dict):
     )
     issues += filter(
         lambda _: enabled("required_tags") and len(missing_required_tags) > 0,
-        [{"message": f"tracks missing required tags ({missing_required_tags}"}],
+        [{"message": f"tracks missing required tags {missing_required_tags}"}],
     )
     if enabled("album_under_album"):
         path = album["path"]

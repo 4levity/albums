@@ -83,10 +83,4 @@ def create_library(library_name: str, albums: list[dict]):
     os.makedirs(library_path, exist_ok=True)
     for album in albums:
         create_album_in_library(library_path, album)
-    with open(library_path / "config.ini", "w") as config_file:  # create a config.ini for cli invocation
-        config_file.write(f"""
-[locations]
-library={library_path}
-database={library_path / "albums.db"}
-""")
     return library_path
