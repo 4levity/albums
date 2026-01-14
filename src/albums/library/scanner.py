@@ -31,7 +31,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
             found_tracks.append({"filename": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
         album_id = unchecked_albums.get(path_str)
         if album_id is None:
-            load_track_metadata(library_root, path_str, found_tracks)
+            _load_track_metadata(library_root, path_str, found_tracks)
             album = {"path": path_str, "tracks": found_tracks}
             logger.debug(f"add album {album}")
             albums.database.operations.add(db, album)
@@ -43,10 +43,10 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         stored_album = albums.database.operations.load_album(db, album_id, check_for_missing_metadata)
         if (
             reread
-            or track_files_modified(stored_album["tracks"], found_tracks)
-            or (check_for_missing_metadata and missing_metadata(stored_album["tracks"]))
+            or _track_files_modified(stored_album["tracks"], found_tracks)
+            or (check_for_missing_metadata and _missing_metadata(stored_album["tracks"]))
         ):
-            load_track_metadata(library_root, path_str, found_tracks)
+            _load_track_metadata(library_root, path_str, found_tracks)
             albums.database.operations.update_tracks(db, album_id, found_tracks)
             return "updated"
 
@@ -93,7 +93,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
     logger.info(f"did not scan files with these extensions: {skipped_file_types}")
 
 
-def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
+def _load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
     for track in tracks:
         path = library_root / album_path / track["filename"]
         (tags, stream_info) = get_metadata(path)
@@ -107,7 +107,7 @@ def load_track_metadata(library_root: Path, album_path: str, tracks: list[dict])
             logger.warning(f"couldn't read stream info for {path}")
 
 
-def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
+def _track_files_modified(tracks1: list[dict], tracks2: list[dict]):
     if len(tracks1) != len(tracks2):
         return True
     for index, t1 in enumerate(tracks1):
@@ -117,7 +117,7 @@ def track_files_modified(tracks1: list[dict], tracks2: list[dict]):
     return False
 
 
-def missing_metadata(tracks: list[dict]):
+def _missing_metadata(tracks: list[dict]):
     for track in tracks:
         if track["tags"] == {} or track["stream"] == {}:
             return True
