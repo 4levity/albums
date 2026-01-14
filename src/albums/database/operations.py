@@ -8,8 +8,18 @@ logger = logging.getLogger(__name__)
 
 def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
     tracks = []
-    for track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate in db.execute(
-        "SELECT track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate "
+    for (
+        track_id,
+        source_file,
+        file_size,
+        modify_timestamp,
+        stream_bitrate,
+        stream_channels,
+        stream_codec,
+        stream_length,
+        stream_sample_rate,
+    ) in db.execute(
+        "SELECT track_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate "
         "FROM track WHERE album_id = ? ORDER BY source_file ASC;",
         (album_id,),
     ):
@@ -17,7 +27,13 @@ def load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
             tags = dict(((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_tag WHERE track_id = ?;", (track_id,))))
         else:
             tags = {}
-        stream = {"bitrate": stream_bitrate, "channels": stream_channels, "length": stream_length, "sample_rate": stream_sample_rate}
+        stream = {
+            "bitrate": stream_bitrate,
+            "channels": stream_channels,
+            "codec": stream_codec,
+            "length": stream_length,
+            "sample_rate": stream_sample_rate,
+        }
         track = {"source_file": source_file, "file_size": file_size, "modify_timestamp": modify_timestamp, "stream": stream, "tags": tags}
         tracks.append(track)
     return tracks
@@ -59,8 +75,8 @@ def insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
     for track in tracks:
         (track_id,) = db.execute(
             "INSERT INTO track ("
-            "album_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_length, stream_sample_rate"
-            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
+            "album_id, source_file, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
             (
                 album_id,
                 track["source_file"],
@@ -68,6 +84,7 @@ def insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
                 track["modify_timestamp"],
                 track.get("stream", {}).get("bitrate", 0),
                 track.get("stream", {}).get("channels", 0),
+                track.get("stream", {}).get("codec", "unknown"),
                 track.get("stream", {}).get("length", 0),
                 track.get("stream", {}).get("sample_rate", 0),
             ),

@@ -10,7 +10,7 @@ def check(ctx: click.Context, default: bool):
     if default or not check_config:
         click.echo("using default check config")
         check_config = checks.ALL_CHECKS_DEFAULT
-        
+
     issues = []
     for album in ctx.obj["SELECT_ALBUMS"](True):
         album_issues = checks.check(ctx.obj["DB_CONNECTION"], album, check_config)

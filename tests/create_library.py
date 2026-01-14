@@ -52,7 +52,6 @@ empty_mp3_file_data = bytearray([
 
 
 def create_file(path: Path, spec: dict):
-    os.makedirs(path, exist_ok=True)
     filename: Path = path / spec["source_file"]
     with open(filename, "wb") as file:
         if filename.suffix == ".flac":
@@ -73,14 +72,16 @@ def create_file(path: Path, spec: dict):
 
 
 def create_album_in_library(library_path: Path, album: dict):
+    path = library_path / album["path"]
+    os.makedirs(path)
     for track in album["tracks"]:
-        create_file(library_path / album["path"], track)
+        create_file(path, track)
 
 
 def create_library(library_name: str, albums: list[dict]):
     library_path = test_data_path / library_name
     shutil.rmtree(library_path, ignore_errors=True)
-    os.makedirs(library_path, exist_ok=True)
+    os.makedirs(library_path)
     for album in albums:
         create_album_in_library(library_path, album)
     return library_path

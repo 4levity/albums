@@ -8,6 +8,8 @@ from .schema import SQL_INIT_SCHEMA
 
 logger = logging.getLogger(__name__)
 
+MEMORY = ":memory:"
+
 SQL_INIT_CONNECTION = """
 PRAGMA foreign_keys = ON;
 """
@@ -16,7 +18,7 @@ SQL_CLEANUP = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collect
 
 
 def open(filename: str):
-    new_database = filename == ":memory:" or not Path(filename).exists()
+    new_database = filename == MEMORY or not Path(filename).exists()
 
     # TODO switch to explicit transactions
     db = sqlite3.connect(filename)

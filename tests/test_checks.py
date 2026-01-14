@@ -122,14 +122,17 @@ class TestChecks:
     def test_album_under_album(self):
         track_template = {"file_size": 1, "modify_timestamp": 0, "stream": {"length": 1.5}, "tags": {}}
         albums = [
-            {"path": "foo/bar", "tracks": [track_template | {"source_file": "1.flac"}]},
-            {"path": "foo", "tracks": [track_template | {"source_file": "1.flac"}]},
+            {"path": "foo/bar/", "tracks": [track_template | {"source_file": "1.flac"}]},
+            {"path": "foo/", "tracks": [track_template | {"source_file": "1.flac"}]},
+            {"path": "foobar/", "tracks": [track_template | {"source_file": "1.flac"}]},
         ]
-        db = connection.open(":memory:")
-        operations.add(db, albums[0])
-        operations.add(db, albums[1])
-        checks_enabled = {"album_under_album": "true"}
-        result = checks.check(db, albums[1], checks_enabled)
-        assert result == [{"message": "there are 1 albums in directories under album foo"}]
-        result = checks.check(db, albums[0], checks_enabled)
-        assert result == []
+
+        with connection.open(connection.MEMORY) as db:
+            operations.add(db, albums[0])
+            operations.add(db, albums[1])
+            operations.add(db, albums[2])
+            checks_enabled = {"album_under_album": "true"}
+            result = checks.check(db, albums[1], checks_enabled)
+            assert result == [{"message": "there are 1 albums in directories under album foo/"}]
+            result = checks.check(db, albums[0], checks_enabled)
+            assert result == []

@@ -1,6 +1,5 @@
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 from click.testing import CliRunner
@@ -15,6 +14,7 @@ albums = [
 ]
 
 
+# Integration tests with persistent database
 class TestCli:
     @pytest.fixture(scope="module", autouse=True)
     def setup_cli_tests(self):
@@ -52,7 +52,6 @@ database={TestCli.library / "albums.db"}
         assert result.exit_code == 0
         assert "tracks missing required tags {'artist': 1} : foo/" in result.output
         assert "tracks missing required tags {'artist': 2} : bar/" in result.output
-
 
     def test_list_json(self):
         result = self.run(["list", "--json"])
@@ -101,9 +100,9 @@ database={TestCli.library / "albums.db"}
         os.makedirs(dest / "other")
         with open(dest / "other" / "baz.txt", "w"):
             pass
-        
+
         result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
-        
+
         assert result.exit_code == 0
         assert "copying 2 tracks" in result.output
         assert "will delete 2 paths" in result.output

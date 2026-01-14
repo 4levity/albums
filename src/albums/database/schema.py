@@ -39,6 +39,7 @@ CREATE TABLE track (
     modify_timestamp INTEGER NOT NULL,
     stream_bitrate INTEGER NOT NULL,
     stream_channels INTEGER NOT NULL,
+    stream_codec TEXT NOT NULL,
     stream_length REAL NOT NULL,
     stream_sample_rate INTEGER NOT NULL
 );
