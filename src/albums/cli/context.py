@@ -1,3 +1,4 @@
+import sqlite3
 import click
 import configparser
 import logging
@@ -13,7 +14,29 @@ import albums.database.selector
 logger = logging.getLogger(__name__)
 
 
-def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str):
+class AppContext(dict):  # must be a dict
+    db: sqlite3.Connection
+    config: dict
+    library_root: Path
+    _collections: list[str]
+    _paths: list[str]
+    _regex: bool
+
+    def is_filtered(self):
+        return len(self._collections) > 0 or len(self._paths) > 0
+
+    def select_albums(self, load_track_tag: bool):
+        return albums.database.selector.select_albums(self.db, self._collections, self._paths, self._regex, load_track_tag)
+
+    def __init__(self, *args, **kwargs):
+        # early setup?
+        super(AppContext, self).__init__(*args, **kwargs)
+
+
+pass_app_context = click.make_pass_decorator(AppContext, ensure=True)
+
+
+def setup(ctx: click.Context, app_context: AppContext, collections: list[str], paths: list[str], regex: bool, config_file: str):
     logger.info("starting albums")
     config = configparser.ConfigParser()
     config_files = [str(platform_dirs.site_config_path / "config.ini"), str(platform_dirs.user_config_path / "config.ini"), "config.ini"]
@@ -40,16 +63,13 @@ def setup(ctx: click.Context, collections: list[str], paths: list[str], regex: b
 
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))
-    ctx.ensure_object(dict)
 
-    ctx.obj["CONFIG"] = {section: dict(config.items(section)) for section in config.sections()}
-    ctx.obj["DB_CONNECTION"] = db
-    ctx.obj["LIBRARY_ROOT"] = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
-
-    # apply filters and create generator
-    ctx.obj["IS_FILTERED"] = len(collections) > 0 or len(paths) > 0
-    ctx.obj["SELECT_ALBUMS"] = lambda load_track_tag: albums.database.selector.select_albums(db, collections, paths, regex, load_track_tag)
+    app_context.db = db
+    app_context.config = {section: dict(config.items(section)) for section in config.sections()}
+    app_context.library_root = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
+    app_context._collections = collections
+    app_context._paths = paths
+    app_context._regex = regex
 
     if config.getboolean("options", "always_scan", fallback=False):
         ctx.invoke(scanner.scan)
-        ctx.obj["SCAN_DONE"] = True

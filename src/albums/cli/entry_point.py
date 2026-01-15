@@ -8,6 +8,7 @@ from .list_albums import list_albums
 from .remove_from_collections import remove_from_collections
 from .scan import scan
 from .sync import sync
+from .context import AppContext, pass_app_context
 
 
 @click.group()
@@ -16,10 +17,11 @@ from .sync import sync
 @click.option("--regex", "-r", is_flag=True, help="type of match for album paths")
 @click.option("--config-file", help="specify path to config.ini")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
+@pass_app_context  # order of these decorators matters
 @click.pass_context
-def albums(ctx: click.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
+def albums(ctx: click.Context, app_context: AppContext, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
     setup_logging(verbose)
-    context.setup(ctx, collections, paths, regex, config_file)
+    context.setup(ctx, app_context, collections, paths, regex, config_file)
 
 
 albums.add_command(add_to_collections)

@@ -4,19 +4,20 @@ import humanize
 from json import dumps
 
 from ..types import Album
+from .context import AppContext, pass_app_context
 
 
 @click.command("list", help="print matching albums")
 @click.option("--json", is_flag=True, help="output all stored details in JSON")
-@click.pass_context
-def list_albums(ctx: click.Context, json):
+@pass_app_context
+def list_albums(ctx: AppContext, json):
     total_size = 0
     count = 0
     if json:
         click.echo("[", nl=False)
     first = True
     album: Album
-    for album in ctx.obj["SELECT_ALBUMS"](json):
+    for album in ctx.select_albums(json):
         tracks_size = reduce(lambda sum, track: sum + track.file_size, album.tracks, 0)
         if json:
             if first:
