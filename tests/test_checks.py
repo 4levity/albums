@@ -8,7 +8,7 @@ class TestChecks:
     def test_check_needs_albumartist_band__all(self):
         album = Album(
             "",
-            [Track("1.flac", {"artist": "A"}), Track("2.flac", {"artist": "B"}), Track("3.flac", {"artist": "B"})],
+            [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
         checks_enabled = {"needs_albumartist_band": "true"}
         result = checks.check(None, album, checks_enabled)
@@ -18,7 +18,11 @@ class TestChecks:
         # some tracks with albumartist
         album = Album(
             "",
-            [Track("1", {"artist": "A", "albumartist": "Foo"}), Track("2", {"artist": "B", "albumartist": "Foo"}), Track("3", {"artist": "B"})],
+            [
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2", {"artist": ["B"], "albumartist": ["Foo"]}),
+                Track("3", {"artist": ["B"]}),
+            ],
         )
         checks_enabled = {"needs_albumartist_band": "true"}
         result = checks.check(None, album, checks_enabled)
@@ -28,9 +32,9 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1", {"artist": "A", "albumartist": "Foo"}),
-                Track("2", {"artist": "B", "albumartist": "Foo"}),
-                Track("3", {"artist": "B", "albumartist": "Bar"}),
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2", {"artist": ["B"], "albumartist": ["Foo"]}),
+                Track("3", {"artist": ["B"], "albumartist": ["Bar"]}),
             ],
         )
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -41,8 +45,8 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1", {"artist": "A", "albumartist": "Foo"}),
-                Track("2", {"artist": "A", "albumartist": "Bar"}),
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2", {"artist": ["A"], "albumartist": ["Bar"]}),
             ],
         )
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -53,8 +57,8 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1", {"artist": "A", "albumartist": "Foo"}),
-                Track("2", {"artist": "A"}),
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2", {"artist": ["A"]}),
             ],
         )
         checks_enabled = {"multiple_albumartist_band": "true"}
@@ -65,8 +69,8 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1", {"artist": "A", "albumartist": "Foo", "Band": "Foo"}),
-                Track("2", {"artist": "B", "albumartist": "Foo", "Band": "Foo"}),
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"], "Band": "Foo"}),
+                Track("2", {"artist": ["B"], "albumartist": ["Foo"], "Band": "Foo"}),
             ],
         )
         checks_enabled = {"albumartist_and_band": "true"}
@@ -77,8 +81,8 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1", {"artist": "A", "albumartist": "A"}),
-                Track("2", {"artist": "B", "albumartist": "A"}),
+                Track("1", {"artist": ["A"], "albumartist": ["A"]}),
+                Track("2", {"artist": ["B"], "albumartist": ["A"]}),
             ],
         )
         checks_enabled = {"albumartist_and_band": "true", "multiple_albumartist_band": "true", "needs_albumartist_band": "true"}
@@ -86,7 +90,7 @@ class TestChecks:
         assert result == []
 
         # different artists, all albumartist the same
-        album.tracks[1].tags["artist"] = "A"
+        album.tracks[1].tags["artist"] = ["A"]
         result = checks.check(None, album, checks_enabled)
         assert result == []
 
@@ -94,7 +98,7 @@ class TestChecks:
         album = Album(
             "",
             [
-                Track("1.flac", {"artist": "Alice"}),
+                Track("1.flac", {"artist": ["Alice"]}),
                 Track("2.flac", {}),
             ],
         )
@@ -103,13 +107,13 @@ class TestChecks:
         assert result == [{"message": "tracks missing required tags {'Title': 2, 'artist': 1}"}]
 
         # one tag missing from both
-        album.tracks[1].tags["artist"] = "Alice"
+        album.tracks[1].tags["artist"] = ["Alice"]
         result = checks.check(None, album, checks_enabled)
         assert result == [{"message": "tracks missing required tags {'Title': 2}"}]
 
         # no tags missing
-        album.tracks[0].tags["Title"] = "one"
-        album.tracks[1].tags["Title"] = "two"
+        album.tracks[0].tags["Title"] = ["one"]
+        album.tracks[1].tags["Title"] = ["two"]
         result = checks.check(None, album, checks_enabled)
         assert result == []
 

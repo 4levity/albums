@@ -51,7 +51,7 @@ CREATE TABLE track_tag (
     track_tag_id INTEGER PRIMARY KEY,
     track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
     name TEXT NOT NULL,
-    value_json TEXT NOT NULL
+    value TEXT NOT NULL
 );
 CREATE INDEX idx_metadata_track_id ON track_tag(track_id);
 """

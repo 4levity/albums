@@ -25,28 +25,34 @@ def get_metadata(path: str) -> tuple[dict, Stream]:
 
     if file is not None:
         stream_info = _get_stream_info(file, codec)
-        tags = dict(((k, _make_tag_serializable(k, v)) for k, v in file.tags.items()))
+        tags = _get_tags(file)
 
-        # extract tracktotal from ID3 tags
-        if str.count(tags.get("tracknumber", ""), "/") == 1:
-            [tracknumber, tracktotal] = tags["tracknumber"].split("/")
-            tags["tracknumber"] = tracknumber
-            tags["tracktotal"] = tracktotal
+        # TODO do this via "canonical view"
+        # # extract tracktotal from ID3 tags
+        # if str.count(tags.get("tracknumber", ""), "/") == 1:
+        #     [tracknumber, tracktotal] = tags["tracknumber"].split("/")
+        #     tags["tracknumber"] = tracknumber
+        #     tags["tracktotal"] = tracktotal
 
         return (tags, stream_info)
 
     return None
 
 
-def _make_tag_serializable(key: str, value):
-    # TODO this is a hack! actually need to handle multi-value, images
-    if key == "covr":
-        return "binary data not stored"
-    if isinstance(value, list) and len(value) > 0:
-        return _make_tag_serializable(key, value[0])
-    if hasattr(value, "pprint"):
-        return value.pprint()
-    return textwrap.shorten(str(value), width=4096)
+def _get_tags(file: FLAC | MP3 | mutagen.FileType):
+    def store_value(key: str, value):
+        if key == "covr":
+            return "binary data not stored"  # TODO: get image metadata
+        if hasattr(value, "pprint"):
+            return str(value.pprint())
+        return textwrap.shorten(str(value), width=4096)
+
+    tags: dict[str, list[str]] = {}
+    for tag_name, tag_value in file.tags.items():
+        name = str.lower(tag_name)
+        for value in tag_value if isinstance(tag_value, list) else [tag_value]:
+            tags.setdefault(name, []).append(store_value(name, value))
+    return tags
 
 
 def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None) -> Stream:

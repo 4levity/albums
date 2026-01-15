@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -18,7 +17,7 @@ class Stream:
 @dataclass
 class Track:
     filename: str
-    tags: dict[str, Any] | None = None
+    tags: dict[str, list[str]] = field(default_factory=dict)
     file_size: int = 0
     modify_timestamp: int = 0
     stream: Stream | None = None

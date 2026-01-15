@@ -22,16 +22,18 @@ def check(db: sqlite3.Connection, album: Album, check_config: dict):
 
     for track in sorted(album.tracks, key=lambda track: track.filename):
         if "artist" in track.tags:
-            artist = f"{track.tags['artist']}"  # possibly a list
-            artists[artist] = artists.get(artist, 0) + 1
+            for artist in track.tags["artist"]:
+                artists[artist] = artists.get(artist, 0) + 1
 
         if "albumartist" in track.tags and "Band" in track.tags:
             albumartist_and_band = True
 
         if "albumartist" in track.tags:
-            albumartists[track.tags["albumartist"]] = albumartists.get(track.tags["albumartist"], 0) + 1
-        elif "Band" in track.tags:
-            albumartists[track.tags["Band"]] = albumartists.get(track.tags["Band"], 0) + 1
+            for albumartist in track.tags["albumartist"]:
+                albumartists[albumartist] = albumartists.get(albumartist, 0) + 1
+        elif "band" in track.tags:
+            for band in track.tags["band"]:
+                albumartists[band] = albumartists.get(track.tags["band"], 0) + 1
         else:
             albumartists[""] = albumartists.get("", 0) + 1
 

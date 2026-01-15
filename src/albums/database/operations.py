@@ -1,4 +1,3 @@
-import json
 import logging
 import sqlite3
 from ..types import Album, Stream, Track
@@ -67,8 +66,9 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 track.stream.sample_rate,
             ),
         ).fetchone()
-        for name, value in track.tags.items() if track.tags else []:
-            db.execute("INSERT INTO track_tag (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
+        for name, values in track.tags.items():
+            for value in values:
+                db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
 
 
 def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
@@ -88,12 +88,19 @@ def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
         (album_id,),
     ):
         if load_tags:
-            tags = dict(((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_tag WHERE track_id = ?;", (track_id,))))
+            tags = _load_tags(db, track_id)
         else:
             tags = {}
         stream = Stream(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
         track = Track(filename, tags, file_size, modify_timestamp, stream)
         yield track
+
+
+def _load_tags(db: sqlite3.Connection, track_id: int):
+    tags: dict[str, list[str]] = {}
+    for name, value in db.execute("SELECT name, value FROM track_tag WHERE track_id = ?;", (track_id,)):
+        tags.setdefault(name, []).append(value)
+    return tags
 
 
 def _insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):

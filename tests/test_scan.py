@@ -36,7 +36,7 @@ class TestScanner:
             assert result[0].tracks[0].modify_timestamp > 1
             assert result[0].tracks[0].stream.sample_rate == 44100
             assert result[0].tracks[0].stream.codec == "FLAC"
-            assert result[0].tracks[0].tags["title"] == "1"
+            assert result[0].tracks[0].tags["title"] == ["1"]
 
             # mp3 files
             assert len(result[1].tracks) == 2
@@ -44,7 +44,7 @@ class TestScanner:
             assert result[1].tracks[0].modify_timestamp > 1
             assert result[1].tracks[0].stream.sample_rate == 44100
             assert result[1].tracks[0].stream.codec == "MP3"
-            assert result[1].tracks[0].tags["title"] == "1"
+            assert result[1].tracks[0].tags["title"] == ["1"]
 
     def test_scan_empty(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
@@ -60,7 +60,7 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
 
             assert result[0].tracks[0].filename == "1.flac"
-            assert result[0].tracks[0].tags["title"] == "1"
+            assert result[0].tracks[0].tags["title"] == ["1"]
 
             file = FLAC(library / result[0].path / "1.flac")
             file["title"] = "new title"
@@ -68,7 +68,7 @@ class TestScanner:
 
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
-            assert result[0].tracks[0].tags["title"] == "new title"
+            assert result[0].tracks[0].tags["title"] == ["new title"]
 
     def test_scan_add(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
