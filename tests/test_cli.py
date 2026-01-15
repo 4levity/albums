@@ -5,12 +5,13 @@ import shutil
 from click.testing import CliRunner
 import pytest
 from albums.cli import entry_point
+from albums.types import Album, Track
 from .create_library import create_library, test_data_path
 
 
 albums = [
-    {"path": "foo/", "tracks": [{"filename": "1.mp3", "tags": {"title": "1"}}]},
-    {"path": "bar/", "tracks": [{"filename": "1.flac", "tags": {"title": "1"}}, {"filename": "2.flac", "tags": {"title": "2"}}]},
+    Album("foo/", [Track("1.mp3", {"title": "1"})]),
+    Album("bar/", [Track("1.flac", {"title": "1"}), Track("2.flac", {"title": "2"})]),
 ]
 
 

@@ -4,7 +4,7 @@ import shutil
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
-
+from albums.types import Album, Track
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
@@ -51,8 +51,8 @@ empty_mp3_file_data = bytearray([
 # fmt: on
 
 
-def create_file(path: Path, spec: dict):
-    filename: Path = path / spec["filename"]
+def create_file(path: Path, spec: Track):
+    filename: Path = path / spec.filename
     with open(filename, "wb") as file:
         if filename.suffix == ".flac":
             file.write(empty_flac_file_data)
@@ -65,20 +65,20 @@ def create_file(path: Path, spec: dict):
         mut = MP3(filename, ID3=EasyID3)
 
     if mut is not None:
-        for name, value in spec.get("tags", {}).items():
+        for name, value in spec.tags.items() if spec.tags else []:
             mut[name] = value
         # minimum padding ensures small changes to tags will change file size for test
         mut.save(padding=lambda info: 0)
 
 
-def create_album_in_library(library_path: Path, album: dict):
-    path = library_path / album["path"]
+def create_album_in_library(library_path: Path, album: Album):
+    path = library_path / album.path
     os.makedirs(path)
-    for track in album["tracks"]:
+    for track in album.tracks:
         create_file(path, track)
 
 
-def create_library(library_name: str, albums: list[dict]):
+def create_library(library_name: str, albums: list[Album]):
     library_path = test_data_path / library_name
     shutil.rmtree(library_path, ignore_errors=True)
     os.makedirs(library_path)

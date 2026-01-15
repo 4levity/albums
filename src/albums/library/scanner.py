@@ -7,6 +7,7 @@ import time
 
 import albums.database.operations
 from ..tools import progress_bar
+from ..types import Album, Track
 from .metadata import get_metadata
 
 
@@ -25,14 +26,12 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
 
     def scan_album(path_str: str, track_files: list[Path]):
         nonlocal unchecked_albums
-        found_tracks = []
-        for track_file in sorted(track_files):
-            stat = track_file.stat()
-            found_tracks.append({"filename": track_file.name, "file_size": stat.st_size, "modify_timestamp": int(stat.st_mtime)})
+        found_tracks = [Track.from_path(file) for file in sorted(track_files)]
         album_id = unchecked_albums.get(path_str)
+
         if album_id is None:
             _load_track_metadata(library_root, path_str, found_tracks)
-            album = {"path": path_str, "tracks": found_tracks}
+            album = Album(path_str, found_tracks)
             logger.debug(f"add album {album}")
             albums.database.operations.add(db, album)
             return "added"
@@ -43,8 +42,8 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         stored_album = albums.database.operations.load_album(db, album_id, check_for_missing_metadata)
         if (
             reread
-            or _track_files_modified(stored_album["tracks"], found_tracks)
-            or (check_for_missing_metadata and _missing_metadata(stored_album["tracks"]))
+            or _track_files_modified(stored_album.tracks, found_tracks)
+            or (check_for_missing_metadata and _missing_metadata(stored_album.tracks))
         ):
             _load_track_metadata(library_root, path_str, found_tracks)
             albums.database.operations.update_tracks(db, album_id, found_tracks)
@@ -68,17 +67,17 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
         for path_str in paths:
             album_path = library_root / path_str
             logger.debug(f"checking {album_path}")
-            track_files = []
+            track_paths = []
             for entry in album_path.iterdir() if path_selector is None or album_path.exists() else []:
                 suffix = str.lower(entry.suffix)
                 if entry.is_file():
                     if suffix in track_suffixes:
-                        track_files.append(entry)
+                        track_paths.append(entry)
                     else:
                         skipped_file_types[suffix] = skipped_file_types.get(suffix, 0) + 1
             stats["scanned"] += 1
-            if len(track_files) > 0:
-                result = scan_album(path_str, track_files)
+            if len(track_paths) > 0:
+                result = scan_album(path_str, track_paths)
                 stats[result] += 1
 
         # remaining entries in unchecked_albums are apparently no longer in the library
@@ -93,32 +92,30 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
     logger.info(f"did not scan files with these extensions: {skipped_file_types}")
 
 
-def _load_track_metadata(library_root: Path, album_path: str, tracks: list[dict]):
+def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track]):
     for track in tracks:
-        path = library_root / album_path / track["filename"]
+        path = library_root / album_path / track.filename
         (tags, stream_info) = get_metadata(path)
-        if tags is not None:
-            track["tags"] = tags
-        else:
+        track.tags = tags
+        if tags is None:
             logger.warning(f"couldn't read tags for {path}")
-        if stream_info is not None:
-            track["stream"] = stream_info
-        else:
+        track.stream = stream_info
+        if stream_info is None:
             logger.warning(f"couldn't read stream info for {path}")
 
 
-def _track_files_modified(tracks1: list[dict], tracks2: list[dict]):
+def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):
     if len(tracks1) != len(tracks2):
         return True
     for index, t1 in enumerate(tracks1):
         t2 = tracks2[index]
-        if t1["filename"] != t2["filename"] or t1["file_size"] != t2["file_size"] or t1["modify_timestamp"] != t2["modify_timestamp"]:
+        if t1.filename != t2.filename or t1.file_size != t2.file_size or t1.modify_timestamp != t2.modify_timestamp:
             return True
     return False
 
 
-def _missing_metadata(tracks: list[dict]):
+def _missing_metadata(tracks: list[Track]):
     for track in tracks:
-        if track["tags"] == {} or track["stream"] == {}:
+        if not track.tags or not track.stream:
             return True
     return False

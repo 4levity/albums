@@ -1,3 +1,5 @@
+import sqlite3
+
 CURRENT_SCHEMA_VERSION = 1
 
 SQL_INIT_SCHEMA = f"""
@@ -53,3 +55,7 @@ CREATE TABLE track_tag (
 );
 CREATE INDEX idx_metadata_track_id ON track_tag(track_id);
 """
+
+
+def migrate(db: sqlite3.Connection):
+    pass  # TODO check schema version, apply migration scripts, update version

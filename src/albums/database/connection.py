@@ -2,8 +2,7 @@ import logging
 from pathlib import Path
 import sqlite3
 
-from .migration import migrate
-from .schema import SQL_INIT_SCHEMA
+from .schema import SQL_INIT_SCHEMA, migrate
 
 
 logger = logging.getLogger(__name__)

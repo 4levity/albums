@@ -8,8 +8,8 @@ import albums.database.operations
 def remove_from_collections(ctx: click.Context, collection_names):
     db = ctx.obj["DB_CONNECTION"]
     for album in ctx.obj["SELECT_ALBUMS"](False):
-        path = album["path"]
-        album_collections = album.get("collections", [])
+        path = album.path
+        album_collections = album.collections if album.collections else []
         changed = False
         for target_collection in collection_names:
             if target_collection in album_collections:
@@ -19,5 +19,5 @@ def remove_from_collections(ctx: click.Context, collection_names):
             else:
                 click.echo(f"album {path} was not in collection {target_collection}")  # filter may prevent this
         if changed:
-            album["collections"] = album_collections
-            albums.database.operations.update_collections(db, album["album_id"], album["collections"])
+            album.collections = album_collections
+            albums.database.operations.update_collections(db, album.album_id, album.collections)

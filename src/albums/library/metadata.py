@@ -5,11 +5,13 @@ from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 
+from ..types import Stream
+
 
 logger = logging.getLogger(__name__)
 
 
-def get_metadata(path: str):
+def get_metadata(path: str) -> tuple[dict, Stream]:
     codec: str | None = None
     suffix = str.lower(path.suffix)
     if suffix == ".flac":
@@ -47,26 +49,26 @@ def _make_tag_serializable(key: str, value):
     return textwrap.shorten(str(value), width=4096)
 
 
-def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None):
-    info = {}
+def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None) -> Stream:
+    stream = Stream()
     # maybe this isn't necessary but I don't think there's a guarantee that these attributes exist
     if hasattr(file.info, "length"):
-        info |= {"length": file.info.length}
+        stream.length = file.info.length
     else:
         logger.warning(f"couldn't determine stream length in {file.filename}")
 
     if hasattr(file.info, "bitrate"):
-        info |= {"bitrate": file.info.bitrate}
+        stream.bitrate = file.info.bitrate
     else:
         logger.warning(f"couldn't determine stream bitrate in {file.filename}")
 
     if hasattr(file.info, "channels"):
-        info |= {"channels": file.info.channels}
+        stream.channel = file.info.channels
     else:
         logger.warning(f"couldn't determine stream channels in {file.filename}")
 
     if hasattr(file.info, "sample_rate"):
-        info |= {"sample_rate": file.info.sample_rate}
+        stream.sample_rate = file.info.sample_rate
     else:
         logger.warning(f"couldn't determine stream sample rate in {file.filename}")
 
@@ -79,6 +81,6 @@ def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None):
     elif not codec:
         logger.warning(f"couldn't determine codec in {file.filename}")
         codec = "unknown"
-    info |= {"codec": codec}
+    stream.codec = codec
 
-    return info
+    return stream

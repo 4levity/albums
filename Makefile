@@ -34,4 +34,4 @@ clean: ## Remove build and test files
 	rm -rf tests/libraries
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
-	rm docs/database_diagram.png
+	rm -f docs/database_diagram.png

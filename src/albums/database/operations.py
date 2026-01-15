@@ -1,12 +1,13 @@
 import json
 import logging
 import sqlite3
+from ..types import Album, Stream, Track
 
 
 logger = logging.getLogger(__name__)
 
 
-def load_album(db: sqlite3.Connection, album_id: int, load_track_tag=True):
+def load_album(db: sqlite3.Connection, album_id: int, load_track_tag=True) -> Album:
     row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
     if row is None:
         return None
@@ -19,16 +20,16 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag=True):
             (album_id,),
         )
     ]
-    tracks = _load_tracks(db, album_id, load_track_tag)
+    tracks = list(_load_tracks(db, album_id, load_track_tag))
 
     # todo ignores
-    return {"album_id": album_id, "path": path, "collections": collections, "tracks": tracks}
+    return Album(path, tracks, collections, album_id)
 
 
-def add(db: sqlite3.Connection, album: dict):
-    (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album["path"],)).fetchone()
-    _insert_collections(db, album_id, album.get("collections", []))
-    _insert_tracks(db, album_id, album["tracks"])
+def add(db: sqlite3.Connection, album: Album) -> int:
+    (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album.path,)).fetchone()
+    _insert_collections(db, album_id, album.collections)
+    _insert_tracks(db, album_id, album.tracks)
     return album_id
 
 
@@ -43,12 +44,12 @@ def update_collections(db: sqlite3.Connection, album_id: int, collections: list[
     _insert_collections(db, album_id, collections)
 
 
-def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
+def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
     db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
     _insert_tracks(db, album_id, tracks)
 
 
-def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
+def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
     for track in tracks:
         (track_id,) = db.execute(
             "INSERT INTO track ("
@@ -56,22 +57,21 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[dict]):
             ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
             (
                 album_id,
-                track["filename"],
-                track["file_size"],
-                track["modify_timestamp"],
-                track.get("stream", {}).get("bitrate", 0),
-                track.get("stream", {}).get("channels", 0),
-                track.get("stream", {}).get("codec", "unknown"),
-                track.get("stream", {}).get("length", 0),
-                track.get("stream", {}).get("sample_rate", 0),
+                track.filename,
+                track.file_size,
+                track.modify_timestamp,
+                track.stream.bitrate,
+                track.stream.channels,
+                track.stream.codec,
+                track.stream.length,
+                track.stream.sample_rate,
             ),
         ).fetchone()
-        for name, value in track["tags"].items():
+        for name, value in track.tags.items() if track.tags else []:
             db.execute("INSERT INTO track_tag (track_id, name, value_json) VALUES (?, ?, ?);", (track_id, name, json.dumps(value)))
 
 
 def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
-    tracks = []
     for (
         track_id,
         filename,
@@ -91,16 +91,9 @@ def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
             tags = dict(((k, json.loads(v)) for (k, v) in db.execute("SELECT name, value_json FROM track_tag WHERE track_id = ?;", (track_id,))))
         else:
             tags = {}
-        stream = {
-            "bitrate": stream_bitrate,
-            "channels": stream_channels,
-            "codec": stream_codec,
-            "length": stream_length,
-            "sample_rate": stream_sample_rate,
-        }
-        track = {"filename": filename, "file_size": file_size, "modify_timestamp": modify_timestamp, "stream": stream, "tags": tags}
-        tracks.append(track)
-    return tracks
+        stream = Stream(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
+        track = Track(filename, tags, file_size, modify_timestamp, stream)
+        yield track
 
 
 def _insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):

@@ -2,20 +2,21 @@ import shutil
 from mutagen.flac import FLAC
 from albums.database import connection, selector
 from albums.library.scanner import scan, DEFAULT_SUPPORTED_FILE_TYPES
+from albums.types import Album, Track
 from .create_library import create_album_in_library, create_library
 
 
 class TestScanner:
     sample_library = [
-        {
-            "path": "bar/",
-            "tracks": [
-                {"filename": "1.flac", "tags": {"title": "1"}},
-                {"filename": "2.flac", "tags": {"title": "2"}},
-                {"filename": "3.flac", "tags": {"title": "3"}},
+        Album(
+            "bar/",
+            [
+                Track("1.flac", {"title": "1"}),
+                Track("2.flac", {"title": "2"}),
+                Track("3.flac", {"title": "3"}),
             ],
-        },
-        {"path": "foo/", "tracks": [{"filename": "1.mp3", "tags": {"title": "1"}}, {"filename": "2.mp3", "tags": {"title": "2"}}]},
+        ),
+        Album("foo/", [Track("1.mp3", {"title": "1"}), Track("2.mp3", {"title": "2"})]),
     ]
 
     def test_initial_scan(self):
@@ -25,24 +26,24 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
 
             assert len(result) == 2
-            assert result[0]["path"] == "bar/"
-            assert result[1]["path"] == "foo/"  # albums were scanned in lexical order
+            assert result[0].path == "bar/"
+            assert result[1].path == "foo/"  # albums were scanned in lexical order
 
             # flac files
-            assert len(result[0]["tracks"]) == 3
-            assert result[0]["tracks"][0]["file_size"] > 1
-            assert result[0]["tracks"][0]["modify_timestamp"] > 1
-            assert result[0]["tracks"][0]["stream"]["sample_rate"] == 44100
-            assert result[0]["tracks"][0]["stream"]["codec"] == "FLAC"
-            assert result[0]["tracks"][0]["tags"]["title"] == "1"
+            assert len(result[0].tracks) == 3
+            assert result[0].tracks[0].file_size > 1
+            assert result[0].tracks[0].modify_timestamp > 1
+            assert result[0].tracks[0].stream.sample_rate == 44100
+            assert result[0].tracks[0].stream.codec == "FLAC"
+            assert result[0].tracks[0].tags["title"] == "1"
 
             # mp3 files
-            assert len(result[1]["tracks"]) == 2
-            assert result[1]["tracks"][0]["file_size"] > 1
-            assert result[1]["tracks"][0]["modify_timestamp"] > 1
-            assert result[1]["tracks"][0]["stream"]["sample_rate"] == 44100
-            assert result[1]["tracks"][0]["stream"]["codec"] == "MP3"
-            assert result[1]["tracks"][0]["tags"]["title"] == "1"
+            assert len(result[1].tracks) == 2
+            assert result[1].tracks[0].file_size > 1
+            assert result[1].tracks[0].modify_timestamp > 1
+            assert result[1].tracks[0].stream.sample_rate == 44100
+            assert result[1].tracks[0].stream.codec == "MP3"
+            assert result[1].tracks[0].tags["title"] == "1"
 
     def test_scan_empty(self):
         with connection.open(connection.MEMORY) as db:
@@ -57,16 +58,16 @@ class TestScanner:
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
 
-            assert result[0]["tracks"][0]["filename"] == "1.flac"
-            assert result[0]["tracks"][0]["tags"]["title"] == "1"
+            assert result[0].tracks[0].filename == "1.flac"
+            assert result[0].tracks[0].tags["title"] == "1"
 
-            file = FLAC(library / result[0]["path"] / "1.flac")
+            file = FLAC(library / result[0].path / "1.flac")
             file["title"] = "new title"
             file.save()
 
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
-            assert result[0]["tracks"][0]["tags"]["title"] == "new title"
+            assert result[0].tracks[0].tags["title"] == "new title"
 
     def test_scan_add(self):
         with connection.open(connection.MEMORY) as db:
@@ -74,14 +75,14 @@ class TestScanner:
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
-            assert result[0]["path"] == "foo/"
+            assert result[0].path == "foo/"
 
             create_album_in_library(library, self.sample_library[0])
 
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
-            assert result[0]["path"] == "bar/"
+            assert result[0].path == "bar/"
 
     def test_scan_remove(self):
         with connection.open(connection.MEMORY) as db:
@@ -89,14 +90,14 @@ class TestScanner:
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
-            assert result[0]["path"] == "bar/"
+            assert result[0].path == "bar/"
 
             shutil.rmtree(library / "bar", ignore_errors=True)
 
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
-            assert result[0]["path"] == "foo/"
+            assert result[0].path == "foo/"
 
     def test_scan_filtered(self):
         with connection.open(connection.MEMORY) as db:
@@ -105,11 +106,11 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
 
-            delete_album = result[0]["path"]
-            shutil.rmtree(library / result[0]["path"], ignore_errors=True)
-            scan(db, library, DEFAULT_SUPPORTED_FILE_TYPES, lambda: [(result[1]["path"], result[1]["album_id"])])
+            delete_album = result[0].path
+            shutil.rmtree(library / result[0].path, ignore_errors=True)
+            scan(db, library, DEFAULT_SUPPORTED_FILE_TYPES, lambda: [(result[1].path, result[1].album_id)])
 
             # deleted path was not scanned, so album is still there
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
-            assert result[0]["path"] == delete_album
+            assert result[0].path == delete_album
