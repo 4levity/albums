@@ -3,9 +3,10 @@ from .base import Check
 from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_album_artist import CheckAlbumArtist
 from .check_required_tags import CheckRequiredTags
+from .check_single_value_tags import CheckSingleValueTags
 
 
-_all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags]
+_all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags]
 
 
 def run_enabled(ctx: AppContext):
