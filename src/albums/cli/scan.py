@@ -2,7 +2,7 @@ import click
 import logging
 
 from ..library import scanner
-from .context import AppContext, pass_app_context
+from ..context import AppContext, pass_app_context
 
 
 logger = logging.getLogger(__name__)

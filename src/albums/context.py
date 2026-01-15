@@ -5,8 +5,7 @@ import logging
 import os
 from pathlib import Path
 
-from ..tools import platform_dirs
-from ..library import scanner
+from .tools import platform_dirs
 import albums.database.connection
 import albums.database.selector
 
@@ -15,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class AppContext(dict):  # must be a dict
-    db: sqlite3.Connection
+    db: sqlite3.Connection | None
     config: dict
-    library_root: Path
+    library_root: Path | None
     _collections: list[str]
     _paths: list[str]
     _regex: bool
@@ -29,8 +28,10 @@ class AppContext(dict):  # must be a dict
         return albums.database.selector.select_albums(self.db, self._collections, self._paths, self._regex, load_track_tag)
 
     def __init__(self, *args, **kwargs):
-        # early setup?
         super(AppContext, self).__init__(*args, **kwargs)
+        self.db = None
+        self.config = {}
+        self.library_root = None
 
 
 pass_app_context = click.make_pass_decorator(AppContext, ensure=True)
@@ -70,6 +71,3 @@ def setup(ctx: click.Context, app_context: AppContext, collections: list[str], p
     app_context._collections = collections
     app_context._paths = paths
     app_context._regex = regex
-
-    if config.getboolean("options", "always_scan", fallback=False):
-        ctx.invoke(scanner.scan)

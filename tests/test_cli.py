@@ -15,7 +15,7 @@ albums = [
 ]
 
 
-# Integration tests with persistent database
+# Integration tests with persistent database that is used between tests - must run all
 class TestCli:
     @pytest.fixture(scope="module", autouse=True)
     def setup_cli_tests(self):

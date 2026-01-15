@@ -1,6 +1,6 @@
 import click
 import albums.database.operations
-from .context import AppContext, pass_app_context
+from ..context import AppContext, pass_app_context
 
 
 @click.command("add", help="add selected albums to collections")

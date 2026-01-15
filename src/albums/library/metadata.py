@@ -26,14 +26,6 @@ def get_metadata(path: str) -> tuple[dict, Stream]:
     if file is not None:
         stream_info = _get_stream_info(file, codec)
         tags = _get_tags(file)
-
-        # TODO do this via "canonical view"
-        # # extract tracktotal from ID3 tags
-        # if str.count(tags.get("tracknumber", ""), "/") == 1:
-        #     [tracknumber, tracktotal] = tags["tracknumber"].split("/")
-        #     tags["tracknumber"] = tracknumber
-        #     tags["tracktotal"] = tracktotal
-
         return (tags, stream_info)
 
     return None

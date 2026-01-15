@@ -4,7 +4,7 @@ import humanize
 from json import dumps
 
 from ..types import Album
-from .context import AppContext, pass_app_context
+from ..context import AppContext, pass_app_context
 
 
 @click.command("list", help="print matching albums")

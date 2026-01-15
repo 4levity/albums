@@ -1,7 +1,7 @@
 import click
 
 import albums.database.operations
-from .context import AppContext, pass_app_context
+from ..context import AppContext, pass_app_context
 
 
 @click.command("remove", help="remove selected albums from collections")

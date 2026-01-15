@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from ..library import synchronizer
-from .context import AppContext, pass_app_context
+from ..context import AppContext, pass_app_context
 
 
 logger = logging.getLogger(__name__)
