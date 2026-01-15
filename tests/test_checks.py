@@ -1,3 +1,4 @@
+import contextlib
 from albums.library import checks
 from albums.database import connection, operations
 from albums.types import Album, Stream, Track
@@ -122,7 +123,7 @@ class TestChecks:
             Album("foobar/", [track("1.flac")]),
         ]
 
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             operations.add(db, albums[0])
             operations.add(db, albums[1])
             operations.add(db, albums[2])

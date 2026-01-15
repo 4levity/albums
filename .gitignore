@@ -9,6 +9,7 @@ dist/
 docs/database_diagram.png
 uv.lock
 .venv/
+.coverage
 
 # application/misc
 *.db

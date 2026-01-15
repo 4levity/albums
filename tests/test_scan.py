@@ -1,3 +1,4 @@
+import contextlib
 import shutil
 from mutagen.flac import FLAC
 from albums.database import connection, selector
@@ -20,7 +21,7 @@ class TestScanner:
     ]
 
     def test_initial_scan(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_initial_scan", self.sample_library)
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
@@ -46,14 +47,14 @@ class TestScanner:
             assert result[1].tracks[0].tags["title"] == "1"
 
     def test_scan_empty(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_empty", [])
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
             assert result == []
 
     def test_scan_update(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_update", self.sample_library)
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
@@ -70,7 +71,7 @@ class TestScanner:
             assert result[0].tracks[0].tags["title"] == "new title"
 
     def test_scan_add(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_add", [self.sample_library[1]])
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
@@ -85,7 +86,7 @@ class TestScanner:
             assert result[0].path == "bar/"
 
     def test_scan_remove(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_remove", self.sample_library)
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))
@@ -100,7 +101,7 @@ class TestScanner:
             assert result[0].path == "foo/"
 
     def test_scan_filtered(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_filtered", self.sample_library)
             scan(db, library)
             result = list(selector.select_albums(db, [], [], False))

@@ -1,10 +1,11 @@
+import contextlib
 from albums.database import connection, operations, schema, selector
 from albums.types import Album, Stream, Track
 
 
 class TestDatabase:
     def test_init_schema(self):
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             schema_version = db.execute("SELECT version FROM _schema;").fetchall()
             assert len(schema_version) == 1
             assert schema_version[0][0] == schema.CURRENT_SCHEMA_VERSION
@@ -15,7 +16,7 @@ class TestDatabase:
 
         albums = [Album("foo/", [track()], []), Album("bar/", [track()], ["test"])]
 
-        with connection.open(connection.MEMORY) as db:
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 0
             albums[0].album_id = operations.add(db, albums[0])
