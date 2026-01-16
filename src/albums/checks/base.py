@@ -1,17 +1,27 @@
 from __future__ import annotations
 from dataclasses import dataclass
-import sqlite3
 
 from ..context import AppContext
 from ..types import Album
-from .defaults import ALL_CHECKS_DEFAULT
+
+
+@dataclass
+class Fixer:
+    has_interactive: bool = False
+    has_automatic: bool = False
+
+    def interactive(self) -> bool:
+        return False
+
+    def automatic(self) -> bool:
+        return False
 
 
 @dataclass(frozen=True)
 class CheckResult:
     name: str
     message: str
-    can_autofix: bool = False
+    fixer: Fixer | None = None
     next: CheckResult | None = None
     # TODO fixes that require user input
 
@@ -25,12 +35,12 @@ class Check:
     default_config: str
 
     # subclass may use these instance values
-    db: sqlite3.Connection
+    ctx: AppContext
     config: str
 
     def __init__(self, ctx: AppContext):
-        self.db = ctx.db
-        self.config = ctx.config.get("checks", {}).get(self.name, ALL_CHECKS_DEFAULT[self.name])
+        self.ctx = ctx
+        self.config = ctx.config.get("checks", {}).get(self.name, self.default_config)
 
     def check(self, album: Album) -> CheckResult | None:
         return None

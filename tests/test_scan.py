@@ -2,7 +2,7 @@ import contextlib
 import shutil
 from mutagen.flac import FLAC
 from albums.database import connection, selector
-from albums.library.scanner import scan, DEFAULT_SUPPORTED_FILE_TYPES
+from albums.library.scanner import scan
 from albums.types import Album, Track
 from .create_library import create_album_in_library, create_library
 
@@ -109,7 +109,7 @@ class TestScanner:
 
             delete_album = result[0].path
             shutil.rmtree(library / result[0].path, ignore_errors=True)
-            scan(db, library, DEFAULT_SUPPORTED_FILE_TYPES, lambda: [(result[1].path, result[1].album_id)])
+            scan(db, library, {}, lambda: [(result[1].path, result[1].album_id)])
 
             # deleted path was not scanned, so album is still there
             result = list(selector.select_albums(db, [], [], False))

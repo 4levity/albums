@@ -4,6 +4,7 @@ from .base import Check, CheckResult
 
 class CheckSingleValueTags(Check):
     name = "single_value_tags"
+    default_config = "album|title|tracknumber|tracktotal"
 
     def check(self, album: Album):
         single_value_tags = self.config.split("|")

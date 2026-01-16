@@ -10,8 +10,13 @@ def normalized(source_tags: dict[str, list[str]]):
     # extract tracktotal from ID3 tags
     tracknumber_tag = tags.get("tracknumber", [None])[0]
     if tracknumber_tag and "tracktotal" not in tags and str.count(tracknumber_tag, "/") == 1:
-        [tracknumber, tracktotal] = tags["tracknumber"].split("/")
+        [tracknumber, tracktotal] = tracknumber_tag.split("/")
         tags["tracknumber"] = [tracknumber]
         tags["tracktotal"] = [tracktotal]
+
+    # band -> albumartist
+    if "band" in tags:
+        tags.setdefault("artistalbum", []).extend(tags["band"])
+        del tags["band"]
 
     return tags

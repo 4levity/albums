@@ -4,11 +4,12 @@ from .base import Check, CheckResult
 
 class CheckAlbumUnderAlbum(Check):
     name = "album_under_album"
+    default_config = "true"
 
     def check(self, album: Album):
         path = album.path
         like_path = path.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-        (matches,) = self.db.execute(
+        (matches,) = self.ctx.db.execute(
             "SELECT COUNT(*) FROM album WHERE path != ? AND path LIKE ? ESCAPE '\\';",
             (
                 path,

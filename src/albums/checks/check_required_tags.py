@@ -4,6 +4,7 @@ from .base import Check, CheckResult
 
 class CheckRequiredTags(Check):
     name = "required_tags"
+    default_config = "artist|title"
 
     def check(self, album: Album):
         required_tags = self.config.split("|")

@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
-def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAULT_SUPPORTED_FILE_TYPES, path_selector=None, reread=False):
+def scan(db: sqlite3.Connection, library_root: Path, config={}, path_selector=None, reread=False):
+    supported_file_types = config.get("locations", {}).get("supported_file_types", "|".join(DEFAULT_SUPPORTED_FILE_TYPES)).split("|")
     start_time = time.perf_counter()
 
     if path_selector is not None:
@@ -88,6 +89,7 @@ def scan(db: sqlite3.Connection, library_root: Path, supported_file_types=DEFAUL
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
+    db.commit()
     click.echo(f"scanned {library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")
     logger.info(f"did not scan files with these extensions: {skipped_file_types}")
 

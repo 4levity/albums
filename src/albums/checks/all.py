@@ -8,6 +8,8 @@ from .check_single_value_tags import CheckSingleValueTags
 
 _all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags]
 
+DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _all_checks)
+
 
 def run_enabled(ctx: AppContext):
     def enabled(check: type[Check]):
@@ -19,4 +21,4 @@ def run_enabled(ctx: AppContext):
         for instance in checks:
             album_result = instance.check(album)
             if album_result:
-                yield (album.path, album_result)
+                yield (album.album_id, album.path, album_result)

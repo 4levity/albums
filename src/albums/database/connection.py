@@ -28,6 +28,7 @@ def open(filename: str):
 
     migrate(db)
     db.executescript(SQL_CLEANUP)
+    db.commit()
     return db
 
 

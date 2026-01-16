@@ -36,6 +36,7 @@ class Album:
     path: str
     tracks: list[Track] = field(default_factory=list)
     collections: list[str] = field(default_factory=list)
+    ignore_checks: list[str] = field(default_factory=list)
     album_id: int | None = None
 
     def to_dict(self):

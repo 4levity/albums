@@ -1,17 +1,51 @@
 import logging
-import textwrap
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
+from pathlib import Path
+import textwrap
 
 from ..types import Stream
 
 
 logger = logging.getLogger(__name__)
+BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal"}
 
 
 def get_metadata(path: str) -> tuple[dict, Stream]:
+    (file, codec) = _mutagen_load_file(path)
+    if file is not None:
+        stream_info = _get_stream_info(file, codec)
+        tags = _get_tags(file)
+        return (tags, stream_info)
+
+    return None
+
+
+def supports_basic_tags(filename: str, codec: str):
+    return str.lower(Path(filename).suffix) in [".flac", ".mp3", ".ogg"] and codec in ["FLAC", "MP3", "Ogg Vorbis"]
+
+
+def set_basic_tag(path: str, name: str, value: str | None):
+    # remove any tag, only set supported tags
+    if value is not None and name not in BASIC_TAGS:
+        raise ValueError(f"tag '{name}' is not a supported basic tag")
+    (file, codec) = _mutagen_load_file(path)
+    if not supports_basic_tags(path, codec):
+        logger.warning(f"cannot set {name} tag in {codec} file {path}")
+        return False
+
+    if value is None:
+        del file[name]
+    else:
+        file[name] = value
+
+    file.save()
+    return True
+
+
+def _mutagen_load_file(path: str) -> tuple[FLAC | MP3 | mutagen.FileType, str]:
     codec: str | None = None
     suffix = str.lower(path.suffix)
     if suffix == ".flac":
@@ -22,13 +56,9 @@ def get_metadata(path: str) -> tuple[dict, Stream]:
         codec = "MP3"
     else:
         file = mutagen.File(path)
+        codec = _get_codec(file)
 
-    if file is not None:
-        stream_info = _get_stream_info(file, codec)
-        tags = _get_tags(file)
-        return (tags, stream_info)
-
-    return None
+    return (file, codec)
 
 
 def _get_tags(file: FLAC | MP3 | mutagen.FileType):
@@ -45,6 +75,17 @@ def _get_tags(file: FLAC | MP3 | mutagen.FileType):
         for value in tag_value if isinstance(tag_value, list) else [tag_value]:
             tags.setdefault(name, []).append(store_value(name, value))
     return tags
+
+
+def _get_codec(file: FLAC | MP3 | mutagen.FileType) -> str:
+    if hasattr(file.info, "codec_name"):
+        return f"{file.info.codec_name}"
+    if hasattr(file.info, "codec"):
+        return f"{file.info.codec}"
+    if hasattr(file.info, "pprint"):
+        return file.info.pprint().split(",")[0]
+    logger.warning(f"couldn't determine codec in {file.filename}")
+    return "unknown"
 
 
 def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None) -> Stream:
@@ -70,15 +111,6 @@ def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None) -> 
     else:
         logger.warning(f"couldn't determine stream sample rate in {file.filename}")
 
-    if not codec and hasattr(file.info, "codec_name"):
-        codec = f"{file.info.codec_name}"
-    elif not codec and hasattr(file.info, "codec"):
-        codec = f"{file.info.codec}"
-    elif not codec and hasattr(file.info, "pprint"):
-        codec = file.info.pprint().split(",")[0]
-    elif not codec:
-        logger.warning(f"couldn't determine codec in {file.filename}")
-        codec = "unknown"
     stream.codec = codec
 
     return stream

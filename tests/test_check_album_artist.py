@@ -25,6 +25,15 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(AppContext()).check(album)
         assert result.message == "multiple artists but no album artist (['A', 'B'] ...)"
 
+    def test_check_needs_albumartist_band__fix(self):
+        album = Album(
+            "",
+            [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
+        )
+        result = CheckAlbumArtist(AppContext()).check(album)
+        assert result.fixer is not None
+        assert result.fixer.has_interactive
+
     def test_multiple_albumartist_band(self):
         album = Album(
             "",
@@ -57,14 +66,14 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(AppContext()).check(album)
-        assert result.message == "multiple album artist values (['Foo', ''] ...)"
+        assert result.message == "album artist is set on some tracks but not all (['Foo'] ...)"
 
     def test_albumartist_and_band(self):
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"], "Band": "Foo"}),
-                Track("2", {"artist": ["B"], "albumartist": ["Foo"], "Band": "Foo"}),
+                Track("1", {"artist": ["A"], "albumartist": ["Foo"], "band": "Foo"}),
+                Track("2", {"artist": ["B"], "albumartist": ["Foo"], "band": "Foo"}),
             ],
         )
         result = CheckAlbumArtist(AppContext()).check(album)
