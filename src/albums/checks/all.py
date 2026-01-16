@@ -22,4 +22,4 @@ def run_enabled(ctx: AppContext):
             if instance.name not in album.ignore_checks:
                 album_result = instance.check(album)
                 if album_result:
-                    yield (album.album_id, album.path, album_result)
+                    yield (album, album_result)

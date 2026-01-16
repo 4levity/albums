@@ -1,6 +1,8 @@
 import click
 
+
 from ..checks import all
+from ..checks.base_fixer import prompt_ignore_checks
 from ..context import AppContext, pass_app_context
 from ..library import scanner
 
@@ -9,7 +11,7 @@ from ..library import scanner
 @click.option("--default", is_flag=True, help="use default settings for all checks")
 @click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes")
 @click.option("--interactive", "-i", is_flag=True, help="prompt if interactive fix is available")
-@click.option("--prompt-always", "-p", is_flag=True, help="prompt even when only option is ignore")
+@click.option("--prompt-always", "-P", is_flag=True, help="prompt even when only option is ignore")
 @pass_app_context
 def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool, prompt_always: bool):
     if default or "checks" not in ctx.config:
@@ -17,8 +19,8 @@ def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool, pr
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
 
     found = False
-    for album_id, album_path, check_result in all.run_enabled(ctx):
-        click.echo(f"{check_result.message} : {album_path}")
+    for album, check_result in all.run_enabled(ctx):
+        click.echo(f"{check_result.message} : {album.path}")
         if check_result.fixer is not None:
             rescan = False
             fixer = check_result.fixer
@@ -29,7 +31,10 @@ def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool, pr
                 if check_result.fixer.interact():
                     rescan = True
             if rescan:
-                scanner.scan(ctx.db, ctx.library_root, ctx.config, lambda: [(album_path, album_id)], True)
+                scanner.scan(ctx.db, ctx.library_root, ctx.config, lambda: [(album.path, album.album_id)], True)
+        elif prompt_always:
+            click.echo("No fix available. ", nl=False)
+            prompt_ignore_checks(ctx.db, album, check_result.name)
 
         found = True
     if not found:

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import logging
 from prettytable import PrettyTable
 from simple_term_menu import TerminalMenu
+import sqlite3
 
 import albums.database.operations
 from ..context import AppContext
@@ -45,8 +46,7 @@ class Fixer:
 
     def interact(self):
         if not self.has_interactive:
-            self._prompt_ignore()
-            return False
+            return prompt_ignore_checks(self.ctx.db, self.album, self.check_name)
 
         prompt = self.get_interactive_prompt()
         done = False  # allow user to start over if canceled by accident or not confirmed
@@ -75,7 +75,7 @@ class Fixer:
             if option_index is None:
                 done = self._prompt_ignore()
                 if not done:
-                    done = click.confirm("do you want to move on to the next album?", default=True)
+                    done = click.confirm("Do you want to move on to the next album?", default=True)
             else:
                 if options[option_index] == OPTION_FREE_TEXT:
                     option = click.prompt("Enter value", type=str)
@@ -84,18 +84,20 @@ class Fixer:
                 else:
                     option = options[option_index]
 
-                done = click.confirm(f'selected "{option}" - are you sure?')
+                done = click.confirm(f'Selected "{option}" - are you sure?')
                 if done:
                     return self.fix_interactive(option)
 
-    def _prompt_ignore(self):
-        ignore_checks = self.album.ignore_checks
-        if self.check_name in ignore_checks:
-            logger.error(f'did not expect "{self.check_name}" to already be ignored for {self.album.path}')
-        elif click.confirm(f'do you want to ignore the check "{self.check_name}" for this album in the future?'):
-            ignore_checks.append(self.check_name)
-            albums.database.operations.update_ignore_checks(self.ctx.db, self.album.album_id, ignore_checks)
-            self.ctx.db.commit()
-            return True
-
         return False
+
+
+def prompt_ignore_checks(db: sqlite3.Connection, album: Album, check_name: str):
+    ignore_checks = album.ignore_checks
+    if check_name in ignore_checks:
+        logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
+    elif click.confirm(f'Do you want to ignore the check "{check_name}" for this album in the future?'):
+        ignore_checks.append(check_name)
+        albums.database.operations.update_ignore_checks(db, album.album_id, ignore_checks)
+        db.commit()
+        return True
+    return False
