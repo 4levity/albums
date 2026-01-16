@@ -54,6 +54,26 @@ database={TestCli.library / "albums.db"}
         assert "tracks missing required tags {'artist': 1} : foo/" in result.output
         assert "tracks missing required tags {'artist': 2} : bar/" in result.output
 
+    def test_ignore_check(self):
+        result = self.run(["-p", "foo/", "ignore", "required_tags"])
+        assert result.exit_code == 0
+        assert "album foo/ will ignore required_tags" in result.output
+
+        result = self.run(["check", "--default"])
+        assert result.exit_code == 0
+        assert "foo/" not in result.output
+        assert "tracks missing required tags {'artist': 2} : bar/" in result.output
+
+    def test_notice_check(self):
+        result = self.run(["notice", "--force", "required_tags"])
+        assert result.exit_code == 0
+        assert "album foo/ will stop ignoring required_tags" in result.output
+
+        result = self.run(["check", "--default"])
+        assert result.exit_code == 0
+        assert "tracks missing required tags {'artist': 1} : foo/" in result.output
+        assert "tracks missing required tags {'artist': 2} : bar/" in result.output
+
     def test_list_json(self):
         result = self.run(["list", "--json"])
         assert result.exit_code == 0

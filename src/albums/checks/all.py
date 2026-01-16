@@ -19,6 +19,7 @@ def run_enabled(ctx: AppContext):
 
     for album in ctx.select_albums(True):
         for instance in checks:
-            album_result = instance.check(album)
-            if album_result:
-                yield (album.album_id, album.path, album_result)
+            if instance.name not in album.ignore_checks:
+                album_result = instance.check(album)
+                if album_result:
+                    yield (album.album_id, album.path, album_result)

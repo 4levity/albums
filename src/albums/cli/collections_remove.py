@@ -7,7 +7,7 @@ from ..context import AppContext, pass_app_context
 @click.command("remove", help="remove selected albums from collections")
 @click.argument("collection_names", nargs=-1)
 @pass_app_context
-def remove_from_collections(ctx: AppContext, collection_names):
+def collections_remove(ctx: AppContext, collection_names):
     for album in ctx.select_albums(False):
         path = album.path
         album_collections = album.collections if album.collections else []

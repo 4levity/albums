@@ -3,10 +3,12 @@ import click
 from .. import context
 from ..library import scanner
 from ..tools import setup_logging
-from .add_to_collections import add_to_collections
+from .collections_add import collections_add
+from .collections_remove import collections_remove
+from .checks_ignore import checks_ignore
+from .checks_notice import checks_notice
 from .check import check
 from .list_albums import list_albums
-from .remove_from_collections import remove_from_collections
 from .scan import scan
 from .sync import sync
 
@@ -29,9 +31,11 @@ def albums(
         ctx.invoke(scanner.scan)
 
 
-albums.add_command(add_to_collections)
 albums.add_command(check)
+albums.add_command(collections_add)
+albums.add_command(collections_remove)
+albums.add_command(checks_ignore)
+albums.add_command(checks_notice)
 albums.add_command(list_albums)
-albums.add_command(remove_from_collections)
 albums.add_command(scan)
 albums.add_command(sync)

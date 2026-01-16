@@ -43,6 +43,17 @@ class TestDatabase:
             assert len(result) == 1  # removed from collection
             assert result[0].path == "foo/"
 
+            set_ignore_checks = ["album_artist", "required_tags"]
+            operations.update_ignore_checks(db, albums[0].album_id, set_ignore_checks)
+            result = list(selector.select_albums(db, [], [albums[0].path], False))
+            assert len(result) == 1
+            assert sorted(result[0].ignore_checks) == set_ignore_checks
+
+            operations.update_ignore_checks(db, albums[0].album_id, [])
+            result = list(selector.select_albums(db, [], [albums[0].path], False))
+            assert len(result) == 1
+            assert result[0].ignore_checks == []
+
             operations.remove(db, albums[1].album_id)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1  # album removed

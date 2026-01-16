@@ -6,7 +6,7 @@ from ..context import AppContext, pass_app_context
 @click.command("add", help="add selected albums to collections")
 @click.argument("collection_names", nargs=-1)
 @pass_app_context
-def add_to_collections(ctx: AppContext, collection_names):
+def collections_add(ctx: AppContext, collection_names):
     for album in ctx.select_albums(False):
         path = album.path
         changed = False

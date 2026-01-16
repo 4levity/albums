@@ -8,9 +8,10 @@ from ..library import scanner
 @click.command(help="report on metadata issues in selected albums")
 @click.option("--default", is_flag=True, help="use default settings for all checks")
 @click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes")
-@click.option("--interactive", "-i", is_flag=True, help="prompt for interactive repair")
+@click.option("--interactive", "-i", is_flag=True, help="prompt if interactive fix is available")
+@click.option("--prompt-always", "-p", is_flag=True, help="prompt even when only option is ignore")
 @pass_app_context
-def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool):
+def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool, prompt_always: bool):
     if default or "checks" not in ctx.config:
         click.echo("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
@@ -24,7 +25,7 @@ def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool):
             if automatic and fixer.has_automatic:
                 if check_result.fixer.automatic():
                     rescan = True
-            if interactive and fixer.has_interactive:
+            if prompt_always or (interactive and fixer.has_interactive):
                 if check_result.fixer.interact():
                     rescan = True
             if rescan:

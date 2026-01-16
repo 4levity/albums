@@ -4,6 +4,10 @@ import logging
 from prettytable import PrettyTable
 from simple_term_menu import TerminalMenu
 
+import albums.database.operations
+from ..context import AppContext
+from ..types import Album
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,28 +24,31 @@ class FixerInteractivePrompt:
 
 @dataclass
 class Fixer:
+    check_name: str
+    ctx: AppContext
+    album: Album
     has_interactive: bool = False
     has_automatic: bool = False
 
     ### subclass overrides to define behavior
 
-    def get_interactive_prompt(self) -> FixerInteractivePrompt | None:
-        return None
+    def get_interactive_prompt(self) -> FixerInteractivePrompt:
+        raise NotImplementedError
 
     def fix_interactive(self, option: str | None) -> bool:
-        return False
+        raise NotImplementedError
 
     def automatic(self) -> bool:
-        return False
+        raise NotImplementedError
 
     ### base functionality
 
     def interact(self):
-        prompt = self.get_interactive_prompt() if self.has_interactive else None
-        if not prompt:
-            logger.warning(f"interact() was called but no prompt available {self.__class__.__name__}")
+        if not self.has_interactive:
+            self._prompt_ignore()
             return False
 
+        prompt = self.get_interactive_prompt()
         done = False  # allow user to start over if canceled by accident or not confirmed
         while not done:
             if prompt.show_table:
@@ -63,14 +70,12 @@ class Fixer:
                     options.append(OPTION_FREE_TEXT)
                 if prompt.option_none:
                     options.append(OPTION_NONE)
-            terminal_menu = TerminalMenu(
-                options,
-                raise_error_on_interrupt=True,
-                title=prompt.question,
-            )
+            terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt.question)
             option_index = terminal_menu.show()
             if option_index is None:
-                done = click.confirm("selection canceled, do you want to move on?", default=True)
+                done = self._prompt_ignore()
+                if not done:
+                    done = click.confirm("do you want to move on to the next album?", default=True)
             else:
                 if options[option_index] == OPTION_FREE_TEXT:
                     option = click.prompt("Enter value", type=str)
@@ -82,3 +87,15 @@ class Fixer:
                 done = click.confirm(f'selected "{option}" - are you sure?')
                 if done:
                     return self.fix_interactive(option)
+
+    def _prompt_ignore(self):
+        ignore_checks = self.album.ignore_checks
+        if self.check_name in ignore_checks:
+            logger.error(f'did not expect "{self.check_name}" to already be ignored for {self.album.path}')
+        elif click.confirm(f'do you want to ignore the check "{self.check_name}" for this album in the future?'):
+            ignore_checks.append(self.check_name)
+            albums.database.operations.update_ignore_checks(self.ctx.db, self.album.album_id, ignore_checks)
+            self.ctx.db.commit()
+            return True
+
+        return False

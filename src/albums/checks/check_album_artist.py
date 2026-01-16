@@ -8,14 +8,13 @@ from .base_fixer import FixerInteractivePrompt
 from .normalize_tags import normalized
 
 
+CHECK_NAME = "album_artist"
 VARIOUS_ARTISTS = "Various Artists"
 
 
 class AlbumArtistFixer(Fixer):
     def __init__(self, ctx: AppContext, album: Album, message: str, candidates: list[str]):
-        super(AlbumArtistFixer, self).__init__(True)
-        self.ctx = ctx
-        self.album = album
+        super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True)
         self.message = message
         self.candidates = candidates
 
@@ -33,14 +32,17 @@ class AlbumArtistFixer(Fixer):
     def fix_interactive(self, album_artist_value: str | None) -> bool:
         for track in sorted(self.album.tracks, key=lambda track: track.filename):
             file = self.ctx.library_root / self.album.path / track.filename
-            if album_artist_value is None and "albumartist" in track.tags:
-                click.echo(f"removing albumartist from {track.filename}")
-                set_basic_tag(file, "albumartist", None)
+            if album_artist_value is None:
+                if "albumartist" in track.tags:
+                    click.echo(f"removing albumartist from {track.filename}")
+                    set_basic_tag(file, "albumartist", None)
+                # else nothing to remove
             elif track.tags.get("albumartist", []) != [album_artist_value]:
                 click.echo(f"setting albumartist on {track.filename}")
                 set_basic_tag(file, "albumartist", album_artist_value)
+            # else nothing to set
 
-            if "band" in track.tags:
+            if "band" in track.tags:  # always remove tag named "band"
                 click.echo(f"removing band from {track.filename}")
                 set_basic_tag(file, "band", None)
 
@@ -49,7 +51,7 @@ class AlbumArtistFixer(Fixer):
 
 
 class CheckAlbumArtist(Check):
-    name = "album_artist"
+    name = CHECK_NAME
     default_config = "true"
 
     def check(self, album: Album):
