@@ -1,6 +1,7 @@
 import contextlib
+
+from albums.app import Context
 from albums.checks.check_album_under_album import CheckAlbumUnderAlbum
-from albums.context import AppContext
 from albums.database import connection, operations
 from albums.types import Album, Stream, Track
 
@@ -17,7 +18,7 @@ class TestCheckAlbumUnderAlbum:
         ]
 
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            ctx = AppContext()
+            ctx = Context()
             ctx.db = db
             checker = CheckAlbumUnderAlbum(ctx)
 

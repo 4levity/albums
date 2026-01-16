@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from ..context import AppContext
+from .. import app
 from ..types import Album
 from .base_fixer import Fixer
 
@@ -24,10 +24,10 @@ class Check:
     default_config: str
 
     # subclass may use these instance values
-    ctx: AppContext
+    ctx: app.Context
     config: str
 
-    def __init__(self, ctx: AppContext):
+    def __init__(self, ctx: app.Context):
         self.ctx = ctx
         self.config = ctx.config.get("checks", {}).get(self.name, self.default_config)
 

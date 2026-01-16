@@ -1,9 +1,10 @@
+from click.testing import CliRunner
 import json
 import os
+import pytest
 import re
 import shutil
-from click.testing import CliRunner
-import pytest
+
 from albums.cli import entry_point
 from albums.types import Album, Track
 from .create_library import create_library, test_data_path

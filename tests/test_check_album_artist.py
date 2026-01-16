@@ -1,6 +1,7 @@
 from pathlib import Path
+
+from albums.app import Context
 from albums.checks.check_album_artist import CheckAlbumArtist
-from albums.context import AppContext
 from albums.types import Album, Track
 
 
@@ -10,7 +11,7 @@ class TestCheckAlbumArtist:
             "",
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "multiple artists but no album artist (['A', 'B'] ...)"
 
     def test_check_needs_albumartist_band__one(self):
@@ -23,7 +24,7 @@ class TestCheckAlbumArtist:
                 Track("3", {"artist": ["B"]}),
             ],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "multiple artists but no album artist (['A', 'B'] ...)"
 
     def test_check_needs_albumartist_band__fix(self, mocker):
@@ -31,7 +32,7 @@ class TestCheckAlbumArtist:
             "album/",
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
-        ctx = AppContext()
+        ctx = Context()
         ctx.library_root = Path("/path/to/library")
         result = CheckAlbumArtist(ctx).check(album)
         assert result.fixer is not None
@@ -62,7 +63,7 @@ class TestCheckAlbumArtist:
                 Track("3", {"artist": ["B"], "albumartist": ["Bar"]}),
             ],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "multiple album artist values (['Foo', 'Bar'] ...)"
 
     def test_multiple_albumartist_band__same_artist(self):
@@ -73,7 +74,7 @@ class TestCheckAlbumArtist:
                 Track("2", {"artist": ["A"], "albumartist": ["Bar"]}),
             ],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "multiple album artist values (['Foo', 'Bar'] ...)"
 
     def test_multiple_albumartist_band__same_artist_2(self):
@@ -84,7 +85,7 @@ class TestCheckAlbumArtist:
                 Track("2", {"artist": ["A"]}),
             ],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "album artist is set inconsistently and probably not needed (['Foo'] ...)"
 
     def test_albumartist_and_band(self):
@@ -95,7 +96,7 @@ class TestCheckAlbumArtist:
                 Track("2", {"artist": ["B"], "albumartist": ["Foo"], "band": "Foo"}),
             ],
         )
-        result = CheckAlbumArtist(AppContext()).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "albumartist and band tags both present"
 
     def test_albumartist__ok(self):
@@ -106,7 +107,7 @@ class TestCheckAlbumArtist:
                 Track("2", {"artist": ["B"], "albumartist": ["A"]}),
             ],
         )
-        checker = CheckAlbumArtist(AppContext())
+        checker = CheckAlbumArtist(Context())
         result = checker.check(album)
         assert result is None
 

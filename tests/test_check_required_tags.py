@@ -1,10 +1,10 @@
+from albums.app import Context
 from albums.checks.check_required_tags import CheckRequiredTags
-from albums.context import AppContext
 from albums.types import Album, Track
 
 
 def context(checks, db=None):
-    ctx = AppContext()
+    ctx = Context()
     ctx.db = db
     ctx.config["checks"] = checks
     return ctx
@@ -19,7 +19,7 @@ class TestCheckRequiredTags:
                 Track("2.flac", {}),
             ],
         )
-        ctx = AppContext()
+        ctx = Context()
         ctx.config["checks"] = {"required_tags": "artist|title"}
         checker = CheckRequiredTags(ctx)
 

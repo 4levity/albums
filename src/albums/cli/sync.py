@@ -2,8 +2,8 @@ import click
 import logging
 from pathlib import Path
 
+from .. import app
 from ..library import synchronizer
-from ..context import AppContext, pass_app_context
 
 
 logger = logging.getLogger(__name__)
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 @click.argument("destination")
 @click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
 @click.option("--force", is_flag=True, help="skip confirmation when deleting files")
-@pass_app_context
-def sync(ctx: AppContext, destination, delete, force):
+@app.pass_context
+def sync(ctx: app.Context, destination, delete, force):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
         synchronizer.do_sync(ctx.select_albums(False), dest, ctx.library_root, delete, force)

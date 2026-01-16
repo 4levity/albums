@@ -1,6 +1,6 @@
 import click
 
-from ..context import AppContext
+from .. import app
 from ..library.metadata import set_basic_tag
 from ..types import Album
 from .base_check import Check, CheckResult, Fixer
@@ -13,7 +13,7 @@ VARIOUS_ARTISTS = "Various Artists"
 
 
 class AlbumArtistFixer(Fixer):
-    def __init__(self, ctx: AppContext, album: Album, message: str, candidates: list[str]):
+    def __init__(self, ctx: app.Context, album: Album, message: str, candidates: list[str]):
         super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True)
         self.message = message
         self.candidates = candidates

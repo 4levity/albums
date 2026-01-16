@@ -1,12 +1,13 @@
 import click
+
 import albums.database.operations
-from ..context import AppContext, pass_app_context
+from .. import app
 
 
 @click.command("add", help="add selected albums to collections")
 @click.argument("collection_names", nargs=-1)
-@pass_app_context
-def collections_add(ctx: AppContext, collection_names):
+@app.pass_context
+def collections_add(ctx: app.Context, collection_names):
     for album in ctx.select_albums(False):
         path = album.path
         changed = False

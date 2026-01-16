@@ -1,9 +1,9 @@
 import click
 
 
+from .. import app
 from ..checks import all
 from ..checks.base_fixer import prompt_ignore_checks
-from ..context import AppContext, pass_app_context
 from ..library import scanner
 
 
@@ -12,8 +12,8 @@ from ..library import scanner
 @click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes")
 @click.option("--interactive", "-i", is_flag=True, help="prompt if interactive fix is available")
 @click.option("--prompt-always", "-P", is_flag=True, help="prompt even when only option is ignore")
-@pass_app_context
-def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool, prompt_always: bool):
+@app.pass_context
+def check(ctx: app.Context, default: bool, automatic: bool, interactive: bool, prompt_always: bool):
     if default or "checks" not in ctx.config:
         click.echo("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG

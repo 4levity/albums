@@ -3,14 +3,14 @@ from functools import reduce
 import humanize
 from json import dumps
 
+from .. import app
 from ..types import Album
-from ..context import AppContext, pass_app_context
 
 
 @click.command("list", help="print matching albums")
 @click.option("--json", is_flag=True, help="output all stored details in JSON")
-@pass_app_context
-def list_albums(ctx: AppContext, json):
+@app.pass_context
+def list_albums(ctx: app.Context, json):
     total_size = 0
     count = 0
     if json:

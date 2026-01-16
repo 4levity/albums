@@ -1,10 +1,10 @@
+from albums.app import Context
 from albums.checks.check_single_value_tags import CheckSingleValueTags
-from albums.context import AppContext
 from albums.types import Album, Track
 
 
 def context(checks, db=None):
-    ctx = AppContext()
+    ctx = Context()
     ctx.db = db
     ctx.config["checks"] = checks
     return ctx
@@ -19,7 +19,7 @@ class TestCheckSingleValueTags:
                 Track("2.flac", {"artist": ["Alice"], "title": ["red"]}),
             ],
         )
-        ctx = AppContext()
+        ctx = Context()
         ctx.config["checks"] = {"single_value_tags": "title"}
         checker = CheckSingleValueTags(ctx)
 

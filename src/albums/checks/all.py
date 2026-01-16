@@ -1,4 +1,4 @@
-from ..context import AppContext
+from .. import app
 from .base_check import Check
 from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_album_artist import CheckAlbumArtist
@@ -11,7 +11,7 @@ _all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckR
 DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _all_checks)
 
 
-def run_enabled(ctx: AppContext):
+def run_enabled(ctx: app.Context):
     def enabled(check: type[Check]):
         return str.lower(ctx.config.get("checks", {}).get(check.name, "false")) != "false"
 

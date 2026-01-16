@@ -1,14 +1,14 @@
 import click
 
 import albums.database.operations
-from ..context import AppContext, pass_app_context
+from .. import app
 
 
 @click.command("notice", help="selected albums stop ignoring specified checks")
 @click.option("--force", "-f", is_flag=True, help="always skip confirmation")
 @click.argument("check_names", nargs=-1)
-@pass_app_context
-def checks_notice(ctx: AppContext, force: bool, check_names: list[str]):
+@app.pass_context
+def checks_notice(ctx: app.Context, force: bool, check_names: list[str]):
     if not force and not ctx.is_filtered() and not click.confirm(f"stop ignoring checks {check_names} for all albums?"):
         return
 

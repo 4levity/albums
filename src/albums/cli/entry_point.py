@@ -1,6 +1,6 @@
 import click
 
-from .. import context
+from .. import app
 from ..library import scanner
 from ..tools import setup_logging
 from .collections_add import collections_add
@@ -19,13 +19,11 @@ from .sync import sync
 @click.option("--regex", "-r", is_flag=True, help="type of match for album paths")
 @click.option("--config-file", help="specify path to config.ini")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
-@context.pass_app_context  # order of these decorators matters
+@app.pass_context  # order of these decorators matters
 @click.pass_context
-def albums(
-    ctx: click.Context, app_context: context.AppContext, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int
-):
+def albums(ctx: click.Context, app_context: app.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
     setup_logging(verbose)
-    context.setup(ctx, app_context, collections, paths, regex, config_file)
+    app.setup(ctx, app_context, collections, paths, regex, config_file)
 
     if app_context.config.get("options", {}).get("always_scan", "false") != "false":
         ctx.invoke(scanner.scan)

@@ -6,7 +6,7 @@ from simple_term_menu import TerminalMenu
 import sqlite3
 
 import albums.database.operations
-from ..context import AppContext
+from .. import app
 from ..types import Album
 
 
@@ -26,7 +26,7 @@ class FixerInteractivePrompt:
 @dataclass
 class Fixer:
     check_name: str
-    ctx: AppContext
+    ctx: app.Context
     album: Album
     has_interactive: bool = False
     has_automatic: bool = False
