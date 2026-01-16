@@ -1,9 +1,8 @@
 import click
 
-from albums.library import scanner
-
 from ..checks import all
 from ..context import AppContext, pass_app_context
+from ..library import scanner
 
 
 @click.command(help="report on metadata issues in selected albums")
@@ -26,7 +25,7 @@ def check(ctx: AppContext, default: bool, automatic: bool, interactive: bool):
                 if check_result.fixer.automatic():
                     rescan = True
             if interactive and fixer.has_interactive:
-                if check_result.fixer.interactive():
+                if check_result.fixer.interact():
                     rescan = True
             if rescan:
                 scanner.scan(ctx.db, ctx.library_root, ctx.config, lambda: [(album_path, album_id)], True)

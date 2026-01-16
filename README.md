@@ -21,7 +21,7 @@ library every time. In addition to data gathered from the scan, albums may be ta
 With [poetry](https://python-poetry.org/) installed, run `make` to install Python dependencies,
 lint, test and build. Or use `poetry` directly.
 
-Developed and tested only on Linux. Probably works on MacOS and Windows.
+Developed/tested only on Linux. Probably works on MacOS. Interactive fixer may not work on Windows.
 
 ## Configuration
 

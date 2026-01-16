@@ -1,5 +1,5 @@
 from ..context import AppContext
-from .base import Check
+from .base_check import Check
 from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_album_artist import CheckAlbumArtist
 from .check_required_tags import CheckRequiredTags

@@ -37,11 +37,13 @@ def set_basic_tag(path: str, name: str, value: str | None):
         return False
 
     if value is None:
-        del file[name]
+        if name in file:
+            del file[name]
+            file.save()
     else:
         file[name] = value
+        file.save()
 
-    file.save()
     return True
 
 

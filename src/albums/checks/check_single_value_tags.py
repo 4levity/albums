@@ -1,5 +1,5 @@
 from ..types import Album
-from .base import Check, CheckResult
+from .base_check import Check, CheckResult
 
 
 class CheckSingleValueTags(Check):

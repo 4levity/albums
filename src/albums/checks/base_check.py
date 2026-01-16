@@ -3,18 +3,7 @@ from dataclasses import dataclass
 
 from ..context import AppContext
 from ..types import Album
-
-
-@dataclass
-class Fixer:
-    has_interactive: bool = False
-    has_automatic: bool = False
-
-    def interactive(self) -> bool:
-        return False
-
-    def automatic(self) -> bool:
-        return False
+from .base_fixer import Fixer
 
 
 @dataclass(frozen=True)

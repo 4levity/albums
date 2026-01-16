@@ -1,13 +1,11 @@
 import click
-from simple_term_menu import TerminalMenu
-
 
 from ..context import AppContext
-from ..library import metadata
+from ..library.metadata import set_basic_tag
 from ..types import Album
-from .base import Check, CheckResult, Fixer
+from .base_check import Check, CheckResult, Fixer
+from .base_fixer import FixerInteractivePrompt
 from .normalize_tags import normalized
-from prettytable import PrettyTable
 
 
 VARIOUS_ARTISTS = "Various Artists"
@@ -21,59 +19,33 @@ class AlbumArtistFixer(Fixer):
         self.message = message
         self.candidates = candidates
 
-    def interactive(self):
-        click.echo(f"*** Fixing album artist for {self.album.path}")
-        click.echo(f"ISSUE: {self.message}")
-        track_list = PrettyTable(["filename", "album tag", "artist", "album artist"], align="l")
-        track_list.add_rows(
-            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks]
+    def get_interactive_prompt(self):
+        message = [f"*** Fixing album artist for {self.album.path}", f"ISSUE: {self.message}"]
+        question = f"Which album artist to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
+        options = sorted(set((v for v in self.candidates if v and v != VARIOUS_ARTISTS))) + [None, VARIOUS_ARTISTS]
+        show_remove_option = len(self.candidates) > 0 and self.candidates[0] is None
+        table = (
+            ["filename", "album tag", "artist", "album artist"],
+            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks],
         )
-        click.echo(track_list.get_string(sortby="filename"))
+        return FixerInteractivePrompt(message, question, options, show_remove_option, True, table)
 
-        if (
-            len(self.candidates) > 0
-            and self.candidates[0] is None  # if the first candidate is None, offer to remove albumartist
-            and click.confirm("do you want to remove albumartist or band tags from all tracks?")
-        ):
-            for track in self.album.tracks:
-                file = self.ctx.library_root / self.album.path / track.filename
-                if "albumartist" in track.tags:
-                    click.echo(f"removing albumartist from {track.filename}")
-                    metadata.set_basic_tag(file, "albumartist", None)
-                if "band" in track.tags:
-                    click.echo(f"removing band from {track.filename}")
-                    metadata.set_basic_tag(file, "band", None)
-            click.echo("done.")
-            return True
+    def fix_interactive(self, album_artist_value: str | None) -> bool:
+        for track in sorted(self.album.tracks, key=lambda track: track.filename):
+            file = self.ctx.library_root / self.album.path / track.filename
+            if album_artist_value is None and "albumartist" in track.tags:
+                click.echo(f"removing albumartist from {track.filename}")
+                set_basic_tag(file, "albumartist", None)
+            elif track.tags.get("albumartist", []) != [album_artist_value]:
+                click.echo(f"setting albumartist on {track.filename}")
+                set_basic_tag(file, "albumartist", album_artist_value)
 
-        options = sorted(set((v for v in self.candidates if v and v != VARIOUS_ARTISTS))) + [VARIOUS_ARTISTS, "- Enter a different value -"]
-        terminal_menu = TerminalMenu(
-            options,
-            raise_error_on_interrupt=True,
-            title=f"Select album artist for all {len(self.album.tracks)} tracks in {self.album.path}",
-        )
-        option_index = terminal_menu.show()
-        if option_index is None:
-            click.echo("skipping this album")
-            click.pause()
-            return False
+            if "band" in track.tags:
+                click.echo(f"removing band from {track.filename}")
+                set_basic_tag(file, "band", None)
 
-        if option_index == len(options) - 1:
-            value = click.prompt("Enter value for album artist", type=str)
-        else:
-            value = options[option_index]
-        if click.confirm(f"set all tracks to album artist = {value} ?", default=True):
-            for track in self.album.tracks:
-                if track.tags.get("albumartist", []) != [value]:
-                    click.echo(f"setting albumartist on {track.filename}")
-                    metadata.set_basic_tag(self.ctx.library_root / self.album.path / track.filename, "albumartist", value)
-                if "band" in track.tags:
-                    click.echo(f"removing band from {track.filename}")
-                    metadata.set_basic_tag(file, "band", None)
-            click.echo("done.")
-            return True
-
-        return False
+        click.echo("done.")
+        return True
 
 
 class CheckAlbumArtist(Check):
@@ -103,11 +75,7 @@ class CheckAlbumArtist(Check):
 
         nonblank_albumartists = list(filter(lambda k: k != "", albumartists.keys()))
         candidates = list(list(artists.keys()) + nonblank_albumartists)
-        redundant = (
-            len(artists) == 1
-            and len(nonblank_albumartists) == 1
-            and (list(artists.keys())[0] == nonblank_albumartists[0] or nonblank_albumartists[0] == VARIOUS_ARTISTS)
-        )
+        redundant = len(artists) == 1 and list(artists.values())[0] == len(album.tracks)
 
         results: CheckResult | None = None
         # TODO configurable check for consistent but redundant albumartist setting (artist=albumartist and is the same on all tracks)
@@ -129,7 +97,7 @@ class CheckAlbumArtist(Check):
                     self.ctx,
                     album,
                     f"album artist is set inconsistently and probably not needed ({nonblank_albumartists[:2]} ...)",
-                    [None] + nonblank_albumartists,
+                    [None] + candidates,
                 )
             else:
                 fixer = AlbumArtistFixer(
@@ -140,4 +108,5 @@ class CheckAlbumArtist(Check):
         if len(artists) > 1 and (sum(albumartists.values()) - albumartists.get("", 0)) != len(album.tracks):
             fixer = AlbumArtistFixer(self.ctx, album, f"multiple artists but no album artist ({list(artists.keys())[:2]} ...)", candidates)
             results = CheckResult(self.name, fixer.message, fixer, results)
+
         return results
