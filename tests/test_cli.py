@@ -36,7 +36,7 @@ database={TestCli.library / "albums.db"}
     def test_help(self):
         result = self.run(["--help"])
         assert result.exit_code == 0
-        assert result.output.startswith("Usage: albums [OPTIONS] COMMAND [ARGS]")
+        assert "Usage: albums [OPTIONS] COMMAND [ARGS]" in result.output
 
     def test_scan(self):
         result = self.run(["scan"])

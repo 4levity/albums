@@ -1,5 +1,3 @@
-import click
-
 from .. import app
 from ..library.metadata import set_basic_tag
 from ..types import Album
@@ -34,19 +32,19 @@ class AlbumArtistFixer(Fixer):
             file = self.ctx.library_root / self.album.path / track.filename
             if album_artist_value is None:
                 if "albumartist" in track.tags:
-                    click.echo(f"removing albumartist from {track.filename}")
+                    self.ctx.console.print(f"removing albumartist from {track.filename}")
                     set_basic_tag(file, "albumartist", None)
                 # else nothing to remove
             elif track.tags.get("albumartist", []) != [album_artist_value]:
-                click.echo(f"setting albumartist on {track.filename}")
+                self.ctx.console.print(f"setting albumartist on {track.filename}")
                 set_basic_tag(file, "albumartist", album_artist_value)
             # else nothing to set
 
             if "band" in track.tags:  # always remove tag named "band"
-                click.echo(f"removing band from {track.filename}")
+                self.ctx.console.print(f"removing band from {track.filename}")
                 set_basic_tag(file, "band", None)
 
-        click.echo("done.")
+        self.ctx.console.print("done.")
         return True
 
 

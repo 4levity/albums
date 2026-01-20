@@ -1,9 +1,10 @@
-import click
+import rich_click as click
 import logging
 from pathlib import Path
 
 from .. import app
 from ..library import synchronizer
+from . import cli_context
 
 
 logger = logging.getLogger(__name__)
@@ -13,10 +14,10 @@ logger = logging.getLogger(__name__)
 @click.argument("destination")
 @click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
 @click.option("--force", is_flag=True, help="skip confirmation when deleting files")
-@app.pass_context
+@cli_context.pass_context
 def sync(ctx: app.Context, destination, delete, force):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
         synchronizer.do_sync(ctx.select_albums(False), dest, ctx.library_root, delete, force)
     else:
-        click.echo("The sync destination must be a directory")
+        ctx.console.print("The sync destination must be a directory")

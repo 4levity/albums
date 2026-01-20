@@ -1,9 +1,8 @@
-import click
 from dataclasses import dataclass
 import logging
 from prettytable import PrettyTable
+from rich.prompt import Confirm
 from simple_term_menu import TerminalMenu
-import sqlite3
 
 import albums.database.operations
 from .. import app
@@ -46,7 +45,7 @@ class Fixer:
 
     def interact(self):
         if not self.has_interactive:
-            return prompt_ignore_checks(self.ctx.db, self.album, self.check_name)
+            return prompt_ignore_checks(self.ctx, self.album, self.check_name)
 
         prompt = self.get_interactive_prompt()
         done = False  # allow user to start over if canceled by accident or not confirmed
@@ -55,10 +54,10 @@ class Fixer:
                 (headers, rows) = prompt.show_table
                 table = PrettyTable(headers, align="l")
                 table.add_rows(rows)
-                click.echo(table.get_string(sortby=headers[0]))
+                self.ctx.console.print(table.get_string(sortby=headers[0]))
 
             for line in prompt.message if isinstance(prompt.message, list) else [prompt.message]:
-                click.echo(line)
+                self.ctx.console.print(line)
 
             OPTION_NONE = ">> None / Remove <<"
             OPTION_FREE_TEXT = ">> Enter Text <<"
@@ -75,29 +74,29 @@ class Fixer:
             if option_index is None:
                 done = self._prompt_ignore()
                 if not done:
-                    done = click.confirm("Do you want to move on to the next album?", default=True)
+                    done = Confirm.ask("Do you want to move on to the next album?", default=True, console=self.ctx.console)
             else:
                 if options[option_index] == OPTION_FREE_TEXT:
-                    option = click.prompt("Enter value", type=str)
+                    option = self.ctx.console.input("Enter value", type=str)
                 elif options[option_index] == OPTION_NONE:
                     option = None
                 else:
                     option = options[option_index]
 
-                done = click.confirm(f'Selected "{option}" - are you sure?')
+                done = Confirm.ask(f'Selected "{option}" - are you sure?', console=self.ctx.console)
                 if done:
                     return self.fix_interactive(option)
 
         return False
 
 
-def prompt_ignore_checks(db: sqlite3.Connection, album: Album, check_name: str):
+def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
     ignore_checks = album.ignore_checks
     if check_name in ignore_checks:
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
-    elif click.confirm(f'Do you want to ignore the check "{check_name}" for this album in the future?'):
+    elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console):
         ignore_checks.append(check_name)
-        albums.database.operations.update_ignore_checks(db, album.album_id, ignore_checks)
-        db.commit()
+        albums.database.operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
+        ctx.db.commit()
         return True
     return False

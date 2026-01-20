@@ -1,12 +1,13 @@
-import click
+import rich_click as click
 
-from .. import app
 import albums.database.operations
+from .. import app
+from . import cli_context
 
 
 @click.command("remove", help="remove selected albums from collections")
 @click.argument("collection_names", nargs=-1)
-@app.pass_context
+@cli_context.pass_context
 def collections_remove(ctx: app.Context, collection_names):
     for album in ctx.select_albums(False):
         path = album.path
@@ -15,10 +16,10 @@ def collections_remove(ctx: app.Context, collection_names):
         for target_collection in collection_names:
             if target_collection in album_collections:
                 album_collections.remove(target_collection)
-                click.echo(f"removed album {path} from collection {target_collection}")
+                ctx.console.print(f"removed album {path} from collection {target_collection}")
                 changed = True
             else:
-                click.echo(f"album {path} was not in collection {target_collection}")  # filter may prevent this
+                ctx.console.print(f"album {path} was not in collection {target_collection}")  # filter may prevent this
         if changed:
             album.collections = album_collections
             albums.database.operations.update_collections(ctx.db, album.album_id, album.collections)
