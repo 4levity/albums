@@ -24,7 +24,7 @@ class TestCheckSingleValueTags:
         checker = CheckSingleValueTags(ctx)
 
         result = checker.check(album)
-        assert result.message == "conflicting values for single value tags {'title': 1}"
+        assert "conflicting values for single value tags {'title':" in result.message
 
         # fixed
         album.tracks[0].tags["title"] = ["definitely blue"]

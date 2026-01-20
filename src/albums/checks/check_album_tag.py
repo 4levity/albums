@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from .. import app
-from ..library.metadata import set_basic_tag, supports_basic_tags
+from ..library.metadata import album_is_basic_taggable, set_basic_tag
 from ..types import Album
 from .base_check import Check, CheckResult
 from .base_fixer import Fixer, FixerInteractivePrompt
@@ -12,14 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 CHECK_NAME = "album_tag"
-
-
-def album_is_taggable(album: Album):
-    ok = True
-    for track in album.tracks:
-        if not supports_basic_tags(track.filename, track.stream.codec if track.stream else None):
-            ok = False
-    return ok
 
 
 class AlbumTagFixer(Fixer):
@@ -72,6 +64,9 @@ class CheckAlbumTag(Check):
         if folder_str in ignore_folders:
             return None
 
+        if not album_is_basic_taggable(album):
+            return None  # this check is currently not valid for files that don't use "album" tag
+
         track_album_tags = {"": 0}
         for track in sorted(album.tracks, key=lambda track: track.filename):
             if "album" in track.tags:
@@ -82,20 +77,18 @@ class CheckAlbumTag(Check):
 
         album_tags = list(track_album_tags.keys())
         candidates = sorted(filter(None, album_tags), key=lambda a: track_album_tags[a], reverse=True)[:12]
-        taggable = album_is_taggable(album)
-        taggable_message = "" if taggable else " (cannot tag file type)"
         if len(candidates) > 1:  # multiple conflicting album names (not including folder name)
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            message = f"{len(candidates)} conflicting album tag values" + taggable_message
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates) if taggable else None
+            message = f"{len(candidates)} conflicting album tag values"
+            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
             return CheckResult(self.name, message, fixer)
 
         if track_album_tags[""] > 0:  # tracks missing album tag
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            message = f"{track_album_tags['']} tracks missing album tag" + taggable_message
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates) if taggable else None
+            message = f"{track_album_tags['']} tracks missing album tag"
+            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
             return CheckResult(self.name, message, fixer)
 
         return None

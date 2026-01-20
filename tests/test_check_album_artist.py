@@ -19,9 +19,9 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
-                Track("2", {"artist": ["B"], "albumartist": ["Foo"]}),
-                Track("3", {"artist": ["B"]}),
+                Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["B"], "albumartist": ["Foo"]}),
+                Track("3.flac", {"artist": ["B"]}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -58,9 +58,9 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
-                Track("2", {"artist": ["B"], "albumartist": ["Foo"]}),
-                Track("3", {"artist": ["B"], "albumartist": ["Bar"]}),
+                Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["B"], "albumartist": ["Foo"]}),
+                Track("3.flac", {"artist": ["B"], "albumartist": ["Bar"]}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -70,8 +70,8 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
-                Track("2", {"artist": ["A"], "albumartist": ["Bar"]}),
+                Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["A"], "albumartist": ["Bar"]}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -81,8 +81,8 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"]}),
-                Track("2", {"artist": ["A"]}),
+                Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["A"]}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -92,8 +92,8 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["Foo"], "albumartist": ["Foo"]}),
-                Track("2", {"artist": ["Foo"], "albumartist": ["Foo"]}),
+                Track("1.flac", {"artist": ["Foo"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["Foo"], "albumartist": ["Foo"]}),
             ],
         )
         ctx = Context()
@@ -105,8 +105,8 @@ class TestCheckAlbumArtist:
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["A"]}),
-                Track("2", {"artist": ["B"], "albumartist": ["A"]}),
+                Track("1.flac", {"artist": ["A"], "albumartist": ["A"]}),
+                Track("2.flac", {"artist": ["B"], "albumartist": ["A"]}),
             ],
         )
         checker = CheckAlbumArtist(Context())

@@ -53,8 +53,8 @@ database="{TestCli.library / "albums.db"}"
     def test_check(self):
         result = self.run(["check", "--default", "album_tag"])
         assert result.exit_code == 0
-        assert "1 tracks missing album tag : foo/" in result.output
-        assert "2 tracks missing album tag : bar/" in result.output
+        assert '1 tracks missing album tag : "foo/"' in result.output
+        assert '2 tracks missing album tag : "bar/"' in result.output
 
     def test_ignore_check(self):
         result = self.run(["-p", "foo/", "ignore", "album_tag"])
@@ -64,7 +64,7 @@ database="{TestCli.library / "albums.db"}"
         result = self.run(["check", "--default", "album_tag"])
         assert result.exit_code == 0
         assert "foo/" not in result.output
-        assert "2 tracks missing album tag : bar/" in result.output
+        assert '2 tracks missing album tag : "bar/"' in result.output
 
     def test_notice_check(self):
         result = self.run(["notice", "--force", "album_tag"])
@@ -73,14 +73,14 @@ database="{TestCli.library / "albums.db"}"
 
         result = self.run(["check", "--default"])
         assert result.exit_code == 0
-        assert "1 tracks missing album tag : foo/" in result.output
-        assert "2 tracks missing album tag : bar/" in result.output
+        assert '1 tracks missing album tag : "foo/"' in result.output
+        assert '2 tracks missing album tag : "bar/"' in result.output
 
     def test_check_automatic_fix(self):
         result = self.run(["check", "--automatic-yes", "album_tag"])
         assert result.exit_code == 0
-        assert "1 tracks missing album tag : foo/" in result.output
-        assert "2 tracks missing album tag : bar/" in result.output
+        assert '1 tracks missing album tag : "foo/"' in result.output
+        assert '2 tracks missing album tag : "bar/"' in result.output
         assert "setting album on 1.flac" in result.output
 
         result = self.run(["check", "--automatic-yes", "album_tag"])

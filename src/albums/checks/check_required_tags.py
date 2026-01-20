@@ -1,12 +1,17 @@
+from ..library.metadata import album_is_basic_taggable
 from ..types import Album
 from .base_check import Check, CheckResult
 
 
+# deprecated, replace with checks for individual important tags
 class CheckRequiredTags(Check):
     name = "required_tags"
     default_config = {"enabled": True, "tags": ["artist", "title"]}
 
     def check(self, album: Album):
+        if not album_is_basic_taggable(album):
+            return None  # this check only makes sense for files with common tags
+
         required_tags = self.config.get("tags", CheckRequiredTags.default_config["tags"])
         missing_required_tags = {}
         for track in sorted(album.tracks, key=lambda track: track.filename):

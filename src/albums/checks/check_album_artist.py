@@ -1,11 +1,10 @@
 import logging
 
 from .. import app
-from ..library.metadata import set_basic_tag
+from ..library.metadata import album_is_basic_taggable, set_basic_tag
 from ..types import Album
 from .base_check import Check, CheckResult
 from .base_fixer import Fixer, FixerInteractivePrompt
-from .normalize_tags import normalized
 
 
 logger = logging.getLogger(__name__)
@@ -55,8 +54,12 @@ class CheckAlbumArtist(Check):
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
 
     def check(self, album: Album):
+        if not album_is_basic_taggable(album):
+            return None  # this check is currently not valid for files that don't use "album" tag
+
         remove_redundant = self.config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"])
         require_redundant = self.config.get("require_redundant", CheckAlbumArtist.default_config["require_redundant"])
+
         if remove_redundant and require_redundant:
             logger.warning("check_album_artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
             remove_redundant = False
@@ -65,17 +68,13 @@ class CheckAlbumArtist(Check):
         albumartists: dict[str, int] = {}
         artists: dict[str, int] = {}
 
-        # TODO: don't offer these fixes when some file types cannot have "albumartist" tags written
-        # Currently this check and fixes only work for FLAC and MP3+EasyID3
         for track in sorted(album.tracks, key=lambda track: track.filename):
-            tags = normalized(track.tags)
-
-            if "artist" in tags:
-                for artist in tags["artist"]:
+            if "artist" in track.tags:
+                for artist in track.tags["artist"]:
                     artists[artist] = artists.get(artist, 0) + 1
 
-            if "albumartist" in tags:
-                for albumartist in tags["albumartist"]:
+            if "albumartist" in track.tags:
+                for albumartist in track.tags["albumartist"]:
                     albumartists[albumartist] = albumartists.get(albumartist, 0) + 1
             else:
                 albumartists[""] = albumartists.get("", 0) + 1

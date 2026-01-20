@@ -6,7 +6,7 @@ from mutagen.mp3 import MP3
 from pathlib import Path
 import textwrap
 
-from ..types import Stream
+from ..types import Album, Stream
 
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,14 @@ def get_metadata(path: str) -> tuple[dict, Stream]:
         return (tags, stream_info)
 
     return None
+
+
+def album_is_basic_taggable(album: Album):
+    ok = True
+    for track in album.tracks:
+        if not supports_basic_tags(track.filename, track.stream.codec if track.stream else None):
+            ok = False
+    return ok
 
 
 def supports_basic_tags(filename: str, codec: str):
