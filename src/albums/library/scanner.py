@@ -38,7 +38,7 @@ def scan(ctx: app.Context, path_selector=None, reread=False):
 
         del unchecked_albums[path_str]
 
-        check_for_missing_metadata = True  # TODO add setting to disable for faster scan
+        check_for_missing_metadata = True  # TODO disable for faster scan, this shouldn't be needed at least after db transactions are explicit
         stored_album = albums.database.operations.load_album(ctx.db, album_id, check_for_missing_metadata)
         if (
             reread
@@ -61,7 +61,7 @@ def scan(ctx: app.Context, path_selector=None, reread=False):
             with ctx.console.status(f"finding folders in {ctx.library_root}", spinner="bouncingBar"):
                 paths = glob.iglob("**/", root_dir=ctx.library_root, recursive=True)
                 paths = list(paths)  # preload all paths so we can display scan progress
-                # TODO: guess total number of paths based on last scan, or something
+                # TODO: instead of preloading, guess total number of paths based on last scan, or something
 
         with Progress(console=ctx.console) as progress:
             scan_task = progress.add_task("Scanning", total=len(paths))

@@ -12,10 +12,6 @@ class CheckResult:
     message: str
     fixer: Fixer | None = None
     next: CheckResult | None = None
-    # TODO fixes that require user input
-
-    def autofix():
-        pass
 
 
 class Check:

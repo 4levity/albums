@@ -8,6 +8,7 @@ from .check_single_value_tags import CheckSingleValueTags
 
 _all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags]
 
+ALL_CHECK_NAMES = [check.name for check in _all_checks]
 DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _all_checks)
 
 

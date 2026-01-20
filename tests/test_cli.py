@@ -59,7 +59,7 @@ database="{TestCli.library / "albums.db"}"
     def test_ignore_check(self):
         result = self.run(["-p", "foo/", "ignore", "required_tags"])
         assert result.exit_code == 0
-        assert "album foo/ will ignore required_tags" in result.output
+        assert "album foo/ - ignore required_tags" in result.output
 
         result = self.run(["check", "--default"])
         assert result.exit_code == 0
