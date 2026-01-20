@@ -31,11 +31,11 @@ def list_albums(ctx: app.Context, json):
             else:
                 ctx.console.print(dumps(album.to_dict()), end="")  # otherwise compact
         else:
-            ctx.console.print(f"album: {album.path} ({humanize.naturalsize(tracks_size, binary=True)})")
+            ctx.console.print(f"{album.path} [bold]{humanize.naturalsize(tracks_size, binary=True)}", highlight=False)
         total_size += tracks_size
         count += 1
     if json:
-        ctx.console.print("]")  # TODO don't put a comma on the last
+        ctx.console.print("]")
     elif count > 0:
         ctx.console.print(f"total size: {humanize.naturalsize(total_size, binary=True)}")
     else:

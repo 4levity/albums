@@ -21,7 +21,7 @@ class CheckResult:
 class Check:
     # subclass must define static name and default_config
     name: str
-    default_config: str
+    default_config: dict
 
     # subclass may use these instance values
     ctx: app.Context

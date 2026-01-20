@@ -21,14 +21,14 @@ rich.traceback.install(show_locals=True)
 @click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
 @click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
 @click.option("--regex", "-r", is_flag=True, help="type of match for album paths")
-@click.option("--config-file", help="specify path to config.ini")
+@click.option("--config-file", help="specify path to config.toml")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
 @cli_context.pass_context  # order of these decorators matters
 @click.pass_context
 def albums(ctx: click.Context, app_context: app.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
     cli_context.setup(ctx, app_context, verbose, collections, paths, regex, config_file)
 
-    if app_context.config.get("options", {}).get("always_scan", "false") != "false":
+    if app_context.config.get("options", {}).get("always_scan", False):
         ctx.invoke(scanner.scan)
 
 

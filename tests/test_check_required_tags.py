@@ -20,7 +20,7 @@ class TestCheckRequiredTags:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {"required_tags": "artist|title"}
+        ctx.config["checks"] = {"required_tags": {"enabled": True, "tags": ["artist", "title"]}}
         checker = CheckRequiredTags(ctx)
 
         result = checker.check(album)

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @click.option("--reread", "-r", is_flag=True, help="reread tracks even if size/timestamp are unchanged")
 @cli_context.pass_context
 def scan(ctx: app.Context, reread: bool):
-    if str.lower(ctx.config.get("options", {}).get("always_scan", "false")) != "false":
+    if ctx.config.get("options", {}).get("always_scan", False):
         ctx.console.print("scan already done, not scanning again")
         return
 

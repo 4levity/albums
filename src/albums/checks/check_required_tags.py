@@ -4,10 +4,10 @@ from .base_check import Check, CheckResult
 
 class CheckRequiredTags(Check):
     name = "required_tags"
-    default_config = "artist|title"
+    default_config = {"enabled": True, "tags": ["artist", "title"]}
 
     def check(self, album: Album):
-        required_tags = self.config.split("|")
+        required_tags = self.config.get("tags", CheckRequiredTags.default_config["tags"])
         missing_required_tags = {}
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag in required_tags:

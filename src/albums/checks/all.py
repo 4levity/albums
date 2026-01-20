@@ -13,7 +13,7 @@ DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _al
 
 def run_enabled(ctx: app.Context):
     def enabled(check: type[Check]):
-        return str.lower(ctx.config.get("checks", {}).get(check.name, "false")) != "false"
+        return ctx.config.get("checks", {}).get(check.name, {}).get("enabled", False)
 
     checks = [check(ctx) for check in _all_checks if enabled(check)]
 

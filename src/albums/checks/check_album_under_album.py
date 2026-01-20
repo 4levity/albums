@@ -4,7 +4,7 @@ from .base_check import Check, CheckResult
 
 class CheckAlbumUnderAlbum(Check):
     name = "album_under_album"
-    default_config = "true"
+    default_config = {"enabled": True}
 
     def check(self, album: Album):
         path = album.path

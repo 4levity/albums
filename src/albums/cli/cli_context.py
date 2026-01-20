@@ -1,10 +1,10 @@
 import click
-import configparser
 import logging
 import os
 from pathlib import Path
 from platformdirs import PlatformDirs
 from rich.logging import RichHandler
+import tomllib
 
 import albums.database.connection
 from ..app import Context
@@ -16,44 +16,61 @@ logger = logging.getLogger(__name__)
 pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
-platform_dirs = PlatformDirs("albums", "4levity")
+PLATFORM_DIRS = PlatformDirs("albums", "4levity")
+DEFAULT_CONFIG_FILE_LOCATIONS = [
+    "config.toml",
+    str(PLATFORM_DIRS.user_config_path / "config.toml"),
+    str(PLATFORM_DIRS.site_config_path / "config.toml"),
+]
 
 
 def setup(ctx: click.Context, app_context: Context, verbose: int, collections: list[str], paths: list[str], regex: bool, config_file: str):
     setup_logging(ctx, verbose)
     logger.info("starting albums")
-    config = configparser.ConfigParser()
-    config_files = [str(platform_dirs.site_config_path / "config.ini"), str(platform_dirs.user_config_path / "config.ini"), "config.ini"]
-    if config_file:
-        specified_config_path = Path(config_file)
-        if specified_config_path.exists() and specified_config_path.is_file():
-            config_files.append(config_file)
-        else:
+
+    config_path = None
+
+    if config_file:  # use config file from command line, ignore others
+        config_path = Path(config_file)
+        if not config_path.exists() or not config_path.is_file():
             logger.error(f"specified configuration file does not exist: {config_file}")
             ctx.abort()
+    else:  # use most-local configuration file from standard locations
+        for f in DEFAULT_CONFIG_FILE_LOCATIONS:
+            candidate = Path(f)
+            if candidate.exists() and candidate.is_file():
+                config_path = candidate
+                break
 
-    configs_read = config.read(config_files)
-    if len(configs_read) > 0:
-        logger.info(f"read config from: {configs_read}")
+    if config_path:
+        with open(config_path, "rb") as file:
+            app_context.config = tomllib.load(file)
+        logger.info(f"read config from {config_path}")
     else:
-        logger.warning(f"no configuration file found! create one at one of these locations: {config_files}")
+        app_context.config = {}
+        # albums really, really wants you to create a config file
+        app_context.console.print(
+            "No configuration file found, using defaults. Create a config file at one of these locations:", DEFAULT_CONFIG_FILE_LOCATIONS
+        )
 
-    if config.has_option("locations", "database"):
-        album_db_file = config["locations"]["database"]
+    if "database" in app_context.config.get("locations", {}):
+        album_db_file = app_context.config["locations"]["database"]
     else:
-        album_db_file = str((platform_dirs.user_config_path / "albums.db"))
+        album_db_file = str((PLATFORM_DIRS.user_config_path / "albums.db"))
         logger.warning(f"no database file specified, using {album_db_file}")
-        os.makedirs(platform_dirs.user_config_dir, exist_ok=True)
+        os.makedirs(PLATFORM_DIRS.user_config_dir, exist_ok=True)
 
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))
-
     app_context.db = db
-    app_context.config = {section: dict(config.items(section)) for section in config.sections()}
-    app_context.library_root = Path(config.get("locations", "library", fallback=str(Path.home() / "Music")))
+
+    # filters applied to command
     app_context._collections = collections
     app_context._paths = paths
     app_context._regex = regex
+
+    # misc
+    app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
 
 
 def setup_logging(ctx: Context, verbose: int):

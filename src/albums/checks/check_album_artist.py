@@ -48,7 +48,7 @@ class AlbumArtistFixer(Fixer):
 
 class CheckAlbumArtist(Check):
     name = CHECK_NAME
-    default_config = "true"
+    default_config = {"enabled": True}
 
     def check(self, album: Album):
         albumartists: dict[str, int] = {}

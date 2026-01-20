@@ -15,7 +15,7 @@ DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
 def scan(ctx: app.Context, path_selector=None, reread=False):
-    supported_file_types = ctx.config.get("locations", {}).get("supported_file_types", "|".join(DEFAULT_SUPPORTED_FILE_TYPES)).split("|")
+    supported_file_types = ctx.config.get("locations", {}).get("supported_file_types", DEFAULT_SUPPORTED_FILE_TYPES)
     start_time = time.perf_counter()
 
     if path_selector is not None:

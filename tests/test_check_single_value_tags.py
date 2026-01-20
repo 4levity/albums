@@ -20,7 +20,7 @@ class TestCheckSingleValueTags:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {"single_value_tags": "title"}
+        ctx.config["checks"] = {"single_value_tags": {"enabled": True, "tags": ["title"]}}
         checker = CheckSingleValueTags(ctx)
 
         result = checker.check(album)

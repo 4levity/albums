@@ -4,10 +4,10 @@ from .base_check import Check, CheckResult
 
 class CheckSingleValueTags(Check):
     name = "single_value_tags"
-    default_config = "album|title|tracknumber|tracktotal"
+    default_config = {"enabled": True, "tags": ["album", "title", "tracknumber", "tracktotal"]}
 
     def check(self, album: Album):
-        single_value_tags = self.config.split("|")
+        single_value_tags = self.config.get("tags", CheckSingleValueTags.default_config["tags"])
         multiple_values = {}
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag in single_value_tags:

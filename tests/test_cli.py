@@ -16,22 +16,23 @@ albums = [
 ]
 
 
-# Integration tests with persistent database that is used between tests - must run all
+# Integration tests with persistent database that is used between tests - must run all (most) in order
+# TODO set up fixtures for these tests to run independently, or create explicit dependencies
 class TestCli:
     @pytest.fixture(scope="module", autouse=True)
     def setup_cli_tests(self):
         TestCli.runner = CliRunner()
         TestCli.library = create_library("cli", albums)
-        with open(TestCli.library / "config.ini", "w") as config_file:  # create a config.ini for cli invocation
+        with open(TestCli.library / "config.toml", "w") as config_file:  # create a config.toml for cli invocation
             config_file.write(
                 f"""[locations]
-library={TestCli.library}
-database={TestCli.library / "albums.db"}
+library="{TestCli.library}"
+database="{TestCli.library / "albums.db"}"
 """
             )
 
     def run(self, params: list[str]):
-        return TestCli.runner.invoke(entry_point.albums, ["--config-file", TestCli.library / "config.ini"] + params)
+        return TestCli.runner.invoke(entry_point.albums, ["--config-file", TestCli.library / "config.toml"] + params)
 
     def test_help(self):
         result = self.run(["--help"])
@@ -47,7 +48,7 @@ database={TestCli.library / "albums.db"}
     def test_list(self):
         result = self.run(["list"])
         assert result.exit_code == 0
-        assert re.search("album: bar/ \\(\\d+ Bytes\\).*total size: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
+        assert re.search("bar/ \\d+ Bytes.*total size: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_check(self):
         result = self.run(["check", "--default"])
