@@ -29,7 +29,7 @@ class Fixer:
     ctx: app.Context
     album: Album
     has_interactive: bool = False
-    has_automatic: bool = False
+    describe_automatic: str | None = None
 
     ### subclass overrides to define behavior
 
@@ -39,7 +39,7 @@ class Fixer:
     def fix_interactive(self, option: str | None) -> bool:
         raise NotImplementedError
 
-    def automatic(self) -> bool:
+    def fix_automatic(self) -> bool:
         raise NotImplementedError
 
     ### base functionality
@@ -79,7 +79,7 @@ class Fixer:
                     done = Confirm.ask("Do you want to move on to the next album?", default=True, console=self.ctx.console)
             else:
                 if options[option_index] == OPTION_FREE_TEXT:
-                    option = self.ctx.console.input("Enter value", type=str)
+                    option = self.ctx.console.input("Enter value: ")
                 elif options[option_index] == OPTION_NONE:
                     option = None
                 else:

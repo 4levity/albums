@@ -1,3 +1,4 @@
+from rich.prompt import Confirm
 import rich_click as click
 
 from .. import app
@@ -13,11 +14,12 @@ from . import cli_context
 )
 @click.option("--default", is_flag=True, help="use default settings for all checks")
 @click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes")
+@click.option("--automatic-yes", "-y", is_flag=True, help="perform automatic fixes without prompting")
 @click.option("--interactive", "-i", is_flag=True, help="prompt if interactive fix is available")
-@click.option("--prompt-always", "-P", is_flag=True, help="prompt even when only option is ignore")
+@click.option("--prompt-ignore", "-P", is_flag=True, help="prompt even when only option is ignore")
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
-def check(ctx: app.Context, default: bool, automatic: bool, interactive: bool, prompt_always: bool, check_names: list[str]):
+def check(ctx: app.Context, default: bool, automatic: bool, automatic_yes: bool, interactive: bool, prompt_ignore: bool, check_names: list[str]):
     if default or "checks" not in ctx.config:
         ctx.console.print("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
@@ -40,15 +42,17 @@ def check(ctx: app.Context, default: bool, automatic: bool, interactive: bool, p
         if check_result.fixer is not None:
             rescan = False
             fixer = check_result.fixer
-            if automatic and fixer.has_automatic:
-                if check_result.fixer.automatic():
+            if fixer.describe_automatic and (
+                automatic_yes or (automatic and Confirm.ask(f"do you want to {fixer.describe_automatic}?", default=True, console=ctx.console))
+            ):
+                if check_result.fixer.fix_automatic():
                     rescan = True
-            if prompt_always or (interactive and fixer.has_interactive):
+            if prompt_ignore or (interactive and fixer.has_interactive):
                 if check_result.fixer.interact():
                     rescan = True
             if rescan:
                 scanner.scan(ctx, lambda: [(album.path, album.album_id)], True)
-        elif prompt_always:
+        elif prompt_ignore:
             ctx.console.print("No fix available. ", end="")
             prompt_ignore_checks(ctx, album, check_result.name)
 

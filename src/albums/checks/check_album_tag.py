@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from .. import app
-from ..library.metadata import set_basic_tag
+from ..library.metadata import set_basic_tag, supports_basic_tags
 from ..types import Album
 from .base_check import Check, CheckResult
 from .base_fixer import Fixer, FixerInteractivePrompt
@@ -14,9 +14,20 @@ logger = logging.getLogger(__name__)
 CHECK_NAME = "album_tag"
 
 
+def album_is_taggable(album: Album):
+    ok = True
+    for track in album.tracks:
+        if not supports_basic_tags(track.filename, track.stream.codec):
+            ok = False
+    return ok
+
+
 class AlbumTagFixer(Fixer):
     def __init__(self, ctx: app.Context, album: Album, message: str, candidates: list[str]):
-        super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True)
+        # if there is only one suggestion, enable automatic fix
+        automatic = f'set album to "{candidates[0]}"' if len(candidates) == 1 else None
+
+        super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic)
         self.message = [f"*** Fixing album tag for {self.album.path}", f"ISSUE: {message}"]
         self.question = f"Which album name to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
         self.options = candidates
@@ -29,16 +40,26 @@ class AlbumTagFixer(Fixer):
         return FixerInteractivePrompt(self.message, self.question, self.options, table, option_none=False, option_free_text=True)
 
     def fix_interactive(self, album_value: str | None) -> bool:
-        for track in sorted(self.album.tracks, key=lambda track: track.filename):
+        changed = self._fix(album_value)
+        self.ctx.console.print("done.")
+        return changed
+
+    def fix_automatic(self) -> bool:
+        return self._fix(self.options[0])
+
+    def _fix(self, album_value: str | None) -> bool:
+        tracks = sorted(self.album.tracks, key=lambda track: track.filename)
+        changed = False
+        for track in tracks:
             if album_value is None:
                 raise ValueError("album tag may not be removed")
+
             file = self.ctx.library_root / self.album.path / track.filename
             if track.tags.get("album", []) != [album_value]:
                 self.ctx.console.print(f"setting album on {track.filename}")
                 set_basic_tag(file, "album", album_value)
-
-        self.ctx.console.print("done.")
-        return True
+                changed = True
+        return changed
 
 
 class CheckAlbumTag(Check):
@@ -59,17 +80,22 @@ class CheckAlbumTag(Check):
             else:
                 track_album_tags[""] += 1
 
-        candidates = sorted(filter(None, (album_tag for album_tag in track_album_tags.keys())), key=lambda a: track_album_tags[a], reverse=True)[:12]
-        if len(candidates) > 1:  # multiple conflicting album names
-            message = f"{len(candidates) - 1} conflicting album tag values"
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
+        album_tags = list(track_album_tags.keys())
+        candidates = sorted(filter(None, album_tags), key=lambda a: track_album_tags[a], reverse=True)[:12]
+        taggable = album_is_taggable(album)
+        taggable_message = "" if taggable else " (cannot tag file type)"
+        if len(candidates) > 1:  # multiple conflicting album names (not including folder name)
+            if folder_str not in candidates:
+                candidates.append(folder_str)
+            message = f"{len(candidates)} conflicting album tag values" + taggable_message
+            fixer = AlbumTagFixer(self.ctx, album, message, candidates) if taggable else None
             return CheckResult(self.name, message, fixer)
 
         if track_album_tags[""] > 0:  # tracks missing album tag
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            message = f"{track_album_tags['']} tracks missing album tag"
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
+            message = f"{track_album_tags['']} tracks missing album tag" + taggable_message
+            fixer = AlbumTagFixer(self.ctx, album, message, candidates) if taggable else None
             return CheckResult(self.name, message, fixer)
 
         return None
