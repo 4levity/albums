@@ -1,10 +1,18 @@
 import contextlib
 import shutil
 from mutagen.flac import FLAC
+from albums.app import Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.types import Album, Track
 from .create_library import create_album_in_library, create_library
+
+
+def ctx(db, library):
+    context = Context()
+    context.db = db
+    context.library_root = library
+    return context
 
 
 class TestScanner:
@@ -23,7 +31,7 @@ class TestScanner:
     def test_initial_scan(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_initial_scan", self.sample_library)
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
 
             assert len(result) == 2
@@ -49,14 +57,14 @@ class TestScanner:
     def test_scan_empty(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_empty", [])
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert result == []
 
     def test_scan_update(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_update", self.sample_library)
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
 
             assert result[0].tracks[0].filename == "1.flac"
@@ -66,21 +74,21 @@ class TestScanner:
             file["title"] = "new title"
             file.save()
 
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert result[0].tracks[0].tags["title"] == ["new title"]
 
     def test_scan_add(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_add", [self.sample_library[1]])
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
             assert result[0].path == "foo/"
 
             create_album_in_library(library, self.sample_library[0])
 
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
             assert result[0].path == "bar/"
@@ -88,14 +96,14 @@ class TestScanner:
     def test_scan_remove(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_remove", self.sample_library)
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
             assert result[0].path == "bar/"
 
             shutil.rmtree(library / "bar", ignore_errors=True)
 
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
             assert result[0].path == "foo/"
@@ -103,13 +111,13 @@ class TestScanner:
     def test_scan_filtered(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_filtered", self.sample_library)
-            scan(db, library)
+            scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
 
             delete_album = result[0].path
             shutil.rmtree(library / result[0].path, ignore_errors=True)
-            scan(db, library, {}, lambda: [(result[1].path, result[1].album_id)])
+            scan(ctx(db, library), lambda: [(result[1].path, result[1].album_id)])
 
             # deleted path was not scanned, so album is still there
             result = list(selector.select_albums(db, [], [], False))

@@ -20,4 +20,4 @@ def scan(ctx: app.Context, reread: bool):
     def filtered_path_selector():
         yield from ((album.path, album.album_id) for album in ctx.select_albums(False))
 
-    scanner.scan(ctx.db, ctx.library_root, ctx.config, filtered_path_selector if ctx.is_filtered() else None, reread)
+    scanner.scan(ctx, filtered_path_selector if ctx.is_filtered() else None, reread)

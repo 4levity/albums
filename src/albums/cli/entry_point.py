@@ -1,4 +1,5 @@
 import rich_click as click
+import rich.traceback
 
 from .. import app
 from ..library import scanner
@@ -11,6 +12,9 @@ from .check import check
 from .list_albums import list_albums
 from .scan import scan
 from .sync import sync
+
+
+rich.traceback.install(show_locals=True)
 
 
 @click.group()

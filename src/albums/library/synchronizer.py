@@ -1,20 +1,20 @@
-import click
 from collections.abc import Iterator
 import humanize
 import logging
 import os
 from pathlib import Path
+from rich.progress import Progress, TransferSpeedColumn
+from rich.prompt import Confirm
 import shutil
-import time
 
-from ..tools import progress_bar
+from .. import app
 from ..types import Album
 
 
 logger = logging.getLogger(__name__)
 
 
-def do_sync(albums: Iterator[Album], dest: Path, library_root: Path, delete, force):
+def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete, force):
     existing_dest_paths = set(dest.rglob("*"))
     skipped_tracks = 0
     total_size = 0
@@ -45,13 +45,13 @@ def do_sync(albums: Iterator[Album], dest: Path, library_root: Path, delete, for
                 copy_track = True
             if copy_track:
                 total_size += track.file_size
-                source_track_path = library_root / album.path / track.filename
+                source_track_path = ctx.library_root / album.path / track.filename
                 tracks.append((source_track_path, dest_track_path, track.file_size))
 
     if delete and len(existing_dest_paths) > 0:
-        click.echo(f"will delete {len(existing_dest_paths)} paths from {dest}")
-        if force or click.confirm("are you sure you want to delete?"):
-            click.echo("deleting files from destination")
+        ctx.console.print(f"[orange]will delete {len(existing_dest_paths)} paths from {dest}")
+        if force or Confirm.ask("are you sure you want to delete?", default=False, console=ctx.console):
+            ctx.console.print("[bold red]deleting files from destination")
             for delete_path in sorted(existing_dest_paths, reverse=True):
                 if delete_path.is_dir():
                     delete_path.rmdir()
@@ -59,26 +59,22 @@ def do_sync(albums: Iterator[Album], dest: Path, library_root: Path, delete, for
                     delete_path.unlink()
                 logger.info(f"deleting {delete_path}")
         else:
-            click.echo("skipped deleting files from destination")
+            ctx.console.print("skipped deleting files from destination")
 
     elif len(existing_dest_paths) > 0:
-        logger.warning(f"not deleting {len(existing_dest_paths)} paths from {dest}: {list(existing_dest_paths)[:2]}")
+        ctx.console.print(f"[bold green]not deleting {len(existing_dest_paths)} paths from {dest}, e.g. {list(existing_dest_paths)[:2]}")
 
     skipped = f"(skipped {skipped_tracks})" if skipped_tracks > 0 else ""
     if len(tracks) > 0:
-        click.echo(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {dest} {skipped}")
-        copied_bytes = 0
-        start_time = time.perf_counter()
+        ctx.console.print(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {dest} {skipped}")
 
-        def get_progress():
-            rate = copied_bytes / (max(0.001, time.perf_counter() - start_time))
-            mm, ss = divmod((total_size - copied_bytes) / rate, 60) if rate > 0 else (0, 0)
-            return f" Copied {humanize.naturalsize(copied_bytes)} ({humanize.naturalsize(rate)}/sec) {int(mm)}:{int(ss):02d} left "
+        with Progress(*Progress.get_default_columns(), TransferSpeedColumn()) as progress:
+            sync_task = progress.add_task("Progress", total=total_size)
+            for source_track_path, dest_track_path, size in sorted(tracks, key=lambda t: t[1]):
+                os.makedirs(os.path.dirname(dest_track_path), exist_ok=True)
+                logger.debug(f"copying to {dest_track_path}")
+                shutil.copy2(source_track_path, dest_track_path)
+                progress.update(sync_task, advance=size)
 
-        for source_track_path, dest_track_path, size in progress_bar(sorted(tracks, key=lambda t: t[1]), get_progress):
-            os.makedirs(os.path.dirname(dest_track_path), exist_ok=True)
-            logger.debug(f"copying to {dest_track_path}")
-            shutil.copy2(source_track_path, dest_track_path)
-            copied_bytes += size
     else:
-        click.echo(f"no tracks to copy {skipped}")
+        ctx.console.print(f"no tracks to copy {skipped}")

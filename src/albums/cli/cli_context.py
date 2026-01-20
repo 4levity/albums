@@ -3,17 +3,20 @@ import configparser
 import logging
 import os
 from pathlib import Path
+from platformdirs import PlatformDirs
 from rich.logging import RichHandler
 
 import albums.database.connection
 from ..app import Context
-from ..tools import platform_dirs
 
 
 logger = logging.getLogger(__name__)
 
 
 pass_context = click.make_pass_decorator(Context, ensure=True)
+
+
+platform_dirs = PlatformDirs("albums", "4levity")
 
 
 def setup(ctx: click.Context, app_context: Context, verbose: int, collections: list[str], paths: list[str], regex: bool, config_file: str):

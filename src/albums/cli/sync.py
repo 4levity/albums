@@ -18,6 +18,6 @@ logger = logging.getLogger(__name__)
 def sync(ctx: app.Context, destination, delete, force):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
-        synchronizer.do_sync(ctx.select_albums(False), dest, ctx.library_root, delete, force)
+        synchronizer.do_sync(ctx, ctx.select_albums(False), dest, delete, force)
     else:
         ctx.console.print("The sync destination must be a directory")

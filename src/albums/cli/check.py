@@ -31,7 +31,7 @@ def check(ctx: app.Context, default: bool, automatic: bool, interactive: bool, p
                 if check_result.fixer.interact():
                     rescan = True
             if rescan:
-                scanner.scan(ctx.db, ctx.library_root, ctx.config, lambda: [(album.path, album.album_id)], True)
+                scanner.scan(ctx, lambda: [(album.path, album.album_id)], True)
         elif prompt_always:
             ctx.console.print("No fix available. ", end="")
             prompt_ignore_checks(ctx, album, check_result.name)

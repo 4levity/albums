@@ -12,7 +12,7 @@ class TestCheckAlbumArtist:
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "multiple artists but no album artist (['A', 'B'] ...)"
+        assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
     def test_check_needs_albumartist_band__one(self):
         # some tracks with albumartist
@@ -25,7 +25,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "multiple artists but no album artist (['A', 'B'] ...)"
+        assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
     def test_check_needs_albumartist_band__fix(self, mocker):
         album = Album(
@@ -41,7 +41,7 @@ class TestCheckAlbumArtist:
         assert "multiple artists but no album artist" in str(prompt.message)
         assert prompt.option_free_text
         assert not prompt.option_none
-        assert prompt.options == ["A", "B", None, "Various Artists"]
+        assert prompt.options == ["B", "A", None, "Various Artists"]
         assert prompt.question.startswith("Which album artist to use for all 3 tracks")
         assert prompt.show_table
         assert len(prompt.show_table[1]) == 3  # tracks
@@ -64,7 +64,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "multiple album artist values (['Foo', 'Bar'] ...)"
+        assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
     def test_multiple_albumartist_band__same_artist(self):
         album = Album(
@@ -75,7 +75,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "multiple album artist values (['Foo', 'Bar'] ...)"
+        assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
     def test_multiple_albumartist_band__same_artist_2(self):
         album = Album(
@@ -86,7 +86,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "album artist is set inconsistently and probably not needed (['Foo'] ...)"
+        assert "ISSUE: album artist is set inconsistently and probably not needed (['Foo'] ...)" in result.message
 
     def test_albumartist_and_band(self):
         album = Album(
@@ -97,7 +97,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert result.message == "albumartist and band tags both present"
+        assert "ISSUE: albumartist and band tags both present" in result.message
 
     def test_albumartist__ok(self):
         album = Album(

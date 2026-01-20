@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
-from prettytable import PrettyTable
 from rich.prompt import Confirm
+from rich.table import Table
 from simple_term_menu import TerminalMenu
 
 import albums.database.operations
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class FixerInteractivePrompt:
     message: str | list[str]
     question: str
-    options: list[str]
+    options: list[str]  #
     option_none: bool = False
     option_free_text: bool = False
     show_table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
@@ -52,9 +52,10 @@ class Fixer:
         while not done:
             if prompt.show_table:
                 (headers, rows) = prompt.show_table
-                table = PrettyTable(headers, align="l")
-                table.add_rows(rows)
-                self.ctx.console.print(table.get_string(sortby=headers[0]))
+                table = Table(*headers)
+                for row in rows:
+                    table.add_row(*[str(v) for v in row])
+                self.ctx.console.print(table)
 
             for line in prompt.message if isinstance(prompt.message, list) else [prompt.message]:
                 self.ctx.console.print(line)
@@ -72,7 +73,7 @@ class Fixer:
             terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt.question)
             option_index = terminal_menu.show()
             if option_index is None:
-                done = self._prompt_ignore()
+                done = prompt_ignore_checks(self.ctx, self.album, self.check_name)
                 if not done:
                     done = Confirm.ask("Do you want to move on to the next album?", default=True, console=self.ctx.console)
             else:
@@ -94,7 +95,7 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
     ignore_checks = album.ignore_checks
     if check_name in ignore_checks:
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
-    elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console):
+    elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console, default=False):
         ignore_checks.append(check_name)
         albums.database.operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
         ctx.db.commit()

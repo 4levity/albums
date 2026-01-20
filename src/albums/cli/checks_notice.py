@@ -11,7 +11,7 @@ from . import cli_context
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
 def checks_notice(ctx: app.Context, force: bool, check_names: list[str]):
-    if not force and not ctx.is_filtered() and not Confirm(f"stop ignoring checks {check_names} for all albums?", console=ctx.console):
+    if not force and not ctx.is_filtered() and not Confirm.ask(f"stop ignoring checks {check_names} for all albums?", console=ctx.console):
         return
 
     for album in ctx.select_albums(False):
