@@ -14,9 +14,4 @@ def normalized(source_tags: dict[str, list[str]]):
         tags["tracknumber"] = [tracknumber]
         tags["tracktotal"] = [tracktotal]
 
-    # band -> albumartist
-    if "band" in tags:
-        tags.setdefault("artistalbum", []).extend(tags["band"])
-        del tags["band"]
-
     return tags

@@ -9,7 +9,7 @@ database = "/path/to/albums.db"
 
 # Extensions to scan (if the file type isn't supported by mutagen, there may be errors)
 # Defaults to these extensions:
-supported_file_types = [ ".flac", ".mp3", ".m4a", ".wma", ".ogg" ]
+supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 [settings]
 # Always rescan the media library before any operation (probably quite slow)
@@ -20,17 +20,20 @@ always_scan = false
 emabled = true
 
 [checks.album_artist]
-# if any tracks have different ARTIST tags, all tracks should have the same ALBUM ARTIST (or BAND) tag
-# if any track has an ALBUM ARTIST or BAND tag, all tracks must have this tag
-# if there is an ALBUM ARTIST tag there should not be a tag named BAND
+# if any tracks have different ARTIST tags, all tracks should have the same ALBUM ARTIST tag
+# if any track has an ALBUM ARTIST tag, all tracks must have this tag
 enabled = true
+# if all tracks have the same ARTIST tag value, an ALBUM ARTIST tag is not necessary
+remove_redundant = false
+# even when all tracks have the same ARTIST tag value, an ALBUM ARTIST tag should also be present
+require_redundant = false
 
 [checks.required_tags]
 # all tracks should have one or more values for each of these tags
 enabled = true
-tag_names = [ "artist", "title" ]
+tag_names = ["artist", "title"]
 
 [checks.single_value_tags]
 # if present, these tags should not have multiple values within the same track
 enabled = true
-tag_names = [ "album", "title", "tracknumber", "tracktotal" ]
+tag_names = ["album", "title", "tracknumber", "tracktotal"]

@@ -6,7 +6,7 @@ from albums.types import Album, Track
 
 
 class TestCheckAlbumArtist:
-    def test_check_needs_albumartist_band__all(self):
+    def test_check_needs_albumartist__all(self):
         album = Album(
             "",
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
@@ -14,7 +14,7 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
-    def test_check_needs_albumartist_band__one(self):
+    def test_check_needs_albumartist__one(self):
         # some tracks with albumartist
         album = Album(
             "",
@@ -27,7 +27,7 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
-    def test_check_needs_albumartist_band__fix(self, mocker):
+    def test_check_needs_albumartist__fix(self, mocker):
         album = Album(
             "album/",
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
@@ -54,7 +54,7 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tag.call_count == 3
         assert mock_set_basic_tag.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, "albumartist", "B")
 
-    def test_multiple_albumartist_band(self):
+    def test_multiple_albumartist(self):
         album = Album(
             "",
             [
@@ -66,7 +66,7 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
-    def test_multiple_albumartist_band__same_artist(self):
+    def test_multiple_albumartist__same_artist(self):
         album = Album(
             "",
             [
@@ -77,7 +77,7 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
-    def test_multiple_albumartist_band__same_artist_2(self):
+    def test_multiple_albumartist__same_artist_2(self):
         album = Album(
             "",
             [
@@ -88,16 +88,18 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "ISSUE: album artist is set inconsistently and probably not needed (['Foo'] ...)" in result.message
 
-    def test_albumartist_and_band(self):
+    def test_albumartist_redundant(self):
         album = Album(
             "",
             [
-                Track("1", {"artist": ["A"], "albumartist": ["Foo"], "band": "Foo"}),
-                Track("2", {"artist": ["B"], "albumartist": ["Foo"], "band": "Foo"}),
+                Track("1", {"artist": ["Foo"], "albumartist": ["Foo"]}),
+                Track("2", {"artist": ["Foo"], "albumartist": ["Foo"]}),
             ],
         )
-        result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: albumartist and band tags both present" in result.message
+        ctx = Context()
+        ctx.config["checks"] = {"album_artist": {"remove_redundant": True}}
+        result = CheckAlbumArtist(ctx).check(album)
+        assert "ISSUE: album artist is probably not needed: Foo" in result.message
 
     def test_albumartist__ok(self):
         album = Album(
