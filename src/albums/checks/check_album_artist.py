@@ -3,8 +3,8 @@ import logging
 from .. import app
 from ..library.metadata import set_basic_tag
 from ..types import Album
-from .base_check import Check, CheckResult, Fixer
-from .base_fixer import FixerInteractivePrompt
+from .base_check import Check, CheckResult
+from .base_fixer import Fixer, FixerInteractivePrompt
 from .normalize_tags import normalized
 
 
@@ -31,7 +31,7 @@ class AlbumArtistFixer(Fixer):
             ["filename", "album tag", "artist", "album artist"],
             [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks],
         )
-        return FixerInteractivePrompt(self.message, self.question, self.options, self.show_remove_option, self.show_free_text_option, table)
+        return FixerInteractivePrompt(self.message, self.question, self.options, table, self.show_remove_option, self.show_free_text_option)
 
     def fix_interactive(self, album_artist_value: str | None) -> bool:
         for track in sorted(self.album.tracks, key=lambda track: track.filename):
@@ -55,8 +55,8 @@ class CheckAlbumArtist(Check):
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
 
     def check(self, album: Album):
-        remove_redundant = self.config.get("remove_redundant", False)
-        require_redundant = self.config.get("require_redundant", False)
+        remove_redundant = self.config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"])
+        require_redundant = self.config.get("require_redundant", CheckAlbumArtist.default_config["require_redundant"])
         if remove_redundant and require_redundant:
             logger.warning("check_album_artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
             remove_redundant = False
@@ -95,59 +95,31 @@ class CheckAlbumArtist(Check):
         results: CheckResult | None = None
 
         if len(nonblank_albumartists) > 1:  # distinct album artist values, not including blank
-            fixer = AlbumArtistFixer(
-                self.ctx, album, f"multiple album artist values ({nonblank_albumartists[:2]} ...)", candidates_various, show_remove_option=False
-            )
-            results = CheckResult(self.name, fixer.message, fixer, results)
+            message = f"multiple album artist values ({nonblank_albumartists[:2]} ...)"
+            fixer = AlbumArtistFixer(self.ctx, album, message, candidates_various, show_remove_option=False)
+            results = CheckResult(self.name, message, fixer, results)
         elif len(albumartists.keys()) == 2:  # some set, some blank
             if redundant:
-                fixer = AlbumArtistFixer(
-                    self.ctx,
-                    album,
-                    f"album artist is set inconsistently and probably not needed ({nonblank_albumartists[:2]} ...)",
-                    candidates_various,
-                    show_remove_option=True,
-                )
+                message = f"album artist is set inconsistently and probably not needed ({nonblank_albumartists[:2]} ...)"
+                fixer = AlbumArtistFixer(self.ctx, album, message, candidates_various, show_remove_option=True)
             else:
-                fixer = AlbumArtistFixer(
-                    self.ctx,
-                    album,
-                    f"album artist is set on some tracks but not all ({nonblank_albumartists[:2]} ...)",
-                    candidates_various,
-                    show_remove_option=False,
-                )
-            results = CheckResult(self.name, fixer.message, fixer, results)
+                message = f"album artist is set on some tracks but not all ({nonblank_albumartists[:2]} ...)"
+                fixer = AlbumArtistFixer(self.ctx, album, message, candidates_various, show_remove_option=False)
+            results = CheckResult(self.name, message, fixer, results)
         # TODO: fixes for remove_redundant and require_redundant can be automatic if you're really sure
         elif redundant and remove_redundant and len(nonblank_albumartists) == 1 and list(artists.keys())[0] == nonblank_albumartists[0]:
-            fixer = AlbumArtistFixer(
-                self.ctx,
-                album,
-                f"album artist is probably not needed: {nonblank_albumartists[0]}",
-                nonblank_albumartists,
-                show_remove_option=True,
-                show_free_text_option=False,
-            )
-            results = CheckResult(self.name, fixer.message, fixer, results)
+            message = f"album artist is probably not needed: {nonblank_albumartists[0]}"
+            fixer = AlbumArtistFixer(self.ctx, album, message, nonblank_albumartists, show_remove_option=True, show_free_text_option=False)
+            results = CheckResult(self.name, message, fixer, results)
         elif require_redundant and redundant and len(nonblank_albumartists) == 0:
             artist = list(artists.keys())[0]
-            fixer = AlbumArtistFixer(
-                self.ctx,
-                album,
-                f"album artist would be redundant, but it can be set to {artist}",
-                [artist],
-                show_remove_option=True,
-                show_free_text_option=False,
-            )
-            results = CheckResult(self.name, fixer.message, fixer, results)
+            message = f"album artist would be redundant, but it can be set to {artist}"
+            fixer = AlbumArtistFixer(self.ctx, album, message, [artist], show_remove_option=True, show_free_text_option=False)
+            results = CheckResult(self.name, message, fixer, results)
 
         if len(artists) > 1 and (sum(albumartists.values()) - albumartists.get("", 0)) != len(album.tracks):
-            fixer = AlbumArtistFixer(
-                self.ctx,
-                album,
-                f"multiple artists but no album artist ({list(artists.keys())[:2]} ...)",
-                candidates_various,
-                show_remove_option=False,
-            )
-            results = CheckResult(self.name, fixer.message, fixer, results)
+            message = f"multiple artists but no album artist ({list(artists.keys())[:2]} ...)"
+            fixer = AlbumArtistFixer(self.ctx, album, message, candidates_various, show_remove_option=False)
+            results = CheckResult(self.name, message, fixer, results)
 
         return results

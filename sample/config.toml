@@ -15,6 +15,12 @@ supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 # Always rescan the media library before any operation (probably quite slow)
 always_scan = false
 
+[checks.album_tag]
+# if a track doesn't have an ALBUM tag
+enabled = true
+# ignore this check when the album folder matches one of these names
+ignore_folders = ["misc"]
+
 [checks.album_under_album]
 # if an album has another album in a subfolder
 emabled = true
@@ -36,4 +42,4 @@ tag_names = ["artist", "title"]
 [checks.single_value_tags]
 # if present, these tags should not have multiple values within the same track
 enabled = true
-tag_names = ["album", "title", "tracknumber", "tracktotal"]
+tag_names = ["title", "tracknumber", "tracktotal"]

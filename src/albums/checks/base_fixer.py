@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+from rich.markup import escape
 from rich.prompt import Confirm
 from rich.table import Table
 from simple_term_menu import TerminalMenu
@@ -16,10 +17,10 @@ logger = logging.getLogger(__name__)
 class FixerInteractivePrompt:
     message: str | list[str]
     question: str
-    options: list[str]  #
+    options: list[str]
+    show_table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
     option_none: bool = False
     option_free_text: bool = False
-    show_table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
 
 
 @dataclass
@@ -52,9 +53,9 @@ class Fixer:
         while not done:
             if prompt.show_table:
                 (headers, rows) = prompt.show_table
-                table = Table(*headers)
+                table = Table(*headers, highlight=False)
                 for row in rows:
-                    table.add_row(*[str(v) for v in row])
+                    table.add_row(*[escape(str(v)) for v in row])
                 self.ctx.console.print(table)
 
             for line in prompt.message if isinstance(prompt.message, list) else [prompt.message]:

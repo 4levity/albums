@@ -51,7 +51,7 @@ database="{TestCli.library / "albums.db"}"
         assert re.search("bar/ \\d+ Bytes.*total size: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_check(self):
-        result = self.run(["check", "--default"])
+        result = self.run(["check", "--default", "required_tags"])
         assert result.exit_code == 0
         assert "tracks missing required tags {'artist': 1} : foo/" in result.output
         assert "tracks missing required tags {'artist': 2} : bar/" in result.output
@@ -61,7 +61,7 @@ database="{TestCli.library / "albums.db"}"
         assert result.exit_code == 0
         assert "album foo/ - ignore required_tags" in result.output
 
-        result = self.run(["check", "--default"])
+        result = self.run(["check", "--default", "required_tags"])
         assert result.exit_code == 0
         assert "foo/" not in result.output
         assert "tracks missing required tags {'artist': 2} : bar/" in result.output

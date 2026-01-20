@@ -1,12 +1,13 @@
 from .. import app
 from .base_check import Check
-from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_album_artist import CheckAlbumArtist
+from .check_album_tag import CheckAlbumTag
+from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_required_tags import CheckRequiredTags
 from .check_single_value_tags import CheckSingleValueTags
 
 
-_all_checks: list[type[Check]] = [CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags]
+_all_checks: list[type[Check]] = [CheckAlbumTag, CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags]
 
 ALL_CHECK_NAMES = [check.name for check in _all_checks]
 DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _all_checks)

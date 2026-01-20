@@ -4,7 +4,7 @@ from .base_check import Check, CheckResult
 
 class CheckSingleValueTags(Check):
     name = "single_value_tags"
-    default_config = {"enabled": True, "tags": ["album", "title", "tracknumber", "tracktotal"]}
+    default_config = {"enabled": True, "tags": ["title", "tracknumber", "tracktotal"]}
 
     def check(self, album: Album):
         single_value_tags = self.config.get("tags", CheckSingleValueTags.default_config["tags"])

@@ -12,7 +12,7 @@ class TestCheckAlbumArtist:
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
+        assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
     def test_check_needs_albumartist__one(self):
         # some tracks with albumartist
@@ -25,7 +25,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: multiple artists but no album artist (['A', 'B'] ...)" in result.message
+        assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
     def test_check_needs_albumartist__fix(self, mocker):
         album = Album(
@@ -64,7 +64,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
+        assert "multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
     def test_multiple_albumartist__same_artist(self):
         album = Album(
@@ -75,7 +75,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: multiple album artist values (['Foo', 'Bar'] ...)" in result.message
+        assert "multiple album artist values (['Foo', 'Bar'] ...)" in result.message
 
     def test_multiple_albumartist__same_artist_2(self):
         album = Album(
@@ -86,7 +86,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "ISSUE: album artist is set inconsistently and probably not needed (['Foo'] ...)" in result.message
+        assert "album artist is set inconsistently and probably not needed (['Foo'] ...)" in result.message
 
     def test_albumartist_redundant(self):
         album = Album(
@@ -99,7 +99,7 @@ class TestCheckAlbumArtist:
         ctx = Context()
         ctx.config["checks"] = {"album_artist": {"remove_redundant": True}}
         result = CheckAlbumArtist(ctx).check(album)
-        assert "ISSUE: album artist is probably not needed: Foo" in result.message
+        assert "album artist is probably not needed: Foo" in result.message
 
     def test_albumartist__ok(self):
         album = Album(

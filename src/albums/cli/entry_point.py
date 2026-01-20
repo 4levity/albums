@@ -20,7 +20,7 @@ rich.traceback.install(show_locals=True)
 @click.group()
 @click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
 @click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
-@click.option("--regex", "-r", is_flag=True, help="type of match for album paths")
+@click.option("--regex", "-r", is_flag=True, help="enable regex match for album paths (default is exact path)")
 @click.option("--config-file", help="specify path to config.toml")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
 @cli_context.pass_context  # order of these decorators matters
