@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+import subprocess
 from rich.markup import escape
 from rich.prompt import Confirm
 from rich.table import Table
@@ -30,6 +31,7 @@ class Fixer:
     album: Album
     has_interactive: bool = False
     describe_automatic: str | None = None
+    enable_tagger: bool = False
 
     ### subclass overrides to define behavior
 
@@ -50,6 +52,7 @@ class Fixer:
 
         prompt = self.get_interactive_prompt()
         done = False  # allow user to start over if canceled by accident or not confirmed
+        maybe_changed = False
         while not done:
             if prompt.show_table:
                 (headers, rows) = prompt.show_table
@@ -61,20 +64,34 @@ class Fixer:
             for line in prompt.message if isinstance(prompt.message, list) else [prompt.message]:
                 self.ctx.console.print(line)
 
+            tagger = self.ctx.config.get("options", {}).get("tagger", None)
             OPTION_NONE = ">> None / Remove <<"
             OPTION_FREE_TEXT = ">> Enter Text <<"
-            options = [opt for opt in prompt.options if opt not in [OPTION_NONE, OPTION_FREE_TEXT]]
-            if prompt.option_none or prompt.option_free_text:
+            OPTION_RUN_TAGGER = f">> Edit tags with {tagger} <<"
+            options = [opt for opt in prompt.options if opt not in [OPTION_NONE, OPTION_FREE_TEXT, OPTION_RUN_TAGGER]]
+            if prompt.option_none or prompt.option_free_text or tagger:
                 if len(options) > 0:
                     options.append(None)
                 if prompt.option_free_text:
                     options.append(OPTION_FREE_TEXT)
                 if prompt.option_none:
                     options.append(OPTION_NONE)
+                if tagger and self.enable_tagger:
+                    options.append(OPTION_RUN_TAGGER)
+
             terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt.question)
             option_index = terminal_menu.show()
-            if option_index is None:
-                done = prompt_ignore_checks(self.ctx, self.album, self.check_name)
+            if option_index is None or options[option_index] == OPTION_RUN_TAGGER:
+                if option_index is None:
+                    done = prompt_ignore_checks(self.ctx, self.album, self.check_name)
+                else:
+                    done = False
+                    path_str = str(self.ctx.library_root / self.album.path)
+                    self.ctx.console.print(f"Launching {tagger} {path_str}")
+                    subprocess.Popen([tagger, path_str])
+                    self.ctx.console.print(f"If you make changes to this album in {tagger} [italic]after[/italic] continuing, scan again later.")
+                    maybe_changed = True
+
                 if not done:
                     done = Confirm.ask("Do you want to move on to the next album?", default=True, console=self.ctx.console)
             else:
@@ -89,7 +106,7 @@ class Fixer:
                 if done:
                     return self.fix_interactive(option)
 
-        return False
+        return maybe_changed
 
 
 def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):

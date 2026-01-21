@@ -19,7 +19,7 @@ class AlbumTagFixer(Fixer):
         # if there is only one suggestion, enable automatic fix
         automatic = f'set album to "{candidates[0]}"' if len(candidates) == 1 else None
 
-        super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic)
+        super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic, True)
         self.message = [f"*** Fixing album tag for {self.album.path}", f"ISSUE: {message}"]
         self.question = f"Which album name to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
         self.options = candidates

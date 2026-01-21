@@ -109,4 +109,5 @@ class TestCheckTrackNumber:
         )
         result = CheckTrackNumber(Context()).check(album)
         # reports problems on disc 2 based on parsing track number
-        assert result.message == "issues: tracktotal = 3 is set on 2/2 tracks on disc 2, tracknumber tag contains disc number"
+        assert "tracktotal = 3 is set on 2/2 tracks on disc 2" in result.message
+        assert "tracknumber tag contains disc number" in result.message

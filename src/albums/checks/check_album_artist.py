@@ -18,7 +18,7 @@ class AlbumArtistFixer(Fixer):
     def __init__(
         self, ctx: app.Context, album: Album, message: str, candidates: list[str], show_remove_option: bool, show_free_text_option: bool = True
     ):
-        super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True)
+        super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True, enable_tagger=True)
         self.message = [f"*** Fixing album artist for {self.album.path}", f"ISSUE: {message}"]
         self.question = f"Which album artist to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
         self.options = candidates
