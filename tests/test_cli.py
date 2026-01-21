@@ -51,30 +51,43 @@ database="{TestCli.library / "albums.db"}"
         assert re.search("bar/ \\d+ Bytes.*total size: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_check(self):
-        result = self.run(["check", "--default", "required_tags"])
+        result = self.run(["check", "--default", "album_tag"])
         assert result.exit_code == 0
-        assert "tracks missing required tags {'artist': 1} : foo/" in result.output
-        assert "tracks missing required tags {'artist': 2} : bar/" in result.output
+        assert "1 tracks missing album tag : foo/" in result.output
+        assert "2 tracks missing album tag : bar/" in result.output
 
     def test_ignore_check(self):
-        result = self.run(["-p", "foo/", "ignore", "required_tags"])
+        result = self.run(["-p", "foo/", "ignore", "album_tag"])
         assert result.exit_code == 0
-        assert "album foo/ - ignore required_tags" in result.output
+        assert "album foo/ - ignore album_tag" in result.output
 
-        result = self.run(["check", "--default", "required_tags"])
+        result = self.run(["check", "--default", "album_tag"])
         assert result.exit_code == 0
         assert "foo/" not in result.output
-        assert "tracks missing required tags {'artist': 2} : bar/" in result.output
+        assert "2 tracks missing album tag : bar/" in result.output
 
     def test_notice_check(self):
-        result = self.run(["notice", "--force", "required_tags"])
+        result = self.run(["notice", "--force", "album_tag"])
         assert result.exit_code == 0
-        assert "album foo/ will stop ignoring required_tags" in result.output
+        assert "album foo/ will stop ignoring album_tag" in result.output
 
         result = self.run(["check", "--default"])
         assert result.exit_code == 0
-        assert "tracks missing required tags {'artist': 1} : foo/" in result.output
-        assert "tracks missing required tags {'artist': 2} : bar/" in result.output
+        assert "1 tracks missing album tag : foo/" in result.output
+        assert "2 tracks missing album tag : bar/" in result.output
+
+    def test_check_automatic_fix(self):
+        result = self.run(["check", "--automatic-yes", "album_tag"])
+        assert result.exit_code == 0
+        assert "1 tracks missing album tag : foo/" in result.output
+        assert "2 tracks missing album tag : bar/" in result.output
+        assert "setting album on 1.flac" in result.output
+
+        result = self.run(["check", "--automatic-yes", "album_tag"])
+        assert result.exit_code == 0
+        assert "foo/" not in result.output
+        assert "bar/" not in result.output
+        assert "1.flac" not in result.output
 
     def test_list_json(self):
         result = self.run(["list", "--json"])
@@ -132,3 +145,7 @@ database="{TestCli.library / "albums.db"}"
         assert (dest / "bar").is_dir()
         assert (dest / "bar" / "1.flac").is_file()
         assert not (dest / "other").exists()
+
+        result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
+        assert result.exit_code == 0
+        assert "no tracks to copy (skipped 2)" in result.output

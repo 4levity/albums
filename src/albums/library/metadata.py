@@ -24,7 +24,7 @@ def get_metadata(path: str) -> tuple[dict, Stream]:
 
 
 def supports_basic_tags(filename: str, codec: str):
-    return str.lower(Path(filename).suffix) in [".flac", ".mp3", ".ogg"] and codec in ["FLAC", "MP3", "Ogg Vorbis"]
+    return str.lower(Path(filename).suffix) in [".flac", ".mp3", ".ogg"] and (codec is None or codec in ["FLAC", "MP3", "Ogg Vorbis"])
 
 
 def set_basic_tag(path: str, name: str, value: str | None):

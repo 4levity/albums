@@ -2,7 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.check_album_tag import CheckAlbumTag
-from albums.types import Album, Stream, Track
+from albums.types import Album, Track
 
 
 class TestCheckAlbumTag:
@@ -10,9 +10,9 @@ class TestCheckAlbumTag:
         album = Album(
             "Foo/",
             [
-                Track("1.flac", stream=Stream(codec="FLAC")),
-                Track("2.flac", stream=Stream(codec="FLAC")),
-                Track("3.flac", stream=Stream(codec="FLAC")),
+                Track("1.flac"),
+                Track("2.flac"),
+                Track("3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
@@ -22,22 +22,39 @@ class TestCheckAlbumTag:
         album = Album(
             "",
             [
-                Track("1.flac", {"album": ["A"]}, stream=Stream(codec="FLAC")),
-                Track("2.flac", {"album": ["A"]}, stream=Stream(codec="FLAC")),
-                Track("3.flac", stream=Stream(codec="FLAC")),
+                Track("1.flac", {"album": ["A"]}),
+                Track("2.flac", {"album": ["A"]}),
+                Track("3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
         assert "1 tracks missing album tag" in result.message
+
+    def test_check_needs_album__conflicting(self):
+        album = Album(
+            "A/",
+            [
+                Track("1.flac", {"album": ["A"]}),
+                Track("2.flac", {"album": ["A"]}),
+                Track("3.flac", {"album": ["B"]}),
+            ],
+        )
+        result = CheckAlbumTag(Context()).check(album)
+        assert "2 conflicting album tag values" in result.message
+        assert result.fixer is not None
+        assert result.fixer.has_interactive
+        prompt = result.fixer.get_interactive_prompt()
+        assert "2 conflicting album tag values" in str(prompt.message)
+        assert prompt.options == ["A", "B"]
 
     def test_check_needs_album__fix_auto(self, mocker):
         # album can be guessed from folder, no conflicting tags
         album = Album(
             "Foo/",
             [
-                Track("1.flac", stream=Stream(codec="FLAC")),
-                Track("2.flac", stream=Stream(codec="FLAC")),
-                Track("3.flac", stream=Stream(codec="FLAC")),
+                Track("1.flac"),
+                Track("2.flac"),
+                Track("3.flac"),
             ],
         )
         ctx = Context()
@@ -57,9 +74,9 @@ class TestCheckAlbumTag:
         album = Album(
             "Foo/",
             [
-                Track("1.flac", {"album": ["Bar"]}, stream=Stream(codec="FLAC")),
-                Track("2.flac", {"album": ["Bar"]}, stream=Stream(codec="FLAC")),
-                Track("3.flac", stream=Stream(codec="FLAC")),
+                Track("1.flac", {"album": ["Bar"]}),
+                Track("2.flac", {"album": ["Bar"]}),
+                Track("3.flac"),
             ],
         )
         ctx = Context()
@@ -78,3 +95,9 @@ class TestCheckAlbumTag:
         assert prompt.show_table
         assert len(prompt.show_table[1]) == 3  # tracks
         assert len(prompt.show_table[0]) == len(prompt.show_table[1][0])  # headers
+
+        mock_set_basic_tag = mocker.patch("albums.checks.check_album_tag.set_basic_tag")
+        fix_result = result.fixer.fix_interactive("Bar")
+        assert fix_result
+        assert mock_set_basic_tag.call_count == 1
+        assert mock_set_basic_tag.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, "album", "Bar")

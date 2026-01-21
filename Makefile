@@ -17,7 +17,7 @@ fix: ## Automatically fix lint/format
 	$(POETRY) run ruff check . --fix
 
 test: ## Run all tests
-	$(POETRY) run pytest --cov=src/albums
+	$(POETRY) run pytest --cov=src/albums --cov-report=html
 
 integration-test: ## Run CLI tests only
 	$(POETRY) run pytest tests/test_cli.py

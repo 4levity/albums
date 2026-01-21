@@ -26,6 +26,7 @@ class TestScanner:
             ],
         ),
         Album("foo/", [Track("1.mp3", {"title": "1"}), Track("2.mp3", {"title": "2"})]),
+        Album("baz/", [Track("1.wma", {"title": "one"}), Track("2.wma", {"title": "two"})]),
     ]
 
     def test_initial_scan(self):
@@ -34,9 +35,9 @@ class TestScanner:
             scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
 
-            assert len(result) == 2
+            assert len(result) == 3
             assert result[0].path == "bar/"
-            assert result[1].path == "foo/"  # albums were scanned in lexical order
+            assert result[2].path == "foo/"  # albums were scanned in lexical order
 
             # flac files
             assert len(result[0].tracks) == 3
@@ -46,13 +47,21 @@ class TestScanner:
             assert result[0].tracks[0].stream.codec == "FLAC"
             assert result[0].tracks[0].tags["title"] == ["1"]
 
-            # mp3 files
+            # wma files
             assert len(result[1].tracks) == 2
             assert result[1].tracks[0].file_size > 1
             assert result[1].tracks[0].modify_timestamp > 1
             assert result[1].tracks[0].stream.sample_rate == 44100
-            assert result[1].tracks[0].stream.codec == "MP3"
-            assert result[1].tracks[0].tags["title"] == ["1"]
+            assert result[1].tracks[0].stream.codec == "Windows Media Audio V8"
+            assert result[1].tracks[0].tags["title"] == ["one"]
+
+            # mp3 files
+            assert len(result[1].tracks) == 2
+            assert result[2].tracks[0].file_size > 1
+            assert result[2].tracks[0].modify_timestamp > 1
+            assert result[2].tracks[0].stream.sample_rate == 44100
+            assert result[2].tracks[0].stream.codec == "MP3"
+            assert result[2].tracks[0].tags["title"] == ["1"]
 
     def test_scan_empty(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
@@ -98,22 +107,22 @@ class TestScanner:
             library = create_library("test_scan_remove", self.sample_library)
             scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
-            assert len(result) == 2
+            assert len(result) == 3
             assert result[0].path == "bar/"
 
             shutil.rmtree(library / "bar", ignore_errors=True)
 
             scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
-            assert len(result) == 1
-            assert result[0].path == "foo/"
+            assert len(result) == 2
+            assert result[0].path == "baz/"
 
     def test_scan_filtered(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_filtered", self.sample_library)
             scan(ctx(db, library))
             result = list(selector.select_albums(db, [], [], False))
-            assert len(result) == 2
+            assert len(result) == 3
 
             delete_album = result[0].path
             shutil.rmtree(library / result[0].path, ignore_errors=True)
@@ -121,5 +130,5 @@ class TestScanner:
 
             # deleted path was not scanned, so album is still there
             result = list(selector.select_albums(db, [], [], False))
-            assert len(result) == 2
+            assert len(result) == 3
             assert result[0].path == delete_album

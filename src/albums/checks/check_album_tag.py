@@ -17,7 +17,7 @@ CHECK_NAME = "album_tag"
 def album_is_taggable(album: Album):
     ok = True
     for track in album.tracks:
-        if not supports_basic_tags(track.filename, track.stream.codec):
+        if not supports_basic_tags(track.filename, track.stream.codec if track.stream else None):
             ok = False
     return ok
 
