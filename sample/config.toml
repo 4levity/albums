@@ -28,18 +28,27 @@ emabled = true
 [checks.album_artist]
 # if any tracks have different ARTIST tags, all tracks should have the same ALBUM ARTIST tag
 # if any track has an ALBUM ARTIST tag, all tracks must have this tag
+#
+# Explanation: Many media players need the ALBUM ARTIST "albumartist" tag when the ARTIST is not
+# the same on all tracks. Albums assumes a folder is an album so this should be consistent.
 enabled = true
-# if all tracks have the same ARTIST tag value, an ALBUM ARTIST tag is not necessary
+# if all tracks have the same ARTIST tag value, an ALBUM ARTIST tag might not be necessary:
 remove_redundant = false
-# even when all tracks have the same ARTIST tag value, an ALBUM ARTIST tag should also be present
+# even when all tracks have the same ARTIST tag value, an ALBUM ARTIST tag should also be present:
 require_redundant = false
 
 [checks.required_tags]
 # all tracks should have one or more values for each of these tags
+#
+# Require certain tags for files that support common tag names.
 enabled = true
 tag_names = ["artist", "title"]
 
 [checks.single_value_tags]
-# if present, these tags should not have multiple values within the same track
+# if present, the specified tags should not have multiple values within the same track
+#
+# Explanation: It is valid for a track to have more than one title, but multiple-value tags may
+# have unpredictable results in some media players. This check allows choosing one title or
+# concatenating multiple titles into a single value.
 enabled = true
 tag_names = ["title", "tracknumber", "tracktotal"]
