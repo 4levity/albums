@@ -52,3 +52,23 @@ tag_names = ["artist", "title"]
 # concatenating multiple titles into a single value.
 enabled = true
 tag_names = ["title", "tracknumber", "tracktotal"]
+
+[checks.track_number]
+# checks for issues with tracknumber, tracktotal, discnumber and disctotal tags
+#
+# if disc number and total are combined in the "discnumber" tag, they will be treated separately
+# if any track has disc number, all should have a single decimal discnumber tag
+# if any track has disc total, all should have a single decimal disctotal tag
+# if present, the disctotal should be the number of distinct discnumber values
+# discnumbers should start at 1 and if there are are 3 discs they should be 1, 2, 3
+#
+# if tracknumber/total are combined in the "tracknumber" tag, they will be treated separately
+# all tracks should have a single decimal tracknumber tag
+# for each discnumber, tracks should start at 1 and if there are 3 tracks they should be 1, 2, 3
+# for each discnumber, if any track has tracktotal, all should have a single decimal tracktotal
+# for each discnumber, if present, the tracktotal should be the number of tracks on that disc
+enabled = true
+# in folders with these names, these checks are always skipped
+ignore_folders = ["misc"]
+# if an album (folder) has a disc number, there should be more than one disc
+warn_disc_per_folder = false

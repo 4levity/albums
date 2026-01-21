@@ -9,7 +9,7 @@ from . import cli_context
 
 
 @click.command("list", help="print matching albums")
-@click.option("--json", is_flag=True, help="output all stored details in JSON")
+@click.option("--json", "-j", is_flag=True, help="output all stored details in JSON")
 @cli_context.pass_context
 def list_albums(ctx: app.Context, json):
     total_size = 0

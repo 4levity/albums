@@ -14,4 +14,11 @@ def normalized(source_tags: dict[str, list[str]]):
         tags["tracknumber"] = [tracknumber]
         tags["tracktotal"] = [tracktotal]
 
+    # extract disctotal from ID3 tags
+    discnumber_tag = tags.get("discnumber", [None])[0]
+    if discnumber_tag and "disctotal" not in tags and str.count(discnumber_tag, "/") == 1:
+        [discnumber, disctotal] = discnumber_tag.split("/")
+        tags["discnumber"] = [discnumber]
+        tags["disctotal"] = [disctotal]
+
     return tags
