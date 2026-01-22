@@ -11,6 +11,7 @@ from .checks_notice import checks_notice
 from .check import check
 from .list_albums import list_albums
 from .scan import scan
+from .sql import sql
 from .sync import sync
 
 
@@ -39,4 +40,5 @@ albums.add_command(checks_ignore)
 albums.add_command(checks_notice)
 albums.add_command(list_albums)
 albums.add_command(scan)
+albums.add_command(sql)
 albums.add_command(sync)

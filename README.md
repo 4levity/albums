@@ -8,6 +8,7 @@ This tool can:
  - Mark a subset of a music library to be copied to a digital audio player or phone
  - Sync selected albums with destination (add, update if changed, remove)
  - Report on problems with tags and organization in the library
+ - Fix some tag problems automatically (with user confirmation)
 
 See section below for future ideas.
 
@@ -29,7 +30,7 @@ The tool needs to know where your albums are. The default is the operating-syste
 music directory. To use a library in another location, create a `config.toml` file with `[library]`
 section specifying where to find albums. See example in [sample/config.toml](sample/config.toml).
 
-In the `[checks]` sections, you may configure options to check albums for issues with tags.
+In the `[checks]` sections, you may configure options to check albums for issues.
 
 ## Usage
 
@@ -40,7 +41,7 @@ run `albums scan` again.
 List albums matching a path with a command like `albums --regex --path "Freezepop" list`.
 
 Albums can be in sets called "collections". You could create a collection named "DAP" for albums to
-sync to a Digital Audio Player: `albums -r -p "Freezepop" add DAP`
+sync to a Digital Audio Player: `albums -rp "Freezepop" add DAP`
 
 List the albums in the collection with `albums --collection DAP list`
 
@@ -60,18 +61,17 @@ via SQL. Install [GraphViz](https://graphviz.org/) and `make diagram` for a refe
 
 ## Future
 
+ - Scan, check and fix albums outside of library + add them to library
  - Select albums based on track tags, recently accessed, other
  - Support additional file formats
    - Comprehend standard tags (artist, album, title. track)
    - For MP4 (M4A, M4B, M4P) and other files
    - Add other extensions to scan
- - Interactively fix metadata problems detected by checks with suggested solutions
  - More checks/fixes:
    - album art (missing, not in desired format, not the same on all tracks, too small/too large)
-   - track numbering issues (missing tag, missing track, filename doesn't start with track number, etc)
    - missing track-total
    - low bitrate or suboptimal codec
    - not all tracks encoded the same (file type or kbps target)
-   - track filename doesn't match title
+   - track filename doesn't match title, doesn't include track/disc number
    - album folder doesn't match album name  
    - parent folder doesn't match artist if using artist/album
