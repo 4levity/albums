@@ -11,7 +11,6 @@ class CheckResult:
     name: str
     message: str
     fixer: Fixer | None = None
-    next: CheckResult | None = None
 
 
 class Check:

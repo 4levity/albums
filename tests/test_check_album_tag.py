@@ -63,11 +63,11 @@ class TestCheckAlbumTag:
         assert result.fixer is not None
         assert result.fixer.describe_automatic == 'set album to "Foo"'
 
-        mock_set_basic_tag = mocker.patch("albums.checks.check_album_tag.set_basic_tag")
+        mock_set_basic_tags = mocker.patch("albums.checks.check_album_tag.set_basic_tags")
         fix_result = result.fixer.fix_automatic()
         assert fix_result
-        assert mock_set_basic_tag.call_count == 3
-        assert mock_set_basic_tag.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, "album", "Foo")
+        assert mock_set_basic_tags.call_count == 3
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Foo")])
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
@@ -96,8 +96,8 @@ class TestCheckAlbumTag:
         assert len(prompt.show_table[1]) == 3  # tracks
         assert len(prompt.show_table[0]) == len(prompt.show_table[1][0])  # headers
 
-        mock_set_basic_tag = mocker.patch("albums.checks.check_album_tag.set_basic_tag")
+        mock_set_basic_tags = mocker.patch("albums.checks.check_album_tag.set_basic_tags")
         fix_result = result.fixer.fix_interactive("Bar")
         assert fix_result
-        assert mock_set_basic_tag.call_count == 1
-        assert mock_set_basic_tag.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, "album", "Bar")
+        assert mock_set_basic_tags.call_count == 1
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Bar")])

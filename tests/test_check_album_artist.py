@@ -25,7 +25,7 @@ class TestCheckAlbumArtist:
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
+        assert result.message == "album artist is set on some tracks but not all (['Foo'] ...)"
 
     def test_check_needs_albumartist__fix(self, mocker):
         album = Album(
@@ -48,11 +48,11 @@ class TestCheckAlbumArtist:
         assert len(prompt.show_table[0]) == len(prompt.show_table[1][0])  # headers
 
         # we select "B" and it is fixed
-        mock_set_basic_tag = mocker.patch("albums.checks.check_album_artist.set_basic_tag")
+        mock_set_basic_tags = mocker.patch("albums.checks.check_album_artist.set_basic_tags")
         fix_result = result.fixer.fix_interactive("B")
         assert fix_result
-        assert mock_set_basic_tag.call_count == 3
-        assert mock_set_basic_tag.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, "albumartist", "B")
+        assert mock_set_basic_tags.call_count == 3
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("albumartist", "B")])
 
     def test_multiple_albumartist(self):
         album = Album(

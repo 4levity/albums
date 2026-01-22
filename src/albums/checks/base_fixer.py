@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 import subprocess
 from rich.markup import escape
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FixerInteractivePrompt:
     message: str | list[str]
-    question: str
-    options: list[str]
+    question: str = "Select an option"
+    options: list[str] = field(default_factory=list)
     show_table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
     option_none: bool = False
     option_free_text: bool = False
@@ -65,9 +65,10 @@ class Fixer:
                 self.ctx.console.print(line)
 
             tagger = self.ctx.config.get("options", {}).get("tagger", None)
-            OPTION_NONE = ">> None / Remove <<"
-            OPTION_FREE_TEXT = ">> Enter Text <<"
-            OPTION_RUN_TAGGER = f">> Edit tags with {tagger} <<"
+            OPTION_NONE = ">> None / Remove"
+            OPTION_FREE_TEXT = ">> Enter Text"
+            OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
+            OPTION_DO_NOTHING = ">> Do nothing (automatic solution not available)"  # same as pressing esc
             options = [opt for opt in prompt.options if opt not in [OPTION_NONE, OPTION_FREE_TEXT, OPTION_RUN_TAGGER]]
             if prompt.option_none or prompt.option_free_text or tagger:
                 if len(options) > 0:
@@ -78,11 +79,14 @@ class Fixer:
                     options.append(OPTION_NONE)
                 if tagger and self.enable_tagger:
                     options.append(OPTION_RUN_TAGGER)
+            if len(options) == 0:
+                options.append(OPTION_DO_NOTHING)
 
             terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt.question)
             option_index = terminal_menu.show()
-            if option_index is None or options[option_index] == OPTION_RUN_TAGGER:
-                if option_index is None:
+            do_nothing = option_index is None or options[option_index] == OPTION_DO_NOTHING
+            if do_nothing or options[option_index] == OPTION_RUN_TAGGER:
+                if do_nothing:
                     done = prompt_ignore_checks(self.ctx, self.album, self.check_name)
                 else:
                     done = False
@@ -94,6 +98,7 @@ class Fixer:
 
                 if not done:
                     done = Confirm.ask("Do you want to move on to the next album?", default=True, console=self.ctx.console)
+                # TODO if not done and maybe_changed we should probably rescan, and if there are updates, run the check again
             else:
                 if options[option_index] == OPTION_FREE_TEXT:
                     option = self.ctx.console.input("Enter value: ")

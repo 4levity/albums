@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from .. import app
-from ..library.metadata import album_is_basic_taggable, set_basic_tag
+from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
 from .base_check import Check, CheckResult
 from .base_fixer import Fixer, FixerInteractivePrompt
@@ -40,16 +40,15 @@ class AlbumTagFixer(Fixer):
         return self._fix(self.options[0])
 
     def _fix(self, album_value: str | None) -> bool:
-        tracks = sorted(self.album.tracks, key=lambda track: track.filename)
         changed = False
-        for track in tracks:
+        for track in self.album.tracks:
             if album_value is None:
                 raise ValueError("album tag may not be removed")
 
             file = self.ctx.library_root / self.album.path / track.filename
             if track.tags.get("album", []) != [album_value]:
                 self.ctx.console.print(f"setting album on {track.filename}")
-                set_basic_tag(file, "album", album_value)
+                set_basic_tags(file, [("album", album_value)])
                 changed = True
         return changed
 
