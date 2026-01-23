@@ -21,7 +21,7 @@ test: ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 
 tests/fixtures/libraries/cli/albums.db: src/albums/database/schema.py
-	$(POETRY) run pytest tests/test_cli.py::TestCli::test_help
+	$(POETRY) run pytest tests/test_cli.py::TestCli::test_run
 
 docs/database_diagram.png: tests/fixtures/libraries/cli/albums.db
 	$(POETRY) run eralchemy -i sqlite:///tests/fixtures/libraries/cli/albums.db -o docs/database_diagram.png
@@ -42,6 +42,7 @@ clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf dist
 	rm -rf tests/fixtures/libraries
+	rm -rf docs/database_diagram.png
 	rm -rf docs/site
 	rm -rf docs/.cache
 	rm -rf htmlcov
