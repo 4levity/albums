@@ -43,7 +43,7 @@ database="{TestCli.library / "albums.db"}"
         result = self.run(["scan"])
         assert result.exit_code == 0
         assert result.output.startswith("creating database")
-        assert "scanned /home/ivan/src/albums/tests/libraries/cli" in result.output
+        assert "folders in /home/ivan/src/albums/tests/libraries/cli" in result.output
 
     def test_list(self):
         result = self.run(["list"])

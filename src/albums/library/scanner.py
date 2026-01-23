@@ -1,124 +1,77 @@
 import glob
 import logging
-from pathlib import Path
 from rich.progress import Progress
 import time
 
 import albums.database.operations
 from .. import app
-from ..types import Album, Track
-from .metadata import get_metadata
+from .folder import scan_folder, AlbumScanResult
 
 
 logger = logging.getLogger(__name__)
+
+
 DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
 def scan(ctx: app.Context, path_selector=None, reread=False):
-    supported_file_types = ctx.config.get("locations", {}).get("supported_file_types", DEFAULT_SUPPORTED_FILE_TYPES)
+    suffixes = [str.lower(suffix) for suffix in ctx.config.get("locations", {}).get("supported_file_types", DEFAULT_SUPPORTED_FILE_TYPES)]
     start_time = time.perf_counter()
 
     if path_selector is not None:
         stored_paths = path_selector()
     else:
         stored_paths = ctx.db.execute("SELECT path, album_id FROM album;")
-    unchecked_albums = dict(((path, album_id) for (path, album_id) in stored_paths))
+    unprocessed_albums = dict(((path, album_id) for (path, album_id) in stored_paths))
 
-    def scan_album(path_str: str, track_files: list[Path]):
-        nonlocal unchecked_albums
-        found_tracks = [Track.from_path(file) for file in sorted(track_files)]
-        album_id = unchecked_albums.get(path_str)
-
-        if album_id is None:
-            _load_track_metadata(ctx.library_root, path_str, found_tracks)
-            album = Album(path_str, found_tracks)
-            logger.debug(f"add album {album}")
-            albums.database.operations.add(ctx.db, album)
-            return "added"
-
-        del unchecked_albums[path_str]
-
-        check_for_missing_metadata = True  # TODO disable for faster scan, this shouldn't be needed at least after db transactions are explicit
-        stored_album = albums.database.operations.load_album(ctx.db, album_id, check_for_missing_metadata)
-        if (
-            reread
-            or _track_files_modified(stored_album.tracks, found_tracks)
-            or (check_for_missing_metadata and _missing_metadata(stored_album.tracks))
-        ):
-            _load_track_metadata(ctx.library_root, path_str, found_tracks)
-            albums.database.operations.update_tracks(ctx.db, album_id, found_tracks)
-            return "updated"
-
-        return "unchanged"
-
-    stats = {"scanned": 0, "added": 0, "removed": 0, "updated": 0, "unchanged": 0}
-    track_suffixes = [str.lower(suffix) for suffix in supported_file_types]
-    skipped_file_types = {}
+    scanned = 0
+    scan_results: dict[AlbumScanResult, int] = dict([(r.name, 0) for r in AlbumScanResult])
     try:
-        if path_selector is not None:
-            paths = list(unchecked_albums.keys())
-        else:
-            with ctx.console.status(f"finding folders in {ctx.library_root}", spinner="bouncingBar"):
-                paths = glob.iglob("**/", root_dir=ctx.library_root, recursive=True)
-                paths = list(paths)  # preload all paths so we can display scan progress
-                # TODO: instead of preloading, guess total number of paths based on last scan, or something
+        with ctx.console.status(f"finding folders in {'specified folders' if path_selector else ctx.library_root}", spinner="bouncingBar"):
+            if path_selector is not None:
+                paths = list(path for path in unprocessed_albums.keys() if (ctx.library_root / path).exists())
+            else:
+                # TODO: instead of preloading, use iglob and guess total number of paths based on last scan, or something
+                paths = glob.glob("**/", root_dir=ctx.library_root, recursive=True)
 
         with Progress(console=ctx.console) as progress:
             scan_task = progress.add_task("Scanning", total=len(paths))
             for path_str in paths:
-                album_path = ctx.library_root / path_str
-                logger.debug(f"checking {album_path}")
-                track_paths = []
-                for entry in album_path.iterdir() if path_selector is None or album_path.exists() else []:
-                    suffix = str.lower(entry.suffix)
-                    if entry.is_file():
-                        if suffix in track_suffixes:
-                            track_paths.append(entry)
-                        else:
-                            skipped_file_types[suffix] = skipped_file_types.get(suffix, 0) + 1
-                stats["scanned"] += 1
-                if len(track_paths) > 0:
-                    result = scan_album(path_str, track_paths)
-                    stats[result] += 1
+                album_id = unprocessed_albums.get(path_str)
+                if album_id is None:
+                    stored_album = None
+                else:
+                    del unprocessed_albums[path_str]
+                    stored_album = albums.database.operations.load_album(ctx.db, album_id, True)
+
+                (album, result) = scan_folder(ctx.library_root, path_str, suffixes, stored_album, reread)
+                scan_results[result.name] += 1
+
+                if result == AlbumScanResult.UNCHANGED:
+                    logger.debug(f"no changes detected for album {album.path}")
+                elif result == AlbumScanResult.NEW:
+                    logger.debug(f"add album {album.path}")
+                    albums.database.operations.add(ctx.db, album)
+                elif result == AlbumScanResult.UPDATED:
+                    logger.debug(f"update track info for album {album.path}")
+                    albums.database.operations.update_tracks(ctx.db, album_id, album.tracks)
+                elif result == AlbumScanResult.NO_TRACKS:
+                    if album_id:
+                        logger.info(f"remove album {stored_album.album_id} {stored_album.path}")
+                        albums.database.operations.remove(ctx.db, album_id)
+                else:
+                    raise ValueError(f"invalid AlbumScanResult {result} for path {path_str}")
+                scanned += 1
                 progress.update(scan_task, advance=1)
 
         # remaining entries in unchecked_albums are apparently no longer in the library
-        for path, album_id in unchecked_albums.items():
+        for path, album_id in unprocessed_albums.items():
             logger.info(f"remove album {album_id} {path}")
             albums.database.operations.remove(ctx.db, album_id)
-            stats["removed"] += 1
+
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
     ctx.db.commit()
-    ctx.console.print(f"scanned {ctx.library_root} in {int(time.perf_counter() - start_time)}s. Stats = {stats}")
-    logger.info(f"did not scan files with these extensions: {skipped_file_types}")
-
-
-def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track]):
-    for track in tracks:
-        path = library_root / album_path / track.filename
-        (tags, stream_info) = get_metadata(path)
-        track.tags = tags
-        if tags is None:
-            logger.warning(f"couldn't read tags for {path}")
-        track.stream = stream_info
-        if stream_info is None:
-            logger.warning(f"couldn't read stream info for {path}")
-
-
-def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):
-    if len(tracks1) != len(tracks2):
-        return True
-    for index, t1 in enumerate(tracks1):
-        t2 = tracks2[index]
-        if t1.filename != t2.filename or t1.file_size != t2.file_size or t1.modify_timestamp != t2.modify_timestamp:
-            return True
-    return False
-
-
-def _missing_metadata(tracks: list[Track]):
-    for track in tracks:
-        if not track.tags or not track.stream:
-            return True
-    return False
+    ctx.console.print(f"scanned {scanned} folders in {ctx.library_root} in {int(time.perf_counter() - start_time)}s.")
+    ctx.console.print(scan_results)
