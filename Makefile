@@ -11,6 +11,7 @@ install: ## Install project dependencies
 lint: ## Lint with ruff
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
+	$(POETRY) run pymarkdown scan *.md docs/*.md
 
 fix: ## Automatically fix lint/format
 	$(POETRY) run ruff format

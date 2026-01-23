@@ -1,77 +1,61 @@
 # albums
 
-A command line tool to help manage a library of music albums. Focuses on albums, not individual
-tracks. To this tool, an album is a folder with music files whhich are either by the same artist
-or a compilation.
+`albums` is a rich interactive command line tool to help manage a library of
+music. Works with FLAC/ID3/etc tags, but acts primarily on "albums" rather than
+individual files.
 
-This tool can:
- - Mark a subset of a music library to be copied to a digital audio player or phone
- - Sync selected albums with destination (add, update if changed, remove)
- - Report on problems with tags and organization in the library
- - Fix some tag problems automatically (with user confirmation)
+> Most of the features of this tool require each album (soundtrack, mixtape,
+> etc) to be in a folder.
 
-See section below for future ideas.
+## Overview
 
-`albums` makes a database of album folders, tracks and metadata. It can quickly rescan the library
-to detect changes and update the database. Other operations can be performed without rescanning the
-library every time. In addition to data gathered from the scan, albums may be tagged with arbitrary
-"collection" names.
+`albums` scans the library and creates a database. It supports tagging albums
+with "collections," for example to make a list of albums to sync to a digital
+audio player. It can also do the sync. There are checks and interactive fixes
+for metadata related issues like track numbering (sequence, totals, disc
+numbers), album-artist tags, etc.
 
 ## Requirements
 
-With [poetry](https://python-poetry.org/) installed, run `make` to install Python dependencies,
-lint, test and build. Or use `poetry` directly.
+Developed/tested only on Linux. Probably works on MacOS. Interactive fixer may
+not work on Windows.
 
-Developed/tested only on Linux. Probably works on MacOS. Interactive fixer may not work on Windows.
+With [poetry](https://python-poetry.org/) installed and Python 3.14 available,
+run `make` to install Python dependencies, lint, test and build. Or use `poetry`
+directly.
 
 ## Configuration
 
-The tool needs to know where your albums are. The default is the operating-system defined user's
-music directory. To use a library in another location, create a `config.toml` file with `[library]`
-section specifying where to find albums. See example in [sample/config.toml](sample/config.toml).
-
-In the `[checks]` sections, you may configure options to check albums for issues.
+The tool needs to know where your albums are. The default is the
+operating-system defined user's music directory. To use a library in another
+location, create a `config.toml` file. See example in
+[sample/config.toml](sample/config.toml).
 
 ## Usage
 
-Scan the library and create the album database with `albums scan`. The first time it runs, it will
-read metadata from every track which may take a long time. When the library is changed, you should
-run `albums scan` again.
+`albums scan` will create the database and scan the library. The first time it
+runs, it will read metadata from every track which may take a long time.
+Subsequent scans should take seconds.
 
-List albums matching a path with a command like `albums --regex --path "Freezepop" list`.
+Most commands can be filtered. For example, to list albums matching a path
+(relative path within the library), run
+`albums --regex --path "Freezepop" list`.
 
-Albums can be in sets called "collections". You could create a collection named "DAP" for albums to
-sync to a Digital Audio Player: `albums -rp "Freezepop" add DAP`
+Albums can be in sets called "collections". Create a collection named "DAP" for
+albums to sync to a Digital Audio Player and add some albums to it with
+`albums -rp "Freezepop" add DAP` and list them with
+`albums --collection DAP list`
 
-List the albums in the collection with `albums --collection DAP list`
+Get a list of issues albums knows about with `albums check`. Adjust the settings
+in `config.toml` to control how checks work. Run `albums check --interactive` to
+interactively fix some problems.
 
-Sync selected albums to an SD card. Add, update or remove files under destination folder:
-`albums -c DAP sync /mnt/sdcard --delete`
-
-Check and report on possible issues with `albums check` and filter with `-c` or `-p` options.
+Sync selected albums to an SD card. Update and **remove** files in destination
+folder (dangerous!): `albums -c DAP sync /mnt/sdcard --delete`
 
 Try `albums --help` or e.g. `albums sync --help`.
 
 ## Developing
 
-Refer to [Makefile](./Makefile).
-
-After scanning a collection, use the `sqlite3` command line tool with the database file to explore
-via SQL. Install [GraphViz](https://graphviz.org/) and `make diagram` for a reference diagram. 
-
-## Future
-
- - Scan, check and fix albums outside of library + add them to library
- - Select albums based on track tags, recently accessed, other
- - Support additional file formats
-   - Comprehend standard tags (artist, album, title. track)
-   - For MP4 (M4A, M4B, M4P) and other files
-   - Add other extensions to scan
- - More checks/fixes:
-   - album art (missing, not in desired format, not the same on all tracks, too small/too large)
-   - missing track-total
-   - low bitrate or suboptimal codec
-   - not all tracks encoded the same (file type or kbps target)
-   - track filename doesn't match title, doesn't include track/disc number
-   - album folder doesn't match album name  
-   - parent folder doesn't match artist if using artist/album
+Refer to [Makefile](./Makefile). Install [GraphViz](https://graphviz.org/) and
+`make diagram` for a database reference diagram. See [docs](./docs).

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from platformdirs import PlatformDirs
 from rich.logging import RichHandler
+from rich.prompt import Confirm
 import tomllib
 
 import albums.database.connection
@@ -47,18 +48,22 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
             app_context.config = tomllib.load(file)
         logger.info(f"read config from {config_path}")
     else:
+        logger.info("no configuration file, using default configuration")
         app_context.config = {}
-        # albums really, really wants you to create a config file
-        app_context.console.print(
-            "No configuration file found, using defaults. Create a config file at one of these locations:", DEFAULT_CONFIG_FILE_LOCATIONS
-        )
 
     if "database" in app_context.config.get("locations", {}):
         album_db_file = app_context.config["locations"]["database"]
     else:
-        album_db_file = str((PLATFORM_DIRS.user_config_path / "albums.db"))
-        logger.warning(f"no database file specified, using {album_db_file}")
-        os.makedirs(PLATFORM_DIRS.user_config_dir, exist_ok=True)
+        album_db_file = str(PLATFORM_DIRS.user_config_path / "albums.db")
+        logger.info(f"using default database location {album_db_file}")
+
+    album_db_path = Path(album_db_file)
+    if not album_db_path.exists():
+        if app_context.console.is_interactive and not Confirm.ask(
+            f"No database file found at {album_db_file}. Create this file?", console=app_context.console
+        ):
+            raise SystemExit(1)
+        os.makedirs(album_db_path.parent, exist_ok=True)
 
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))

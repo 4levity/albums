@@ -18,7 +18,9 @@ from .sync import sync
 rich.traceback.install(show_locals=True)
 
 
-@click.group()
+@click.group(
+    epilog=f"if --config-file is not specified, albums will search for config files in these locations: {', '.join(cli_context.DEFAULT_CONFIG_FILE_LOCATIONS)}"
+)
 @click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
 @click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
 @click.option("--regex", "-r", is_flag=True, help="enable regex match for album paths (default is exact path)")
