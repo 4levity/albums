@@ -149,3 +149,15 @@ database="{TestCli.library / "albums.db"}"
         result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
         assert result.exit_code == 0
         assert "no tracks to copy (skipped 2)" in result.output
+
+    def test_sql(self):
+        result = self.run(["sql", "--json", "SELECT * from album;"])
+        assert result.exit_code == 0
+        result = json.loads(result.output)
+        assert result == [[1, "bar/"], [2, "foo/"]]
+
+        result = self.run(["sql", "SELECT * from album;"])
+        assert result.exit_code == 0
+        assert "foo/" in result.output
+        assert "album_id" in result.output  # shows column names
+        assert "path" in result.output
