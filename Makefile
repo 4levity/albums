@@ -23,7 +23,7 @@ integration-test: ## Run CLI tests only
 	$(POETRY) run pytest tests/test_cli.py
 
 diagram: integration-test ## Create database diagram
-	$(POETRY) run eralchemy -i sqlite:///tests/libraries/cli/albums.db -o docs/database_diagram.png
+	$(POETRY) run eralchemy -i sqlite:///tests/fixtures/libraries/cli/albums.db -o docs/database_diagram.png
 
 package: ## Create distribution
 	$(POETRY) build
@@ -31,7 +31,7 @@ package: ## Create distribution
 clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf dist
-	rm -rf tests/libraries
+	rm -rf tests/fixtures/libraries
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
 	rm -f docs/database_diagram.png

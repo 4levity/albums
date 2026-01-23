@@ -7,7 +7,7 @@ import shutil
 
 from albums.cli import entry_point
 from albums.types import Album, Track
-from .create_library import create_library, test_data_path
+from .fixtures.create_library import create_library, test_data_path
 
 
 albums = [
@@ -43,7 +43,7 @@ database="{TestCli.library / "albums.db"}"
         result = self.run(["scan"])
         assert result.exit_code == 0
         assert result.output.startswith("creating database")
-        assert "folders in /home/ivan/src/albums/tests/libraries/cli" in result.output
+        assert "folders in /home/ivan/src/albums/tests/fixtures/libraries/cli" in result.output
 
     def test_list(self):
         result = self.run(["list"])

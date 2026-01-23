@@ -1,11 +1,12 @@
 import contextlib
-import shutil
 from mutagen.flac import FLAC
+import shutil
+
 from albums.app import Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.types import Album, Track
-from .create_library import create_album_in_library, create_library
+from .fixtures.create_library import create_album_in_library, create_library
 
 
 def ctx(db, library):
