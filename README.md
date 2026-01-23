@@ -1,15 +1,17 @@
 # albums
 
-> A rich text-based interactive command line tool to help manage a library of
-> music, clean up metadata tags and file organization, and sync parts of the
-> library to digital audio players
+A rich text-based interactive command line tool to help manage a library of
+music, clean up metadata tags and file organization, and sync parts of the
+library to digital audio players
+
+> -> [See Full Documentation Here](https://4levity.github.io/albums/) <-
+
+## Overview
 
 `albums` works with media files and tags, but primarily acts on "albums" rather
 than individual files.
 
-## Overview
-
-`albums` scans the library and creates a database. It supports adding albums to
+It scans the media library and creates a database. It supports adding albums to
 "collections," for example to make a list of albums to sync to a digital audio
 player. It can also perform the sync. There are automated checks and interactive
 fixes for metadata related issues sich as track numbering (sequence, totals,
@@ -32,4 +34,5 @@ Interactive features might not work on Windows.
 
 ## Getting Started
 
-Builds not yet distributed. See [docs/developing.md](./docs/developing.md).
+Builds not yet distributed. See
+[docs/developing.md](https://4levity.github.io/albums/developing/).
