@@ -102,9 +102,7 @@ class TrackTotalFixer(Fixer):
             (
                 int(track.tags["tracktotal"][0])
                 for track in self.tracks
-                if track.tags.get("discnumber", [""])[0].isdecimal()
-                and (discnumber is None or int(track.tags["discnumber"][0]) == discnumber)
-                and track.tags.get("tracktotal", [""])[0].isdecimal()
+                if track.tags.get("tracktotal", [""])[0].isdecimal() and (discnumber is None or int(track.tags["discnumber"][0]) == discnumber)
             ),
             default=None,
         )
@@ -274,11 +272,9 @@ class CheckTrackNumber(Check):
         # if there are issues with discnumbers, that's the next thing to fix
         if len(tag_issues) > 0:
             message = f"discnumber/disctotal problems: {', '.join(tag_issues)}"
-            return CheckResult(
-                self.name, message, DiscNumberFixer(self.ctx, album, message, option_remove_disctotal, option_remove_discnumber_and_disctotal)
-            )
+            fixer = DiscNumberFixer(self.ctx, album, message, option_remove_disctotal, option_remove_discnumber_and_disctotal)
+            return CheckResult(self.name, message, fixer)
 
-        fixer: Fixer | None = None
         for discnumber in tracks_by_disc.keys():
             tracks = tracks_by_disc[discnumber]
             expect_track_total = len(tracks)  # will set to tracktotal if higher value is seen
@@ -306,29 +302,30 @@ class CheckTrackNumber(Check):
                         if tracktotal > expect_track_total:
                             expect_track_total = tracktotal
 
+            if len(tag_issues) > 0:  # if there are non-numeric/multiple value tags, stop here
+                message = f"tracknumber/tracktotal tag problems: {', '.join(tag_issues)}"
+                return CheckResult(self.name, message, TrackNumberFixer(self.ctx, album, message))
+
             on_disc_message = f" on disc {discnumber}" if discnumber else ""
             if len(track_total_counts) > 1:
-                tag_issues.add(f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}")
+                message = f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}"
+                return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
             elif len(track_total_counts) == 1:
                 (tracktotal, tracktotal_tagged_count) = list(track_total_counts.items())[0]
                 if tracktotal == len(tracks) and tracktotal != tracktotal_tagged_count:
                     # tracktotal matches the number of tracks, but not all tracks have tracktotal tag
                     message = f"tracktotal = {tracktotal} is not set on all tracks{on_disc_message}"
-                    if len(tag_issues) == 0:
-                        # TODO smarter decision about which fixer to present when there are multiple issues
-                        fixer = TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message)
-                    tag_issues.add(message)
-                elif tracktotal_tagged_count != len(tracks):
+                    return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
+                elif tracktotal_tagged_count != len(tracks):  # hmm needs clarification
                     message = f"tracktotal = {tracktotal} is set on {tracktotal_tagged_count}/{len(tracks)} tracks{on_disc_message}"
-                    tag_issues.add(message)
-                    # TODO detect when album is probably missing tracks based on tracktotal
-                    fixer = TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message)
+                    return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
 
             expected_track_numbers = set(range(1, expect_track_total + 1))
             missing_track_numbers = expected_track_numbers - actual_track_numbers
             unexpected_track_numbers = actual_track_numbers - expected_track_numbers
             if actual_track_numbers > expected_track_numbers:
-                tag_issues.add(f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}")
+                message = f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}"
+                return CheckResult(self.name, message, TrackNumberFixer(self.ctx, album, message))
             elif len(missing_track_numbers) > 1:
                 if len(actual_track_numbers) == len(tracks):
                     # if all tracks have a unique track number tag but there are missing track numbers, maybe album is incomplete
@@ -337,11 +334,7 @@ class CheckTrackNumber(Check):
                     # TODO: report specifically on duplicate track numbers
                     message = f"missing track numbers or tags{on_disc_message} {missing_track_numbers}"
                     fixer = TrackNumberFixer(self.ctx, album, message)
-                tag_issues.add(message)
-
-        if len(tag_issues) > 0:
-            message = f"issues: {', '.join(tag_issues)}"
-            return CheckResult(self.name, message, fixer)
+                return CheckResult(self.name, message, fixer)
 
         return None
 

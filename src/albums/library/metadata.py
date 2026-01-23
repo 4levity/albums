@@ -11,7 +11,7 @@ from ..types import Album, Stream
 
 
 logger = logging.getLogger(__name__)
-BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber"}
+BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
 
 
 @dataclass

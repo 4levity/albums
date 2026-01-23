@@ -139,8 +139,30 @@ class TestCheckTrackNumber:
         fixer = result.fixer
         assert fixer
         prompt = fixer.get_interactive_prompt()
-        assert prompt.options == [">> Set tracktotal to number of tracks: 3"]
+        assert prompt.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 3"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
         assert fixer.fix_interactive(prompt.options[0])
         assert mock_set_basic_tags.call_count == 1
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("tracktotal", "3")])
+
+    def test_check_track_total_missing_and_disagrees(self, mocker):
+        album = Album(
+            "Foo/",
+            [
+                Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["4"]}),
+                Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["4"]}),
+                Track("3.flac", {"tracknumber": ["3"]}),
+            ],
+        )
+        ctx = Context()
+        ctx.library_root = Path("/path/to/library")
+        result = CheckTrackNumber(ctx).check(album)
+        assert "tracktotal = 4 is set on 2/3 tracks" in result.message
+        fixer = result.fixer
+        assert fixer
+        prompt = fixer.get_interactive_prompt()
+        assert prompt.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 4"]
+        mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
+        assert fixer.fix_interactive(prompt.options[0])
+        assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("tracktotal", "3")])
