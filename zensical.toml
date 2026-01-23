@@ -7,9 +7,6 @@
 # ============================================================================
 
 [project]
-
-docs_dir = "."
-
 # The site_name is shown in the page header and the browser window title
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_name

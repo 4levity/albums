@@ -29,11 +29,10 @@ docs/database_diagram.png: tests/fixtures/libraries/cli/albums.db
 diagram: docs/database_diagram.png ## Generate database diagram
 
 preview: diagram ## Preview docs
-	$(POETRY) run zensical serve --config-file docs/zensical.toml
+	$(POETRY) run zensical serve
 
 docs: diagram ## Build docs
-	$(POETRY) run zensical build --config-file docs/zensical.toml --clean
-	rm docs/site/zensical.toml
+	$(POETRY) run zensical build --clean
 
 package: ## Create distribution
 	$(POETRY) build
@@ -43,7 +42,7 @@ clean: ## Remove build and test files
 	rm -rf dist
 	rm -rf tests/fixtures/libraries
 	rm -rf docs/database_diagram.png
-	rm -rf docs/site
+	rm -rf site
 	rm -rf docs/.cache
 	rm -rf htmlcov
 	rm -rf .coverage

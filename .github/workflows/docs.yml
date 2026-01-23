@@ -22,9 +22,9 @@ jobs:
       - name: Setup Graphviz
         uses: ts-graphviz/setup-graphviz@v2
       - uses: snok/install-poetry@v1
-      - run: make install && make docs && ls -la docs/site
+      - run: make install docs && ls -la site
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/site
+          path: site
       - uses: actions/deploy-pages@v4
         id: deployment

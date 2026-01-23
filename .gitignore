@@ -11,7 +11,8 @@ uv.lock
 .venv/
 .coverage
 /htmlcov
-/docs/site
+/site
+/docs/database_diagram.png
 
 # application/misc
 *.db
