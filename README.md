@@ -35,4 +35,4 @@ Interactive features might not work on Windows.
 ## Getting Started
 
 Builds not yet distributed. See
-[docs/developing.md](https://4levity.github.io/albums/developing/).
+[Developing](https://4levity.github.io/albums/developing/).

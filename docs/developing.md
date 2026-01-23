@@ -2,7 +2,7 @@
 icon: lucide/computer
 ---
 
-# Developing `albums`
+# Developing
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Python 3.14. `poetry install` will cache the Python installation so it does not
 need to run in a special environment afterwards. Run the local app with
 `poetry run albums`.
 
-## Developing
+## Tips
 
 - Copy
   [sample/config.toml](https://github.com/4levity/albums/blob/main/sample/config.toml)
