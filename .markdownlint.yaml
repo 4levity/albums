@@ -1,0 +1,3 @@
+# replicates pymarkdown rules from scripts/pymarkdown.yaml in order to use markdownlint in IDE
+MD040: false
+MD046: false

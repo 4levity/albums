@@ -20,6 +20,7 @@ ruff = "^0.14.10"
 eralchemy = {extras = ["graphviz"], version = "^1.6.0"}
 pytest-cov = "^7.0.0"
 pymarkdownlnt = "^0.9.34"
+zensical = "^0.0.18"
 
 
 [tool.poetry.group.test.dependencies]

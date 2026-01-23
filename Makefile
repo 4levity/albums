@@ -1,6 +1,6 @@
 POETRY := poetry
 
-.PHONY: build install lint fix test integration-test diagram package clean
+.PHONY: build install lint fix test integration-test diagram preview package clean
 
 build: install lint test package
 	@echo "build complete"
@@ -11,7 +11,7 @@ install: ## Install project dependencies
 lint: ## Lint with ruff
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
-	$(POETRY) run pymarkdown scan *.md docs/*.md
+	$(POETRY) run python scripts/lint_markdown.py
 
 fix: ## Automatically fix lint/format
 	$(POETRY) run ruff format
@@ -20,11 +20,16 @@ fix: ## Automatically fix lint/format
 test: ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 
-integration-test: ## Run CLI tests only
+tests/fixtures/libraries/cli/albums.db: src/albums/database/schema.py
 	$(POETRY) run pytest tests/test_cli.py
 
-diagram: integration-test ## Create database diagram
+docs/database_diagram.png: tests/fixtures/libraries/cli/albums.db
 	$(POETRY) run eralchemy -i sqlite:///tests/fixtures/libraries/cli/albums.db -o docs/database_diagram.png
+
+diagram: docs/database_diagram.png ## Generate database diagram
+
+preview: diagram ## Preview docs
+	$(POETRY) run zensical serve --config-file docs/zensical.toml
 
 package: ## Create distribution
 	$(POETRY) build
@@ -35,4 +40,3 @@ clean: ## Remove build and test files
 	rm -rf tests/fixtures/libraries
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
-	rm -f docs/database_diagram.png

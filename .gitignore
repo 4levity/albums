@@ -6,11 +6,11 @@ dist/
 *.log
 .vscode/
 /tests/fixtures/libraries/
-docs/database_diagram.png
 uv.lock
 .venv/
 .coverage
 /htmlcov
+/docs/site
 
 # application/misc
 *.db

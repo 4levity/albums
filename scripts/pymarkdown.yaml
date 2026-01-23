@@ -1,0 +1,5 @@
+plugins:
+  md040:
+    enabled: False
+  md046:
+    enabled: False
