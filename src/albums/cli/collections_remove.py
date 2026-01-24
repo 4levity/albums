@@ -16,10 +16,10 @@ def collections_remove(ctx: app.Context, collection_names):
         for target_collection in collection_names:
             if target_collection in album_collections:
                 album_collections.remove(target_collection)
-                ctx.console.print(f"removed album {path} from collection {target_collection}")
+                ctx.console.print(f"removed album {path} from collection {target_collection}", markup=False)
                 changed = True
             else:
-                ctx.console.print(f"album {path} was not in collection {target_collection}")  # filter may prevent this
+                ctx.console.print(f"album {path} was not in collection {target_collection}", markup=False)  # filter may prevent this
         if changed:
             album.collections = album_collections
             albums.database.operations.update_collections(ctx.db, album.album_id, album.collections)

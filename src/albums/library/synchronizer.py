@@ -3,6 +3,7 @@ import humanize
 import logging
 import os
 from pathlib import Path
+from rich.markup import escape
 from rich.progress import Progress, TransferSpeedColumn
 from rich.prompt import Confirm
 import shutil
@@ -49,7 +50,7 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete, force
                 tracks.append((source_track_path, dest_track_path, track.file_size))
 
     if delete and len(existing_dest_paths) > 0:
-        ctx.console.print(f"[orange]will delete {len(existing_dest_paths)} paths from {dest}")
+        ctx.console.print(f"[orange]will delete {len(existing_dest_paths)} paths from {escape(str(dest))}")
         if force or Confirm.ask("are you sure you want to delete?", default=False, console=ctx.console):
             ctx.console.print("[bold red]deleting files from destination")
             for delete_path in sorted(existing_dest_paths, reverse=True):
@@ -62,11 +63,11 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete, force
             ctx.console.print("skipped deleting files from destination")
 
     elif len(existing_dest_paths) > 0:
-        ctx.console.print(f"[bold green]not deleting {len(existing_dest_paths)} paths from {dest}, e.g. {list(existing_dest_paths)[:2]}")
+        ctx.console.print(f"[bold green]not deleting {len(existing_dest_paths)} paths from {escape(str(dest))}, e.g. {list(existing_dest_paths)[:2]}")
 
-    skipped = f"(skipped {skipped_tracks})" if skipped_tracks > 0 else ""
+    skipped = f" (skipped {skipped_tracks})" if skipped_tracks > 0 else ""
     if len(tracks) > 0:
-        ctx.console.print(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {dest} {skipped}")
+        ctx.console.print(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {escape(str(dest))} {skipped}")
 
         with Progress(*Progress.get_default_columns(), TransferSpeedColumn()) as progress:
             sync_task = progress.add_task("Progress", total=total_size)
@@ -77,4 +78,4 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete, force
                 progress.update(sync_task, advance=size)
 
     else:
-        ctx.console.print(f"no tracks to copy {skipped}")
+        ctx.console.print(f"no tracks to copy{skipped}")

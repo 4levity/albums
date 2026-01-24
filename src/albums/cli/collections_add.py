@@ -14,10 +14,10 @@ def collections_add(ctx: app.Context, collection_names):
         changed = False
         for target_collection in collection_names:
             if target_collection in album.collections:
-                ctx.console.print(f"album {path} is already in collection {target_collection}")
+                ctx.console.print(f"album {path} is already in collection {target_collection}", markup=False)
             else:
                 album.collections.append(target_collection)
-                ctx.console.print(f"added album {path} to collection {target_collection}")
+                ctx.console.print(f"added album {path} to collection {target_collection}", markup=False)
                 changed = True
         if changed:
             albums.database.operations.update_collections(ctx.db, album.album_id, album.collections)

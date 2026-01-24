@@ -1,5 +1,6 @@
 import glob
 import logging
+from rich.markup import escape
 from rich.progress import Progress
 import time
 
@@ -27,7 +28,9 @@ def scan(ctx: app.Context, path_selector=None, reread=False):
     scanned = 0
     scan_results: dict[AlbumScanResult, int] = dict([(r.name, 0) for r in AlbumScanResult])
     try:
-        with ctx.console.status(f"finding folders in {'specified folders' if path_selector else ctx.library_root}", spinner="bouncingBar"):
+        with ctx.console.status(
+            f"finding folders in {'specified folders' if path_selector else escape(str(ctx.library_root))}", spinner="bouncingBar"
+        ):
             if path_selector is not None:
                 paths = list(path for path in unprocessed_albums.keys() if (ctx.library_root / path).exists())
             else:
@@ -73,5 +76,5 @@ def scan(ctx: app.Context, path_selector=None, reread=False):
         logger.error("scan interrupted, exiting")
 
     ctx.db.commit()
-    ctx.console.print(f"scanned {scanned} folders in {ctx.library_root} in {int(time.perf_counter() - start_time)}s.")
+    ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
     ctx.console.print(scan_results)

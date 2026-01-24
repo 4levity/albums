@@ -19,29 +19,32 @@ class AlbumArtistFixer(Fixer):
         self, ctx: app.Context, album: Album, message: str, candidates: list[str], show_remove_option: bool, show_free_text_option: bool = True
     ):
         super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True, enable_tagger=True)
-        self.message = [f"*** Fixing album artist for {self.album.path}", f"ISSUE: {message}"]
-        self.question = f"Which album artist to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
-        self.options = candidates
-        self.show_remove_option = show_remove_option
-        self.show_free_text_option = show_free_text_option
-
-    def get_interactive_prompt(self):
         table = (
             ["filename", "album tag", "artist", "album artist"],
             [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks],
         )
-        return FixerInteractivePrompt(self.message, self.question, self.options, table, self.show_remove_option, self.show_free_text_option)
+        self.prompt = FixerInteractivePrompt(
+            [f"*** Fixing album artist for {self.album.path}", f"ISSUE: {message}"],
+            f"Which album artist to use for all {len(self.album.tracks)} tracks in {self.album.path}?",
+            candidates,
+            table,
+            show_remove_option,
+            show_free_text_option,
+        )
+
+    def get_interactive_prompt(self):
+        return self.prompt
 
     def fix_interactive(self, album_artist_value: str | None) -> bool:
         for track in sorted(self.album.tracks, key=lambda track: track.filename):
             file = self.ctx.library_root / self.album.path / track.filename
             if album_artist_value is None:
                 if "albumartist" in track.tags:
-                    self.ctx.console.print(f"removing albumartist from {track.filename}")
+                    self.ctx.console.print(f"removing albumartist from {track.filename}", markup=False)
                     set_basic_tags(file, [("albumartist", None)])
                 # else nothing to remove
             elif track.tags.get("albumartist", []) != [album_artist_value]:
-                self.ctx.console.print(f"setting albumartist on {track.filename}")
+                self.ctx.console.print(f"setting albumartist on {track.filename}", markup=False)
                 set_basic_tags(file, [("albumartist", album_artist_value)])
             # else nothing to set
 

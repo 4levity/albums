@@ -19,6 +19,7 @@ fix: ## Automatically fix lint/format
 
 test: ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
+	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
 tests/fixtures/libraries/cli/albums.db: src/albums/database/schema.py
 	$(POETRY) run pytest tests/test_cli.py::TestCli::test_run

@@ -25,5 +25,5 @@ def sql(ctx: app.Context, sql_command, json):
                 table.add_row(*[escape(str(v)) for v in row])
             ctx.console.print(table)
     except OperationalError as err:
-        ctx.console.print(Panel(f"[bold]SQL error | [red]{err}", expand=False))
+        ctx.console.print(Panel(f"[bold]SQL error | [red]{escape(str(err))}", expand=False))
         raise SystemExit(1)

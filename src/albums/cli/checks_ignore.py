@@ -20,12 +20,12 @@ def checks_ignore(ctx: app.Context, force: bool, check_names: list[str]):
                 ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help')
                 error = True
             if target_check in album.ignore_checks:
-                ctx.console.print(f"album {album.path} is already configured to ignore {target_check}")
+                ctx.console.print(f"album {album.path} is already configured to ignore {target_check}", markup=False)
             else:
                 album.ignore_checks.append(target_check)
                 changed = True
                 if ctx.is_filtered():  # don't show individual albums if operating on all albums (confirm below)
-                    ctx.console.print(f"album {album.path} - ignore {target_check}")
+                    ctx.console.print(f"album {album.path} - ignore {target_check}", markup=False)
 
         if changed and not error:
             if force or ctx.is_filtered() or Confirm.ask(f"ignore checks {check_names} for all albums?", console=ctx.console):

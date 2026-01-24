@@ -62,25 +62,21 @@ class Fixer:
                 self.ctx.console.print(table)
 
             for line in prompt.message if isinstance(prompt.message, list) else [prompt.message]:
-                self.ctx.console.print(line)
+                self.ctx.console.print(line, markup=False)
 
             tagger = self.ctx.config.get("options", {}).get("tagger", None)
             OPTION_NONE = ">> None / Remove"
             OPTION_FREE_TEXT = ">> Enter Text"
             OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
-            OPTION_DO_NOTHING = ">> Do nothing (automatic solution not available)"  # same as pressing esc
-            options = [opt for opt in prompt.options if opt not in [OPTION_NONE, OPTION_FREE_TEXT, OPTION_RUN_TAGGER]]
-            if prompt.option_none or prompt.option_free_text or tagger:
-                if len(options) > 0:
-                    options.append(None)
-                if prompt.option_free_text:
-                    options.append(OPTION_FREE_TEXT)
-                if prompt.option_none:
-                    options.append(OPTION_NONE)
-                if tagger and self.enable_tagger:
-                    options.append(OPTION_RUN_TAGGER)
-            if len(options) == 0:
-                options.append(OPTION_DO_NOTHING)
+            OPTION_DO_NOTHING = ">> Do nothing"  # same as pressing esc
+            options = [opt for opt in prompt.options if opt not in [OPTION_NONE, OPTION_FREE_TEXT, OPTION_RUN_TAGGER, OPTION_DO_NOTHING]]
+            if prompt.option_none:
+                options.append(OPTION_NONE)
+            if prompt.option_free_text:
+                options.append(OPTION_FREE_TEXT)
+            options.append(OPTION_DO_NOTHING)
+            if tagger and self.enable_tagger:
+                options.append(OPTION_RUN_TAGGER)
 
             terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt.question)
             option_index = terminal_menu.show()
@@ -91,7 +87,7 @@ class Fixer:
                 else:
                     done = False
                     path_str = str(self.ctx.library_root / self.album.path)
-                    self.ctx.console.print(f"Launching {tagger} {path_str}")
+                    self.ctx.console.print(f"Launching {tagger} {path_str}", markup=False)
                     subprocess.Popen([tagger, path_str])
                     self.ctx.console.print(f"If you make changes to this album in {tagger} [italic]after[/italic] continuing, scan again later.")
                     maybe_changed = True

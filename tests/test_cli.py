@@ -52,7 +52,7 @@ database="{TestCli.library / "albums.db"}"
     def test_list(self):
         result = self.run(["list"])
         assert result.exit_code == 0
-        assert re.search("bar/ \\d+ Bytes.*total size: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
+        assert re.search("bar/.+00:00.+\\d+ Bytes.+total: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_check(self):
         result = self.run(["check", "--default", "album_tag"])

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from rich.markup import escape
 
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -17,19 +18,24 @@ CHECK_NAME = "album_tag"
 class AlbumTagFixer(Fixer):
     def __init__(self, ctx: app.Context, album: Album, message: str, candidates: list[str]):
         # if there is only one suggestion, enable automatic fix
-        automatic = f'set album to "{candidates[0]}"' if len(candidates) == 1 else None
+        automatic = f'set album to "{escape(candidates[0])}"' if len(candidates) == 1 else None
 
         super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic, True)
-        self.message = [f"*** Fixing album tag for {self.album.path}", f"ISSUE: {message}"]
-        self.question = f"Which album name to use for all {len(self.album.tracks)} tracks in {self.album.path}?"
-        self.options = candidates
-
-    def get_interactive_prompt(self):
         table = (
             ["filename", "album tag", "artist", "album artist"],
-            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks],
+            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in album.tracks],
         )
-        return FixerInteractivePrompt(self.message, self.question, self.options, table, option_none=False, option_free_text=True)
+        self.prompt = FixerInteractivePrompt(
+            [f"*** Fixing album tag for {album.path}", f"ISSUE: {message}"],
+            f"Which album name to use for all {len(self.album.tracks)} tracks in {album.path}?",
+            candidates,
+            table,
+            option_none=False,
+            option_free_text=True,
+        )
+
+    def get_interactive_prompt(self):
+        return self.prompt
 
     def fix_interactive(self, album_value: str | None) -> bool:
         changed = self._fix(album_value)
@@ -37,7 +43,7 @@ class AlbumTagFixer(Fixer):
         return changed
 
     def fix_automatic(self) -> bool:
-        return self._fix(self.options[0])
+        return self._fix(self.prompt.options[0])
 
     def _fix(self, album_value: str | None) -> bool:
         changed = False

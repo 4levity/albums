@@ -38,7 +38,7 @@ def check(ctx: app.Context, default: bool, automatic: bool, automatic_yes: bool,
 
     found = False
     for album, check_result in all.run_enabled(ctx):
-        ctx.console.print(f'{check_result.message} : "{album.path}"')
+        ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
         if check_result.fixer is not None:
             rescan = False
             fixer = check_result.fixer
