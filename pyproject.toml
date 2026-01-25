@@ -43,14 +43,9 @@ line-length = 150
 exclude = ["typings"]
 
 [tool.pyright]
-# include = []
 ignore = ["tests", "**/typings"]
 exclude = [".venv", "**/.*", "**/__*", "**/typings"]
-
 typeCheckingMode = "strict"
-stubPath = "typings"
-# typeshedPath = "typings"
-
-
+stubPath = "src/typings"
 pythonPlatform = "Linux"
 pythonVersion = "3.14"

@@ -3,12 +3,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .cache/
-dist/
 *.log
-/tests/fixtures/libraries/
 uv.lock
 .venv/
 .coverage
+/dist
+/tests/fixtures/libraries/
 /htmlcov
 /site
 /docs/database_diagram.png
