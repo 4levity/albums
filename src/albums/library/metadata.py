@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+from typing import Any
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
@@ -20,41 +21,46 @@ class TagCapabilities:
     has_disctotal: bool
 
 
-def get_metadata(path: str) -> tuple[dict, Stream]:
-    (file, codec, capabilities) = _mutagen_load_file(path)
-    if file is not None:
-        stream_info = _get_stream_info(file, codec)
-        tags = _get_tags(file)
-        return (tags, stream_info)
+def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream] | None:
+    file_info = _mutagen_load_file(path)
+    if not file_info:
+        return None
 
-    return None
+    (file, codec, _) = file_info
+    stream_info = _get_stream_info(file, codec)
+    tags = _get_tags(file)
+    return (tags, stream_info)
 
 
 def album_is_basic_taggable(album: Album):  # TODO use TagCapabilities instead
     ok = True
     for track in album.tracks:
-        if not supports_basic_tags(track.filename, track.stream.codec if track.stream else None):
+        if not supports_basic_tags(Path(track.filename), track.stream.codec if track.stream else None):
             ok = False
     return ok
 
 
-def supports_basic_tags(filename: str, codec: str):  # TODO use TagCapabilities instead
-    return str.lower(Path(filename).suffix) in [".flac", ".mp3", ".ogg"] and (codec is None or codec in ["FLAC", "MP3", "Ogg Vorbis"])
+def supports_basic_tags(filename: Path, codec: str | None):  # TODO use TagCapabilities instead
+    return str.lower(filename.suffix) in [".flac", ".mp3", ".ogg"] and (codec is None or codec in ["FLAC", "MP3", "Ogg Vorbis"])
 
 
-def set_basic_tags(path: str, values: list[tuple[str, str | None]]):
+def set_basic_tags(path: Path, tag_values: list[tuple[str, str | None]]):
     # remove any tag, only set supported tags
-    for name, value in values:
+    for name, value in tag_values:
         if value is not None and name not in BASIC_TAGS:
             raise ValueError(f"tag '{name}' is not a supported basic tag")
 
-    (file, codec, capabilities) = _mutagen_load_file(path)
+    file_info = _mutagen_load_file(path)
+    if not file_info:
+        raise ValueError(f"couldn't access {path} to write tags")
+
+    (file, codec, capabilities) = file_info
     if not supports_basic_tags(path, codec):  # TODO use TagCapabilities instead
-        logger.warning(f"cannot set tags {[name for (name, value) in values]} in {codec} file {path}")
+        logger.warning(f"cannot set tags {[name for (name, _) in tag_values]} in {codec} file {path}")
         return False
 
     changed = False
-    for name, value in values:
+    for name, value in tag_values:
         if name == "tracktotal" and not capabilities.has_tracktotal:
             changed |= _set_tracktotal_in_tracknumber(file, value)
         elif name == "disctotal" and not capabilities.has_disctotal:
@@ -68,54 +74,54 @@ def set_basic_tags(path: str, values: list[tuple[str, str | None]]):
             changed = True
 
     if changed:
-        file.save()
+        file.save()  # pyright: ignore[reportUnknownMemberType]
         return True
     return False
 
 
-def _set_disctotal_in_discnumber(file: FLAC | MP3 | mutagen.FileType, value: str | None):
-    discnumbers = file["discnumber"] if "discnumber" in file else None
-    if discnumbers and len(discnumbers) > 1:  # unlikely, we are probably only doing this for MP3 files
-        logger.warning(f"more than one discnumber tag, ignoring all but first: {discnumbers}")
+def _set_disctotal_in_discnumber(file: FLAC | MP3 | mutagen.FileType, value: str | None):  # pyright: ignore[reportPrivateImportUsage]
+    old_discnumbers: list[str] | None = file["discnumber"] if "discnumber" in file else None
+    if old_discnumbers and len(old_discnumbers) > 1:  # unlikely, we are probably only doing this for MP3 files
+        logger.warning(f"more than one discnumber tag, ignoring all but first: {old_discnumbers}")
 
     if value is None:
-        if discnumbers and "/" in discnumbers[0]:
-            file["discnumber"] = f"{discnumbers[0].split('/')[0]}"  # remove / and anything after
-            file.save()
+        if old_discnumbers and "/" in old_discnumbers[0]:
+            file["discnumber"] = f"{old_discnumbers[0].split('/')[0]}"  # remove / and anything after
+            file.save()  # pyright: ignore[reportUnknownMemberType]
             return True
         else:
             logger.debug("not removing disctotal because there is no discnumber tag to remove it from")
     elif "discnumber" not in file:
         logger.warning("failed to set disctotal because there is no discnumber tag")
-    else:
-        file["discnumber"] = f"{discnumbers[0].split('/')[0]}/{value}"
-        file.save()
+    elif old_discnumbers and len(old_discnumbers) > 0:  # old_discnumbers is definitely a non-empty array here, added checks for pyright
+        file["discnumber"] = f"{old_discnumbers[0].split('/')[0]}/{value}"
+        file.save()  # pyright: ignore[reportUnknownMemberType]
         return True
     return False
 
 
-def _set_tracktotal_in_tracknumber(file: FLAC | MP3 | mutagen.FileType, value: str | None):
-    tracknumbers = file["tracknumber"] if "tracknumber" in file else None
+def _set_tracktotal_in_tracknumber(file: FLAC | MP3 | mutagen.FileType, value: str | None):  # pyright: ignore[reportPrivateImportUsage]
+    tracknumbers: list[str] | None = file["tracknumber"] if "tracknumber" in file else None
     if tracknumbers and len(tracknumbers) > 1:  # unlikely, we are probably only doing this for MP3 files
         logger.warning(f"more than one tracknumber tag, ignoring all but first: {tracknumbers}")
 
     if value is None:
         if tracknumbers and "/" in tracknumbers[0]:
             file["tracknumber"] = f"{tracknumbers[0].split('/')[0]}"  # remove / and anything after
-            file.save()
+            file.save()  # pyright: ignore[reportUnknownMemberType]
             return True
         else:
             logger.debug("not removing tracktotal because there is no tracknumber tag to remove it from")
     elif "tracknumber" not in file:
         logger.warning("failed to set tracktotal because there is no tracknumber tag")
-    else:
+    elif tracknumbers and len(tracknumbers) > 0:  # tracknumbers is definitely a non-empty array here, added checks for pyright
         file["tracknumber"] = f"{tracknumbers[0].split('/')[0]}/{value}"
-        file.save()
+        file.save()  # pyright: ignore[reportUnknownMemberType]
         return True
     return False
 
 
-def _mutagen_load_file(path: str) -> tuple[FLAC | MP3 | mutagen.FileType, str, TagCapabilities]:
+def _mutagen_load_file(path: Path) -> tuple[FLAC | MP3 | mutagen.FileType, str, TagCapabilities] | None:  # pyright: ignore[reportPrivateImportUsage]
     codec: str | None = None
     suffix = str.lower(path.suffix)
     if suffix == ".flac":
@@ -127,15 +133,17 @@ def _mutagen_load_file(path: str) -> tuple[FLAC | MP3 | mutagen.FileType, str, T
         codec = "MP3"
         capabilities = TagCapabilities(has_tracktotal=False, has_disctotal=False)
     else:
-        file = mutagen.File(path)
-        codec = _get_codec(file)
+        file: mutagen.FileType | None = mutagen.File(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportPrivateImportUsage]
+        if file is None:
+            return None
+        codec = _get_codec(file)  # pyright: ignore[reportUnknownArgumentType]
         capabilities = TagCapabilities(has_tracktotal=True, has_disctotal=True)  # TODO this is often NOT true
 
-    return (file, codec, capabilities)
+    return (file, codec, capabilities)  # pyright: ignore[reportUnknownVariableType]
 
 
-def _get_tags(file: FLAC | MP3 | mutagen.FileType):
-    def store_value(key: str, value):
+def _get_tags(file: FLAC | MP3 | mutagen.FileType):  # pyright: ignore[reportPrivateImportUsage]
+    def store_value(key: str, value: Any):
         if key == "covr":
             return "binary data not stored"  # TODO: get image metadata
         if hasattr(value, "pprint"):
@@ -143,44 +151,44 @@ def _get_tags(file: FLAC | MP3 | mutagen.FileType):
         return textwrap.shorten(str(value), width=4096)
 
     tags: dict[str, list[str]] = {}
-    for tag_name, tag_value in file.tags.items():
-        name = str.lower(tag_name)
-        for value in tag_value if isinstance(tag_value, list) else [tag_value]:
+    for tag_name, tag_value in file.tags.items():  # pyright: ignore[reportUnknownVariableType, reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
+        name = str.lower(tag_name)  # pyright: ignore[reportUnknownArgumentType]
+        for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
             tags.setdefault(name, []).append(store_value(name, value))
     return tags
 
 
-def _get_codec(file: FLAC | MP3 | mutagen.FileType) -> str:
-    if hasattr(file.info, "codec_name"):
-        return f"{file.info.codec_name}"
-    if hasattr(file.info, "codec"):
-        return f"{file.info.codec}"
-    if hasattr(file.info, "pprint"):
-        return file.info.pprint().split(",")[0]
+def _get_codec(file: FLAC | MP3 | mutagen.FileType) -> str:  # pyright: ignore[reportPrivateImportUsage]
+    if hasattr(file.info, "codec_name"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        return f"{file.info.codec_name}"  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
+    if hasattr(file.info, "codec"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        return f"{file.info.codec}"  # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue, reportUnknownMemberType]
+    if hasattr(file.info, "pprint"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        return file.info.pprint().split(",")[0]  # pyright: ignore[reportOptionalMemberAccess, reportUnknownVariableType, reportUnknownMemberType]
     logger.warning(f"couldn't determine codec in {file.filename}")
     return "unknown"
 
 
-def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str | None) -> Stream:
+def _get_stream_info(file: FLAC | MP3 | mutagen.FileType, codec: str) -> Stream:  # pyright: ignore[reportPrivateImportUsage]
     stream = Stream()
     # maybe this isn't necessary but I don't think there's a guarantee that these attributes exist
-    if hasattr(file.info, "length"):
-        stream.length = file.info.length
+    if hasattr(file.info, "length"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        stream.length = file.info.length  # pyright: ignore[reportOptionalMemberAccess, reportUnknownMemberType]
     else:
         logger.warning(f"couldn't determine stream length in {file.filename}")
 
-    if hasattr(file.info, "bitrate"):
-        stream.bitrate = file.info.bitrate
+    if hasattr(file.info, "bitrate"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        stream.bitrate = file.info.bitrate  # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue, reportUnknownMemberType]
     else:
         logger.warning(f"couldn't determine stream bitrate in {file.filename}")
 
-    if hasattr(file.info, "channels"):
-        stream.channel = file.info.channels
+    if hasattr(file.info, "channels"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        stream.channel = file.info.channels  # pyright: ignore[reportUnknownMemberType, reportOptionalMemberAccess, reportAttributeAccessIssue]
     else:
         logger.warning(f"couldn't determine stream channels in {file.filename}")
 
-    if hasattr(file.info, "sample_rate"):
-        stream.sample_rate = file.info.sample_rate
+    if hasattr(file.info, "sample_rate"):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        stream.sample_rate = file.info.sample_rate  # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue, reportUnknownMemberType]
     else:
         logger.warning(f"couldn't determine stream sample rate in {file.filename}")
 

@@ -12,7 +12,10 @@ class CheckSingleValueTags(Check):
             return None  # this check only makes sense for files with common tags
 
         single_value_tags = self.config.get("tags", CheckSingleValueTags.default_config["tags"])
-        multiple_value_tags: list[dict] = []
+        if not isinstance(single_value_tags, list):
+            raise ValueError("single_value_tags.tags config must be a list of tags")
+
+        multiple_value_tags: list[dict[str, dict[str, list[str]]]] = []
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag_name in single_value_tags:
                 # check for multiple values for tag_name

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
 @click.option("--force", is_flag=True, help="skip confirmation when deleting files")
 @cli_context.pass_context
-def sync(ctx: app.Context, destination, delete, force):
+def sync(ctx: app.Context, destination: str, delete: bool, force: bool):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
         synchronizer.do_sync(ctx, ctx.select_albums(False), dest, delete, force)

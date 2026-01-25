@@ -8,10 +8,10 @@ from ..types import Album, Stream, Track
 logger = logging.getLogger(__name__)
 
 
-def load_album(db: sqlite3.Connection, album_id: int, load_track_tag=True) -> Album:
+def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
     row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
     if row is None:
-        return None
+        raise ValueError(f"load_album called with invalid album_id={album_id}")
 
     (path,) = row
     collections = [
@@ -86,6 +86,8 @@ def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
 
 def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
     for track in tracks:
+        if not track.stream:
+            raise ValueError(f"can't save track without stream info: {track.filename}")
         (track_id,) = db.execute(
             "INSERT INTO track ("
             "album_id, filename, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate"
@@ -107,7 +109,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
 
 
-def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags=True):
+def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
     for (
         track_id,
         filename,

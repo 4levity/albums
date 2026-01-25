@@ -42,13 +42,13 @@ def scan_folder(
 def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track]):
     for track in tracks:
         path = library_root / album_path / track.filename
-        (tags, stream_info) = get_metadata(path)
-        track.tags = tags
-        if tags is None:
-            logger.warning(f"couldn't read tags for {path}")
-        track.stream = stream_info
-        if stream_info is None:
-            logger.warning(f"couldn't read stream info for {path}")
+        file_info = get_metadata(path)
+        if file_info is None:
+            logger.warning(f"couldn't load metadata for track {path}")
+        else:
+            (tags, stream_info) = file_info
+            track.tags = tags
+            track.stream = stream_info
 
 
 def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):

@@ -34,7 +34,7 @@ class TestCheckFixInteractive:
         assert mock_ask.call_args.args[0] == ('Selected "A" - are you sure?')
 
     def test_fix_ignore_check(self, mocker):
-        album = Album("/", [Track("1.flac")])
+        album = Album("/", [Track("1.flac")], album_id=1)
         ctx = app.Context()
         ctx.db = mocker.Mock()
         ctx.db.execute.return_value = None

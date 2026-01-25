@@ -21,6 +21,7 @@ eralchemy = {extras = ["graphviz"], version = "^1.6.0"}
 pytest-cov = "^7.0.0"
 pymarkdownlnt = "^0.9.34"
 zensical = "^0.0.18"
+pyright = "^1.1.408"
 
 
 [tool.poetry.group.test.dependencies]
@@ -39,3 +40,17 @@ line-length = 150
 
 [tool.ruff]
 line-length = 150
+exclude = ["typings"]
+
+[tool.pyright]
+# include = []
+ignore = ["tests", "**/typings"]
+exclude = [".venv", "**/.*", "**/__*", "**/typings"]
+
+typeCheckingMode = "strict"
+stubPath = "typings"
+# typeshedPath = "typings"
+
+
+pythonPlatform = "Linux"
+pythonVersion = "3.14"

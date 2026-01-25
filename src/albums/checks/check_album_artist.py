@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -19,9 +20,12 @@ class AlbumArtistFixer(Fixer):
         self, ctx: app.Context, album: Album, message: str, candidates: list[str], show_remove_option: bool, show_free_text_option: bool = True
     ):
         super(AlbumArtistFixer, self).__init__(CHECK_NAME, ctx, album, True, enable_tagger=True)
-        table = (
+        table: tuple[list[str], list[list[str]]] = (
             ["filename", "album tag", "artist", "album artist"],
-            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in self.album.tracks],
+            [
+                [track.filename, str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
+                for track in self.album.tracks
+            ],
         )
         self.prompt = FixerInteractivePrompt(
             [f"*** Fixing album artist for {self.album.path}", f"ISSUE: {message}"],
@@ -35,9 +39,10 @@ class AlbumArtistFixer(Fixer):
     def get_interactive_prompt(self):
         return self.prompt
 
-    def fix_interactive(self, album_artist_value: str | None) -> bool:
+    def fix_interactive(self, option: str | None) -> bool:
+        album_artist_value = option
         for track in sorted(self.album.tracks, key=lambda track: track.filename):
-            file = self.ctx.library_root / self.album.path / track.filename
+            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
             if album_artist_value is None:
                 if "albumartist" in track.tags:
                     self.ctx.console.print(f"removing albumartist from {track.filename}", markup=False)
@@ -90,11 +95,11 @@ class CheckAlbumArtist(Check):
         nonblank_albumartists = sorted(
             filter(lambda k: k not in ["", VARIOUS_ARTISTS], albumartists.keys()), key=lambda aa: albumartists[aa], reverse=True
         )[:12]
-        candidates_various = candidates + ([None, VARIOUS_ARTISTS] if len(candidates) > 0 else [VARIOUS_ARTISTS])
+        candidates_various = candidates + [VARIOUS_ARTISTS]
 
         redundant = len(artists) == 1 and list(artists.values())[0] == len(album.tracks)  # albumartist maybe not needed?
         message = None
-
+        fixer = None
         if len(nonblank_albumartists) > 1:  # distinct album artist values, not including blank
             message = f"multiple album artist values ({nonblank_albumartists[:2]} ...)"
             fixer = AlbumArtistFixer(self.ctx, album, message, candidates_various, show_remove_option=False)

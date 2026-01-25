@@ -8,7 +8,10 @@ from . import cli_context
 @click.command("add", help="add selected albums to collections")
 @click.argument("collection_names", nargs=-1)
 @cli_context.pass_context
-def collections_add(ctx: app.Context, collection_names):
+def collections_add(ctx: app.Context, collection_names: list[str]):
+    if not ctx.db:
+        raise ValueError("add requires database connection")
+
     for album in ctx.select_albums(False):
         path = album.path
         changed = False
@@ -20,4 +23,6 @@ def collections_add(ctx: app.Context, collection_names):
                 ctx.console.print(f"added album {path} to collection {target_collection}", markup=False)
                 changed = True
         if changed:
+            if album.album_id is None:
+                raise ValueError(f"unexpected album.album_id=None for {album.path}")
             albums.database.operations.update_collections(ctx.db, album.album_id, album.collections)

@@ -21,9 +21,12 @@ class AlbumTagFixer(Fixer):
         automatic = f'set album to "{escape(candidates[0])}"' if len(candidates) == 1 else None
 
         super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic, True)
-        table = (
+        table: tuple[list[str], list[list[str]]] = (
             ["filename", "album tag", "artist", "album artist"],
-            [[track.filename, track.tags.get("album"), track.tags.get("artist"), track.tags.get("albumartist")] for track in album.tracks],
+            [
+                [str(track.filename), str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
+                for track in album.tracks
+            ],
         )
         self.prompt = FixerInteractivePrompt(
             [f"*** Fixing album tag for {album.path}", f"ISSUE: {message}"],
@@ -37,8 +40,8 @@ class AlbumTagFixer(Fixer):
     def get_interactive_prompt(self):
         return self.prompt
 
-    def fix_interactive(self, album_value: str | None) -> bool:
-        changed = self._fix(album_value)
+    def fix_interactive(self, option: str | None) -> bool:
+        changed = self._fix(option)
         self.ctx.console.print("done.")
         return changed
 
@@ -51,7 +54,7 @@ class AlbumTagFixer(Fixer):
             if album_value is None:
                 raise ValueError("album tag may not be removed")
 
-            file = self.ctx.library_root / self.album.path / track.filename
+            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
             if track.tags.get("album", []) != [album_value]:
                 self.ctx.console.print(f"setting album on {track.filename}")
                 set_basic_tags(file, [("album", album_value)])
@@ -66,7 +69,7 @@ class CheckAlbumTag(Check):
     def check(self, album: Album):
         ignore_folders = self.config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
         folder_str = Path(album.path).name
-        if folder_str in ignore_folders:
+        if folder_str in ignore_folders if isinstance(ignore_folders, list) else []:
             return None
 
         if not album_is_basic_taggable(album):

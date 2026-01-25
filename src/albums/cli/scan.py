@@ -1,3 +1,4 @@
+from typing import Generator
 import rich_click as click
 import logging
 
@@ -17,7 +18,7 @@ def scan(ctx: app.Context, reread: bool):
         ctx.console.print("scan already done, not scanning again")
         return
 
-    def filtered_path_selector():
+    def filtered_path_selector() -> Generator[tuple[str, int | None], None, None]:
         yield from ((album.path, album.album_id) for album in ctx.select_albums(False))
 
     scanner.scan(ctx, filtered_path_selector if ctx.is_filtered() else None, reread)

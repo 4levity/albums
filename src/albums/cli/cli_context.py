@@ -26,7 +26,7 @@ DEFAULT_CONFIG_FILE_LOCATIONS = [
 
 
 def setup(ctx: click.Context, app_context: Context, verbose: int, collections: list[str], paths: list[str], regex: bool, config_file: str):
-    setup_logging(ctx, verbose)
+    setup_logging(app_context, verbose)
     logger.info("starting albums")
 
     config_path = None
@@ -70,9 +70,9 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
     app_context.db = db
 
     # filters applied to command
-    app_context._collections = collections
-    app_context._paths = paths
-    app_context._regex = regex
+    app_context.filter_collections = collections
+    app_context.filter_paths = paths
+    app_context.filter_regex = regex
 
     # misc
     app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))

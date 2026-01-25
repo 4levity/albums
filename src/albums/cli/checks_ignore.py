@@ -12,6 +12,9 @@ from . import cli_context
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
 def checks_ignore(ctx: app.Context, force: bool, check_names: list[str]):
+    if not ctx.db:
+        raise ValueError("ignore requires database connection")
+
     for album in ctx.select_albums(False):
         changed = False
         error = False
@@ -28,6 +31,8 @@ def checks_ignore(ctx: app.Context, force: bool, check_names: list[str]):
                     ctx.console.print(f"album {album.path} - ignore {target_check}", markup=False)
 
         if changed and not error:
+            if album.album_id is None:
+                raise ValueError(f"cannot ignore checks for album with no album_id: {album.path}")
             if force or ctx.is_filtered() or Confirm.ask(f"ignore checks {check_names} for all albums?", console=ctx.console):
                 albums.database.operations.update_ignore_checks(ctx.db, album.album_id, album.ignore_checks)
         elif error:

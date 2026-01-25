@@ -12,7 +12,7 @@ from . import cli_context
 @click.command("list", help="print matching albums")
 @click.option("--json", "-j", is_flag=True, help="output all stored details in JSON")
 @cli_context.pass_context
-def list_albums(ctx: app.Context, json):
+def list_albums(ctx: app.Context, json: bool):
     total_size = 0
     total_length = 0
     table = Table("path in library", "tracks", "length", "size")

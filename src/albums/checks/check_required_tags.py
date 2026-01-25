@@ -13,7 +13,9 @@ class CheckRequiredTags(Check):
             return None  # this check only makes sense for files with common tags
 
         required_tags = self.config.get("tags", CheckRequiredTags.default_config["tags"])
-        missing_required_tags = {}
+        if not isinstance(required_tags, list):
+            raise ValueError("required_tags.tag configuration must be a list of tags")
+        missing_required_tags: dict[str, int] = {}
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag in required_tags:
                 if tag != "" and tag not in track.tags:

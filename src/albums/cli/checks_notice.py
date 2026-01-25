@@ -12,6 +12,9 @@ from . import cli_context
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
 def checks_notice(ctx: app.Context, force: bool, check_names: list[str]):
+    if not ctx.db:
+        raise ValueError("notice requires database connection")
+
     for album in ctx.select_albums(False):
         changed = False
         error = False
@@ -28,6 +31,8 @@ def checks_notice(ctx: app.Context, force: bool, check_names: list[str]):
 
         if changed and not error:
             if force or ctx.is_filtered() or Confirm.ask(f"stop ignoring checks {check_names} for all albums?", console=ctx.console):
+                if album.album_id is None:
+                    raise ValueError(f"unexpected album.album_id=None for {album.path}")
                 albums.database.operations.update_ignore_checks(ctx.db, album.album_id, album.ignore_checks)
         elif error:
             ctx.console.print("changes not saved because some options were invalid")

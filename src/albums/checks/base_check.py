@@ -16,11 +16,10 @@ class CheckResult:
 class Check:
     # subclass must define static name and default_config
     name: str
-    default_config: dict
-
+    default_config: dict[str, bool | str | int | list[str]]
     # subclass may use these instance values
     ctx: app.Context
-    config: str
+    config: dict[str, bool | str | int | list[str]]
 
     def __init__(self, ctx: app.Context):
         self.ctx = ctx

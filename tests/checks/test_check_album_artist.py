@@ -41,7 +41,7 @@ class TestCheckAlbumArtist:
         assert "multiple artists but no album artist" in str(prompt.message)
         assert prompt.option_free_text
         assert not prompt.option_none
-        assert prompt.options == ["B", "A", None, "Various Artists"]
+        assert prompt.options == ["B", "A", "Various Artists"]
         assert prompt.question.startswith("Which album artist to use for all 3 tracks")
         assert prompt.show_table
         assert len(prompt.show_table[1]) == 3  # tracks

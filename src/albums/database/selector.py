@@ -1,9 +1,14 @@
 import re
 import sqlite3
+from typing import Generator
+
+from ..types import Album
 from . import operations
 
 
-def select_albums(db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_tag=True):
+def select_albums(
+    db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_tag: bool = True
+) -> Generator[Album]:
     collection_placeholders = ",".join(["?"] * len(collection_names))
     if len(match_paths) == 0 or match_path_regex:  # no path filter
         if len(collection_names) == 0:

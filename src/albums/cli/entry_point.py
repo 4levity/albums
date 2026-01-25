@@ -2,7 +2,6 @@ import rich_click as click
 import rich.traceback
 
 from .. import app
-from ..library import scanner
 from . import cli_context
 from .collections_add import collections_add
 from .collections_remove import collections_remove
@@ -32,7 +31,7 @@ def albums(ctx: click.Context, app_context: app.Context, collections: list[str],
     cli_context.setup(ctx, app_context, verbose, collections, paths, regex, config_file)
 
     if app_context.config.get("options", {}).get("always_scan", False):
-        ctx.invoke(scanner.scan)
+        ctx.invoke(scan)
 
 
 albums.add_command(check)

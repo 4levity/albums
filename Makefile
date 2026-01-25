@@ -8,9 +8,10 @@ build: install lint test package
 install: ## Install project dependencies
 	$(POETRY) install
 
-lint: ## Lint with ruff
+lint: ## Lint and static analysis
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
+	$(POETRY) run pyright
 	$(POETRY) run python scripts/lint_markdown.py
 
 fix: ## Automatically fix lint/format

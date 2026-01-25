@@ -7,6 +7,8 @@ class CheckAlbumUnderAlbum(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
+        if not self.ctx.db:
+            raise ValueError("CheckAlbumUnderAlbum.check called without a db connection")
         path = album.path
         like_path = path.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
         (matches,) = self.ctx.db.execute(

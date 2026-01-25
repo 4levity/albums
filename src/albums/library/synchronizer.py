@@ -15,11 +15,14 @@ from ..types import Album
 logger = logging.getLogger(__name__)
 
 
-def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete, force):
+def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool, force: bool):
+    if not ctx.db or not ctx.library_root:
+        raise ValueError("do_sync called without db connection and library_root")
+
     existing_dest_paths = set(dest.rglob("*"))
     skipped_tracks = 0
     total_size = 0
-    tracks = []
+    tracks: list[tuple[Path, Path, int]] = []  # list of (source, destination, size)
     for album in albums:
         for track in album.tracks:
             # remove in-use dirs from destination set if present
