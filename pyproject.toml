@@ -46,6 +46,6 @@ exclude = ["typings"]
 ignore = ["tests", "**/typings"]
 exclude = [".venv", "**/.*", "**/__*", "**/typings"]
 typeCheckingMode = "strict"
-stubPath = "src/typings"
+stubPath = "typings"
 pythonPlatform = "Linux"
 pythonVersion = "3.14"
