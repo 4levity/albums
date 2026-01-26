@@ -12,12 +12,15 @@ database = "/path/to/albums.db"
 supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 [options]
-# Always rescan the media library before any operation (probably quite slow)
+# Always rescan the media library before any operation (probably quite slow if enabled)
 always_scan = false
+
 # If this option is set, whenever there is an interactive tag fix, there will be a menu option to
 # execute this external tagging program. The path of the album will be the first parameter.
-#
 # tagger = "easytag"
+
+# If this option is set, this will override the default command to open a window for a folder.
+# open_folder_command = "xdg-open"
 
 [checks.album_tag]
 # if a track doesn't have an ALBUM tag

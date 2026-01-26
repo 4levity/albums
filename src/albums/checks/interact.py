@@ -1,5 +1,7 @@
 import logging
+import os
 from pathlib import Path
+import platform
 import subprocess
 from rich.markup import escape
 from rich.prompt import Confirm
@@ -32,6 +34,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
 
     OPTION_FREE_TEXT = ">> Enter Text"
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
+    OPTION_OPEN_FOLDER = ">> Open folder and see all files"
     OPTION_DO_NOTHING = ">> Do nothing"
     OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
@@ -40,13 +43,13 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
         options.extend([opt for opt in fixer.options if opt not in [OPTION_FREE_TEXT, OPTION_RUN_TAGGER, OPTION_DO_NOTHING]])
     if fixer and fixer.option_free_text:
         options.append(OPTION_FREE_TEXT)
-    ignore_check_index = len(options)
     options.append(OPTION_IGNORE_CHECK)
     do_nothing_index = len(options)
     options.append(OPTION_DO_NOTHING)
     if tagger:
         options.append(OPTION_RUN_TAGGER)
-    # TODO if problem is file/folder, offer option to open folder with OS
+    # if check_result.category != ProblemCategory.TAGS:
+    options.append(OPTION_OPEN_FOLDER)
 
     album_path = (ctx.library_root if ctx.library_root else Path(".")) / album.path
 
@@ -70,21 +73,24 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
         if isinstance(option_index, tuple):
             raise ValueError("unexpected tuple result from TerminalMenu.show")
 
-        run_tagger = option_index is not None and options[option_index] == OPTION_RUN_TAGGER
-        if option_index is None or option_index in [ignore_check_index, do_nothing_index] or run_tagger:
+        if option_index is None or options[option_index] in [OPTION_IGNORE_CHECK, OPTION_DO_NOTHING, OPTION_RUN_TAGGER, OPTION_OPEN_FOLDER]:
             # these options do not invoke fixer.fix
-            if run_tagger:
+            choice = options[option_index] if option_index else None
+            if choice == OPTION_RUN_TAGGER:
                 done = False
                 ctx.console.print(f"Launching {tagger} {str(album_path)}", markup=False)
                 subprocess.Popen([str(tagger), str(album_path)])
                 ctx.console.print(f"If you make changes to this album in {tagger} [italic]after[/italic] continuing, scan again later.")
                 maybe_changed = True
-
-            if option_index == do_nothing_index:  # if user specifically picked "do nothing" from the menu, continue immediately
+            elif choice == OPTION_DO_NOTHING:
                 done = True
-            elif option_index == ignore_check_index:
+            elif choice == OPTION_IGNORE_CHECK:
                 done = prompt_ignore_checks(ctx, album, check_name)
-            else:
+            elif choice == OPTION_OPEN_FOLDER:
+                done = False
+                os_open_folder(ctx, album_path)
+                ctx.console.print("If you make changes to this album [italic]after[/italic] continuing, scan again later.")
+            else:  # quit menu without selecting1
                 done = Confirm.ask("Do you want to move on to the next album?", default=True, console=ctx.console)
 
         elif fixer:
@@ -117,3 +123,15 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
         ctx.db.commit()
         return True
     return False
+
+
+def os_open_folder(ctx: app.Context, path: Path):
+    open_folder_command = ctx.config.get("options", {}).get("open_folder_command")
+    if not open_folder_command and platform.system() == "Windows":
+        # type warnings because startfile only exists on Windows
+        # TODO try this on Windows someday
+        os.startfile(path)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    elif not open_folder_command and platform.system() == "Darwin":
+        subprocess.Popen(["open", path])
+    else:
+        subprocess.Popen([open_folder_command if open_folder_command else "xdg-open", path])
