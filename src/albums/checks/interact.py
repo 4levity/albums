@@ -21,8 +21,8 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     # always offer these options:
     #  - do nothing
     #  - ignore this check for this album
-    #  - browse folder (if appropriate problem type)
-    #  - run tagger (if configured + appropriate problem type)
+    #  - run tagger (if configured + issue is tag related)
+    #  - open new window to browse album folder
     # if there is an automatic fix option, it is the default, otherwise do nothing is the default
 
     fixer = check_result.fixer
@@ -63,21 +63,14 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
 
         ctx.console.print(check_result.message, markup=False)
 
-        terminal_menu = TerminalMenu(
-            options,
-            raise_error_on_interrupt=True,
-            title=fixer.prompt if fixer else "select an option",
-            cursor_index=fixer.option_automatic_index if fixer and (fixer.option_automatic_index is not None) else do_nothing_index,
-        )
-        option_index = terminal_menu.show()
-        if isinstance(option_index, tuple):
-            raise ValueError("unexpected tuple result from TerminalMenu.show")
+        prompt_text = fixer.prompt if fixer else "select an option"
+        default_option_index = fixer.option_automatic_index if fixer and (fixer.option_automatic_index is not None) else do_nothing_index
+        option_index = choose_from_menu(ctx, prompt_text, options, default_option_index)
 
         if option_index is None or options[option_index] in [OPTION_IGNORE_CHECK, OPTION_DO_NOTHING, OPTION_RUN_TAGGER, OPTION_OPEN_FOLDER]:
-            # these options do not invoke fixer.fix
+            # these options do not use the fixer (if one was provided)
             choice = options[option_index] if option_index else None
             if choice == OPTION_RUN_TAGGER:
-                done = False
                 ctx.console.print(f"Launching {tagger} {str(album_path)}", markup=False)
                 subprocess.Popen([str(tagger), str(album_path)])
                 ctx.console.print(f"If you make changes to this album in {tagger} [italic]after[/italic] continuing, scan again later.")
@@ -87,10 +80,11 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
             elif choice == OPTION_IGNORE_CHECK:
                 done = prompt_ignore_checks(ctx, album, check_name)
             elif choice == OPTION_OPEN_FOLDER:
-                done = False
                 os_open_folder(ctx, album_path)
                 ctx.console.print("If you make changes to this album [italic]after[/italic] continuing, scan again later.")
-            else:  # quit menu without selecting1
+                maybe_changed = True
+            if choice is None or maybe_changed:
+                # if user pressed esc, confirm; if user launched tagger or folder, pause
                 done = Confirm.ask("Do you want to move on to the next album?", default=True, console=ctx.console)
 
         elif fixer:
@@ -135,3 +129,12 @@ def os_open_folder(ctx: app.Context, path: Path):
         subprocess.Popen(["open", path])
     else:
         subprocess.Popen([open_folder_command if open_folder_command else "xdg-open", path])
+
+
+def choose_from_menu(ctx: app.Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
+    terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt, cursor_index=default_option_index)
+    option_index = terminal_menu.show()
+    if isinstance(option_index, tuple):
+        raise ValueError("unexpected tuple result from TerminalMenu.show")
+
+    return option_index
