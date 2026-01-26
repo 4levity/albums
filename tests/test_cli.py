@@ -87,6 +87,10 @@ database="{TestCli.library / "albums.db"}"
         assert '2 tracks missing album tag : "bar/"' in result.output
         assert "setting album on 1.flac" in result.output
 
+        result = self.run(["--verbose", "scan"])
+        assert result.exit_code == 0
+        assert "unchanged: 2" in result.output
+
         result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
         assert "foo/" not in result.output

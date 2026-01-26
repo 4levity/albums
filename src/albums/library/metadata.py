@@ -148,7 +148,10 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagCapabil
         codec = _get_codec(file)
         capabilities = TagCapabilities(has_tracktotal=True, has_disctotal=True)  # TODO this is often NOT true
 
-    return (file, codec, capabilities) if file else None
+    if file is not None:
+        return (file, codec, capabilities)
+    else:
+        return None
 
 
 def _get_tags(file: MutagenFileTypeLike, capabilities: TagCapabilities):

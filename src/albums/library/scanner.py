@@ -32,7 +32,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
     unprocessed_albums = dict(((path, album_id) for (path, album_id) in stored_paths))
 
     scanned = 0
-    scan_results: dict[str, int] = dict([(r.name, 0) for r in AlbumScanResult])
+    scan_results: dict[str, int] = dict([(r.name, 0) for r in AlbumScanResult] + [("REMOVED", 0)])
     try:
         with ctx.console.status(
             f"finding folders in {'specified folders' if path_selector else escape(str(ctx.library_root))}", spinner="bouncingBar"
@@ -80,10 +80,11 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
             if album_id is not None:
                 logger.info(f"remove album {album_id} {path}")
                 albums.database.operations.remove(ctx.db, album_id)
+                scan_results["REMOVED"] += 1
 
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
     ctx.db.commit()
     ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
-    ctx.console.print(scan_results)
+    ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))
