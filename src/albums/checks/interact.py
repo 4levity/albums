@@ -114,7 +114,6 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
     elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console, default=False):
         ignore_checks.append(check_name)
         albums.database.operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
-        ctx.db.commit()
         return True
     return False
 

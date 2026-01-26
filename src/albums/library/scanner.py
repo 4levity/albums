@@ -59,10 +59,10 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                 if album and result == AlbumScanResult.UNCHANGED:
                     logger.debug(f"no changes detected for album {album.path}")
                 elif album and result == AlbumScanResult.NEW:
-                    logger.debug(f"add album {album.path}")
+                    logger.info(f"add album {album.path}")
                     albums.database.operations.add(ctx.db, album)
                 elif album and album_id is not None and result == AlbumScanResult.UPDATED:
-                    logger.debug(f"update track info for album {album.path}")
+                    logger.info(f"update track info for album {album.path}")
                     albums.database.operations.update_tracks(ctx.db, album_id, album.tracks)
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:
@@ -85,6 +85,5 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
-    ctx.db.commit()
     ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
     ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))

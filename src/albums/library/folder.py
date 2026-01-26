@@ -34,6 +34,7 @@ def scan_folder(
             _load_track_metadata(scan_root, album_relpath, found_tracks)
             album = copy(stored_album)
             album.tracks = found_tracks
+            # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
             return (album, AlbumScanResult.UPDATED)
         return (stored_album, AlbumScanResult.UNCHANGED)
     return (None, AlbumScanResult.NO_TRACKS)

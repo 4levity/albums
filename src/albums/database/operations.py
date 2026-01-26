@@ -9,49 +9,53 @@ logger = logging.getLogger(__name__)
 
 
 def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
-    row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
-    if row is None:
-        raise ValueError(f"load_album called with invalid album_id={album_id}")
+    with db:
+        row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
+        if row is None:
+            raise ValueError(f"load_album called with invalid album_id={album_id}")
 
-    (path,) = row
-    collections = [
-        name
-        for (name,) in db.execute(
-            "SELECT collection_name FROM collection AS c JOIN album_collection AS ac ON c.collection_id = ac.collection_id WHERE ac.album_id = ?;",
-            (album_id,),
-        )
-    ]
+        (path,) = row
+        collections = [
+            name
+            for (name,) in db.execute(
+                "SELECT collection_name FROM collection AS c JOIN album_collection AS ac ON c.collection_id = ac.collection_id WHERE ac.album_id = ?;",
+                (album_id,),
+            )
+        ]
 
-    ignore_checks: list[str] = []
-    for (name,) in db.execute("SELECT check_name FROM album_ignore_check WHERE album_id = ?;", (album_id,)):
-        if name in ALL_CHECK_NAMES:
-            ignore_checks.append(name)
-        else:
-            # if chack_names changed, a migrationm should have prevented this, but raising an error here will not solve anything
-            logger.warning(f'album_id {album_id} has unknown check_name "{name}" in ignore list')
+        ignore_checks: list[str] = []
+        for (name,) in db.execute("SELECT check_name FROM album_ignore_check WHERE album_id = ?;", (album_id,)):
+            if name in ALL_CHECK_NAMES:
+                ignore_checks.append(name)
+            else:
+                # if chack_names changed, a migrationm should have prevented this, but raising an error here will not solve anything
+                logger.warning(f'album_id {album_id} has unknown check_name "{name}" in ignore list')
 
-    tracks = list(_load_tracks(db, album_id, load_track_tag))
+        tracks = list(_load_tracks(db, album_id, load_track_tag))
 
-    return Album(path, tracks, collections, ignore_checks, album_id)
+        return Album(path, tracks, collections, ignore_checks, album_id)
 
 
 def add(db: sqlite3.Connection, album: Album) -> int:
-    (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album.path,)).fetchone()
-    _insert_collections(db, album_id, album.collections)
-    _insert_ignore_checks(db, album_id, album.ignore_checks)
-    _insert_tracks(db, album_id, album.tracks)
-    return album_id
+    with db:
+        (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album.path,)).fetchone()
+        _insert_collections(db, album_id, album.collections)
+        _insert_ignore_checks(db, album_id, album.ignore_checks)
+        _insert_tracks(db, album_id, album.tracks)
+        return album_id
 
 
 def remove(db: sqlite3.Connection, album_id: int):
-    cur = db.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
-    if cur.rowcount == 0:
-        logger.warning(f"didn't delete album, not found: {album_id}")
+    with db:
+        cur = db.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
+        if cur.rowcount == 0:
+            logger.warning(f"didn't delete album, not found: {album_id}")
 
 
 def update_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
-    db.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
-    _insert_collections(db, album_id, collections)
+    with db:
+        db.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
+        _insert_collections(db, album_id, collections)
 
 
 def _insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
@@ -68,8 +72,9 @@ def _get_collection_id(db: sqlite3.Connection, collection_name: str):
 
 
 def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
-    db.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
-    _insert_ignore_checks(db, album_id, ignore_checks)
+    with db:
+        db.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
+        _insert_ignore_checks(db, album_id, ignore_checks)
 
 
 def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
@@ -80,8 +85,9 @@ def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: 
 
 
 def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
-    db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
-    _insert_tracks(db, album_id, tracks)
+    with db:
+        db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
+        _insert_tracks(db, album_id, tracks)
 
 
 def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):

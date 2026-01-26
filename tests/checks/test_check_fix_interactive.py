@@ -1,7 +1,9 @@
 import rich
+import albums.database.connection
+import albums.database.operations
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
-from albums.types import Album, Track
+from albums.types import Album, Stream, Track
 from albums.checks.interact import interact
 
 
@@ -35,11 +37,11 @@ class TestCheckFixInteractive:
         assert mock_ask.call_args.args[0] == ('Selected "A" - are you sure?')
 
     def test_fix_ignore_check(self, mocker):
-        album = Album("/", [Track("1.flac")], album_id=1)
+        album = Album("/", [Track("1.flac", stream=Stream())], album_id=1)
         ctx = app.Context()
-        ctx.db = mocker.Mock()
-        ctx.db.execute.return_value = None
-        ctx.db.commit.return_value = None
+        ctx.db = albums.database.connection.open(albums.database.connection.MEMORY)
+        album_id = albums.database.operations.add(ctx.db, album)
+
         fixer = MockFixer(ctx, album)
         mock_TerminalMenu = mocker.patch("albums.checks.interact.TerminalMenu")
         mock_menu = mock_TerminalMenu.return_value
@@ -50,5 +52,8 @@ class TestCheckFixInteractive:
         assert mock_menu.show.call_count == 1
         assert mock_ask.call_count == 1
         assert mock_ask.call_args.args[0] == ('Do you want to ignore the check "album_tag" for this album in the future?')
-        assert ctx.db.execute.call_count == 2
-        assert ctx.db.execute.call_args.args[0] == "INSERT INTO album_ignore_check (album_id, check_name) VALUES (?, ?);"
+
+        rows = ctx.db.execute("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = ?", (album_id,)).fetchall()
+        assert len(rows) == 1
+        assert rows[0][0] == 1
+        ctx.db.close()
