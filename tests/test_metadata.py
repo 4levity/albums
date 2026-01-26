@@ -6,7 +6,7 @@ from albums.types import Album, Track
 from .fixtures.create_library import create_library
 
 
-albums = [Album("foo/", [Track("1.mp3", {"tracknumber": "1/3", "discnumber": "2/2"})])]
+albums = [Album("foo/", [Track("1.mp3", {"tracknumber": ["1/3"], "discnumber": ["2/2"]})])]
 
 
 class TestMetadata:

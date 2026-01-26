@@ -6,50 +6,42 @@ import re
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
-from .base_check import Check, CheckResult
-from .base_fixer import Fixer, FixerInteractivePrompt
+from .base_check import ProblemCategory, Check, CheckResult, Fixer
 from .normalize_tags import normalized
 
 
 logger = logging.getLogger(__name__)
 
 
-CHECK_NAME = "track_number"
-OPTION_REMOVE_DT = ">> Remove disctotal tag from all tracks"
-OPTION_REMOVE_DN_AND_DT = ">> Remove discnumber AND disctotal tag from all tracks"
-
-
 class DiscNumberFixer(Fixer):
+    OPTION_REMOVE_DT = ">> Remove disctotal tag from all tracks"
+    OPTION_REMOVE_DN_AND_DT = ">> Remove discnumber AND disctotal tag from all tracks"
     # TODO more fixer options e.g. re-number from filenames
 
-    def __init__(self, ctx: app.Context, album: Album, message: str, option_remove_disctotal: bool, option_remove_discnumber_and_disctotal: bool):
-        super(DiscNumberFixer, self).__init__(CHECK_NAME, ctx, album, True, None, True)
+    def __init__(self, ctx: app.Context, album: Album, option_remove_disctotal: bool, option_remove_discnumber_and_disctotal: bool):
         tracks = [[_describe_track_number(track), track.filename] for track in _ordered_tracks(album)]
+        table = (["disc/track", "filename"], tracks)
         options: list[str] = []
         if option_remove_disctotal:
-            options.append(OPTION_REMOVE_DT)
+            options.append(DiscNumberFixer.OPTION_REMOVE_DT)
         if option_remove_discnumber_and_disctotal:
-            options.append(OPTION_REMOVE_DN_AND_DT)
-        self.prompt = FixerInteractivePrompt(
-            [f"*** Fixing discnumber/disctotal tags for {self.album.path}", f"ISSUE: {message}"],
-            "Select an option",
-            options,
-            (["disc/track", "filename"], tracks),
-        )
+            options.append(DiscNumberFixer.OPTION_REMOVE_DN_AND_DT)
+
+        super(DiscNumberFixer, self).__init__(lambda option: self._fix(ctx, album, option), options, False, None, table)
 
     def get_interactive_prompt(self):
         return self.prompt
 
-    def fix_interactive(self, option: str | None):
-        if option is None:
-            raise ValueError("DiscNumberFixer.fix_interactive invalid option None")
+    def _fix(self, ctx: app.Context, album: Album, option: str | None) -> bool:
+        if option not in [DiscNumberFixer.OPTION_REMOVE_DN_AND_DT, DiscNumberFixer.OPTION_REMOVE_DT]:
+            raise ValueError(f"DiscNumberFixer invalid option {option}")
 
-        remove_discnumber = option.startswith(OPTION_REMOVE_DN_AND_DT)
-        for track in self.album.tracks:
-            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
+        remove_discnumber = option.startswith(DiscNumberFixer.OPTION_REMOVE_DN_AND_DT)
+        for track in album.tracks:
+            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
             tags = normalized(track.tags)
             if "disctotal" in tags or (remove_discnumber and "discnumber" in tags):
-                self.ctx.console.print(f"removing {'discnumber and ' if remove_discnumber else ''}disctotal from {track.filename}")
+                ctx.console.print(f"removing {'discnumber and ' if remove_discnumber else ''}disctotal from {track.filename}")
                 if remove_discnumber:
                     set_basic_tags(path, [("discnumber", None), ("disctotal", None)])
                 else:
@@ -59,45 +51,29 @@ class DiscNumberFixer(Fixer):
 
 
 class TrackNumberFixer(Fixer):
-    def __init__(self, ctx: app.Context, album: Album, message: str):
-        super(TrackNumberFixer, self).__init__(CHECK_NAME, ctx, album, True, None, True)
+    def __init__(self, ctx: app.Context, album: Album):
         # sort by discnumber/tracknumber tag if all tracks have one
-        has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in self.album.tracks)
+        has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
         tracks = [
             [_describe_track_number(track), track.filename, f"{'' if has_discnumber else (index + 1)}"]
-            for (index, track) in enumerate(_ordered_tracks(self.album))
+            for (index, track) in enumerate(_ordered_tracks(album))
         ]
         table = (["track", "filename", "proposed track #"], tracks)
-        self.prompt = FixerInteractivePrompt(
-            [f"*** Fixing track/disc number tags for {self.album.path}", f"ISSUE: {message}"],
-            "Which track numbering option to apply?",
-            [],  # with no options, user can run external tagger or ignore
-            table,
-            False,
-            False,
-        )
+        super(TrackNumberFixer, self).__init__(lambda option: self._fix(ctx, album, option), ["no valid options yet"], False, None, table)
 
-    def get_interactive_prompt(self):
-        return self.prompt
-
-    # TODO better proposed track numbers, actual fixer!
+    def _fix(self, ctx: app.Context, album: Album, option: str) -> bool:
+        raise NotImplementedError("TrackNumberFixer fix not implemented")
 
 
 class TrackTotalFixer(Fixer):
     OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
     OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
 
-    def __init__(self, ctx: app.Context, album: Album, discnumber: int | None, message: str):
-        automatic = None  # TODO this can be automatic for at least some situations
-        super(TrackTotalFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic, True)
-        self.message = [f"*** Fixing tracktotal values for {self.album.path}", f"ISSUE: {message}"]
-        self.discnumber = discnumber
-
-    def get_interactive_prompt(self):
+    def __init__(self, ctx: app.Context, album: Album, discnumber: int | None):
         self.tracks: list[Track] = []
-        for track in _ordered_tracks(self.album):
+        for track in _ordered_tracks(album):
             tags = normalized(track.tags)
-            if self.discnumber is None or (tags.get("discnumber", [""])[0].isdecimal() and int(tags["discnumber"][0]) == self.discnumber):
+            if discnumber is None or (tags.get("discnumber", [""])[0].isdecimal() and int(tags["discnumber"][0]) == discnumber):
                 normalized_track = copy(track)
                 normalized_track.tags = tags
                 self.tracks.append(normalized_track)
@@ -106,24 +82,29 @@ class TrackTotalFixer(Fixer):
             (
                 int(track.tags["tracktotal"][0])
                 for track in self.tracks
-                if track.tags.get("tracktotal", [""])[0].isdecimal()
-                and (self.discnumber is None or int(track.tags["discnumber"][0]) == self.discnumber)
+                if track.tags.get("tracktotal", [""])[0].isdecimal() and (discnumber is None or int(track.tags["discnumber"][0]) == discnumber)
             ),
             default=None,
         )
-        discnumber_notice = {f" on disc {self.discnumber}"} if self.discnumber is not None else ""
-        self.options = [f"{TrackTotalFixer.OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
+        discnumber_notice = {f" on disc {discnumber}"} if discnumber is not None else ""
+        options = [f"{TrackTotalFixer.OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
         if self.max_tracktotal:
-            self.options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
+            options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
 
-        tracks = [[_describe_track_number(track), track.filename] for track in _ordered_tracks(self.album)]
+        tracks = [[_describe_track_number(track), track.filename] for track in _ordered_tracks(album)]
         table = (["track", "filename"], tracks)
         # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
-        return FixerInteractivePrompt(
-            self.message, f"Which option to apply to {len(self.tracks)} tracks{discnumber_notice}?", self.options, table, True, True
+
+        super(TrackTotalFixer, self).__init__(
+            lambda option: self._fix(ctx, album, option),
+            options,
+            True,
+            None,
+            table,
+            f"select option to apply to {len(self.tracks)} tracks{discnumber_notice}",
         )
 
-    def fix_interactive(self, option: str | None):
+    def _fix(self, ctx: app.Context, album: Album, option: str | None):
         if option is None:
             new_tracktotal = None
         elif option.startswith(TrackTotalFixer.OPTION_USE_TRACK_COUNT):
@@ -136,13 +117,13 @@ class TrackTotalFixer(Fixer):
 
         changed = False
         for track in self.tracks:
-            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
+            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
             tags = normalized(track.tags)
             if new_tracktotal is None and "tracktotal" in tags:
-                self.ctx.console.print(f"removing tracktotal from {track.filename}")
+                ctx.console.print(f"removing tracktotal from {track.filename}")
                 changed = True
             elif new_tracktotal is not None and tags.get("tracktotal", []) != [str(new_tracktotal)]:
-                self.ctx.console.print(f"setting tracktotal on {track.filename}")
+                ctx.console.print(f"setting tracktotal on {track.filename}")
                 changed = True
             if changed:
                 set_basic_tags(path, [("tracktotal", new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
@@ -150,37 +131,30 @@ class TrackTotalFixer(Fixer):
 
 
 class DiscInTracknumberFixer(Fixer):
-    message = "track number contains disc number"
-
     OPTION_USE_PROPOSED = ">> Split track number automatically (proposed values)"
 
     def __init__(self, ctx: app.Context, album: Album):
-        automatic = "split tracknumber -> discnumber/tracknumber"
-        super(DiscInTracknumberFixer, self).__init__(CHECK_NAME, ctx, album, has_interactive=True, describe_automatic=automatic, enable_tagger=True)
         tracks = [[_describe_track_number(track), track.filename, *self._proposed_disc_and_tracknumber(track)] for track in _ordered_tracks(album)]
-        self.prompt = FixerInteractivePrompt(
-            DiscInTracknumberFixer.message,
-            "track numbers are invalid - how do you want to fix them?",
+        table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
+        super(DiscInTracknumberFixer, self).__init__(
+            lambda option: self._fix(ctx, album, option),
             [DiscInTracknumberFixer.OPTION_USE_PROPOSED],
-            (["track", "filename", "proposed disc#", "proposed track#"], tracks),
+            False,
+            0,
+            table,
+            "select an option to fix invalid track numbers",
         )
 
-    def get_interactive_prompt(self):
-        return self.prompt
-
-    def fix_interactive(self, option: str | None):
+    def _fix(self, ctx: app.Context, album: Album, option: str | None) -> bool:
         if option != DiscInTracknumberFixer.OPTION_USE_PROPOSED:
             raise ValueError(f"invalid option {option}")
 
-        for track in self.album.tracks:
-            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
-            self.ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
+        for track in album.tracks:
+            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
+            ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
             (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
             set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])
         return True
-
-    def fix_automatic(self):
-        return self.fix_interactive(DiscInTracknumberFixer.OPTION_USE_PROPOSED)
 
     def _proposed_disc_and_tracknumber(self, track: Track):
         [discnumber, tracknumber] = track.tags["tracknumber"][0].split("-")
@@ -188,15 +162,15 @@ class DiscInTracknumberFixer(Fixer):
 
 
 class CheckTrackNumber(Check):
-    name = CHECK_NAME
+    name = "track_number"
     default_config = {"enabled": True, "ignore_folders": ["misc"], "warn_disc_per_folder": False}
 
     def check(self, album: Album):
-        ignore_folders = self.config.get("ignore_folders", CheckTrackNumber.default_config["ignore_folders"])
+        ignore_folders = self.check_config.get("ignore_folders", CheckTrackNumber.default_config["ignore_folders"])
         if not isinstance(ignore_folders, list):
             raise ValueError("track_number.ignore_folders must be a list")
 
-        warn_disc_per_folder = self.config.get("warn_disc_per_folder", CheckTrackNumber.default_config["warn_disc_per_folder"])
+        warn_disc_per_folder = self.check_config.get("warn_disc_per_folder", CheckTrackNumber.default_config["warn_disc_per_folder"])
         folder_str = Path(album.path).name
         if folder_str in ignore_folders:
             return None
@@ -208,9 +182,7 @@ class CheckTrackNumber(Check):
         disc_in_tracknumber = all(re.match("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in album.tracks)
         has_discnumber = any("discnumber" in track.tags for track in album.tracks)
         if disc_in_tracknumber and not has_discnumber:
-            return CheckResult(self.name, DiscInTracknumberFixer.message, DiscInTracknumberFixer(self.ctx, album))
-
-        # (tracks_by_disc, tag_issues) = _tracks_by_disc_with_issues(album.tracks, disc_in_tracknumber, warn_disc_per_folder)
+            return CheckResult(ProblemCategory.TAGS, "track number contains disc number", DiscInTracknumberFixer(self.ctx, album))
 
         tracks_by_disc: dict[str, list[Track]] = {}
         valid_disc_numbers: set[int] = set()
@@ -282,9 +254,11 @@ class CheckTrackNumber(Check):
                 tag_issues.add("unexpected disc numbers present")
         # if there are issues with discnumbers, that's the next thing to fix
         if len(tag_issues) > 0:
-            message = f"discnumber/disctotal problems: {', '.join(tag_issues)}"
-            fixer = DiscNumberFixer(self.ctx, album, message, option_remove_disctotal, option_remove_discnumber_and_disctotal)
-            return CheckResult(self.name, message, fixer)
+            return CheckResult(
+                ProblemCategory.TAGS,
+                f"discnumber/disctotal problems: {', '.join(tag_issues)}",
+                DiscNumberFixer(self.ctx, album, option_remove_disctotal, option_remove_discnumber_and_disctotal),
+            )
 
         for discnumber in tracks_by_disc.keys():
             tracks = tracks_by_disc[discnumber]
@@ -319,39 +293,64 @@ class CheckTrackNumber(Check):
                             expect_track_total = tracktotal
 
             if len(tag_issues) > 0:  # if there are non-numeric/multiple value tags, stop here
-                message = f"tracknumber/tracktotal tag problems: {', '.join(tag_issues)}"
-                return CheckResult(self.name, message, TrackNumberFixer(self.ctx, album, message))
+                return CheckResult(
+                    ProblemCategory.TAGS,
+                    f"tracknumber/tracktotal tag problems: {', '.join(tag_issues)}",
+                    TrackNumberFixer(self.ctx, album),
+                )
 
             on_disc_message = f" on disc {discnumber}" if discnumber else ""
             if len(track_total_counts) > 1:
-                message = f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}"
-                return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
+                return CheckResult(
+                    ProblemCategory.TAGS,
+                    f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}",
+                    TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                )
             elif len(track_total_counts) == 1:
                 (tracktotal, tracktotal_tagged_count) = list(track_total_counts.items())[0]
                 if tracktotal == len(tracks) and tracktotal != tracktotal_tagged_count:
                     # tracktotal matches the number of tracks, but not all tracks have tracktotal tag
-                    message = f"tracktotal = {tracktotal} is not set on all tracks{on_disc_message}"
-                    return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
+                    return CheckResult(
+                        ProblemCategory.TAGS,
+                        f"tracktotal = {tracktotal} is not set on all tracks{on_disc_message}",
+                        TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                    )
                 elif tracktotal_tagged_count != len(tracks):  # hmm needs clarification
-                    message = f"tracktotal = {tracktotal} is set on {tracktotal_tagged_count}/{len(tracks)} tracks{on_disc_message}"
-                    return CheckResult(self.name, message, TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None, message))
+                    return CheckResult(
+                        ProblemCategory.TAGS,
+                        f"tracktotal = {tracktotal} is set on {tracktotal_tagged_count}/{len(tracks)} tracks{on_disc_message}",
+                        TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                    )
 
             expected_track_numbers = set(range(1, expect_track_total + 1))
             missing_track_numbers = expected_track_numbers - actual_track_numbers
             unexpected_track_numbers = actual_track_numbers - expected_track_numbers
             if actual_track_numbers > expected_track_numbers:
-                message = f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}"
-                return CheckResult(self.name, message, TrackNumberFixer(self.ctx, album, message))
+                return CheckResult(
+                    ProblemCategory.TAGS,
+                    f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}",
+                    TrackNumberFixer(self.ctx, album),
+                )
             elif len(missing_track_numbers) > 0:
                 if duplicate_tracks:
-                    message = f"duplicate track numbers: {duplicate_tracks}"
-                elif len(actual_track_numbers) == len(tracks):
+                    return CheckResult(
+                        ProblemCategory.TAGS,
+                        f"duplicate track numbers{on_disc_message}: {duplicate_tracks}",
+                        TrackNumberFixer(self.ctx, album),
+                    )
+                if len(actual_track_numbers) == len(tracks):
                     # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
-                    message = f"tracks missing from album{on_disc_message} {missing_track_numbers}"
-                else:
-                    message = f"missing track numbers or tags{on_disc_message} {missing_track_numbers}"
-                return CheckResult(self.name, message, TrackNumberFixer(self.ctx, album, message))
+                    return CheckResult(
+                        ProblemCategory.OTHER,
+                        f"tracks missing from album{on_disc_message} {missing_track_numbers}",
+                        TrackNumberFixer(self.ctx, album),
+                    )
+                return CheckResult(
+                    ProblemCategory.TAGS,
+                    f"missing track numbers or tags{on_disc_message} {missing_track_numbers}",
+                    TrackNumberFixer(self.ctx, album),
+                )
 
         return None
 

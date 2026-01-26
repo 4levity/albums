@@ -1,4 +1,5 @@
 {
+    "python.analysis.useNearestConfiguration": true,
     "python.testing.pytestArgs": [
         "tests"
     ],

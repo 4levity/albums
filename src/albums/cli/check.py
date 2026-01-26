@@ -1,9 +1,8 @@
-from rich.prompt import Confirm
 import rich_click as click
 
 from .. import app
 from ..checks import all
-from ..checks.base_fixer import prompt_ignore_checks
+from ..checks.interact import interact
 from ..library import scanner
 from . import cli_context
 
@@ -13,13 +12,12 @@ from . import cli_context
     epilog=f"If any CHECK_NAMES are provided, only those checks will run. Valid checks are: {', '.join(all.ALL_CHECK_NAMES)}",
 )
 @click.option("--default", is_flag=True, help="use default settings for all checks")
-@click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes")
-@click.option("--automatic-yes", "-y", is_flag=True, help="perform automatic fixes without prompting")
-@click.option("--interactive", "-i", is_flag=True, help="prompt if interactive fix is available")
-@click.option("--prompt-ignore", "-P", is_flag=True, help="prompt even when only option is ignore")
+@click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")
+@click.option("--fix", "-f", is_flag=True, help="prompt when there is a selectable fix available")
+@click.option("--interactive", "-i", is_flag=True, help="ask what to do even if the only options are manual (implies -f)")
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
-def check(ctx: app.Context, default: bool, automatic: bool, automatic_yes: bool, interactive: bool, prompt_ignore: bool, check_names: list[str]):
+def check(ctx: app.Context, default: bool, automatic: bool, fix: bool, interactive: bool, check_names: list[str]):
     if default or "checks" not in ctx.config:
         ctx.console.print("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
@@ -37,24 +35,18 @@ def check(ctx: app.Context, default: bool, automatic: bool, automatic_yes: bool,
             ctx.config["checks"][check_name]["enabled"] = check_name in check_names
 
     found = False
-    for album, check_result in all.run_enabled(ctx):
+    for album, check, check_result in all.run_enabled(ctx):
         ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
-        if check_result.fixer is not None:
+        fixer = check_result.fixer
+        if automatic and fixer and fixer.option_automatic_index is not None:
+            rescan = fixer.fix(fixer.options[fixer.option_automatic_index])
+        elif interactive or (fixer and fix):
+            rescan = interact(ctx, check.name, check_result, album)
+        else:
             rescan = False
-            fixer = check_result.fixer
-            if fixer.describe_automatic and (
-                automatic_yes or (automatic and Confirm.ask(f"do you want to {fixer.describe_automatic}?", default=True, console=ctx.console))
-            ):
-                if check_result.fixer.fix_automatic():
-                    rescan = True
-            if prompt_ignore or (interactive and fixer.has_interactive):
-                if check_result.fixer.interact():
-                    rescan = True
-            if rescan:
-                scanner.scan(ctx, lambda: [(album.path, album.album_id)], True)
-        elif prompt_ignore:
-            ctx.console.print("No fix available. ", end="")
-            prompt_ignore_checks(ctx, album, check_result.name)
+
+        if rescan:
+            scanner.scan(ctx, lambda: [(album.path, album.album_id)], True)
 
         found = True
     if not found:

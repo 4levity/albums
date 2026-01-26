@@ -44,7 +44,7 @@ exclude = ["typings"]
 
 [tool.pyright]
 ignore = ["tests", "**/typings"]
-exclude = [".venv", "**/.*", "**/__*", "**/typings"]
+exclude = [".venv", "**/.*", "**/__*", "**/typings", "**/node_modules", "**/__pycache__"]
 typeCheckingMode = "strict"
 stubPath = "typings"
 pythonPlatform = "Linux"

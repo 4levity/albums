@@ -1,73 +1,20 @@
 import logging
 from pathlib import Path
-from rich.markup import escape
 
-from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
-from .base_check import Check, CheckResult
-from .base_fixer import Fixer, FixerInteractivePrompt
+from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
 
 logger = logging.getLogger(__name__)
 
 
-CHECK_NAME = "album_tag"
-
-
-class AlbumTagFixer(Fixer):
-    def __init__(self, ctx: app.Context, album: Album, message: str, candidates: list[str]):
-        # if there is only one suggestion, enable automatic fix
-        automatic = f'set album to "{escape(candidates[0])}"' if len(candidates) == 1 else None
-
-        super(AlbumTagFixer, self).__init__(CHECK_NAME, ctx, album, True, automatic, True)
-        table: tuple[list[str], list[list[str]]] = (
-            ["filename", "album tag", "artist", "album artist"],
-            [
-                [str(track.filename), str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
-                for track in album.tracks
-            ],
-        )
-        self.prompt = FixerInteractivePrompt(
-            [f"*** Fixing album tag for {album.path}", f"ISSUE: {message}"],
-            f"Which album name to use for all {len(self.album.tracks)} tracks in {album.path}?",
-            candidates,
-            table,
-            option_none=False,
-            option_free_text=True,
-        )
-
-    def get_interactive_prompt(self):
-        return self.prompt
-
-    def fix_interactive(self, option: str | None) -> bool:
-        changed = self._fix(option)
-        self.ctx.console.print("done.")
-        return changed
-
-    def fix_automatic(self) -> bool:
-        return self._fix(self.prompt.options[0])
-
-    def _fix(self, album_value: str | None) -> bool:
-        changed = False
-        for track in self.album.tracks:
-            if album_value is None:
-                raise ValueError("album tag may not be removed")
-
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / self.album.path / track.filename
-            if track.tags.get("album", []) != [album_value]:
-                self.ctx.console.print(f"setting album on {track.filename}")
-                set_basic_tags(file, [("album", album_value)])
-                changed = True
-        return changed
-
-
 class CheckAlbumTag(Check):
-    name = CHECK_NAME
+    name = "album_tag"
     default_config = {"enabled": True, "ignore_folders": ["misc"]}
 
     def check(self, album: Album):
-        ignore_folders = self.config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
+        ignore_folders = self.check_config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
         folder_str = Path(album.path).name
         if folder_str in ignore_folders if isinstance(ignore_folders, list) else []:
             return None
@@ -88,15 +35,38 @@ class CheckAlbumTag(Check):
         if len(candidates) > 1:  # multiple conflicting album names (not including folder name)
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            message = f"{len(candidates)} conflicting album tag values"
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
-            return CheckResult(self.name, message, fixer)
+            return CheckResult(ProblemCategory.TAGS, f"{len(candidates)} conflicting album tag values", self._make_fixer(album, candidates))
 
         if track_album_tags[""] > 0:  # tracks missing album tag
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            message = f"{track_album_tags['']} tracks missing album tag"
-            fixer = AlbumTagFixer(self.ctx, album, message, candidates)
-            return CheckResult(self.name, message, fixer)
+            return CheckResult(ProblemCategory.TAGS, f"{track_album_tags['']} tracks missing album tag", self._make_fixer(album, candidates))
 
         return None
+
+    def _make_fixer(self, album: Album, options: list[str]):
+        table: tuple[list[str], list[list[str]]] = (
+            ["filename", "album tag", "artist", "album artist"],
+            [
+                [str(track.filename), str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
+                for track in album.tracks
+            ],
+        )
+        return Fixer(
+            lambda option: self._fix(album, option),
+            options,
+            True,
+            0 if len(options) == 1 else None,
+            table,
+            f"select album name to use for all {len(album.tracks)} tracks",
+        )
+
+    def _fix(self, album: Album, option: str) -> bool:
+        changed = False
+        for track in album.tracks:
+            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            if track.tags.get("album", []) != [option]:
+                self.ctx.console.print(f"setting album on {track.filename}")
+                set_basic_tags(file, [("album", option)])
+                changed = True
+        return changed

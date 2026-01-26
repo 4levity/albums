@@ -1,0 +1,10 @@
+{
+  "exclude": ["**/__pycache__", "**/node_modules", "**/.*", ".venv"],
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "standard",
+  "extraPaths": ["../"],
+  "reportAttributeAccessIssue": false,
+  "reportOptionalMemberAccess": false,
+  "reportOptionalSubscript": false,
+  "reportPrivateImportUsage": false,
+}

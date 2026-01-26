@@ -42,10 +42,9 @@ class TestCheckAlbumTag:
         result = CheckAlbumTag(Context()).check(album)
         assert "2 conflicting album tag values" in result.message
         assert result.fixer is not None
-        assert result.fixer.has_interactive
-        prompt = result.fixer.get_interactive_prompt()
-        assert "2 conflicting album tag values" in str(prompt.message)
-        assert prompt.options == ["A", "B"]
+        assert result.fixer.options == ["A", "B"]
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_free_text is not None
 
     def test_check_needs_album__fix_auto(self, mocker):
         # album can be guessed from folder, no conflicting tags
@@ -61,10 +60,11 @@ class TestCheckAlbumTag:
         ctx.library_root = Path("/path/to/library")
         result = CheckAlbumTag(ctx).check(album)
         assert result.fixer is not None
-        assert result.fixer.describe_automatic == 'set album to "Foo"'
+        assert result.fixer.options[0] == "Foo"
+        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_album_tag.set_basic_tags")
-        fix_result = result.fixer.fix_automatic()
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Foo")])
@@ -82,22 +82,18 @@ class TestCheckAlbumTag:
         ctx = Context()
         ctx.library_root = Path("/path/to/library")
         result = CheckAlbumTag(ctx).check(album)
+        assert "1 tracks missing album tag" in str(result.message)
         assert result.fixer is not None
-        assert result.fixer.describe_automatic is None
-        assert result.fixer.has_interactive
-
-        prompt = result.fixer.get_interactive_prompt()
-        assert "1 tracks missing album tag" in str(prompt.message)
-        assert prompt.option_free_text
-        assert not prompt.option_none
-        assert prompt.options == ["Bar", "Foo"]
-        assert prompt.question.startswith("Which album name to use for all 3 tracks")
-        assert prompt.show_table
-        assert len(prompt.show_table[1]) == 3  # tracks
-        assert len(prompt.show_table[0]) == len(prompt.show_table[1][0])  # headers
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_free_text
+        assert result.fixer.options == ["Bar", "Foo"]
+        assert "album name to use" in result.fixer.prompt
+        assert result.fixer.table
+        assert len(result.fixer.table[1]) == 3  # tracks
+        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_album_tag.set_basic_tags")
-        fix_result = result.fixer.fix_interactive("Bar")
+        fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Bar")])

@@ -35,21 +35,18 @@ class TestCheckAlbumArtist:
         ctx = Context()
         ctx.library_root = Path("/path/to/library")
         result = CheckAlbumArtist(ctx).check(album)
+        assert "multiple artists but no album artist" in result.message
         assert result.fixer is not None
-        assert result.fixer.has_interactive
-        prompt = result.fixer.get_interactive_prompt()
-        assert "multiple artists but no album artist" in str(prompt.message)
-        assert prompt.option_free_text
-        assert not prompt.option_none
-        assert prompt.options == ["B", "A", "Various Artists"]
-        assert prompt.question.startswith("Which album artist to use for all 3 tracks")
-        assert prompt.show_table
-        assert len(prompt.show_table[1]) == 3  # tracks
-        assert len(prompt.show_table[0]) == len(prompt.show_table[1][0])  # headers
+        assert result.fixer.option_free_text
+        assert result.fixer.options == ["B", "A", "Various Artists"]
+        assert "album artist to use" in result.fixer.prompt
+        assert result.fixer.table
+        assert len(result.fixer.table[1]) == 3  # tracks
+        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
 
         # we select "B" and it is fixed
         mock_set_basic_tags = mocker.patch("albums.checks.check_album_artist.set_basic_tags")
-        fix_result = result.fixer.fix_interactive("B")
+        fix_result = result.fixer.fix("B")
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("albumartist", "B")])

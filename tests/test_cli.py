@@ -11,8 +11,8 @@ from .fixtures.create_library import create_library, test_data_path
 
 
 albums = [
-    Album("foo/", [Track("1.mp3", {"title": "1"})]),
-    Album("bar/", [Track("1.flac", {"title": "1"}), Track("2.flac", {"title": "2"})]),
+    Album("foo/", [Track("1.mp3", {"title": ["1"]})]),
+    Album("bar/", [Track("1.flac", {"title": ["1"]}), Track("2.flac", {"title": ["2"]})]),
 ]
 
 
@@ -81,13 +81,13 @@ database="{TestCli.library / "albums.db"}"
         assert '2 tracks missing album tag : "bar/"' in result.output
 
     def test_check_automatic_fix(self):
-        result = self.run(["check", "--automatic-yes", "album_tag"])
+        result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
         assert '1 tracks missing album tag : "foo/"' in result.output
         assert '2 tracks missing album tag : "bar/"' in result.output
         assert "setting album on 1.flac" in result.output
 
-        result = self.run(["check", "--automatic-yes", "album_tag"])
+        result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
         assert "foo/" not in result.output
         assert "bar/" not in result.output

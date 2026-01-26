@@ -18,11 +18,11 @@ def run_enabled(ctx: app.Context):
     def enabled(check: type[Check]) -> bool:
         return ctx.config.get("checks", {}).get(check.name, {}).get("enabled", False)
 
-    checks = [check(ctx) for check in _all_checks if enabled(check)]
+    check_instances = [check(ctx) for check in _all_checks if enabled(check)]
 
     for album in ctx.select_albums(True):
-        for instance in checks:
+        for instance in check_instances:
             if instance.name not in album.ignore_checks:
                 album_result = instance.check(album)
                 if album_result:
-                    yield (album, album_result)
+                    yield (album, instance, album_result)

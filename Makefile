@@ -12,6 +12,7 @@ lint: ## Lint and static analysis
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
 	$(POETRY) run pyright
+	$(POETRY) run pyright -p tests
 	$(POETRY) run python scripts/lint_markdown.py
 
 fix: ## Automatically fix lint/format

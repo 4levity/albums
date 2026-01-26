@@ -88,10 +88,9 @@ class TestCheckTrackNumber:
         assert "some tracks have disctotal tag and some do not" in result.message
         fixer = result.fixer
         assert fixer
-        prompt = fixer.get_interactive_prompt()
-        assert prompt.options == [">> Remove disctotal tag from all tracks"]
+        assert fixer.options == [">> Remove disctotal tag from all tracks"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
-        assert fixer.fix_interactive(prompt.options[0])
+        assert fixer.fix(fixer.options[0])
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
             ctx.library_root / album.path / album.tracks[3].filename,
@@ -113,10 +112,9 @@ class TestCheckTrackNumber:
         assert "track number contains disc number" in result.message
         fixer = result.fixer
         assert fixer
-        prompt = fixer.get_interactive_prompt()
-        assert prompt.options == [">> Split track number automatically (proposed values)"]
+        assert fixer.options == [">> Split track number automatically (proposed values)"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
-        assert fixer.fix_interactive(prompt.options[0])
+        assert fixer.fix(fixer.options[0])
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (
             ctx.library_root / album.path / album.tracks[2].filename,
@@ -138,10 +136,9 @@ class TestCheckTrackNumber:
         assert "tracktotal = 3 is not set on all tracks" in result.message
         fixer = result.fixer
         assert fixer
-        prompt = fixer.get_interactive_prompt()
-        assert prompt.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 3"]
+        assert fixer.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 3"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
-        assert fixer.fix_interactive(prompt.options[0])
+        assert fixer.fix(fixer.options[0])
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("tracktotal", "3")])
 
@@ -160,9 +157,8 @@ class TestCheckTrackNumber:
         assert "tracktotal = 4 is set on 2/3 tracks" in result.message
         fixer = result.fixer
         assert fixer
-        prompt = fixer.get_interactive_prompt()
-        assert prompt.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 4"]
+        assert fixer.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 4"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_number.set_basic_tags")
-        assert fixer.fix_interactive(prompt.options[0])
+        assert fixer.fix(fixer.options[0])
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("tracktotal", "3")])

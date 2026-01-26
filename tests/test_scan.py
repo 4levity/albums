@@ -21,13 +21,13 @@ class TestScanner:
         Album(
             "bar/",
             [
-                Track("1.flac", {"title": "1"}),
-                Track("2.flac", {"title": "2"}),
-                Track("3.flac", {"title": "3"}),
+                Track("1.flac", {"title": ["1"]}),
+                Track("2.flac", {"title": ["2"]}),
+                Track("3.flac", {"title": ["3"]}),
             ],
         ),
-        Album("foo/", [Track("1.mp3", {"title": "1"}), Track("2.mp3", {"title": "2"})]),
-        Album("baz/", [Track("1.wma", {"title": "one"}), Track("2.wma", {"title": "two"})]),
+        Album("foo/", [Track("1.mp3", {"title": ["1"]}), Track("2.mp3", {"title": ["2"]})]),
+        Album("baz/", [Track("1.wma", {"title": ["one"]}), Track("2.wma", {"title": ["two"]})]),
     ]
 
     def test_initial_scan(self):
