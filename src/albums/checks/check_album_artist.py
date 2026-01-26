@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
@@ -17,17 +18,17 @@ class CheckAlbumArtist(Check):
     name = "album_artist"
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
 
+    def init(self, check_config: dict[str, Any]):
+        self.remove_redundant = bool(check_config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"]))
+        self.require_redundant = bool(check_config.get("require_redundant", CheckAlbumArtist.default_config["require_redundant"]))
+        if self.remove_redundant and self.require_redundant:
+            logger.warning("check_album_artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
+            self.remove_redundant = False
+            self.require_redundant = False
+
     def check(self, album: Album):
         if not album_is_basic_taggable(album):
             return None  # this check is currently not valid for files that don't use "album" tag
-
-        remove_redundant = bool(self.check_config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"]))
-        require_redundant = bool(self.check_config.get("require_redundant", CheckAlbumArtist.default_config["require_redundant"]))
-
-        if remove_redundant and require_redundant:
-            logger.warning("check_album_artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
-            remove_redundant = False
-            require_redundant = False
 
         albumartists: dict[str, int] = {}
         artists: dict[str, int] = {}
@@ -79,13 +80,13 @@ class CheckAlbumArtist(Check):
                 self._make_fixer(album, candidates_various, show_free_text_option=True),
             )
         # TODO: fixes for remove_redundant and require_redundant can be automatic if you're really sure
-        elif redundant and remove_redundant and len(nonblank_albumartists) == 1 and list(artists.keys())[0] == nonblank_albumartists[0]:
+        elif redundant and self.remove_redundant and len(nonblank_albumartists) == 1 and list(artists.keys())[0] == nonblank_albumartists[0]:
             return CheckResult(
                 ProblemCategory.TAGS,
                 f"album artist is probably not needed: {nonblank_albumartists[0]}",
                 self._make_fixer(album, nonblank_albumartists + remove, show_free_text_option=False),
             )
-        elif require_redundant and redundant and len(nonblank_albumartists) == 0:
+        elif self.require_redundant and redundant and len(nonblank_albumartists) == 0:
             artist = list(artists.keys())[0]
             return CheckResult(
                 ProblemCategory.TAGS,

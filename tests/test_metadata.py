@@ -16,22 +16,34 @@ class TestMetadata:
 
     def test_write_id3_tracktotal(self):
         file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
-        assert get_metadata(file)[0]["tracknumber"] == ["1/3"]
+        tags = get_metadata(file)[0]
+        assert tags["tracknumber"] == ["1"]
+        assert tags["tracktotal"] == ["3"]
 
         assert set_basic_tags(file, [("tracktotal", "2")])
-        assert get_metadata(file)[0]["tracknumber"] == ["1/2"]
+        tags = get_metadata(file)[0]
+        assert tags["tracknumber"] == ["1"]
+        assert tags["tracktotal"] == ["2"]
 
         # write both at once
         assert set_basic_tags(file, [("tracknumber", "2"), ("tracktotal", "3")])
-        assert get_metadata(file)[0]["tracknumber"] == ["2/3"]
+        tags = get_metadata(file)[0]
+        assert tags["tracknumber"] == ["2"]
+        assert tags["tracktotal"] == ["3"]
 
     def test_write_id3_disctotal(self):
         file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
-        assert get_metadata(file)[0]["discnumber"] == ["2/2"]
+        tags = get_metadata(file)[0]
+        assert tags["discnumber"] == ["2"]
+        assert tags["disctotal"] == ["2"]
 
         assert set_basic_tags(file, [("disctotal", "1")])
-        assert get_metadata(file)[0]["discnumber"] == ["2/1"]
+        tags = get_metadata(file)[0]
+        assert tags["discnumber"] == ["2"]
+        assert tags["disctotal"] == ["1"]
 
         # write both at once
         assert set_basic_tags(file, [("discnumber", "1"), ("disctotal", "2")])
-        assert get_metadata(file)[0]["discnumber"] == ["1/2"]
+        tags = get_metadata(file)[0]
+        assert tags["discnumber"] == ["1"]
+        assert tags["disctotal"] == ["2"]

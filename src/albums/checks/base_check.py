@@ -40,11 +40,14 @@ class Check:
     ctx: app.Context
     check_config: dict[str, Any]
 
-    # subclass may override __init__ but must retain signature
-    def __init__(self, ctx: app.Context):
-        self.ctx = ctx
-        self.check_config = ctx.config.get("checks", {}).get(self.name, self.default_config)
-
     # subclass must override check()
     def check(self, album: Album) -> CheckResult | None:
         raise NotImplementedError(f"check not implemented for {self.name}")
+
+    # subclass should override init if there is configuration to validate or other one-time initialization
+    def init(self, check_config: dict[str, Any]):
+        pass
+
+    def __init__(self, ctx: app.Context):
+        self.ctx = ctx
+        self.init(ctx.config.get("checks", {}).get(self.name, self.default_config))

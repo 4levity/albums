@@ -35,9 +35,9 @@ def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream] | None:
     if not file_info:
         return None
 
-    (file, codec, _) = file_info
+    (file, codec, capabilities) = file_info
     stream_info = _get_stream_info(file, codec)
-    tags = _get_tags(file)
+    tags = _get_tags(file, capabilities)
     return (tags, stream_info)
 
 
@@ -151,7 +151,7 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagCapabil
     return (file, codec, capabilities) if file else None
 
 
-def _get_tags(file: MutagenFileTypeLike):
+def _get_tags(file: MutagenFileTypeLike, capabilities: TagCapabilities):
     def store_value(key: str, value: Any):
         if key == "covr":
             return "binary data not stored"  # TODO: get image metadata
@@ -164,7 +164,30 @@ def _get_tags(file: MutagenFileTypeLike):
         name = str.lower(tag_name)
         for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
             tags.setdefault(name, []).append(store_value(name, value))
+    _normalize(tags, capabilities)
     return tags
+
+
+def _normalize(tags: dict[str, list[str]], capabilities: TagCapabilities) -> None:
+    tracknumber_tag = tags.get("tracknumber", [None])[0]
+    if not capabilities.has_tracktotal:
+        if "tracktotal" in tags:
+            logger.warning("internal error: tracktotal tag exists but capabilities indicate it should not")
+        # extract tracktotal from ID3/etc tags
+        elif tracknumber_tag and str.count(tracknumber_tag, "/") == 1:
+            [tracknumber, tracktotal] = tracknumber_tag.split("/")
+            tags["tracknumber"] = [tracknumber]
+            tags["tracktotal"] = [tracktotal]
+
+    if not capabilities.has_disctotal:
+        if "disctotal" in tags:
+            logger.warning("internal error: disctotal tag exists but capabilities indicate it should not")
+        # extract disctotal from ID3 tags
+        discnumber_tag = tags.get("discnumber", [None])[0]
+        if discnumber_tag and "disctotal" not in tags and str.count(discnumber_tag, "/") == 1:
+            [discnumber, disctotal] = discnumber_tag.split("/")
+            tags["discnumber"] = [discnumber]
+            tags["disctotal"] = [disctotal]
 
 
 def _get_codec(file: MutagenFileTypeLike) -> str:

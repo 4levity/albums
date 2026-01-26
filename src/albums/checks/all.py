@@ -6,9 +6,18 @@ from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_required_tags import CheckRequiredTags
 from .check_single_value_tags import CheckSingleValueTags
 from .check_track_number import CheckTrackNumber
+from .check_zero_pad_numbers import CheckZeroPadNumbers
 
 
-_all_checks: list[type[Check]] = [CheckAlbumTag, CheckAlbumUnderAlbum, CheckAlbumArtist, CheckRequiredTags, CheckSingleValueTags, CheckTrackNumber]
+_all_checks: list[type[Check]] = [
+    CheckAlbumTag,
+    CheckAlbumUnderAlbum,
+    CheckAlbumArtist,
+    CheckRequiredTags,
+    CheckSingleValueTags,
+    CheckTrackNumber,
+    CheckZeroPadNumbers,
+]
 
 ALL_CHECK_NAMES = [check.name for check in _all_checks]
 DEFAULT_CHECKS_CONFIG = dict((check.name, check.default_config) for check in _all_checks)

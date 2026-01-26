@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
@@ -13,10 +14,18 @@ class CheckAlbumTag(Check):
     name = "album_tag"
     default_config = {"enabled": True, "ignore_folders": ["misc"]}
 
+    def init(self, check_config: dict[str, Any]):
+        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
+        if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
+            not isinstance(f, str) or f == "" for f in ignore_folders
+        ):
+            logger.warning(f'album_tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            ignore_folders = []
+        self.ignore_folders = list(str(folder) for folder in ignore_folders)
+
     def check(self, album: Album):
-        ignore_folders = self.check_config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
         folder_str = Path(album.path).name
-        if folder_str in ignore_folders if isinstance(ignore_folders, list) else []:
+        if folder_str in self.ignore_folders:
             return None
 
         if not album_is_basic_taggable(album):

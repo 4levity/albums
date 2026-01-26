@@ -61,7 +61,7 @@ enabled = true
 tag_names = ["title", "tracknumber", "tracktotal"]
 
 [checks.track_number]
-# checks for issues with tracknumber, tracktotal, discnumber and disctotal tags
+# checks for general issues with tracknumber, tracktotal, discnumber and disctotal tags
 #
 # if disc number and total are combined in the "discnumber" tag, they will be treated separately
 # if any track has disc number, all should have a single decimal discnumber tag
@@ -79,3 +79,25 @@ enabled = true
 ignore_folders = ["misc"]
 # if an album (folder) has a disc number, there should be more than one disc
 warn_disc_per_folder = false
+
+[checks.zero_pad_numbers]
+# enforce a policy for zero-padding in the track number/total and disc number/total tags.
+# can be run automatically, will not try to fix albums that have major issues with these tags.
+#
+# explanation: some devices may not show tracks in the correct order unless they are zero-padded,
+# because for example "2" comes after "10" if you sort alphabetically.
+enabled = true
+
+# set a policy for each tag. the policy options are:
+# "ignore" - don't check this tag
+# "never" - do not use leading zeros
+# "if_needed" - leading zeros when required for all values to have the same number of digits
+#               (same as "never" for track/disc totals)
+# "two_digit_minimum" - all values should be at least two digits (three if more than 99 values)
+#
+# the default settings below will result in, for example, track 04/07 and disc 1/3
+# setting all policies to "if_needed" will result in, for example, track 4/7 or track 04/12
+tracknumber_pad = "two_digit_minimum"
+tracktotal_pad = "two_digit_minimum"
+discnumber_pad = "if_needed"
+disctotal_pad = "never"

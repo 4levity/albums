@@ -23,7 +23,8 @@ def sql(ctx: app.Context, sql_command: str, json: bool):
             ctx.console.print_json(dumps(cursor.fetchall()))
             # more compact: ctx.console.print(dumps(cursor.fetchall()))
         else:
-            table = Table(*[description[0] for description in cursor.description])
+            column_names = list([str(description[0]) for description in (cursor.description if cursor.description else [("results",)])])
+            table = Table(*column_names)
             for row in cursor:
                 table.add_row(*[escape(str(v)) for v in row])
             ctx.console.print(table)
