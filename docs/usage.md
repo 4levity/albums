@@ -38,4 +38,4 @@ unrecognized files** in destination folder (dangerous!):
 `albums -c DAP sync /mnt/sdcard --delete`
 
 There are many other commands and options. Try `albums --help`. To learn more
-about a command try e.g. `albums sync --help`.
+about a command try e.g. `albums check --help`.

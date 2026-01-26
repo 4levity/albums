@@ -1,3 +1,4 @@
+from rich.markup import escape
 import rich_click as click
 
 from .. import app
@@ -36,13 +37,15 @@ def check(ctx: app.Context, default: bool, automatic: bool, fix: bool, interacti
 
     found = False
     for album, check, check_result in all.run_enabled(ctx):
-        ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
         fixer = check_result.fixer
         if automatic and fixer and fixer.option_automatic_index is not None:
+            ctx.console.print(f'[bold]automatically fixing:[/bold] {escape(check_result.message)} : "{escape(album.path)}"')
             rescan = fixer.fix(fixer.options[fixer.option_automatic_index])
         elif interactive or (fixer and fix):
+            ctx.console.print(f'>> "{album.path}"', markup=False)
             rescan = interact(ctx, check.name, check_result, album)
         else:
+            ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
             rescan = False
 
         if rescan:

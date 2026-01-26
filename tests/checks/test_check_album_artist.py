@@ -53,26 +53,46 @@ class TestCheckAlbumArtist:
 
     def test_multiple_albumartist(self):
         album = Album(
-            "",
+            "B",
             [
                 Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
                 Track("2.flac", {"artist": ["B"], "albumartist": ["Foo"]}),
                 Track("3.flac", {"artist": ["B"], "albumartist": ["Bar"]}),
+                Track("4.flac", {"artist": ["B"], "albumartist": ["Bar"]}),
+                Track("5.flac", {"artist": ["B"], "albumartist": ["Bar"]}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
-        assert "multiple album artist values (['Foo', 'Bar'] ...)" in result.message
+        assert "multiple album artist values (['Bar', 'Foo'] ...)" in result.message
+        assert result.fixer
+        assert result.fixer.options == ["B", "Bar", "Foo", "A", "Various Artists"]
+        assert result.fixer.option_free_text
 
-    def test_multiple_albumartist__same_artist(self):
+    def test_multiple_albumartist__same_artist(self, mocker):
         album = Album(
             "",
             [
                 Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
-                Track("2.flac", {"artist": ["A"], "albumartist": ["Bar"]}),
+                Track("2.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("3.flac", {"artist": ["A"], "albumartist": ["Bar"]}),
             ],
         )
-        result = CheckAlbumArtist(Context()).check(album)
+        ctx = Context()
+        ctx.library_root = Path("/path/to/library")
+        result = CheckAlbumArtist(ctx).check(album)
         assert "multiple album artist values (['Foo', 'Bar'] ...)" in result.message
+        assert result.fixer
+        assert result.fixer.options == ["A", "Foo", "Bar", "Various Artists", ">> Copy album artist -> artist"]
+        assert result.fixer.option_free_text
+        assert result.fixer.table
+        assert "album artist to use" in result.fixer.prompt
+
+        # we select "copy album artist to artist" and it is fixed
+        mock_set_basic_tags = mocker.patch("albums.checks.check_album_artist.set_basic_tags")
+        fix_result = result.fixer.fix(result.fixer.options[4])
+        assert fix_result
+        assert mock_set_basic_tags.call_count == 3
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("artist", "Bar")])
 
     def test_multiple_albumartist__same_artist_2(self):
         album = Album(
