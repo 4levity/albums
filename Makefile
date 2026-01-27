@@ -27,8 +27,11 @@ tests/fixtures/libraries/cli/albums.db: src/albums/database/schema.py
 	$(POETRY) run pytest tests/test_cli.py::TestCli::test_run
 
 docs/database_diagram.png: tests/fixtures/libraries/cli/albums.db
+	@ls -l tests/fixtures/libraries/cli/albums.db
+	@dpkg -l graphviz
 	@dot -V
 	$(POETRY) run eralchemy -i sqlite:///tests/fixtures/libraries/cli/albums.db --title "Albums Database Schema" -o docs/database_diagram.png
+	@ls -l docs/database_diagram.png
 
 diagram: docs/database_diagram.png ## Generate database diagram
 

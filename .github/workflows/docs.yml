@@ -21,8 +21,8 @@ jobs:
           python-version: 3.14
       - name: Setup Graphviz
         uses: ts-graphviz/setup-graphviz@v2
-        with:
-          ubuntu-graphviz-version: '2.42.2-6ubuntu0.1'
+        # with:
+        #   ubuntu-graphviz-version: '2.42.2-6ubuntu0.1'
       - uses: snok/install-poetry@v1
       - run: make install docs && ls -la site
       - uses: actions/upload-pages-artifact@v4
