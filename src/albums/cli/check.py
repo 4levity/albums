@@ -12,13 +12,17 @@ from . import cli_context
 )
 @click.option("--default", is_flag=True, help="use default settings for all checks, including whether they are enabled")
 @click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")
+@click.option("--preview", "-p", is_flag=True, help="preview the automatic fixes that would be made with -a")
 @click.option("--fix", "-f", is_flag=True, help="prompt when there is a selectable fix available")
 @click.option("--interactive", "-i", is_flag=True, help="ask what to do even if the only options are manual (implies -f)")
 @click.argument("checks", nargs=-1)
 @cli_context.pass_context
-def check(ctx: app.Context, default: bool, automatic: bool, fix: bool, interactive: bool, checks: list[str]):
+def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
     if interactive and automatic:
         ctx.console.print("cannot use --interactive with --automatic")
+        raise SystemExit(1)
+    if preview and (automatic or fix or interactive):
+        ctx.console.print("--preview cannot be used with other fix options")
         raise SystemExit(1)
 
     if default or "checks" not in ctx.config:
@@ -38,6 +42,6 @@ def check(ctx: app.Context, default: bool, automatic: bool, fix: bool, interacti
         for check_name in ctx.config["checks"].keys():
             ctx.config["checks"][check_name]["enabled"] = check_name in checks
 
-    issues = run_enabled(ctx, automatic, fix, interactive)
+    issues = run_enabled(ctx, automatic, preview, fix, interactive)
     if issues == 0:
         ctx.console.print("no exceptions found")

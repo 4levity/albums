@@ -9,10 +9,15 @@ from .all import ALL_CHECKS
 from .interact import interact
 
 
-def run_enabled(ctx: app.Context, automatic: bool, fix: bool, interactive: bool):
+def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
     def handle_check_result(ctx: app.Context, check_result: CheckResult, album: Album):
         fixer = check_result.fixer
-        if automatic and fixer and fixer.option_automatic_index is not None:
+        rescan = False
+        if preview:
+            if fixer and fixer.option_automatic_index is not None:
+                ctx.console.print(f'[bold]preview automatic fix:[/bold] {escape(check_result.message)} : "{escape(album.path)}"')
+                ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}")
+        elif automatic and fixer and fixer.option_automatic_index is not None:
             ctx.console.print(f'[bold]automatically fixing:[/bold] {escape(check_result.message)} : "{escape(album.path)}"')
             rescan = fixer.fix(fixer.options[fixer.option_automatic_index])
         elif interactive or (fixer and fix):
@@ -20,7 +25,6 @@ def run_enabled(ctx: app.Context, automatic: bool, fix: bool, interactive: bool)
             rescan = interact(ctx, check.name, check_result, album)
         else:
             ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
-            rescan = False
         if rescan:
             scanner.scan(ctx, lambda: [(album.path, album.album_id)], True)
 

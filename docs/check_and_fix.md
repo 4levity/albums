@@ -30,6 +30,7 @@ in which case it will run those only. To also apply fixes, see options below.
 | Option                 | Description                                                                                        |
 | ---------------------- | -------------------------------------------------------------------------------------------------- |
 | `--automatic` / `-a`   | If the check has an automatic option, it will be applied without asking.                           |
+| `--preview` / `-p`     | Preview the changes that would be made if you use the -a option.                                   |
 | `--fix` / `-f`         | If the check provides a menu of fixes, you will be shown details and prompted to select an option. |
 | `--interactive` / `-i` | For every issue, you will be asked what to do, even if the only options are ignore or manual fix.  |
 
