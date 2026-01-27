@@ -44,20 +44,24 @@ See `albums --help` and `albums check --help` for more.
 
 ### album_artist
 
-The "album artist" tag (e.g. `albumartist`, `TPE2`) groups tracks in the same
-album when the "artist" tag is not the same on all the tracks.
+The "album artist" tag (e.g. `albumartist`, `TPE2`) allows many media players to
+group tracks in the same album when the "artist" tag is not the same on all the
+tracks.
 
 - If any tracks in an album have different artist tags, all tracks should have
   the same album artist tag.
 - If any track has an album artist tag, all tracks should have the same album
   artist tag.
 
+The fix gathers candidates from tags plus "Various Artists". It may also apply a
+policy from the options below.
+
 <!-- pyml disable line-length -->
 
-| Option              | Default   | Description                                                                                              |
-| ------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
-| `remove_redundant`  | **false** | The album artist tag should be removed if all the artist tags are the same.                              |
-| `require_redundant` | **false** | There should always be an album artist tag even if all the artist tags are the same. (default **false**) |
+| Option              | Default   | Description                                                                          |
+| ------------------- | --------- | ------------------------------------------------------------------------------------ |
+| `remove_redundant`  | **false** | The album artist tag should be removed if all the artist tags are the same.          |
+| `require_redundant` | **false** | There should always be an album artist tag even if all the artist tags are the same. |
 
 <!-- pyml enable line-length -->
 
@@ -79,7 +83,7 @@ on other tracks in the folder, and the name of the folder. Choose from options.
 ### album_under_album
 
 This check reports when an album has another album in a subfolder. Maybe they
-should be in separate folders. No fix provided.
+should be in separate folders. No fix offered.
 
 ### required_tags
 
@@ -93,9 +97,10 @@ All tracks should have one or more values for each of these tags.
 
 ### single_value_tags
 
-If present, the specified tags should usually not have multiple values within
-the same track. It is valid for a track to have more than one title, but
-multiple-value tags may have unpredictable results in some media players.
+If present, the specified tags should not have multiple values _in the same
+track_. Some checks cannot detect issues unless certain tags are single-value.
+Many multiple-value tags are valid, but they can still cause unpredictable
+results with various media players.
 
 <!-- pyml disable line-length -->
 
@@ -107,25 +112,30 @@ multiple-value tags may have unpredictable results in some media players.
 
 ### track_number
 
-Reports on several issues with tracknumber, tracktotal, discnumber and disctotal
-tags. These are tied together because for example if the disc number isn't set
-correctly, we can't tell whether the track total (per disc) is correct or not.
+Reports on several issues with track number, track total, disc number and disc
+total tags. These are tied together because for example if the disc number isn't
+set correctly, we can't tell whether the track total (per disc) is correct or
+not.
 
-If tracknumber and tracktotal are combined in the tracknumber tag with a slash
-(i.e. tracknumber="04/12") instead of separate tags, they will be treated as
-separate values. Same for discnumber and disctotal if combined in the discnumber
-tag.
+If track number and track total are combined in the track number tag with a
+slash (i.e. track number="04/12") instead of separate tags, they will be treated
+as separate values. Same for disc number and disc total if combined in the disc
+number tag.
 
-- if any track has disc number, all should have a single decimal disc number
-- if any track has disc total, all should have a single decimal disc total
-- if present, the disc total should be the number of distinct disc number values
-- discnumbers should start at 1 and be sequential (1, 2, 3...)
-- every track should have a single decimal tracknumber tag
-- for each discnumber, tracks should start at 1 and be sequential
-- for each discumber, if any track has track total, all should have a single
+The rules are:
+
+- If any track has disc number, all tracks should have a single decimal disc
+  number
+- If any track has disc total, all tracks should have a single decimal disc
+  total
+- If present, the disc total should be the number of distinct disc number values
+- Disc numbers should start at 1 and be sequential (1, 2, 3...)
+- Every track should have a single decimal track number
+- For each disc, track numbers should start at 1 and be sequential
+- For each disc, if any track has track total, all tracks should have a single
   decimal track total
-- for each discnumber, if track total is present, it should be the number of
-  tracks on that disc
+- For each disc, if track total is present, it should be the number of tracks on
+  that disc
 
 <!-- pyml disable line-length -->
 
@@ -138,14 +148,16 @@ tag.
 
 ### zero_pad_numbers
 
-Enforce a policy for zero-padding in the track number/total and disc
-number/total tags. Some devices may not show tracks in the correct order unless
-they are zero-padded, because for example "2" comes after "10" if you sort
-alphabetically.
+Apply selected policies for zero-padding in the track number/total and disc
+number/total tags.
 
-**Automatic fix**: If no major problems detected in existing tags, apply policy
+> Some media players do not show tracks in the correct order unless they are
+> zero-padded, because for example "2" comes after "10" when sorted
+> alphabetically.
 
-Set a policy for each tag. The policy options are:
+**Automatic fix**: If no major problems detected in existing tags, apply policy.
+
+Choose a policy for each tag. The policy options are:
 
 - **"ignore"**: don't check this tag
 - **"never"**: do not use leading zeros
@@ -161,6 +173,6 @@ Set a policy for each tag. The policy options are:
 | `discnumber_pad`  | `"if_needed"`         |
 | `disctotal_pad`   | `"never"`             |
 
-> The default settings will result in, for example, track 04/07 and disc 1/1. Or
-> setting all policies to "if_needed" will result in, for example, track 4/7 and
-> track 04/12
+> The default settings will result in, for example, track **04** of **07** and
+> disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
+> for example, track **4** of **7** and track **04** of **12**.
