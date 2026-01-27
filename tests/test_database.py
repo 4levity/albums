@@ -11,6 +11,12 @@ class TestDatabase:
             assert len(schema_version) == 1
             assert schema_version[0][0] == schema.CURRENT_SCHEMA_VERSION
 
+    def test_foreign_key(self):
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+            foreign_keys = db.execute("PRAGMA foreign_keys;").fetchall()
+            assert len(foreign_keys) == 1
+            assert foreign_keys[0][0] == 1
+
     def test_operations(self):
         def track(filename="1.flac"):
             return Track(filename, {}, 1, 0, Stream(1.5, 0, 0, "FLAC"))
