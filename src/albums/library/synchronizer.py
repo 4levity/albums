@@ -62,6 +62,7 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool,
                 else:
                     delete_path.unlink()
                 logger.info(f"deleting {delete_path}")
+            ctx.console.print("done deleting files.")
         else:
             ctx.console.print("skipped deleting files from destination")
 
@@ -79,6 +80,8 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool,
                 logger.debug(f"copying to {dest_track_path}")
                 shutil.copy2(source_track_path, dest_track_path)
                 progress.update(sync_task, advance=size)
+
+        ctx.console.print("done copying.")
 
     else:
         ctx.console.print(f"no tracks to copy{skipped}")

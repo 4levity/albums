@@ -53,5 +53,3 @@ folder. Also, Prettier is useful to automatically reflow Markdown text.
 ## Database Schema
 
 ![albums database schema diagram](./database_diagram.png)
-
-`make diagram` generates this image.

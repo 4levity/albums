@@ -85,5 +85,6 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
 
-    ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
-    ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))
+    if ctx.verbose:
+        ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
+        ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))

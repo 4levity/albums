@@ -58,7 +58,7 @@ The fix gathers candidates from tags plus "Various Artists". It may also apply a
 policy from the options below.
 
 **Automatic fix**: If a policy is enabled to set or remove redundant album
-artist, it can be applied automatically.
+artist, it can be applied automatically when no other problems are detected.
 
 <!-- pyml disable line-length -->
 
@@ -164,7 +164,7 @@ number/total tags.
 > zero-padded, because for example "2" comes after "10" when sorted
 > alphabetically.
 
-**Automatic fix**: If no major problems detected in existing tags, apply policy.
+**Automatic fix**: If no major problems detected in relevant tags, apply policy.
 
 Choose a policy for each tag. The policy options are:
 

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Any
+import click
 from rich.console import Console
 import sqlite3
 
@@ -12,12 +13,15 @@ logger = logging.getLogger(__name__)
 
 class Context(dict[Any, Any]):
     console = Console()  # single shared Console
+    click_ctx: click.Context | None
     db: sqlite3.Connection | None
     config: dict[str, dict[str, Any]]
     library_root: Path | None
     filter_collections: list[str]
     filter_paths: list[str]
     filter_regex: bool
+    rescan_auto: bool = False
+    verbose: int = 0
 
     def is_filtered(self):
         return len(self.filter_collections) > 0 or len(self.filter_paths) > 0

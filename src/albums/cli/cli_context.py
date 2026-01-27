@@ -26,6 +26,8 @@ DEFAULT_CONFIG_FILE_LOCATIONS = [
 
 
 def setup(ctx: click.Context, app_context: Context, verbose: int, collections: list[str], paths: list[str], regex: bool, config_file: str):
+    app_context.click_ctx = ctx
+    app_context.verbose = verbose
     setup_logging(app_context, verbose)
     logger.info("starting albums")
 
@@ -64,6 +66,9 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
         ):
             raise SystemExit(1)
         os.makedirs(album_db_path.parent, exist_ok=True)
+        new_database = True
+    else:
+        new_database = False
 
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))
@@ -76,6 +81,8 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
 
     # misc
     app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
+
+    return new_database
 
 
 def setup_logging(ctx: Context, verbose: int):

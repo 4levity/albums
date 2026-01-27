@@ -4,6 +4,7 @@ from .. import app
 from ..checks import all
 from ..checks.checker import run_enabled
 from . import cli_context
+from .scan import scan
 
 
 @click.command(
@@ -25,6 +26,9 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
         ctx.console.print("--preview cannot be used with other fix options")
         raise SystemExit(1)
 
+    if ctx.rescan_auto and ctx.click_ctx:
+        ctx.click_ctx.invoke(scan)
+
     if default or "checks" not in ctx.config:
         ctx.console.print("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
@@ -44,4 +48,4 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
 
     issues = run_enabled(ctx, automatic, preview, fix, interactive)
     if issues == 0:
-        ctx.console.print("no exceptions found")
+        ctx.console.print("no issues")

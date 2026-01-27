@@ -12,8 +12,12 @@ database = "/path/to/albums.db"
 supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 [options]
-# Always rescan the media library before any operation (probably quite slow if enabled)
-always_scan = false
+# Rescan the library before performing other operations. If the operation is filtered then only
+# selected albums will be rescanned. Options:
+# "always" - always scan the library so you never need to run "albums scan" but may be slow
+# "never" - never automatically scan the library, you must run "albums scan" if it's changed
+# "auto" (default) - scan on first run and before "check" or "sync" operations
+#rescan = "auto"
 
 # If this option is set, whenever there is an interactive tag fix, there will be a menu option to
 # execute this external tagging program. The path of the album will be the first parameter.
@@ -24,8 +28,9 @@ always_scan = false
 #
 #open_folder_command = "xdg-open"
 
-
+##############################################################################
 # See documentation for instructions on configuring checks.
+# If there is no configuration for a check, it will use defaults (including whether it is enabled).
 
 [checks.album_artist]
 enabled = true

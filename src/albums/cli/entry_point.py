@@ -28,9 +28,15 @@ rich.traceback.install(show_locals=True)
 @cli_context.pass_context  # order of these decorators matters
 @click.pass_context
 def albums(ctx: click.Context, app_context: app.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
-    cli_context.setup(ctx, app_context, verbose, collections, paths, regex, config_file)
+    new_database = cli_context.setup(ctx, app_context, verbose, collections, paths, regex, config_file)
 
-    if app_context.config.get("options", {}).get("always_scan", False):
+    rescan = app_context.config.get("options", {}).get("rescan", "auto")
+    VALID_RESCAN_OPTIONS = ["always", "auto", "never"]
+    if rescan not in VALID_RESCAN_OPTIONS:
+        app_context.console.print(f"configuration option rescan must be one of {', '.join(VALID_RESCAN_OPTIONS)}")
+        raise SystemExit(1)
+    app_context.rescan_auto = rescan == "auto"
+    if rescan == "always" or (rescan == "auto" and new_database):
         ctx.invoke(scan)
 
 
