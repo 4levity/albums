@@ -79,19 +79,18 @@ class CheckAlbumArtist(Check):
                 f"album artist is set on some tracks but not all ({nonblank_albumartists[:2]} ...)",
                 self._make_fixer(album, candidates_various, show_free_text_option=True),
             )
-        # TODO: fixes for remove_redundant and require_redundant can be automatic if you're really sure
         elif redundant and self.remove_redundant and len(nonblank_albumartists) == 1 and list(artists.keys())[0] == nonblank_albumartists[0]:
             return CheckResult(
                 ProblemCategory.TAGS,
-                f"album artist is probably not needed: {nonblank_albumartists[0]}",
-                self._make_fixer(album, nonblank_albumartists + remove, show_free_text_option=False),
+                f"album artist is not needed: {nonblank_albumartists[0]}",
+                self._make_fixer(album, remove + nonblank_albumartists, show_free_text_option=False, option_automatic_index=0),
             )
         elif self.require_redundant and redundant and len(nonblank_albumartists) == 0:
             artist = list(artists.keys())[0]
             return CheckResult(
                 ProblemCategory.TAGS,
                 f"album artist would be redundant, but it can be set to {artist}",
-                self._make_fixer(album, [artist] + remove, show_free_text_option=False),
+                self._make_fixer(album, [artist] + remove, show_free_text_option=False, option_automatic_index=0),
             )
         elif len(artists) > 1 and (sum(albumartists.values()) - albumartists.get("", 0)) != len(album.tracks):
             return CheckResult(
@@ -100,7 +99,7 @@ class CheckAlbumArtist(Check):
                 self._make_fixer(album, candidates_various, show_free_text_option=True),
             )
 
-    def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool):
+    def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
         table: tuple[list[str], list[list[str]]] = (
             ["filename", "album tag", "artist", "album artist"],
             [
@@ -109,7 +108,12 @@ class CheckAlbumArtist(Check):
             ],
         )
         return Fixer(
-            lambda option: self._fix(album, option), options, show_free_text_option, None, table, "select album artist to use for all tracks"
+            lambda option: self._fix(album, option),
+            options,
+            show_free_text_option,
+            option_automatic_index,
+            table,
+            "select album artist to use for all tracks",
         )
 
     def _fix(self, album: Album, album_artist_value: str) -> bool:

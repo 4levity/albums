@@ -40,7 +40,7 @@ ignore_folders = ["misc"]
 emabled = true
 
 [checks.required_tags]
-enabled = true
+enabled = false
 tag_names = ["artist", "title"]
 
 [checks.single_value_tags]

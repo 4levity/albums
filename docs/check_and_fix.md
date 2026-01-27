@@ -56,6 +56,9 @@ tracks.
 The fix gathers candidates from tags plus "Various Artists". It may also apply a
 policy from the options below.
 
+**Automatic fix**: If a policy is enabled to set or remove redundant album
+artist, it can be applied automatically.
+
 <!-- pyml disable line-length -->
 
 | Option              | Default   | Description                                                                          |

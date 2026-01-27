@@ -22,7 +22,7 @@ Python 3.14+. Run the local app with `poetry run albums`.
 
 All checks must pass for a successful build.
 
-- lint and formatting with[ruff](https://docs.astral.sh/ruff/)
+- lint and formatting with [ruff](https://docs.astral.sh/ruff/)
     - all default settings except for 150 character line limit
     - formats the same as [Black](https://black.readthedocs.io/en/stable/)
       static
