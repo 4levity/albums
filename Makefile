@@ -23,14 +23,12 @@ test: ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
-tests/fixtures/libraries/cli/albums.db: src/albums/database/schema.py
-	$(POETRY) run pytest tests/test_cli.py::TestCli::test_run
+build/albums.db: src/albums/database/schema.py
+	@mkdir -p build
+	$(POETRY) run python src/albums/database/connection.py build/albums.db
 
-docs/database_diagram.png: tests/fixtures/libraries/cli/albums.db
-	@ls -l tests/fixtures/libraries/cli/albums.db
-	@dpkg -l graphviz
-	@dot -V
-	$(POETRY) run eralchemy -i sqlite:///tests/fixtures/libraries/cli/albums.db --title "Albums Database Schema" -o docs/database_diagram.png
+docs/database_diagram.png: build/albums.db
+	$(POETRY) run eralchemy -i sqlite:///build/albums.db --title "Albums Database Schema" -o docs/database_diagram.png
 	@ls -l docs/database_diagram.png
 
 diagram: docs/database_diagram.png ## Generate database diagram
@@ -46,6 +44,7 @@ package: ## Create distribution
 
 clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf build
 	rm -rf dist
 	rm -rf tests/fixtures/libraries
 	rm -rf docs/database_diagram.png

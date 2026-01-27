@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
 import sqlite3
+import sys
 
-from .schema import SQL_INIT_SCHEMA, migrate
+from albums.database.schema import SQL_INIT_SCHEMA, migrate
 
 
 logger = logging.getLogger(__name__)
@@ -38,3 +39,7 @@ def open(filename: str):
 def close(db: sqlite3.Connection):
     db.close()
     logger.debug("closed database")
+
+
+if __name__ == "__main__":
+    open(sys.argv[1]).close()  # create empty database for diagram
