@@ -1,0 +1,8 @@
+plugins:
+  md040:
+    enabled: False
+  ul-indent:
+    indent: 4
+extensions:
+  front-matter:
+    enabled: True

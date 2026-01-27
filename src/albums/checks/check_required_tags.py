@@ -7,7 +7,7 @@ from .base_check import Check, CheckResult, ProblemCategory
 # deprecated, replace with checks for individual important tags
 class CheckRequiredTags(Check):
     name = "required_tags"
-    default_config = {"enabled": True, "tags": ["artist", "title"]}
+    default_config = {"enabled": False, "tags": ["artist", "title"]}
 
     def init(self, check_config: dict[str, Any]):
         required_tags: list[Any] = check_config.get("tags", CheckRequiredTags.default_config["tags"])

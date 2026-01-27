@@ -7,7 +7,7 @@ from .base_check import ProblemCategory, Check, CheckResult
 
 class CheckSingleValueTags(Check):
     name = "single_value_tags"
-    default_config = {"enabled": True, "tags": ["title", "tracknumber", "tracktotal"]}
+    default_config = {"enabled": True, "tags": ["discnumber", "disctotal", "title", "tracknumber", "tracktotal"]}
 
     def init(self, check_config: dict[str, Any]):
         tags: list[Any] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])

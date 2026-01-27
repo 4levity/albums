@@ -17,6 +17,10 @@ from . import cli_context
 @click.argument("checks", nargs=-1)
 @cli_context.pass_context
 def check(ctx: app.Context, default: bool, automatic: bool, fix: bool, interactive: bool, checks: list[str]):
+    if interactive and automatic:
+        ctx.console.print("cannot use --interactive with --automatic")
+        raise SystemExit(1)
+
     if default or "checks" not in ctx.config:
         ctx.console.print("using default check config")
         ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG

@@ -17,86 +17,43 @@ always_scan = false
 
 # If this option is set, whenever there is an interactive tag fix, there will be a menu option to
 # execute this external tagging program. The path of the album will be the first parameter.
-# tagger = "easytag"
+#
+#tagger = "easytag"
 
 # If this option is set, this will override the default command to open a window for a folder.
-# open_folder_command = "xdg-open"
+#
+#open_folder_command = "xdg-open"
+
+
+# See documentation for instructions on configuring checks.
+
+[checks.album_artist]
+enabled = true
+remove_redundant = false
+require_redundant = false
 
 [checks.album_tag]
-# if a track doesn't have an ALBUM tag
 enabled = true
-# ignore this check when the album folder matches one of these names
 ignore_folders = ["misc"]
 
 [checks.album_under_album]
-# if an album has another album in a subfolder
 emabled = true
 
-[checks.album_artist]
-# if any tracks have different ARTIST tags, all tracks should have the same ALBUM ARTIST tag
-# if any track has an ALBUM ARTIST tag, all tracks must have this tag
-#
-# Explanation: Many media players need the ALBUM ARTIST "albumartist" tag when the ARTIST is not
-# the same on all tracks. Albums assumes a folder is an album so this should be consistent.
-enabled = true
-# if all tracks have the same ARTIST tag value, an ALBUM ARTIST tag might not be necessary:
-remove_redundant = false
-# even when all tracks have the same ARTIST tag value, an ALBUM ARTIST tag should also be present:
-require_redundant = false
-
 [checks.required_tags]
-# all tracks should have one or more values for each of these tags
-#
-# Require certain tags for files that support common tag names.
 enabled = true
 tag_names = ["artist", "title"]
 
 [checks.single_value_tags]
-# if present, the specified tags should not have multiple values within the same track
-#
-# Explanation: It is valid for a track to have more than one title, but multiple-value tags may
-# have unpredictable results in some media players. This check allows choosing one title or
-# concatenating multiple titles into a single value.
 enabled = true
 tag_names = ["title", "tracknumber", "tracktotal"]
 
 [checks.track_number]
-# checks for general issues with tracknumber, tracktotal, discnumber and disctotal tags
-#
-# if disc number and total are combined in the "discnumber" tag, they will be treated separately
-# if any track has disc number, all should have a single decimal discnumber tag
-# if any track has disc total, all should have a single decimal disctotal tag
-# if present, the disctotal should be the number of distinct discnumber values
-# discnumbers should start at 1 and if there are are 3 discs they should be 1, 2, 3
-#
-# if tracknumber/total are combined in the "tracknumber" tag, they will be treated separately
-# all tracks should have a single decimal tracknumber tag
-# for each discnumber, tracks should start at 1 and if there are 3 tracks they should be 1, 2, 3
-# for each discnumber, if any track has tracktotal, all should have a single decimal tracktotal
-# for each discnumber, if present, the tracktotal should be the number of tracks on that disc
 enabled = true
-# in folders with these names, these checks are always skipped
 ignore_folders = ["misc"]
-# if an album (folder) has a disc number, there should be more than one disc
 warn_disc_per_folder = false
 
 [checks.zero_pad_numbers]
-# enforce a policy for zero-padding in the track number/total and disc number/total tags.
-# can be run automatically, will not try to fix albums that have major issues with these tags.
-#
-# explanation: some devices may not show tracks in the correct order unless they are zero-padded,
-# because for example "2" comes after "10" if you sort alphabetically.
 enabled = true
-
-# set a policy for each tag. the policy options are:
-# "ignore" - don't check this tag
-# "never" - do not use leading zeros
-# "if_needed" - leading zeros when required for all values to have the same number of digits
-#               (same as "never" for track/disc totals)
-# "two_digit_minimum" - all values should be at least two digits (three if more than 99 values)
-#
-# the default settings below will result in, for example, track 04/07 and disc 1/3
-# setting all policies to "if_needed" will result in, for example, track 4/7 or track 04/12
 tracknumber_pad = "two_digit_minimum"
 tracktotal_pad = "two_digit_minimum"
 discnumber_pad = "if_needed"
