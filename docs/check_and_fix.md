@@ -118,9 +118,14 @@ set correctly, we can't tell whether the track total (per disc) is correct or
 not.
 
 If track number and track total are combined in the track number tag with a
-slash (i.e. track number="04/12") instead of separate tags, they will be treated
-as separate values. Same for disc number and disc total if combined in the disc
-number tag.
+slash (i.e. track number="04/12") instead of being in separate tags, they will
+be treated as separate values. Same for disc number and disc total if combined
+in the disc number tag. This is not an error for ID3 tags.
+
+If the disc number and track number are combined in the track number tag with a
+dash (i.e. track number="2-03") instead of being in separate tags, this is
+treated as an error, but an automated fix option is provided to split the disc
+number in a separate tag.
 
 The rules are:
 
