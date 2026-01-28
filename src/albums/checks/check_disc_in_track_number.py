@@ -53,4 +53,6 @@ class CheckDiscInTrackNumber(Check):
 
 
 def all_tracks_discnumber_in_tracknumber(tracks: list[Track]):
-    return all(re.fullmatch("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in tracks)
+    any_discnumber = any("discnumber" in track.tags for track in tracks)
+    all_tracknumber_with_dashes = all(re.fullmatch("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in tracks)
+    return not any_discnumber and all_tracknumber_with_dashes

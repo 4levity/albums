@@ -151,8 +151,8 @@ class CheckTrackNumber(Check):
         disc_in_tracknumber = all(re.match("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in album.tracks)
         has_discnumber = any("discnumber" in track.tags for track in album.tracks)
         if disc_in_tracknumber and not has_discnumber:
-            return CheckResult(ProblemCategory.TAGS, "track number contains disc number")
         ###########
+            return CheckResult(ProblemCategory.TAGS, "invalid tags - disc_in_track_number and invalid_track_or_disc_number checks must pass first")
 
         tracks_by_disc: dict[str, list[Track]] = {}
         valid_disc_numbers: set[int] = set()
