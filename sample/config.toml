@@ -31,29 +31,36 @@ supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 ##############################################################################
 # See documentation for instructions on configuring checks.
 # If there is no configuration for a check, it will use defaults (including whether it is enabled).
+[checks.disc_in_track_number]
+enabled = true
+
+[checks.invalid_track_or_disc_number]
+enabled = true
+
+[checks.track_total_presence]
+enabled = true
+policy = "consistent"
+
+[checks.disc_total_presence]
+enabled = true
+policy = "consistent"
+
+[checks.album_tag]
+enabled = true
+ignore_folders = ["misc"]
 
 [checks.album_artist]
 enabled = true
 remove_redundant = false
 require_redundant = false
 
-[checks.album_tag]
-enabled = true
-ignore_folders = ["misc"]
-
-[checks.album_under_album]
-enabled = true
-
-[checks.invalid_track_or_disc_number]
-enabled = true
-
 [checks.required_tags]
 enabled = false
-tag_names = ["artist", "title"]
+tags = ["artist", "title"]
 
 [checks.single_value_tags]
 enabled = true
-tag_names = ["artist", "title"]
+tags = ["artist", "title"]
 
 [checks.track_number]
 enabled = true
@@ -66,3 +73,6 @@ tracknumber_pad = "two_digit_minimum"
 tracktotal_pad = "two_digit_minimum"
 discnumber_pad = "if_needed"
 disctotal_pad = "never"
+
+[checks.album_under_album]
+enabled = true
