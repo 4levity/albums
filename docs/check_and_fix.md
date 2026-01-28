@@ -72,6 +72,7 @@ Otherwise, delete the tag.
 ### tracktotal_presence
 
 Apply selected policy for whether or not a track total is present on each track.
+Additionally, report if any track has a track total tag without a track number.
 
 **Automatic fix**: If the policy is "consistent" but some tracks are missing
 track total, remove it from all tracks. If the policy is "never", always remove
@@ -155,23 +156,14 @@ total tags. These are tied together because for example if the disc number isn't
 set correctly, we can't tell whether the track total (per disc) is correct or
 not.
 
-If track number and track total are combined in the track number tag with a
-slash (i.e. track number="04/12") instead of being in separate tags, they will
-be treated as separate values. Same for disc number and disc total if combined
-in the disc number tag. This is not an error for ID3 tags.
-
 The rules are:
 
 - If any track has disc number, all tracks should have a single decimal disc
   number
-- If any track has disc total, all tracks should have a single decimal disc
-  total
 - If present, the disc total should be the number of distinct disc number values
 - Disc numbers should start at 1 and be sequential (1, 2, 3...)
 - Every track should have a single decimal track number
 - For each disc, track numbers should start at 1 and be sequential
-- For each disc, if any track has track total, all tracks should have a single
-  decimal track total
 - For each disc, if track total is present, it should be the number of tracks on
   that disc
 

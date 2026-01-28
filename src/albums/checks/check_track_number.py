@@ -1,13 +1,12 @@
 import logging
 from pathlib import Path
-import re
 from typing import Any
 
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import ProblemCategory, Check, CheckResult, Fixer
-from .helpers import describe_track_number, ordered_tracks
+from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 
 
 logger = logging.getLogger(__name__)
@@ -147,79 +146,41 @@ class CheckTrackNumber(Check):
         if not album_is_basic_taggable(album):
             return None  # this check works for tracks with "tracknumber" tag
 
-        # TODO REMOVE
-        disc_in_tracknumber = all(re.match("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in album.tracks)
-        has_discnumber = any("discnumber" in track.tags for track in album.tracks)
-        if disc_in_tracknumber and not has_discnumber:
-            ###########
-            return CheckResult(ProblemCategory.TAGS, "invalid tags - disc_in_track_number and invalid_track_or_disc_number checks must pass first")
+        tracks_by_disc = get_tracks_by_disc(album.tracks)
+        if not tracks_by_disc:
+            return CheckResult(
+                ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_in_track_number and invalid_track_or_disc_number checks must pass first"
+            )
 
-        tracks_by_disc: dict[str, list[Track]] = {}
-        valid_disc_numbers: set[int] = set()
-        disc_totals: set[str] = set()
+        # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric
+
+        # first we need to eliminate issues with discnumber
+        all_disc_numbers = set((int(track.tags["discnumber"][0]) if "discnumber" in track.tags else 0) for track in album.tracks)
+        all_disc_totals = set((int(track.tags["disctotal"][0]) if "disctotal" in track.tags else 0) for track in album.tracks)
+
         tag_issues: set[str] = set()
         option_remove_discnumber_and_disctotal = False
         option_remove_disctotal = False
-        for track in album.tracks:
-            discnumbers: list[str] = []
-            if disc_in_tracknumber and "tracknumber" in track.tags and len(track.tags["tracknumber"]) == 1:
-                discnumber = track.tags["tracknumber"][0].split("-")[0]
-                discnumbers.append(discnumber)
-
-            discnumber = None
-            if "discnumber" in track.tags:
-                discnumbers.extend(track.tags["discnumber"])
-                if not all(tn.isdecimal() for tn in discnumbers):
-                    tag_issues.add("non-numeric discnumber")
-                elif len(discnumbers) > 1:
-                    tag_issues.add("multiple values for discnumber")
-                else:
-                    valid_disc_numbers.add(int(discnumbers[0]))
-                discnumber = discnumbers[0]
-            elif not disc_in_tracknumber:
-                discnumber = ""
-
-            if discnumber in tracks_by_disc:
-                tracks_by_disc[discnumber].append(track)
-            elif discnumber is not None:
-                tracks_by_disc[discnumber] = [track]
-
-            if "disctotal" in track.tags:
-                if not all(dt.isdecimal() for dt in track.tags["disctotal"]):
-                    tag_issues.add("non-numeric disctotal")
-                elif len(track.tags["disctotal"]) > 1:
-                    tag_issues.add("multiple tag values for disctotal")
-                for dt in track.tags["disctotal"]:
-                    disc_totals.add(dt)
-            else:
-                disc_totals.add("")
-
-        if "" in disc_totals and len(disc_totals) == 2:
-            tag_issues.add("some tracks have disctotal tag and some do not")
-            option_remove_disctotal = True
-        elif len(disc_totals) > 1:
-            tag_issues.add(f"multiple values for disctotal: {disc_totals}")
-            option_remove_disctotal = True
-
-        if "" in tracks_by_disc and len(tracks_by_disc) == 1:
-            # disctotal with no discnumber
-            if len(list(filter(None, disc_totals))) > 0:
+        if 0 in tracks_by_disc and len(tracks_by_disc) == 1:
+            # no tracks have a disc number
+            if len(list(filter(None, all_disc_totals))) > 0:
                 tag_issues.add("disctotal tags present without discnumber tags")
                 option_remove_disctotal = True
+
         # has discnumber:
-        elif "" in tracks_by_disc:
+        elif 0 in tracks_by_disc:
             tag_issues.add("some tracks have discnumber tag and some do not")
             option_remove_discnumber_and_disctotal = True
         else:
-            expect_disc_total = len(valid_disc_numbers)
+            expect_disc_total = len(all_disc_numbers)
             expect_disc_numbers = set(range(1, expect_disc_total + 1))
-            if expect_disc_total == 1 and len(valid_disc_numbers) == 1:
+            if expect_disc_total == 1 and len(all_disc_numbers) == 1:
                 if self.warn_disc_per_folder:
-                    tag_issues.add(f"unnecessary discnumber {list(valid_disc_numbers)[0]} because there is only 1 disc")
+                    tag_issues.add(f"unnecessary discnumber {list(all_disc_numbers)[0]} because there is only 1 disc")
                     option_remove_discnumber_and_disctotal = True
-            elif valid_disc_numbers < expect_disc_numbers:
+            elif all_disc_numbers < expect_disc_numbers:
                 tag_issues.add(f"not all disc numbers from 1-{expect_disc_total} present")
-            elif valid_disc_numbers > expect_disc_numbers:
+            elif all_disc_numbers > expect_disc_numbers:
                 tag_issues.add("unexpected disc numbers present")
         # if there are issues with discnumbers, that's the next thing to fix
         if len(tag_issues) > 0:
@@ -229,36 +190,23 @@ class CheckTrackNumber(Check):
                 DiscNumberFixer(self.ctx, album, option_remove_disctotal, option_remove_discnumber_and_disctotal),
             )
 
-        for discnumber in tracks_by_disc.keys():
-            tracks = tracks_by_disc[discnumber]
+        for disc_number in tracks_by_disc.keys():
+            tracks = tracks_by_disc[disc_number]
             expect_track_total = len(tracks)  # will set to tracktotal if higher value is seen
             actual_track_numbers: set[int] = set()
             track_total_counts: dict[int, int] = {}
             duplicate_tracks: list[int] = []
             for track in tracks:
                 if "tracknumber" in track.tags:
-                    if not all(tn.isdecimal() for tn in track.tags["tracknumber"]) and not disc_in_tracknumber:
-                        tag_issues.add("non-numeric tracknumber")
-                    elif len(track.tags["tracknumber"]) > 1:
-                        tag_issues.add("multiple tag values for tracknumber")
-                    else:
-                        if disc_in_tracknumber:
-                            tracknumber = int(track.tags["tracknumber"][0].split("-")[1])
-                        else:
-                            tracknumber = int(track.tags["tracknumber"][0])
-                        if tracknumber in actual_track_numbers:
-                            duplicate_tracks.append(tracknumber)
-                        actual_track_numbers.add(tracknumber)
+                    tracknumber = int(track.tags["tracknumber"][0])
+                    if tracknumber in actual_track_numbers:
+                        duplicate_tracks.append(tracknumber)
+                    actual_track_numbers.add(tracknumber)
                 if "tracktotal" in track.tags:
-                    if not all(tt.isdecimal() for tt in track.tags["tracktotal"]):
-                        tag_issues.add("non-numeric tracktotal")
-                    elif len(track.tags["tracktotal"]) > 1:
-                        tag_issues.add("multiple tag values for tracktotal")
-                    else:
-                        tracktotal = int(track.tags["tracktotal"][0])
-                        track_total_counts[tracktotal] = track_total_counts.get(tracktotal, 0) + 1
-                        if tracktotal > expect_track_total:
-                            expect_track_total = tracktotal
+                    tracktotal = int(track.tags["tracktotal"][0])
+                    track_total_counts[tracktotal] = track_total_counts.get(tracktotal, 0) + 1
+                    if tracktotal > expect_track_total:
+                        expect_track_total = tracktotal
 
             if len(tag_issues) > 0:  # if there are non-numeric/multiple value tags, stop here
                 return CheckResult(
@@ -267,12 +215,12 @@ class CheckTrackNumber(Check):
                     TrackNumberFixer(self.ctx, album),
                 )
 
-            on_disc_message = f" on disc {discnumber}" if discnumber else ""
+            on_disc_message = f" on disc {disc_number}" if disc_number else ""
             if len(track_total_counts) > 1:
                 return CheckResult(
                     ProblemCategory.TAGS,
                     f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}",
-                    TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                    TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
                 )
             elif len(track_total_counts) == 1:
                 (tracktotal, tracktotal_tagged_count) = list(track_total_counts.items())[0]
@@ -281,13 +229,13 @@ class CheckTrackNumber(Check):
                     return CheckResult(
                         ProblemCategory.TAGS,
                         f"tracktotal = {tracktotal} is not set on all tracks{on_disc_message}",
-                        TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                        TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
                     )
                 elif tracktotal_tagged_count != len(tracks):  # hmm needs clarification
                     return CheckResult(
                         ProblemCategory.TAGS,
                         f"tracktotal = {tracktotal} is set on {tracktotal_tagged_count}/{len(tracks)} tracks{on_disc_message}",
-                        TrackTotalFixer(self.ctx, album, int(discnumber) if discnumber else None),
+                        TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
                     )
 
             expected_track_numbers = set(range(1, expect_track_total + 1))
