@@ -43,6 +43,45 @@ See `albums --help` and `albums check --help` for more.
 
 ## Checks
 
+Checks run in a particular order. First basic tag issues like non-numeric or
+ambiguous values, then higher level checks.
+
+### disc_in_track_number
+
+If the disc number and track number are combined in the track number tag with a
+dash (i.e. track number="2-03") instead of being in separate tags, this is
+treated as an error. Later checks may require track numbers to be numeric.
+
+**Automatic fix**: Split the values into track number and disc number tags.
+
+### invalid_track_or_disc_number
+
+This check reports when an album has invalid or ambiguous values for track
+number, track total, disc number or disc total. If these fields cannot be
+resolved to a single valid number, they are not useful and should be removed.
+
+Rule: for each track, if present, track/disc number/total tags should each have
+a single value and that value should be a positive number (0 is not valid).
+
+**Automatic fix**: For each of the noted tags in each track, discard all values
+that are non-numeric or 0. If exactly one unique value remains, save it.
+Otherwise, delete the tag.
+
+### album_tag
+
+Tracks should have `album` tags. The fix attempts to guess album name from tags
+on other tracks in the folder, and the name of the folder. Choose from options.
+
+**Automatic fix**: If there is exactly one option for the album name, use it.
+
+<!-- pyml disable line-length -->
+
+| Option           | Default    | Description                                                          |
+| ---------------- | ---------- | -------------------------------------------------------------------- |
+| `ignore_folders` | `["misc"]` | a list of folder names (not paths) where this rule should be ignored |
+
+<!-- pyml enable line-length -->
+
 ### album_artist
 
 The "album artist" tag (e.g. `albumartist`, `TPE2`) allows many media players to
@@ -68,39 +107,6 @@ artist, it can be applied automatically when no other problems are detected.
 | `require_redundant` | **false** | There should always be an album artist tag even if all the artist tags are the same. |
 
 <!-- pyml enable line-length -->
-
-### album_tag
-
-Tracks should have `album` tags. The fix attempts to guess album name from tags
-on other tracks in the folder, and the name of the folder. Choose from options.
-
-**Automatic fix**: If there is exactly one option for the album name, use it.
-
-<!-- pyml disable line-length -->
-
-| Option           | Default    | Description                                                          |
-| ---------------- | ---------- | -------------------------------------------------------------------- |
-| `ignore_folders` | `["misc"]` | a list of folder names (not paths) where this rule should be ignored |
-
-<!-- pyml enable line-length -->
-
-### album_under_album
-
-This check reports when an album has another album in a subfolder. Maybe they
-should be in separate folders. No fix offered.
-
-### invalid_track_or_disc_number
-
-This check reports when an album has invalid or ambiguous values for track
-number, track total, disc number or disc total. If these fields cannot be
-resolved to a single valid number, they are not useful and should be removed.
-
-Rule: for each track, if present, track/disc number/total tags should each have
-a single value and that value should be a positive number (0 is not valid).
-
-**Automatic fix**: For each of the noted tags in each track, discard all values
-that are non-numeric or 0. If exactly one unique value remains, save it.
-Otherwise, delete the tag.
 
 ### required_tags
 
@@ -135,11 +141,6 @@ If track number and track total are combined in the track number tag with a
 slash (i.e. track number="04/12") instead of being in separate tags, they will
 be treated as separate values. Same for disc number and disc total if combined
 in the disc number tag. This is not an error for ID3 tags.
-
-If the disc number and track number are combined in the track number tag with a
-dash (i.e. track number="2-03") instead of being in separate tags, this is
-treated as an error, but an automated fix option is provided to split the disc
-number in a separate tag.
 
 The rules are:
 
@@ -195,3 +196,8 @@ Choose a policy for each tag. The policy options are:
 > The default settings will result in, for example, track **04** of **07** and
 > disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
 > for example, track **4** of **7** and track **04** of **12**.
+
+### album_under_album
+
+This check reports when an album has another album in a subfolder. Maybe they
+should be in separate folders. No fix offered.

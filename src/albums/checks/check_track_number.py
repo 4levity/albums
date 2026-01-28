@@ -125,37 +125,6 @@ class TrackTotalFixer(Fixer):
         return changed
 
 
-class DiscInTracknumberFixer(Fixer):
-    OPTION_USE_PROPOSED = ">> Split track number automatically (proposed values)"
-
-    def __init__(self, ctx: app.Context, album: Album):
-        tracks = [[describe_track_number(track), track.filename, *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)]
-        table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
-        super(DiscInTracknumberFixer, self).__init__(
-            lambda option: self._fix(ctx, album, option),
-            [DiscInTracknumberFixer.OPTION_USE_PROPOSED],
-            False,
-            0,
-            table,
-            "select an option to fix invalid track numbers",
-        )
-
-    def _fix(self, ctx: app.Context, album: Album, option: str | None) -> bool:
-        if option != DiscInTracknumberFixer.OPTION_USE_PROPOSED:
-            raise ValueError(f"invalid option {option}")
-
-        for track in album.tracks:
-            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
-            ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
-            (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
-            set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])
-        return True
-
-    def _proposed_disc_and_tracknumber(self, track: Track):
-        [discnumber, tracknumber] = track.tags["tracknumber"][0].split("-")
-        return (discnumber, tracknumber)
-
-
 class CheckTrackNumber(Check):
     name = "track_number"
     default_config = {"enabled": True, "ignore_folders": ["misc"], "warn_disc_per_folder": False}
@@ -178,11 +147,12 @@ class CheckTrackNumber(Check):
         if not album_is_basic_taggable(album):
             return None  # this check works for tracks with "tracknumber" tag
 
-        # if tracknumber is formatted as "1-03" with disc and track together, need to fix that first
+        # TODO REMOVE
         disc_in_tracknumber = all(re.match("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in album.tracks)
         has_discnumber = any("discnumber" in track.tags for track in album.tracks)
         if disc_in_tracknumber and not has_discnumber:
-            return CheckResult(ProblemCategory.TAGS, "track number contains disc number", DiscInTracknumberFixer(self.ctx, album))
+            return CheckResult(ProblemCategory.TAGS, "track number contains disc number")
+        ###########
 
         tracks_by_disc: dict[str, list[Track]] = {}
         valid_disc_numbers: set[int] = set()

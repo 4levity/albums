@@ -4,7 +4,7 @@ from pathlib import Path
 from albums.checks.check_track_number import describe_track_number, ordered_tracks
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
-from ..types import Album
+from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
 
@@ -22,14 +22,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         if not album_is_basic_taggable(album):
             return None  # this check is not valid for files where albums doesn't know about the noted tags
 
-        issues: set[str] = set()
-        for track in album.tracks:
-            if _has_multi_value(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
-                issues.add("track/disc numbering tags with multiple values")
-            if _has_non_numeric(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
-                issues.add("track/disc numbering tags with non-numeric values")
-            if _has_zero_value(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
-                issues.add("track/disc numbering tags where the value is 0")
+        issues = get_issues_invalid_disc_or_track_number(album.tracks)
 
         if issues:
             option_free_text = False
@@ -77,6 +70,18 @@ class CheckInvalidTrackOrDiscNumber(Check):
                 changed = True
 
         return changed
+
+
+def get_issues_invalid_disc_or_track_number(tracks: list[Track]):
+    issues: set[str] = set()
+    for track in tracks:
+        if _has_multi_value(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
+            issues.add("track/disc numbering tags with multiple values")
+        if _has_non_numeric(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
+            issues.add("track/disc numbering tags with non-numeric values")
+        if _has_zero_value(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
+            issues.add("track/disc numbering tags where the value is 0")
+    return issues
 
 
 def _has_multi_value(tags: dict[str, list[str]], tag_names: list[str]):
