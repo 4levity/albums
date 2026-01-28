@@ -1,4 +1,4 @@
-from ..types import Track
+from ..types import Album, Track
 
 
 def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
@@ -32,3 +32,27 @@ def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
         tracks_by_disc[discnumber].sort(key=lambda track: int(track.tags.get("tracknumber", ["0"])[0]))
 
     return tracks_by_disc
+
+
+def ordered_tracks(album: Album):
+    # sort by discnumber/tracknumber tag if all tracks have one
+    has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
+    if all(len(track.tags.get("tracknumber", [])) == 1 for track in album.tracks):
+        if has_discnumber:
+            return sorted(album.tracks, key=lambda t: (t.tags["discnumber"][0], t.tags["tracknumber"][0]))
+        else:
+            return sorted(album.tracks, key=lambda t: t.tags["tracknumber"][0])
+    else:  # default album sort is by filename
+        return album.tracks
+
+
+def describe_track_number(track: Track):
+    tags = track.tags
+
+    if "discnumber" in tags or "disctotal" in tags:
+        s = f"(disc {tags.get('discnumber', ['<no disc>'])[0]}{('/' + tags['disctotal'][0]) if 'disctotal' in tags else ''}) "
+    else:
+        s = ""
+
+    s += f"{tags.get('tracknumber', ['<no track>'])[0]}{('/' + tags['tracktotal'][0]) if 'tracktotal' in tags else ''}"
+    return s

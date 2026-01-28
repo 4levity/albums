@@ -42,7 +42,10 @@ enabled = true
 ignore_folders = ["misc"]
 
 [checks.album_under_album]
-emabled = true
+enabled = true
+
+[checks.invalid_track_or_disc_number]
+enabled = true
 
 [checks.required_tags]
 enabled = false

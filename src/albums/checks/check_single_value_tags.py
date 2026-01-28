@@ -30,3 +30,5 @@ class CheckSingleValueTags(Check):
 
         if len(multiple_value_tags) > 0:
             return CheckResult(ProblemCategory.TAGS, f"conflicting values for single value tags\n{yaml.dump(multiple_value_tags)}")
+
+    # could have a fixer, automatic for some cases, but haven't seen this problem o often

@@ -32,7 +32,7 @@ class CheckAlbumTag(Check):
             return None  # this check is currently not valid for files that don't use "album" tag
 
         track_album_tags = {"": 0}
-        for track in sorted(album.tracks, key=lambda track: track.filename):
+        for track in album.tracks:
             if "album" in track.tags:
                 for album_tag in track.tags["album"]:
                     track_album_tags[album_tag] = track_album_tags.get(album_tag, 0) + 1

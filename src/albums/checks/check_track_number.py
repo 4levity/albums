@@ -7,6 +7,7 @@ from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import ProblemCategory, Check, CheckResult, Fixer
+from .helpers import describe_track_number, ordered_tracks
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class DiscNumberFixer(Fixer):
     # TODO more fixer options e.g. re-number from filenames
 
     def __init__(self, ctx: app.Context, album: Album, option_remove_disctotal: bool, option_remove_discnumber_and_disctotal: bool):
-        tracks = [[describe_track_number(track), track.filename] for track in _ordered_tracks(album)]
+        tracks = [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]
         table = (["disc/track", "filename"], tracks)
         options: list[str] = []
         if option_remove_disctotal:
@@ -54,7 +55,7 @@ class TrackNumberFixer(Fixer):
         has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
         tracks = [
             [describe_track_number(track), track.filename, f"{'' if has_discnumber else (index + 1)}"]
-            for (index, track) in enumerate(_ordered_tracks(album))
+            for (index, track) in enumerate(ordered_tracks(album))
         ]
         table = (["track", "filename", "proposed track #"], tracks)
         super(TrackNumberFixer, self).__init__(lambda option: self._fix(ctx, album, option), ["no valid options yet"], False, None, table)
@@ -69,7 +70,7 @@ class TrackTotalFixer(Fixer):
 
     def __init__(self, ctx: app.Context, album: Album, discnumber: int | None):
         self.tracks: list[Track] = []
-        for track in _ordered_tracks(album):
+        for track in ordered_tracks(album):
             if discnumber is None or (track.tags.get("discnumber", [""])[0].isdecimal() and int(track.tags["discnumber"][0]) == discnumber):
                 self.tracks.append(track)
 
@@ -86,7 +87,7 @@ class TrackTotalFixer(Fixer):
         if self.max_tracktotal:
             options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
 
-        tracks = [[describe_track_number(track), track.filename] for track in _ordered_tracks(album)]
+        tracks = [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]
         table = (["track", "filename"], tracks)
         # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
 
@@ -128,7 +129,7 @@ class DiscInTracknumberFixer(Fixer):
     OPTION_USE_PROPOSED = ">> Split track number automatically (proposed values)"
 
     def __init__(self, ctx: app.Context, album: Album):
-        tracks = [[describe_track_number(track), track.filename, *self._proposed_disc_and_tracknumber(track)] for track in _ordered_tracks(album)]
+        tracks = [[describe_track_number(track), track.filename, *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)]
         table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
         super(DiscInTracknumberFixer, self).__init__(
             lambda option: self._fix(ctx, album, option),
@@ -350,27 +351,3 @@ class CheckTrackNumber(Check):
                 )
 
         return None
-
-
-def _ordered_tracks(album: Album):
-    # sort by discnumber/tracknumber tag if all tracks have one
-    has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
-    if all(len(track.tags.get("tracknumber", [])) == 1 for track in album.tracks):
-        if has_discnumber:
-            return sorted(album.tracks, key=lambda t: (t.tags["discnumber"][0], t.tags["tracknumber"][0]))
-        else:
-            return sorted(album.tracks, key=lambda t: t.tags["tracknumber"][0])
-    else:  # default album sort is by filename
-        return album.tracks
-
-
-def describe_track_number(track: Track):
-    tags = track.tags
-
-    if "discnumber" in tags or "disctotal" in tags:
-        s = f"(disc {tags.get('discnumber', ['<no disc>'])[0]}{('/' + tags['disctotal'][0]) if 'disctotal' in tags else ''}) "
-    else:
-        s = ""
-
-    s += f"{tags.get('tracknumber', ['<no track>'])[0]}{('/' + tags['tracktotal'][0]) if 'tracktotal' in tags else ''}"
-    return s

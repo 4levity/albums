@@ -89,6 +89,19 @@ on other tracks in the folder, and the name of the folder. Choose from options.
 This check reports when an album has another album in a subfolder. Maybe they
 should be in separate folders. No fix offered.
 
+### invalid_track_or_disc_number
+
+This check reports when an album has invalid or ambiguous values for track
+number, track total, disc number or disc total. If these fields cannot be
+resolved to a single valid number, they are not useful and should be removed.
+
+Rule: for each track, if present, track/disc number/total tags should each have
+a single value and that value should be a positive number (0 is not valid).
+
+**Automatic fix**: For each of the noted tags in each track, discard all values
+that are non-numeric or 0. If exactly one unique value remains, save it.
+Otherwise, delete the tag.
+
 ### required_tags
 
 All tracks should have one or more values for each of these tags.
