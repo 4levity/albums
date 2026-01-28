@@ -115,17 +115,14 @@ All tracks should have one or more values for each of these tags.
 ### single_value_tags
 
 If present, the specified tags should not have multiple values _in the same
-track_. Some checks cannot detect issues unless certain tags are single-value.
-Many multiple-value tags are valid, but they can still cause unpredictable
-results with various media players.
+track_. Many multiple-value tags are valid, but they might be unintended, and
+might cause unpredictable results with various media players.
 
-<!-- pyml disable line-length -->
+The fix provides options to concatenate multiple values into a single value.
 
-| Option      | Default                                                             |
-| ----------- | ------------------------------------------------------------------- |
-| `tag_names` | `["discnumber", "disctotal", "title", "tracknumber", "tracktotal"]` |
-
-<!-- pyml enable line-length -->
+| Option      | Default               |
+| ----------- | --------------------- |
+| `tag_names` | `["artist", "title"]` |
 
 ### track_number
 

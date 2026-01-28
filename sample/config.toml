@@ -53,7 +53,7 @@ tag_names = ["artist", "title"]
 
 [checks.single_value_tags]
 enabled = true
-tag_names = ["title", "tracknumber", "tracktotal"]
+tag_names = ["artist", "title"]
 
 [checks.track_number]
 enabled = true
