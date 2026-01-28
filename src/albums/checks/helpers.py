@@ -1,4 +1,21 @@
+from enum import Enum, auto
 from ..types import Album, Track
+
+
+class ItemTotalPolicy(Enum):
+    CONSISTENT = auto()
+    ALWAYS = auto()
+    NEVER = auto()
+
+    @classmethod
+    def from_str(cls, selection: str):
+        for policy in cls:
+            if str.lower(policy.name) == str.lower(selection):
+                return policy
+        raise ValueError(f'invalid ItemTotalPolicy "{selection}"')
+
+
+OPTION_APPLY_POLICY = ">> Apply policy"
 
 
 def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:

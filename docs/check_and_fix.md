@@ -46,6 +46,8 @@ See `albums --help` and `albums check --help` for more.
 Checks run in a particular order. First basic tag issues like non-numeric or
 ambiguous values, then higher level checks.
 
+The checks run in the order they appear in this document.
+
 ### disc_in_track_number
 
 If the disc number and track number are combined in the track number tag with a
@@ -66,6 +68,22 @@ a single value and that value should be a positive number (0 is not valid).
 **Automatic fix**: For each of the noted tags in each track, discard all values
 that are non-numeric or 0. If exactly one unique value remains, save it.
 Otherwise, delete the tag.
+
+### tracktotal_presence
+
+Apply selected policy for whether or not a track total is present on each track.
+
+**Automatic fix**: If the policy is "consistent" but some tracks are missing
+track total, remove it from all tracks. If the policy is "never", always remove
+the tag. (There is currently no automatic fix if the policy is "always".)
+
+| Option   | Default        | Description                                 |
+| -------- | -------------- | ------------------------------------------- |
+| `policy` | `"consistent"` | Set the tag presence policy for track total |
+
+### disctotal_presence
+
+Exactly the same as `tracktotal_presence` except it is for the disc total.
 
 ### album_tag
 
