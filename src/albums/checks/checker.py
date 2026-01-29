@@ -50,4 +50,4 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
 
 
 def _enabled(config: dict[str, dict[str, Any]], check: type[Check]) -> bool:
-    return config.get("checks", {}).get(check.name, {}).get("enabled", False)
+    return config.get("checks", {}).get(check.name, {}).get("enabled", check.default_config["enabled"])

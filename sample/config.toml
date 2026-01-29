@@ -37,11 +37,11 @@ enabled = true
 [checks.invalid_track_or_disc_number]
 enabled = true
 
-[checks.track_total_presence]
+[checks.tracktotal_presence]
 enabled = true
 policy = "consistent"
 
-[checks.disc_total_presence]
+[checks.disctotal_presence]
 enabled = true
 policy = "consistent"
 
