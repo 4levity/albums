@@ -48,7 +48,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         changed = False
         for track in album.tracks:
             file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
-            new_values: list[tuple[str, str | None]] = []
+            new_values: list[tuple[str, str | list[str] | None]] = []
             for tag_name in SINGLE_POSITIVE_NUMBER_TAGS:
                 if tag_name in track.tags:
                     # gather all values for this tag that are numeric and > 0, if any

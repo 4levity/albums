@@ -53,7 +53,7 @@ def supports_basic_tags(filename: Path, codec: str | None):  # TODO use TagCapab
     return str.lower(filename.suffix) in [".flac", ".mp3", ".ogg"] and (codec is None or codec in ["FLAC", "MP3", "Ogg Vorbis"])
 
 
-def set_basic_tags(path: Path, tag_values: list[tuple[str, str | None]]):
+def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | None]]):
     # remove any tag, only set supported tags
     for name, value in tag_values:
         if value is not None and name not in BASIC_TAGS:
@@ -71,9 +71,9 @@ def set_basic_tags(path: Path, tag_values: list[tuple[str, str | None]]):
     changed = False
     for name, value in tag_values:
         if name == "tracktotal" and not capabilities.has_tracktotal:
-            changed |= _set_tracktotal_in_tracknumber(file, value)
+            changed |= _set_tracktotal_in_tracknumber(file, value[0] if isinstance(value, list) else value)
         elif name == "disctotal" and not capabilities.has_disctotal:
-            changed |= _set_disctotal_in_discnumber(file, value)
+            changed |= _set_disctotal_in_discnumber(file, value[0] if isinstance(value, list) else value)
         elif value is None:
             if name in file:
                 del file[name]

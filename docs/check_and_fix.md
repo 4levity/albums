@@ -133,9 +133,9 @@ All tracks should have one or more values for each of these tags.
 
 > Disabled by default, set `enable = true` to use.
 
-| Option      | Default               |
-| ----------- | --------------------- |
-| `tag_names` | `["artist", "title"]` |
+| Option | Default               |
+| ------ | --------------------- |
+| `tags` | `["artist", "title"]` |
 
 ### single_value_tags
 
@@ -143,11 +143,16 @@ If present, the specified tags should not have multiple values _in the same
 track_. Many multiple-value tags are valid, but they might be unintended, and
 might cause unpredictable results with various media players.
 
-The fix provides options to concatenate multiple values into a single value.
+The fix provides options to concatenate multiple values into a single value,
+after removing duplicates.
 
-| Option      | Default               |
-| ----------- | --------------------- |
-| `tag_names` | `["artist", "title"]` |
+**Automatic fix**: When a track has **duplicate** values for the tag, an
+automatic fix is available that only removes the duplicates. If there are
+multiple unique values, they will be kept and still flagged by this check.
+
+| Option | Default               |
+| ------ | --------------------- |
+| `tags` | `["artist", "title"]` |
 
 ### track_number
 

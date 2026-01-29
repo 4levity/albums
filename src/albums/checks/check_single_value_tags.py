@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 import yaml
@@ -8,8 +9,9 @@ from .base_check import Fixer, ProblemCategory, Check, CheckResult
 from .helpers import describe_track_number, ordered_tracks
 
 
-OPTION_CONCATENATE_SLASH = ">> Concatenate into a single value with '/' between"
-OPTION_CONCATENATE_DASH = ">> Concatenate into a single value with '-' between"
+OPTION_CONCATENATE_SLASH = ">> Concatenate unique values into one with '/' between"
+OPTION_CONCATENATE_DASH = ">> Concatenate unique values into one with '-' between"
+OPTION_REMOVE_DUPLICATES_ONLY = ">> Remove duplicate values (preserve unique multiple values)"
 
 
 class CheckSingleValueTags(Check):
@@ -30,21 +32,26 @@ class CheckSingleValueTags(Check):
             return None  # this check only makes sense for files with common tags
 
         multiple_value_tags: list[dict[str, dict[str, list[str]]]] = []
+        duplicates = False
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag_name in self.single_value_tags:
                 # check for multiple values for tag_name
                 if tag_name in track.tags and len(track.tags[tag_name]) > 1:
                     multiple_value_tags.append({track.filename: {tag_name: track.tags[tag_name]}})
+                    if len(set(track.tags[tag_name])) < len(track.tags[tag_name]):
+                        duplicates = True
 
         if len(multiple_value_tags) > 0:
             option_free_text = False
-            option_automatic_index = None
+            options = [OPTION_REMOVE_DUPLICATES_ONLY] if duplicates else []
+            options.extend([OPTION_CONCATENATE_SLASH, OPTION_CONCATENATE_DASH])
+            option_automatic_index = 0 if duplicates else None
             return CheckResult(
                 ProblemCategory.TAGS,
-                f"conflicting values for single value tags\n{yaml.dump(multiple_value_tags)}",
+                f"multiple values for single value tags\n{yaml.dump(multiple_value_tags)}",
                 Fixer(
                     lambda option: self._fix(album, option),
-                    [OPTION_CONCATENATE_SLASH, OPTION_CONCATENATE_DASH],
+                    options,
                     option_free_text,
                     option_automatic_index,
                     (["track", "filename"], [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]),
@@ -56,17 +63,21 @@ class CheckSingleValueTags(Check):
             concat = " - "
         elif option == OPTION_CONCATENATE_SLASH:
             concat = " / "
+        elif option == OPTION_REMOVE_DUPLICATES_ONLY:
+            concat = None
         else:
             raise ValueError(f"invalid option {option}")
 
         changed = False
         for track in album.tracks:
             file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
-            new_values: list[tuple[str, str | None]] = []
+            new_values: list[tuple[str, str | list[str] | None]] = []
             for tag_name in self.single_value_tags:
                 if tag_name in track.tags and len(track.tags[tag_name]) > 1:
-                    new_value = concat.join(track.tags[tag_name])
-                    new_values.append((tag_name, new_value))
+                    unique_values = list(OrderedDict.fromkeys(track.tags[tag_name]))
+                    if concat:
+                        unique_values = [concat.join(unique_values)]
+                    new_values.append((tag_name, unique_values))
                     changed = True
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")

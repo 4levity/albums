@@ -150,7 +150,7 @@ class CheckZeroPadNumbers(Check):
         for disc in tracks_by_disc.values():
             for track in disc:
                 file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
-                new_values: list[tuple[str, str | None]] = []
+                new_values: list[tuple[str, str | list[str] | None]] = []
                 if self.tracknumber_pad != ZeroPadPolicy.IGNORE and "tracknumber" in track.tags:
                     new_tracknumber = self._apply_pad_policy(track.tags["tracknumber"][0], self.tracknumber_pad, len(disc))
                     if new_tracknumber != track.tags["tracknumber"][0]:
