@@ -36,11 +36,11 @@ class AbstractCheckTotalTag(Check):
             message = f"{self.total_tag_name} appears on tracks without {self.corresponding_index_tag}"
             # if policy != always, automated fix to remove all totals will solve this
         elif self.policy == ItemTotalPolicy.ALWAYS and not on_all_tracks:
-            message = f"{self.total_tag_name} policy {self.policy.name} but not on all tracks"
+            message = f"{self.total_tag_name} policy={self.policy.name} but it is not on all tracks"
         elif self.policy == ItemTotalPolicy.NEVER and on_any_tracks:
-            message = f"{self.total_tag_name} policy {self.policy.name} but appears on tracks"
+            message = f"{self.total_tag_name} policy={self.policy.name} but it appears on tracks"
         elif self.policy == ItemTotalPolicy.CONSISTENT and on_all_tracks != on_any_tracks:
-            message = f"{self.total_tag_name} policy {self.policy.name} but it is on some tracks and not others"
+            message = f"{self.total_tag_name} policy={self.policy.name} but it is on some tracks and not others"
         else:
             message = None
 

@@ -62,10 +62,13 @@ tags = ["artist", "title"]
 enabled = true
 tags = ["artist", "title"]
 
+[checks.disc_numbering]
+enabled = true
+discs_in_separate_folders = false
+
 [checks.track_number]
 enabled = true
 ignore_folders = ["misc"]
-warn_disc_per_folder = false
 
 [checks.zero_pad_numbers]
 enabled = true

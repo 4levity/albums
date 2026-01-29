@@ -54,7 +54,7 @@ class TestCheckTotalTags:
         ctx = Context()
         ctx.config["checks"] = {"tracktotal_presence": {"policy": "always"}}
         result = CheckTrackTotalPresence(ctx).check(album)
-        assert "tracktotal policy ALWAYS but not on all tracks" in result.message
+        assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
         assert not result.fixer
 
     def test_check_tracktotal_presence_consistent(self, mocker):
@@ -64,7 +64,7 @@ class TestCheckTotalTags:
         ctx.config["checks"] = {"tracktotal_presence": {"policy": "consistent"}}
         ctx.library_root = Path("/path/to/library")
         result = CheckTrackTotalPresence(ctx).check(album)
-        assert "tracktotal policy CONSISTENT but it is on some tracks and not others" in result.message
+        assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove tag tracktotal from all tracks"]
         assert result.fixer.option_automatic_index == 0
@@ -86,7 +86,7 @@ class TestCheckTotalTags:
         ctx.config["checks"] = {"tracktotal_presence": {"policy": "never"}}
         ctx.library_root = Path("/path/to/library")
         result = CheckTrackTotalPresence(ctx).check(album)
-        assert "tracktotal policy NEVER but appears on tracks" in result.message
+        assert "tracktotal policy=NEVER but it appears on tracks" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove tag tracktotal from all tracks"]
         assert result.fixer.option_automatic_index == 0

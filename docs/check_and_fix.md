@@ -154,6 +154,33 @@ multiple unique values, they will be kept and still flagged by this check.
 | ------ | --------------------- |
 | `tags` | `["artist", "title"]` |
 
+### disc_numbering
+
+Reports on issues with disc number and disc total. This high level check
+requires that the individual tag values are valid. In other words,
+`disc_in_track_number` and `invalid_track_or_disc_number` must pass, or this
+check will just fail saying "couldn't arrange tracks by disc".
+
+Rules:
+
+- If any track has disc number, all tracks should have disc number
+- Disc numbers should start at 1 and be sequential (1, 2, 3...)
+- If present, the disc total should be the number of distinct disc number values
+  which should be the same as the highest disc number
+
+<!-- pyml disable line-length -->
+
+| Option                      | Default  | Description                                                  |
+| --------------------------- | -------- | ------------------------------------------------------------ |
+| `discs_in_separate_folders` | **true** | albums with multiple discs may be stored in separate folders |
+
+<!-- pyml enable line-length -->
+
+> When `discs_in_separate_folders` is enabled (default), this check will ignore
+> when an album is only one disc of a multiple disc set. But then it cannot tell
+> whether an album is missing a disc number or if disc total is correct. If you
+> can put multiple-disc albums together in one folder, set this to **false**.
+
 ### track_number
 
 Reports on several issues with track number, track total, disc number and disc
@@ -163,10 +190,6 @@ not.
 
 The rules are:
 
-- If any track has disc number, all tracks should have a single decimal disc
-  number
-- If present, the disc total should be the number of distinct disc number values
-- Disc numbers should start at 1 and be sequential (1, 2, 3...)
 - Every track should have a single decimal track number
 - For each disc, track numbers should start at 1 and be sequential
 - For each disc, if track total is present, it should be the number of tracks on
@@ -174,10 +197,9 @@ The rules are:
 
 <!-- pyml disable line-length -->
 
-| Option                 | Default    | Description                                                                |
-| ---------------------- | ---------- | -------------------------------------------------------------------------- |
-| `ignore_folders`       | `["misc"]` | in folders with these names, ignore track/disc numbers                     |
-| `warn_disc_per_folder` | `false`    | if an album (folder) has a disc number, there should be more than one disc |
+| Option           | Default    | Description                                                |
+| ---------------- | ---------- | ---------------------------------------------------------- |
+| `ignore_folders` | `["misc"]` | in all folders with these names, ignore track/disc numbers |
 
 <!-- pyml enable line-length -->
 
