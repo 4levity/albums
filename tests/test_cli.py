@@ -79,8 +79,8 @@ database="{TestCli.library / "albums.db"}"
     def test_check_automatic_fix(self):
         result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
-        assert '1 tracks missing album tag : "foo/"' in result.output
-        assert '2 tracks missing album tag : "bar/"' in result.output
+        assert '"foo/" - 1 tracks missing album tag' in result.output
+        assert '"bar/" - 2 tracks missing album tag' in result.output
         assert "setting album on 1.flac" in result.output
 
         result = self.run(["--verbose", "scan"])

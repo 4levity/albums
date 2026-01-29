@@ -16,7 +16,7 @@ from simple_term_menu import TerminalMenu
 logger = logging.getLogger(__name__)
 
 
-def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album: Album) -> bool:
+def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album: Album) -> tuple[bool, bool]:
     # if there is a fixer, offer the options it provides
     # always offer these options:
     #  - do nothing
@@ -28,6 +28,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     fixer = check_result.fixer
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
+    user_quit = False  # user explicitly quit this check
 
     tagger_config = ctx.config.get("options", {}).get("tagger")
     tagger = str(tagger_config) if check_result.category == ProblemCategory.TAGS and tagger_config else None
@@ -73,19 +74,25 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
             if choice == OPTION_RUN_TAGGER:
                 ctx.console.print(f"Launching {tagger} {str(album_path)}", markup=False)
                 subprocess.Popen([str(tagger), str(album_path)])
-                ctx.console.print(f"If you make changes to this album in {tagger} [italic]after[/italic] continuing, scan again later.")
-                maybe_changed = True
+                while not Confirm.ask("Done making changes in external program?", console=ctx.console):
+                    pass
+                maybe_changed |= True
             elif choice == OPTION_DO_NOTHING:
                 done = True
+                user_quit = True
             elif choice == OPTION_IGNORE_CHECK:
                 done = prompt_ignore_checks(ctx, album, check_name)
+                user_quit = done
             elif choice == OPTION_OPEN_FOLDER:
+                ctx.console.print(f"Opening folder {str(album_path)}", markup=False)
                 os_open_folder(ctx, album_path)
-                ctx.console.print("If you make changes to this album [italic]after[/italic] continuing, scan again later.")
-                maybe_changed = True
-            if choice is None or maybe_changed:
-                # if user pressed esc, confirm; if user launched tagger or folder, pause
-                done = Confirm.ask("Do you want to move on to the next album?", default=True, console=ctx.console)
+                ctx.console.print()
+                while not Confirm.ask("Done making changes in external program?", console=ctx.console):
+                    pass
+                maybe_changed |= True
+            elif choice is None:  # if user pressed esc, confirm
+                done = Confirm.ask("Do you want to move on to the next check?", default=True, console=ctx.console)
+                user_quit = done
 
         elif fixer:
             if options[option_index] == OPTION_FREE_TEXT:
@@ -95,12 +102,11 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
 
             done = Confirm.ask(f'Selected "{option}" - are you sure?', console=ctx.console)
             if done:
-                return fixer.fix(option)
+                maybe_changed |= fixer.fix(option)
 
-            # otherwise loop and ask again
+        # otherwise loop and ask again
 
-    # TODO if not done + maybe_changed we should probably recheck, and if there are updates, run the same check again
-    return maybe_changed
+    return (maybe_changed, user_quit)
 
 
 def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):

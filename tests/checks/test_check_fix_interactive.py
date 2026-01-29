@@ -31,7 +31,9 @@ class TestCheckFixInteractive:
         mock_menu.show.return_value = 0
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
-        assert interact(ctx, "", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
+        (changed, quit) = interact(ctx, "", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
+        assert changed
+        assert not quit
         assert mock_menu.show.call_count == 1
         assert mock_ask.call_count == 1
         assert mock_ask.call_args.args[0] == ('Selected "A" - are you sure?')
@@ -48,7 +50,9 @@ class TestCheckFixInteractive:
         mock_menu.show.return_value = 3  # fixer has 2 options + free text, next option is ignore check
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
-        assert not interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
+        (changed, quit) = interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
+        assert not changed
+        assert quit
         assert mock_menu.show.call_count == 1
         assert mock_ask.call_count == 1
         assert mock_ask.call_args.args[0] == ('Do you want to ignore the check "album_tag" for this album in the future?')
