@@ -43,8 +43,12 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
             if check_name not in ctx.config["checks"]:
                 ctx.config["checks"][check_name] = all.DEFAULT_CHECKS_CONFIG[check_name]
         # enable only specified checks
-        for check_name in ctx.config["checks"].keys():
-            ctx.config["checks"][check_name]["enabled"] = check_name in checks
+        for check_name in all.ALL_CHECK_NAMES:
+            enabled = check_name in checks
+            if check_name in ctx.config["checks"]:
+                ctx.config["checks"][check_name]["enabled"] = enabled
+            else:
+                ctx.config["checks"][check_name] = {"enabled": enabled}
 
     issues = run_enabled(ctx, automatic, preview, fix, interactive)
     if issues == 0:
