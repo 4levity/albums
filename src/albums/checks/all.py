@@ -9,6 +9,7 @@ from .check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
 from .check_required_tags import CheckRequiredTags
 from .check_single_value_tags import CheckSingleValueTags
 from .check_track_number import CheckTrackNumber
+from .check_track_title import CheckTrackTitle
 from .check_tracktotal_presence import CheckTrackTotalPresence
 from .check_zero_pad_numbers import CheckZeroPadNumbers
 
@@ -27,6 +28,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckSingleValueTags,
     CheckDiscNumbering,
     CheckTrackNumber,
+    CheckTrackTitle,
     # pickier checks, may require correct tags
     CheckZeroPadNumbers,
     # non-tag related

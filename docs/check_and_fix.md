@@ -203,6 +203,23 @@ The rules are:
 
 <!-- pyml enable line-length -->
 
+### track_title
+
+Each track should have a title tag. If the track doesn't have a title, it can be
+guessed from the filename, if the filename looks similar to one of these
+examples:
+
+- `the title.flac`
+- `01 the title.flac`
+- `01. the title.mp3`
+- `01 - the title.mp3`
+- `1-03 - the title.flac`
+
+If the filename looks like a track number only, no title guess will be made.
+
+**Automatic fix**: If every tag that has a missing title also has a filename from
+which a title can be guessed, fill in all empty titles.
+
 ### zero_pad_numbers
 
 Apply selected policies for zero-padding in the track number/total and disc
