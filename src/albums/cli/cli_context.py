@@ -8,6 +8,7 @@ from rich.prompt import Confirm
 import tomllib
 
 import albums.database.connection
+import albums.database.selector
 from ..app import Context
 
 
@@ -73,6 +74,7 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
     db = albums.database.connection.open(album_db_file)
     ctx.call_on_close(lambda: albums.database.connection.close(db))
     app_context.db = db
+    app_context.select_albums = lambda load_track_tag: albums.database.selector.select_albums(db, collections, paths, regex, load_track_tag)
 
     # filters applied to command
     app_context.filter_collections = collections

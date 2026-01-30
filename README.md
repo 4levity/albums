@@ -29,7 +29,7 @@ checks may be skipped.
 
 ## System Requirements
 
-Requires Python 3.14. Developed/tested only on Linux. Probably works on MacOS.
+Requires Python 3.12+. Developed/tested only on Linux. Probably works on MacOS.
 Interactive features might not work on Windows.
 
 ## Getting Started
