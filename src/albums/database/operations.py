@@ -2,7 +2,7 @@ import logging
 import sqlite3
 
 from ..checks.all import ALL_CHECK_NAMES
-from ..types import Album, Stream, Track
+from ..types import Album, ScanHistoryEntry, Stream, Track
 
 
 logger = logging.getLogger(__name__)
@@ -145,3 +145,19 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
     for name, value in db.execute("SELECT name, value FROM track_tag WHERE track_id = ?;", (track_id,)):
         tags.setdefault(name, []).append(value)
     return tags
+
+
+def record_full_scan(db: sqlite3.Connection, entry: ScanHistoryEntry):
+    with db:
+        db.execute(
+            "INSERT INTO scan_history (timestamp, folders_scanned, albums_total) VALUES (?, ?, ?)",
+            (entry.timestamp, entry.folders_scanned, entry.albums_total),
+        )
+
+
+def get_last_scan_info(db: sqlite3.Connection) -> ScanHistoryEntry | None:
+    row = db.execute("SELECT timestamp, folders_scanned, albums_total FROM scan_history ORDER BY timestamp DESC LIMIT 1;").fetchone()
+    if row is None:
+        return None
+    (timestamp, folders_scanned, albums_total) = row
+    return ScanHistoryEntry(timestamp, folders_scanned, albums_total)

@@ -41,3 +41,10 @@ class Album:
 
     def to_dict(self):
         return self.__dict__ | {"tracks": [t.to_dict() for t in self.tracks] if self.tracks else []}
+
+
+@dataclass
+class ScanHistoryEntry:
+    timestamp: int
+    folders_scanned: int
+    albums_total: int

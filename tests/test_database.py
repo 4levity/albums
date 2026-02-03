@@ -1,7 +1,7 @@
 import contextlib
 
 from albums.database import connection, operations, schema, selector
-from albums.types import Album, Stream, Track
+from albums.types import Album, ScanHistoryEntry, Stream, Track
 
 
 class TestDatabase:
@@ -71,3 +71,11 @@ class TestDatabase:
             operations.update_tracks(db, albums[0].album_id, albums[0].tracks)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result[0].tracks) == 2
+
+            assert operations.get_last_scan_info(db) is None
+            operations.record_full_scan(db, ScanHistoryEntry(3, 2, 1))
+            entry = operations.get_last_scan_info(db)
+            assert entry
+            assert entry.timestamp == 3
+            assert entry.folders_scanned == 2
+            assert entry.albums_total == 1

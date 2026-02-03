@@ -1,12 +1,14 @@
+import logging
 import sqlite3
 
-CURRENT_SCHEMA_VERSION = 1
 
-SQL_INIT_SCHEMA = f"""
+logger = logging.getLogger(__name__)
+
+SQL_INIT_SCHEMA = """
 CREATE TABLE _schema (
     version INTEGER UNIQUE NOT NULL
 );
-INSERT INTO _schema (version) VALUES ({CURRENT_SCHEMA_VERSION});
+INSERT INTO _schema (version) VALUES (1);
 
 CREATE TABLE album (
     album_id INTEGER PRIMARY KEY,
@@ -53,9 +55,38 @@ CREATE TABLE track_tag (
     name TEXT NOT NULL,
     value TEXT NOT NULL
 );
-CREATE INDEX idx_metadata_track_id ON track_tag(track_id);
+CREATE INDEX idx_track_tag_track_id ON track_tag(track_id);
 """
+
+CURRENT_SCHEMA_VERSION = 2
+MIGRATIONS = {  # key is target schema version
+    2: """
+CREATE TABLE scan_history (
+    scan_history_id INTEGER PRIMARY KEY,
+    timestamp INTEGER NOT NULL,
+    folders_scanned INTEGER NOT NULL,
+    albums_total INTEGER NOT NULL
+);
+CREATE INDEX idx_scan_history_timestamp ON scan_history(timestamp);
+"""
+}
 
 
 def migrate(db: sqlite3.Connection):
-    pass  # TODO check schema version, apply migration scripts, update version
+    current_version = max(MIGRATIONS.keys())
+    (db_version,) = db.execute("SELECT version FROM _schema;").fetchone()
+    if db_version == current_version:
+        return
+
+    migrations = range(db_version + 1, current_version + 1)
+    logger.debug(f"database schema version {db_version}, migrations to perform: {migrations}")
+    for migration in migrations:
+        _do_migration(db, migration)
+    with db:
+        db.execute("UPDATE _schema SET version = ?", (current_version,))
+
+
+def _do_migration(db: sqlite3.Connection, migration: int):
+    with db:
+        logger.info(f"migrating database: v{migration}")
+        db.executescript(MIGRATIONS[migration])

@@ -1,4 +1,5 @@
 import contextlib
+import os
 from mutagen.flac import FLAC
 import shutil
 
@@ -124,12 +125,20 @@ class TestScanner:
             assert len(result) == 3
             assert result[0].path == "bar/"
 
+            # remove a folder that contains an album (removed without scanning)
             shutil.rmtree(library / "bar", ignore_errors=True)
-
             scan(ctx)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 2
             assert result[0].path == "baz/"
+
+            # remove the tracks but the folder is still there (removed when scanned)
+            shutil.rmtree(library / "baz", ignore_errors=True)
+            os.mkdir(library / "baz")
+            scan(ctx)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 1
+            assert result[0].path == "foo/"
 
     def test_scan_filtered(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:

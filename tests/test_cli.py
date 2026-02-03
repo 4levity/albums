@@ -45,6 +45,10 @@ database="{TestCli.library / "albums.db"}"
         assert result.output.startswith("creating database")
         assert "Scanning" in result.output
 
+        result = self.run(["scan"])
+        assert result.exit_code == 0
+        assert not result.output.startswith("creating database")
+
     def test_list(self):
         result = self.run(["list"])
         assert result.exit_code == 0
