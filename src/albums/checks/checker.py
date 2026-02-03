@@ -11,6 +11,13 @@ from .interact import interact
 
 
 def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
+    need_checks = required_disabled_checks(ctx.config)
+    if need_checks:
+        ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")
+        for check, deps in need_checks.items():
+            ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
+        raise SystemExit(1)
+
     def handle_check_result(ctx: app.Context, check: Check, check_result: CheckResult, album: Album):
         fixer = check_result.fixer
         displayed_any = False
@@ -36,16 +43,25 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
 
         return (maybe_changed, user_quit, displayed_any)
 
-    check_instances = [check(ctx) for check in ALL_CHECKS if _enabled(ctx.config, check)]
+    check_instances = [check(ctx) for check in ALL_CHECKS if _enabled_check(ctx.config, check)]
 
     showed_issues = 0
     for album in ctx.select_albums(True):
+        checks_passed: set[str] = set()
         for check in check_instances:
             if check.name not in album.ignore_checks:
+                missing_dependent_checks = check.must_pass_checks - checks_passed
+                if missing_dependent_checks:
+                    ctx.console.print(
+                        f'[bold]dependency not met to check {check.name}[/bold] on "{escape(album.path)}": {" and ".join(missing_dependent_checks)} must pass first'
+                    )
+                    showed_issues += 1
+                    continue
+
                 maybe_fixable = True
-                fixed = False
+                passed = False
                 quit = False
-                while maybe_fixable and not fixed and not quit:
+                while maybe_fixable and not passed and not quit:
                     check_result = check.check(album)
                     if check_result:
                         (took_action, quit, displayed) = handle_check_result(ctx, check, check_result, album)
@@ -60,10 +76,26 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
                         else:
                             maybe_fixable = False
                     else:
-                        fixed = True
+                        passed = True
+                if passed:
+                    checks_passed.add(check.name)
 
     return showed_issues
 
 
-def _enabled(config: dict[str, dict[str, Any]], check: type[Check]) -> bool:
+def required_disabled_checks(config: dict[str, dict[str, Any]]):
+    check_classes = [check for check in ALL_CHECKS if _enabled_check(config, check)]
+    enabled = set(check.name for check in check_classes)
+    required_disabled: dict[str, list[str]] = {}
+    for check in check_classes:
+        for dep in check.must_pass_checks:
+            if dep not in enabled:
+                if dep in required_disabled:
+                    required_disabled[dep].append(check.name)
+                else:
+                    required_disabled[dep] = [check.name]
+    return required_disabled
+
+
+def _enabled_check(config: dict[str, dict[str, Any]], check: type[Check]) -> bool:
     return config.get("checks", {}).get(check.name, {}).get("enabled", check.default_config["enabled"])

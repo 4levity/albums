@@ -91,6 +91,7 @@ class TrackTotalFixer(Fixer):
 class CheckTrackNumber(Check):
     name = "track_number"
     default_config = {"enabled": True, "ignore_folders": ["misc"], "discs_in_separate_folders": True}
+    must_pass_checks = {"invalid_track_or_disc_number"}
 
     def init(self, check_config: dict[str, Any]):
         ignore_folders: list[Any] = check_config.get("ignore_folders", CheckTrackNumber.default_config["ignore_folders"])
@@ -112,9 +113,7 @@ class CheckTrackNumber(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
-            return CheckResult(
-                ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_in_track_number and invalid_track_or_disc_number checks must pass first"
-            )
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
 
         # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric
         # TODO ensure check_disc_numbering has passed, we need check deps

@@ -17,6 +17,7 @@ SINGLE_POSITIVE_NUMBER_TAGS = ["tracknumber", "tracktotal", "discnumber", "disct
 class CheckInvalidTrackOrDiscNumber(Check):
     name = "invalid_track_or_disc_number"
     default_config = {"enabled": True}
+    must_pass_checks = {"disc_in_track_number"}
 
     def check(self, album: Album):
         if not album_is_basic_taggable(album):

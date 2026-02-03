@@ -41,6 +41,7 @@ class CheckZeroPadNumbers(Check):
         "discnumber_pad": "if_needed",
         "disctotal_pad": "never",
     }
+    must_pass_checks = {"invalid_track_or_disc_number"}
 
     def init(self, check_config: dict[str, Any]):
         self.tracknumber_pad = ZeroPadPolicy.from_str(str(check_config.get("tracknumber_pad", CheckZeroPadNumbers.default_config["tracknumber_pad"])))
@@ -61,7 +62,7 @@ class CheckZeroPadNumbers(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if tracks_by_disc is None:
-            return CheckResult(ProblemCategory.TAGS, "zero_pad_numbers cannot process this album - run track_numbers check")
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
 
         total_discs = len(tracks_by_disc.keys())
         table_rows: list[list[str]] = []

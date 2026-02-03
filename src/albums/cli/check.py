@@ -2,7 +2,7 @@ import rich_click as click
 
 from .. import app
 from ..checks import all
-from ..checks.checker import run_enabled
+from ..checks.checker import required_disabled_checks, run_enabled
 from . import cli_context
 from .scan import scan
 
@@ -49,6 +49,13 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
                 ctx.config["checks"][check_name]["enabled"] = enabled
             else:
                 ctx.config["checks"][check_name] = {"enabled": enabled}
+
+        while len(dependent_checks := required_disabled_checks(ctx.config)) > 0:
+            for dep, required_by in dependent_checks.items():
+                ctx.console.print(
+                    f"automatically enabling check [italic]{dep}[/italic] required by {' and '.join(f'[italic]{check}[/italic]' for check in required_by)}"
+                )
+                ctx.config["checks"][dep]["enabled"] = True
 
     issues = run_enabled(ctx, automatic, preview, fix, interactive)
     if issues == 0:

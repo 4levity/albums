@@ -31,8 +31,8 @@ database="{TestCli.library / "albums.db"}"
 """
             )
 
-    def run(self, params: list[str]):
-        return TestCli.runner.invoke(entry_point.albums, ["--config-file", TestCli.library / "config.toml"] + params)
+    def run(self, params: list[str], config_filename="config.toml"):
+        return TestCli.runner.invoke(entry_point.albums, ["--config-file", TestCli.library / config_filename] + params)
 
     def test_help(self):
         result = self.run(["--help"])
@@ -59,6 +59,21 @@ database="{TestCli.library / "albums.db"}"
         assert result.exit_code == 0
         assert '1 tracks missing album tag : "foo/"' in result.output
         assert '2 tracks missing album tag : "bar/"' in result.output
+
+    def test_check_automatically_enabled_dependencies(self):
+        config_filename = "config_invalid_number_disabled.toml"
+        with open(TestCli.library / config_filename, "w") as config_file:
+            config_file.write(
+                f"""[locations]
+library="{TestCli.library}"
+database="{TestCli.library / "albums.db"}"
+checks.invalid_track_or_disc_number.enabled = false
+"""
+            )
+
+        result = self.run(["check", "disc_numbering"], config_filename)
+        assert result.exit_code == 0
+        assert "automatically enabling check invalid_track_or_disc_number" in result.output
 
     def test_ignore_check(self):
         result = self.run(["-p", "foo/", "ignore", "album_tag"])

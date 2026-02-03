@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 class CheckDiscNumbering(Check):
     name = "disc_numbering"
     default_config = {"enabled": "true", "discs_in_separate_folders": True}
+    must_pass_checks = {"invalid_track_or_disc_number"}
 
     def init(self, check_config: dict[str, Any]):
         self.discs_in_separate_folders = check_config.get("discs_in_separate_folders", CheckDiscNumbering.default_config["discs_in_separate_folders"])
@@ -24,9 +25,7 @@ class CheckDiscNumbering(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
-            return CheckResult(
-                ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_in_track_number and invalid_track_or_disc_number checks must pass first"
-            )
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
 
         # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric
 

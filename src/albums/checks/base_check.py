@@ -36,6 +36,9 @@ class Check:
     name: str
     default_config: dict[str, Any]
 
+    # subclass may override to define static dependencies on other checks passing first
+    must_pass_checks: set[str] = set()
+
     # subclass may use these instance values
     ctx: app.Context
     check_config: dict[str, Any]
