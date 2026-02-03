@@ -1,14 +1,15 @@
+import os
+import shutil
+from pathlib import Path
+
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
-import os
-from pathlib import Path
-import shutil
 
 from albums.types import Album, Track
-from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES
 
+from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 

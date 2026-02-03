@@ -1,4 +1,5 @@
 from enum import Enum, auto
+
 from rich.markup import escape
 
 from ..types import Album, Track

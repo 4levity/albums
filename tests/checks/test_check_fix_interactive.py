@@ -1,10 +1,11 @@
 import rich
+
 import albums.database.connection
 import albums.database.operations
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
-from albums.types import Album, Stream, Track
 from albums.checks.interact import interact
+from albums.types import Album, Stream, Track
 
 
 class MockFixer(Fixer):

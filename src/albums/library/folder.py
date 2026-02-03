@@ -1,11 +1,10 @@
+import logging
 from copy import copy
 from enum import Enum, auto
-import logging
 from pathlib import Path
 
 from ..types import Album, Track
 from .metadata import get_metadata
-
 
 logger = logging.getLogger(__name__)
 

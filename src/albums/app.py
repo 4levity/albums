@@ -1,13 +1,13 @@
-from collections.abc import Generator
 import logging
+import sqlite3
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Callable
+
 import click
 from rich.console import Console
-import sqlite3
 
 from .types import Album
-
 
 logger = logging.getLogger(__name__)
 

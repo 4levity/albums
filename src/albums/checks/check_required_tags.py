@@ -1,4 +1,5 @@
 from typing import Any
+
 from ..library.metadata import album_is_basic_taggable
 from ..types import Album
 from .base_check import Check, CheckResult, ProblemCategory

@@ -1,16 +1,17 @@
-import click
 import logging
 import os
 from pathlib import Path
+
+import click
+import tomllib
 from platformdirs import PlatformDirs
 from rich.logging import RichHandler
 from rich.prompt import Confirm
-import tomllib
 
 import albums.database.connection
 import albums.database.selector
-from ..app import Context
 
+from ..app import Context
 
 logger = logging.getLogger(__name__)
 

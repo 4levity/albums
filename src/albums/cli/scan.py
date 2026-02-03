@@ -1,11 +1,11 @@
-from typing import Generator
-import rich_click as click
 import logging
+from typing import Generator
+
+import rich_click as click
 
 from .. import app
 from ..library import scanner
 from . import cli_context
-
 
 logger = logging.getLogger(__name__)
 

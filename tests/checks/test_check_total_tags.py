@@ -1,8 +1,9 @@
 from pathlib import Path
+
 from albums.app import Context
-from albums.types import Album, Track
 from albums.checks.check_disctotal_presence import CheckDiscTotalPresence
 from albums.checks.check_tracktotal_presence import CheckTrackTotalPresence
+from albums.types import Album, Track
 
 
 class TestCheckTotalTags:

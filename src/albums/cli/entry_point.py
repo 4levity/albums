@@ -1,18 +1,17 @@
-import rich_click as click
 import rich.traceback
+import rich_click as click
 
 from .. import app
 from . import cli_context
-from .collections_add import collections_add
-from .collections_remove import collections_remove
+from .check import check
 from .checks_ignore import checks_ignore
 from .checks_notice import checks_notice
-from .check import check
+from .collections_add import collections_add
+from .collections_remove import collections_remove
 from .list_albums import list_albums
 from .scan import scan
 from .sql import sql
 from .sync import sync
-
 
 rich.traceback.install(show_locals=True)
 

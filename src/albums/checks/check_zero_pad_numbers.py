@@ -1,15 +1,15 @@
-from enum import Enum, auto
 import logging
+from enum import Enum, auto
 from pathlib import Path
-from rich.markup import escape
 from typing import Any
+
+from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 from .check_track_number import describe_track_number
 from .helpers import get_tracks_by_disc
-
 
 logger = logging.getLogger(__name__)
 

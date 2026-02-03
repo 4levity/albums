@@ -4,7 +4,6 @@ import sqlite3
 from ..checks.all import ALL_CHECK_NAMES
 from ..types import Album, ScanHistoryEntry, Stream, Track
 
-
 logger = logging.getLogger(__name__)
 
 

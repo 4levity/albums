@@ -13,7 +13,6 @@ from .check_track_title import CheckTrackTitle
 from .check_tracktotal_presence import CheckTrackTotalPresence
 from .check_zero_pad_numbers import CheckZeroPadNumbers
 
-
 # enabled checks will run on an album in this order:
 ALL_CHECKS: tuple[type[Check], ...] = (
     # lower level cleanup

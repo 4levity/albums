@@ -1,12 +1,12 @@
-import rich_click as click
 import logging
 from pathlib import Path
+
+import rich_click as click
 
 from .. import app
 from ..library import synchronizer
 from . import cli_context
 from .scan import scan
-
 
 logger = logging.getLogger(__name__)
 

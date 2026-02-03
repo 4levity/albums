@@ -1,14 +1,14 @@
 import logging
 from pathlib import Path
-from rich.markup import escape
 from typing import Any
+
+from rich.markup import escape
 
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
-from .base_check import ProblemCategory, Check, CheckResult, Fixer
+from .base_check import Check, CheckResult, Fixer, ProblemCategory
 from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from albums.app import Context
 from albums.checks.check_track_number import CheckTrackNumber
 from albums.types import Album, Track

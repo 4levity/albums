@@ -1,13 +1,13 @@
 import logging
 from pathlib import Path
-from rich.markup import escape
 from typing import Any
+
+from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 from .helpers import show_tag
-
 
 logger = logging.getLogger(__name__)
 

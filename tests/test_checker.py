@@ -1,11 +1,12 @@
 import contextlib
+
 import pytest
 from rich.text import Text
 
 from albums.app import Context
+from albums.checks.checker import run_enabled
 from albums.database import connection
 from albums.types import Album, Track
-from albums.checks.checker import run_enabled
 
 
 class TestChecker:

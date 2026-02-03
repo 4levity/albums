@@ -1,16 +1,16 @@
-from collections.abc import Iterator
-import humanize
 import logging
 import os
+import shutil
+from collections.abc import Iterator
 from pathlib import Path
+
+import humanize
 from rich.markup import escape
 from rich.progress import Progress, TransferSpeedColumn
 from rich.prompt import Confirm
-import shutil
 
 from .. import app
 from ..types import Album
-
 
 logger = logging.getLogger(__name__)
 

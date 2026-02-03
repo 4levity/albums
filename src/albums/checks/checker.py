@@ -1,7 +1,9 @@
 from typing import Any
+
 from rich.markup import escape
 
 import albums.database.operations
+
 from .. import app
 from ..checks.base_check import Check, CheckResult
 from ..library import scanner

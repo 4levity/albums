@@ -1,7 +1,8 @@
-import rich_click as click
 from functools import reduce
-import humanize
 from json import dumps
+
+import humanize
+import rich_click as click
 from rich.markup import escape
 from rich.table import Table
 

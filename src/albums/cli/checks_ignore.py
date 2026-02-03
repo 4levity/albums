@@ -2,6 +2,7 @@ import rich_click as click
 from rich.prompt import Confirm
 
 import albums.database.operations
+
 from .. import app
 from ..checks.all import ALL_CHECK_NAMES
 from . import cli_context

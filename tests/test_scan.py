@@ -1,12 +1,14 @@
 import contextlib
 import os
-from mutagen.flac import FLAC
 import shutil
+
+from mutagen.flac import FLAC
 
 from albums.app import Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.types import Album, Track
+
 from .fixtures.create_library import create_album_in_library, create_library
 
 

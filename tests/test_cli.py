@@ -1,14 +1,15 @@
-from click.testing import CliRunner
 import json
 import os
-import pytest
 import re
 import shutil
 
+import pytest
+from click.testing import CliRunner
+
 from albums.cli import entry_point
 from albums.types import Album, Track
-from .fixtures.create_library import create_library, test_data_path
 
+from .fixtures.create_library import create_library, test_data_path
 
 albums = [
     Album("foo/", [Track("1.mp3", {"title": ["1"]})]),

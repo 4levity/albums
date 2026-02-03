@@ -1,10 +1,9 @@
 import logging
-from pathlib import Path
 import sqlite3
 import sys
+from pathlib import Path
 
 from albums.database.schema import SQL_INIT_SCHEMA, migrate
-
 
 logger = logging.getLogger(__name__)
 

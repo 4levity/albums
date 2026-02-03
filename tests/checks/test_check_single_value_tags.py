@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from albums.app import Context
 from albums.checks.check_single_value_tags import CheckSingleValueTags
 from albums.types import Album, Track

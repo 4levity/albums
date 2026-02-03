@@ -1,17 +1,18 @@
 import glob
 import logging
-from pathlib import Path
 import sqlite3
+import time
+from pathlib import Path
 from typing import Callable, Iterable
+
 from rich.markup import escape
 from rich.progress import Progress
-import time
 
 import albums.database.operations
 from albums.types import ScanHistoryEntry
-from .. import app
-from .folder import scan_folder, AlbumScanResult
 
+from .. import app
+from .folder import AlbumScanResult, scan_folder
 
 logger = logging.getLogger(__name__)
 

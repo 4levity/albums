@@ -1,9 +1,10 @@
 from json import dumps
 from sqlite3 import OperationalError
+
+import rich_click as click
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
-import rich_click as click
 
 from .. import app
 from . import cli_context

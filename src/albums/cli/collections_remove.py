@@ -1,6 +1,7 @@
 import rich_click as click
 
 import albums.database.operations
+
 from .. import app
 from . import cli_context
 

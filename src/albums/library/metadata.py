@@ -1,15 +1,15 @@
-from dataclasses import dataclass
 import logging
+import textwrap
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
-from pathlib import Path
-import textwrap
 
 from ..types import Album, Stream
-
 
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}

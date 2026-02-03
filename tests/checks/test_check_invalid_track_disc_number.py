@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from albums.app import Context
-from albums.types import Album, Track
 from albums.checks.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
+from albums.types import Album, Track
 
 
 class TestCheckInvalidTrackOrDiscNumber:

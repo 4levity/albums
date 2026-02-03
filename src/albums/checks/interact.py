@@ -1,16 +1,18 @@
 import logging
 import os
-from pathlib import Path
 import platform
 import subprocess
+from pathlib import Path
+
 from rich.prompt import Confirm
 from rich.table import Table
+from simple_term_menu import TerminalMenu
 
 import albums.database.operations
+
 from .. import app
 from ..types import Album
-from .base_check import ProblemCategory, CheckResult
-from simple_term_menu import TerminalMenu
+from .base_check import CheckResult, ProblemCategory
 
 logger = logging.getLogger(__name__)
 
