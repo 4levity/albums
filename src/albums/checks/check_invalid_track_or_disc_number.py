@@ -1,11 +1,11 @@
 import logging
 from pathlib import Path
-
-from albums.checks.check_track_number import describe_track_number, ordered_tracks
+from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .check_track_number import describe_track_number, ordered_tracks
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
                     [OPTION_AUTOMATIC_REPAIR],
                     option_free_text,
                     option_automatic_index,
-                    (["track", "filename"], [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]),
+                    (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]),
                 ),
             )
 

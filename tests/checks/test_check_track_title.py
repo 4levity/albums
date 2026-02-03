@@ -27,9 +27,10 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "4 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
+        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_title.set_basic_tags")
-        fix_result = result.fixer.fix(result.fixer.options[0])
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 4
         path = ctx.library_root / album.path
@@ -55,9 +56,10 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
+        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_title.set_basic_tags")
-        fix_result = result.fixer.fix(result.fixer.options[0])
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1  # track 3 could not be fixed
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[1].filename, [("title", "bar")])
@@ -77,9 +79,10 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "1 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
+        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_title.set_basic_tags")
-        fix_result = result.fixer.fix(result.fixer.options[0])
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[1].filename, [("title", "bar")])

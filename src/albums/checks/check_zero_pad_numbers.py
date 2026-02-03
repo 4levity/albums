@@ -1,14 +1,14 @@
 from enum import Enum, auto
 import logging
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
-
-from albums.checks.check_track_number import describe_track_number
-from albums.checks.helpers import get_tracks_by_disc
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .check_track_number import describe_track_number
+from .helpers import get_tracks_by_disc
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ class CheckZeroPadNumbers(Check):
         fix_disctotals = 0
         for tracks in tracks_by_disc.values():
             for track in tracks:
-                table_rows.append([describe_track_number(track), track.filename])
+                table_rows.append([describe_track_number(track), escape(track.filename)])
                 if (
                     "tracknumber" in track.tags
                     and self._apply_pad_policy(track.tags["tracknumber"][0], self.tracknumber_pad, len(tracks)) != track.tags["tracknumber"][0]

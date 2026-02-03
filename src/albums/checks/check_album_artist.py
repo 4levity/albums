@@ -1,6 +1,9 @@
 import logging
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
+
+from albums.checks.helpers import show_tag
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
@@ -103,7 +106,12 @@ class CheckAlbumArtist(Check):
         table: tuple[list[str], list[list[str]]] = (
             ["filename", "album tag", "artist", "album artist"],
             [
-                [track.filename, str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
+                [
+                    escape(track.filename),
+                    show_tag(track.tags.get("album")),
+                    show_tag(track.tags.get("artist")),
+                    show_tag(track.tags.get("albumartist")),
+                ]
                 for track in album.tracks
             ],
         )

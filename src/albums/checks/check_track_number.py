@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
 
 from .. import app
@@ -17,7 +18,7 @@ class TrackNumberFixer(Fixer):
         # sort by discnumber/tracknumber tag if all tracks have one
         has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
         tracks = [
-            [describe_track_number(track), track.filename, f"{'' if has_discnumber else (index + 1)}"]
+            [describe_track_number(track), escape(track.filename), f"{'' if has_discnumber else (index + 1)}"]
             for (index, track) in enumerate(ordered_tracks(album))
         ]
         table = (["track", "filename", "proposed track #"], tracks)
@@ -50,7 +51,7 @@ class TrackTotalFixer(Fixer):
         if self.max_tracktotal:
             options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
 
-        tracks = [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]
+        tracks = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
         table = (["track", "filename"], tracks)
         # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
 

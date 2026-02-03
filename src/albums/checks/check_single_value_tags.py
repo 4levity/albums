@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
 import yaml
 
@@ -54,7 +55,7 @@ class CheckSingleValueTags(Check):
                     options,
                     option_free_text,
                     option_automatic_index,
-                    (["track", "filename"], [[describe_track_number(track), track.filename] for track in ordered_tracks(album)]),
+                    (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]),
                 ),
             )
 

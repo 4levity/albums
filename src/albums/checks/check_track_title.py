@@ -1,10 +1,12 @@
 import logging
 from pathlib import Path
 import re
+from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .helpers import show_tag
 
 
 logger = logging.getLogger(__name__)
@@ -27,14 +29,22 @@ class CheckTrackTitle(Check):
             if any_fixable:
                 table: tuple[list[str], list[list[str]]] = (
                     ["filename", "title", "proposed new title"],
-                    [[str(track.filename), str(track.tags.get("title")), str(proposed_titles[ix])] for (ix, track) in enumerate(album.tracks)],
+                    [
+                        [
+                            escape(track.filename),
+                            show_tag(track.tags.get("title")),
+                            escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
+                        ]
+                        for (ix, track) in enumerate(album.tracks)
+                    ],
                 )
                 option_free_text = False
-                option_automatic_index = None  # TODO enable
-                fixer = Fixer(lambda option: self._fix(album, option), [OPTION_USE_PROPOSED], option_free_text, option_automatic_index, table)
-            else:
-                fixer = None
-            return CheckResult(ProblemCategory.TAGS, f"{no_title} tracks missing title tag", fixer)
+                options = [OPTION_USE_PROPOSED]
+                option_automatic_index = 0
+                fixer = Fixer(lambda option: self._fix(album, option), options, option_free_text, option_automatic_index, table)
+                return CheckResult(ProblemCategory.TAGS, f"{no_title} tracks missing title tag", fixer)
+
+            return CheckResult(ProblemCategory.TAGS, f"{no_title} tracks missing title tag and cannot guess from filename")
 
         return None
 
@@ -46,7 +56,7 @@ class CheckTrackTitle(Check):
         match = re.fullmatch(filename_parser, track.filename)
         title = match.group("title") if match else None
         if title:
-            return title
+            return str(title)
         return None
 
     def _fix(self, album: Album, option: str) -> bool:

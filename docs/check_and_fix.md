@@ -148,7 +148,7 @@ If present, the specified tags should not have multiple values _in the same
 track_. Many multiple-value tags are valid, but they might be unintended, and
 might cause unpredictable results with various media players.
 
-Other checks also enforce a single value for certain tags such as track number.
+Other checks also enforce a single value for specific tags such as track number.
 
 The fix provides options to concatenate multiple values into a single value,
 after removing duplicates.
@@ -240,9 +240,9 @@ from which a title can be guessed, fill in all empty titles.
 Apply selected policies for zero-padding in the track number/total and disc
 number/total tags.
 
-> Some media players do not show tracks in the correct order unless they are
-> zero-padded, because for example "2" comes after "10" when sorted
-> alphabetically.
+> Some media players and many file managers do not show tracks in the correct
+> order unless the track numbers are zero-padded, because for example "2" comes
+> after "10" when sorted alphabetically.
 
 !!!note
 

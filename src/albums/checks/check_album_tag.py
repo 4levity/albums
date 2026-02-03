@@ -1,10 +1,12 @@
 import logging
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .helpers import show_tag
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +59,12 @@ class CheckAlbumTag(Check):
         table: tuple[list[str], list[list[str]]] = (
             ["filename", "album tag", "artist", "album artist"],
             [
-                [str(track.filename), str(track.tags.get("album")), str(track.tags.get("artist")), str(track.tags.get("albumartist"))]
+                [
+                    escape(track.filename),
+                    show_tag(track.tags.get("album")),
+                    show_tag(track.tags.get("artist")),
+                    show_tag(track.tags.get("albumartist")),
+                ]
                 for track in album.tracks
             ],
         )

@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import platform
 import subprocess
-from rich.markup import escape
 from rich.prompt import Confirm
 from rich.table import Table
 
@@ -57,9 +56,9 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     while not done:
         if fixer and fixer.table:
             (headers, rows) = fixer.table
-            table = Table(*headers, highlight=False)
+            table = Table(*headers)
             for row in rows:
-                table.add_row(*[escape(str(v)) for v in row])
+                table.add_row(*row)
             ctx.console.print(table)
 
         ctx.console.print(check_result.message, markup=False)

@@ -1,12 +1,12 @@
 import logging
 from pathlib import Path
 import re
-
-from albums.checks.check_track_number import describe_track_number, ordered_tracks
+from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .check_track_number import describe_track_number, ordered_tracks
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,9 @@ class CheckDiscInTrackNumber(Check):
         if all_tracks_discnumber_in_tracknumber(album.tracks):
             option_free_text = False
             option_automatic_index = 0
-            tracks = [[describe_track_number(track), track.filename, *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)]
+            tracks = [
+                [describe_track_number(track), escape(track.filename), *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)
+            ]
             table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
             return CheckResult(
                 ProblemCategory.TAGS,

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from rich.markup import escape
 from typing import Any
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -52,7 +53,7 @@ class AbstractCheckTotalTag(Check):
                 options = [self.option_remove_all]
                 option_free_text = False
                 option_automatic_index = 0
-                table = (["track", "filename"], [[describe_track_number(track), track.filename] for track in ordered_tracks(album)])
+                table = (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)])
                 return CheckResult(
                     ProblemCategory.TAGS,
                     message,

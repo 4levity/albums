@@ -1,4 +1,6 @@
 from enum import Enum, auto
+from rich.markup import escape
+
 from ..types import Album, Track
 
 
@@ -73,3 +75,11 @@ def describe_track_number(track: Track):
 
     s += f"{tags.get('tracknumber', ['<no track>'])[0]}{('/' + tags['tracktotal'][0]) if 'tracktotal' in tags else ''}"
     return s
+
+
+def show_tag(tag: list[str] | None) -> str:
+    if tag is None:
+        return "[bold italic]None[/bold italic]"
+    if len(tag) == 1:
+        return escape(str(tag[0]))
+    return escape(str(tag))
