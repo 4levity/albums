@@ -44,7 +44,8 @@ See `albums --help` and `albums check --help` for more.
 ## Checks
 
 Checks run in a particular order. First basic tag issues like non-numeric or
-ambiguous values, then higher level checks.
+ambiguous values, then higher level checks. Some checks require specific prior
+checks to pass first.
 
 The checks run in the order they appear in this document.
 
@@ -52,7 +53,7 @@ The checks run in the order they appear in this document.
 
 If the disc number and track number are combined in the track number tag with a
 dash (i.e. track number="2-03") instead of being in separate tags, this is
-treated as an error. Later checks may require track numbers to be numeric.
+treated as an error. Subsequent checks require track numbers to be numeric.
 
 **Automatic fix**: Split the values into track number and disc number tags.
 
@@ -64,6 +65,10 @@ resolved to a single valid number, they are not useful and should be removed.
 
 Rule: for each track, if present, track/disc number/total tags should each have
 a single value and that value should be a positive number (0 is not valid).
+
+!!!note
+
+    Requires the `disc_in_track_number` check to pass first.
 
 **Automatic fix**: For each of the noted tags in each track, discard all values
 that are non-numeric or 0. If exactly one unique value remains, save it.
@@ -143,6 +148,8 @@ If present, the specified tags should not have multiple values _in the same
 track_. Many multiple-value tags are valid, but they might be unintended, and
 might cause unpredictable results with various media players.
 
+Other checks also enforce a single value for certain tags such as track number.
+
 The fix provides options to concatenate multiple values into a single value,
 after removing duplicates.
 
@@ -167,6 +174,10 @@ Rules:
 - Disc numbers should start at 1 and be sequential (1, 2, 3...)
 - If present, the disc total should be the number of distinct disc number values
   which should be the same as the highest disc number
+
+!!!note
+
+    Requires the `invalid_track_or_disc_number` check to pass first.
 
 <!-- pyml disable line-length -->
 
@@ -195,6 +206,10 @@ The rules are:
 - For each disc, if track total is present, it should be the number of tracks on
   that disc
 
+!!!note
+
+    Requires the `invalid_track_or_disc_number` check to pass first.
+
 <!-- pyml disable line-length -->
 
 | Option           | Default    | Description                                                |
@@ -217,8 +232,8 @@ examples:
 
 If the filename looks like a track number only, no title guess will be made.
 
-**Automatic fix**: If every tag that has a missing title also has a filename from
-which a title can be guessed, fill in all empty titles.
+**Automatic fix**: If every tag that has a missing title also has a filename
+from which a title can be guessed, fill in all empty titles.
 
 ### zero_pad_numbers
 
@@ -228,6 +243,10 @@ number/total tags.
 > Some media players do not show tracks in the correct order unless they are
 > zero-padded, because for example "2" comes after "10" when sorted
 > alphabetically.
+
+!!!note
+
+    Requires the `invalid_track_or_disc_number` check to pass first.
 
 **Automatic fix**: If no major problems detected in relevant tags, apply policy.
 
