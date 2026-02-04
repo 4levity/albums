@@ -1,9 +1,50 @@
-[tool.poetry]
+[project]
 name = "albums"
 version = "0.1.0"
-description = ""
-authors = ["Ivan Cooper <ivan@4levity.net>"]
+description = "Manage music albums, automatically correct tags, organize and sync copies with interactive command line interface."
+authors = [{name = "Ivan Cooper", email = "ivan@4levity.net"}]
+requires-python = ">= 3.12"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Utilities",
+]
 license = "GPL-3.0-or-later"
+license-files = ["COPYING"]
+readme = "README.md"
+keywords = ["flac", "mp3", "id3", "vorbis", "tags", "music", "library"]
+
+[project.urls]
+Homepage = "https://github.com/4levity/albums"
+Repository = "https://github.com/4levity/albums"
+Issues = "https://github.com/4levity/albums/issues"
+Documentation = "https://4levity.github.io/albums/"
+Changelog = "https://4levity.github.io/albums/changelog/"
+
+[project.scripts]
+albums = "albums.cli.entry_point:albums"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 150
+
+[tool.ruff]
+line-length = 150
+exclude = ["typings"]
+lint.extend-select = ["I"]
+
+[tool.pyright]
+ignore = ["tests", "**/typings"]
+exclude = [".venv", "**/.*", "**/__*", "**/typings", "**/node_modules", "**/__pycache__"]
+typeCheckingMode = "strict"
+stubPath = "typings"
+pythonPlatform = "Linux"
+pythonVersion = "3.12"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -26,26 +67,3 @@ pyright = "^1.1.408"
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.2"
 pytest-mock = "^3.15.1"
-
-[tool.poetry.scripts]
-albums = "albums.cli.entry_point:albums"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 150
-
-[tool.ruff]
-line-length = 150
-exclude = ["typings"]
-lint.extend-select = ["I"]
-
-[tool.pyright]
-ignore = ["tests", "**/typings"]
-exclude = [".venv", "**/.*", "**/__*", "**/typings", "**/node_modules", "**/__pycache__"]
-typeCheckingMode = "strict"
-stubPath = "typings"
-pythonPlatform = "Linux"
-pythonVersion = "3.12"

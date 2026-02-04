@@ -1,8 +1,8 @@
 # albums
 
-A rich text-based interactive command line tool to help manage a library of
-music, clean up metadata tags and file organization, and sync parts of the
-library to digital audio players
+A rich text-based interactive tool to help manage a library of music, clean up
+metadata tags and file organization, and sync parts of the library to digital
+audio players
 
 > -> [See Full Documentation Here](https://4levity.github.io/albums/) <-
 
