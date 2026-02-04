@@ -2,7 +2,7 @@ name: Publish Package
 on:
   push:
     tags:
-      - 'v*' # tags starting with 'v'
+      - 'v*'
   workflow_dispatch:
 jobs:
   build:
@@ -15,17 +15,17 @@ jobs:
         with:
           python-version: 3.14
       - uses: snok/install-poetry@v1
-      - name: install dependencies
+      - name: Install dependencies
         run: make install
-      - name: lint/analyze source
+      - name: Lint/analyze source
         run: make lint
-      - name: run tests
+      - name: Run tests
         env:
           TERM: 'dumb'
         run: make test
-      - name: create package
+      - name: Create package
         run: make package
-      - name: upload package artifact
+      - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: albums-package
@@ -42,8 +42,5 @@ jobs:
         with:
           name: albums-package
           path: dist/
-      - name: publish to pypi (test)
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
-          repository-url: https://test.pypi.org/legacy/
