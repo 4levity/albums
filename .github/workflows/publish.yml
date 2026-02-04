@@ -15,6 +15,8 @@ jobs:
           python-version: 3.14
       - uses: snok/install-poetry@v1
       - name: build
+        env:
+          TERM: 'dumb'
         run: make build
       - name: upload package artifact
         uses: actions/upload-artifact@v4
