@@ -30,6 +30,12 @@ class TestMetadata:
         assert tags["tracknumber"] == ["2"]
         assert tags["tracktotal"] == ["3"]
 
+        # remove total
+        assert set_basic_tags(file, [("tracktotal", None)])
+        tags = get_metadata(file)[0]
+        assert tags["tracknumber"] == ["2"]
+        assert "tracktotal" not in tags
+
     def test_write_id3_disctotal(self):
         file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
         tags = get_metadata(file)[0]
@@ -46,3 +52,9 @@ class TestMetadata:
         tags = get_metadata(file)[0]
         assert tags["discnumber"] == ["1"]
         assert tags["disctotal"] == ["2"]
+
+        # remove total
+        assert set_basic_tags(file, [("disctotal", None)])
+        tags = get_metadata(file)[0]
+        assert tags["discnumber"] == ["1"]
+        assert "disctotal" not in tags
