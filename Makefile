@@ -8,22 +8,22 @@ build: install lint test package
 install: ## Install project dependencies
 	$(POETRY) install
 
-lint: ## Lint and static analysis
+lint: install ## Lint and static analysis
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
 	$(POETRY) run pyright
 	$(POETRY) run pyright -p tests
 	$(POETRY) run pymarkdown --strict-config scan *.md **/*.md
 
-fix: ## Automatically fix lint/format
+fix: install ## Automatically fix lint/format
 	$(POETRY) run ruff format
 	$(POETRY) run ruff check . --fix
 
-test: ## Run all tests
+test: install ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
-sample/albums.db: src/albums/database/schema.py
+sample/albums.db: install src/albums/database/schema.py
 	$(POETRY) run python src/albums/database/connection.py sample/albums.db
 
 docs/database_diagram.png: sample/albums.db
@@ -38,7 +38,7 @@ preview: diagram ## Preview docs
 docs: diagram ## Build docs
 	$(POETRY) run zensical build --clean
 
-package: ## Create distribution
+package: lint test ## Create distribution
 	$(POETRY) build
 
 clean: ## Remove build and test files
