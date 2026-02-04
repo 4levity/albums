@@ -39,7 +39,8 @@ preview: docs/database_diagram.png ## Preview docs (does not automatically insta
 
 docs: install lint-markdown docs/database_diagram.png ## Build docs
 	$(POETRY) run zensical build --clean
-	sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
+	@echo injecting version `poetry dynamic-versioning show`
+	@sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
 
 package: lint test ## Create distribution
 	$(POETRY) build
