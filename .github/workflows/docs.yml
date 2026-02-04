@@ -2,7 +2,7 @@ name: Publish Docs
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,12 +20,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.14
-      - name: Setup Graphviz
-        uses: ts-graphviz/setup-graphviz@v2
-        # with:
-        #   ubuntu-graphviz-version: '2.42.2-6ubuntu0.1'
+      - uses: ts-graphviz/setup-graphviz@v2
       - uses: snok/install-poetry@v1
-      - run: make install docs && ls -la site
+      - name: Install dependencies
+        run: make install
+      - name: Make docs site
+        run: make docs && ls -la site
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site

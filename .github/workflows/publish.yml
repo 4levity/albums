@@ -2,7 +2,7 @@ name: Publish Package
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
         run: make lint
       - name: Run tests
         env:
-          TERM: 'dumb'
+          TERM: "dumb"
         run: make test
       - name: Create package
         run: make package

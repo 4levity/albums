@@ -8,9 +8,7 @@ icon: lucide/rocket
 music, clean up metadata tags and file organization, and sync parts of the
 library to digital audio players
 
-## Project home
-
-**[https://github.com/4levity/albums/](https://github.com/4levity/albums/)**
+This documentation is for `albums` version **%%version_placeholder%%**.
 
 ## License
 

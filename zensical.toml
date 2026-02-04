@@ -9,6 +9,8 @@ site_name = "Albums Docs"
 site_description = "Documentation for albums free music library tag tool."
 site_author = "4Levity"
 site_url = "https://4levity.github.io/albums/"
+repo_url = "https://github.com/4levity/albums"
+repo_name = "4levity/albums"
 copyright = """
 Copyright &copy; 2026 Ivan Cooper
 """
@@ -153,6 +155,9 @@ features = [
     # https://zensical.org/docs/setup/navigation/#navigation-integration
     #"toc.integrate",
 ]
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
 
 # https://zensical.org/docs/setup/colors/
 [[project.theme.palette]]

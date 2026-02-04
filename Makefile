@@ -1,6 +1,6 @@
 POETRY := poetry
 
-.PHONY: build install lint fix test integration-test diagram preview docs package clean
+.PHONY: build install lint lint-markdown fix test integration-test preview docs package clean
 
 build: install lint test package
 	@echo "build complete"
@@ -8,7 +8,10 @@ build: install lint test package
 install: ## Install project dependencies
 	$(POETRY) install
 
-lint: install ## Lint and static analysis
+lint-markdown: install ## Lint markdown
+	$(POETRY) run pymarkdown --strict-config scan *.md **/*.md
+
+lint: install lint-markdown ## Lint and static analysis
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
 	$(POETRY) run pyright
@@ -23,20 +26,20 @@ test: install ## Run all tests
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
-sample/albums.db: install src/albums/database/schema.py
+sample/albums.db: src/albums/database/schema.py
+	rm -rf sample/albums.db
 	$(POETRY) run python src/albums/database/connection.py sample/albums.db
 
 docs/database_diagram.png: sample/albums.db
 	$(POETRY) run eralchemy -i sqlite:///sample/albums.db -o docs/database_diagram.png
 	@ls -l docs/database_diagram.png
 
-diagram: docs/database_diagram.png ## Generate database diagram
-
-preview: diagram ## Preview docs
+preview: docs/database_diagram.png ## Preview docs (does not automatically install)
 	$(POETRY) run zensical serve
 
-docs: diagram ## Build docs
+docs: install lint-markdown docs/database_diagram.png ## Build docs
 	$(POETRY) run zensical build --clean
+	sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
 
 package: lint test ## Create distribution
 	$(POETRY) build
