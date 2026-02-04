@@ -4,8 +4,8 @@ icon: lucide/rocket
 
 # Overview
 
-`albums` is a rich text-based interactive tool to help manage a library
-of music, clean up metadata tags and file organization, and sync parts of the
+`albums` is a rich text-based interactive tool to help manage a library of
+music, clean up metadata tags and file organization, and sync parts of the
 library to digital audio players
 
 ## Project home
@@ -19,8 +19,7 @@ library to digital audio players
 
 ## Installation
 
-Not released yet. See [docs for Developing](./developing.md) to install
-dependencies and use the prerelease tool.
+Install with `pip install albums` in an environment with Python 3.12 or newer.
 
 ## Minimum setup
 
