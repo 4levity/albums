@@ -31,7 +31,7 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
 
     if default or "checks" not in ctx.config:
         ctx.console.print("using default check config")
-        ctx.config["checks"] = all.DEFAULT_CHECKS_CONFIG
+        ctx.config["checks"] = all.DEFAULT_CHECK_CONFIGS
 
     if len(checks) > 0:
         # validate check names
@@ -41,7 +41,7 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
                 return
             # use default if no configuration present
             if check_name not in ctx.config["checks"]:
-                ctx.config["checks"][check_name] = all.DEFAULT_CHECKS_CONFIG[check_name]
+                ctx.config["checks"][check_name] = all.DEFAULT_CHECK_CONFIGS[check_name]
         # enable only specified checks
         for check_name in all.ALL_CHECK_NAMES:
             enabled = check_name in checks

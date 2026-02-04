@@ -78,6 +78,13 @@ Otherwise, delete the tag.
 
 Apply selected policy for whether or not a track total is present on each track.
 Additionally, report if any track has a track total tag without a track number.
+This check does not check whether the track total is correct.
+
+Policies:
+
+- **"consistent"**: either all tracks on an album have track total, or none do
+- **"always"**: all tracks should have track total
+- **"never"**: track total should be removed
 
 **Automatic fix**: If the policy is "consistent" but some tracks are missing
 track total, remove it from all tracks. If the policy is "never", always remove
@@ -192,12 +199,10 @@ Rules:
 > whether an album is missing a disc number or if disc total is correct. If you
 > can put multiple-disc albums together in one folder, set this to **false**.
 
-### track_number
+### track_numbering
 
-Reports on several issues with track number, track total, disc number and disc
-total tags. These are tied together because for example if the disc number isn't
-set correctly, we can't tell whether the track total (per disc) is correct or
-not.
+Reports on several issues with track numbers and track totals, including
+apparently missing tracks.
 
 The rules are:
 
@@ -220,17 +225,20 @@ The rules are:
 
 ### track_title
 
-Each track should have a title tag. If the track doesn't have a title, it can be
-guessed from the filename, if the filename looks similar to one of these
+Each track should have at least one title tag. This check doesn't care if a
+track has more than one title. If the track doesn't have a title, it can be
+guessed from the filename, as long as the filename looks similar to one of these
 examples:
 
-- `the title.flac`
 - `01 the title.flac`
 - `01. the title.mp3`
 - `01 - the title.mp3`
 - `1-03 - the title.flac`
+- `the title.flac` _(if nothing else matches)_
 
 If the filename looks like a track number only, no title guess will be made.
+However, if the title doesn't match any recognized pattern, the guess will be
+the whole filename except for the extension.
 
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.

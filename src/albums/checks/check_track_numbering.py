@@ -89,20 +89,22 @@ class TrackTotalFixer(Fixer):
         return changed
 
 
-class CheckTrackNumber(Check):
-    name = "track_number"
+class CheckTrackNumbering(Check):
+    name = "track_numbering"
     default_config = {"enabled": True, "ignore_folders": ["misc"], "discs_in_separate_folders": True}
-    must_pass_checks = {"invalid_track_or_disc_number"}
+    must_pass_checks = {"disc_numbering"}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckTrackNumber.default_config["ignore_folders"])
+        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckTrackNumbering.default_config["ignore_folders"])
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
             logger.warning(f'album_tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
-        self.discs_in_separate_folders = check_config.get("discs_in_separate_folders", CheckTrackNumber.default_config["discs_in_separate_folders"])
+        self.discs_in_separate_folders = check_config.get(
+            "discs_in_separate_folders", CheckTrackNumbering.default_config["discs_in_separate_folders"]
+        )
 
     def check(self, album: Album):
         folder_str = Path(album.path).name
@@ -114,10 +116,9 @@ class CheckTrackNumber(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
-            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_numbering check must pass first")
 
         # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric
-        # TODO ensure check_disc_numbering has passed, we need check deps
 
         for disc_number in tracks_by_disc.keys():
             tracks = tracks_by_disc[disc_number]
