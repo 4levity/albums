@@ -15,7 +15,7 @@ library to digital audio players
 ## License
 
 `albums` is free software, licensed under the terms of the
-[GNU General Public License Version 3](https://github.com/4levity/albums/blob/main/sample/config.toml)
+[GNU General Public License Version 3](https://github.com/4levity/albums/blob/main/COPYING)
 
 ## Installation
 
