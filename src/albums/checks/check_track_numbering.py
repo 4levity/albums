@@ -13,21 +13,6 @@ from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 logger = logging.getLogger(__name__)
 
 
-class TrackNumberFixer(Fixer):
-    def __init__(self, ctx: app.Context, album: Album):
-        # sort by discnumber/tracknumber tag if all tracks have one
-        has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
-        tracks = [
-            [describe_track_number(track), escape(track.filename), f"{'' if has_discnumber else (index + 1)}"]
-            for (index, track) in enumerate(ordered_tracks(album))
-        ]
-        table = (["track", "filename", "proposed track #"], tracks)
-        super(TrackNumberFixer, self).__init__(lambda option: self._fix(ctx, album, option), ["no valid options yet"], False, None, table)
-
-    def _fix(self, ctx: app.Context, album: Album, option: str) -> bool:
-        raise NotImplementedError("TrackNumberFixer fix not implemented")
-
-
 class TrackTotalFixer(Fixer):
     OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
     OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
@@ -78,13 +63,14 @@ class TrackTotalFixer(Fixer):
         changed = False
         for track in self.tracks:
             path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
+            track_changed = False
             if new_tracktotal is None and "tracktotal" in track.tags:
                 ctx.console.print(f"removing tracktotal from {track.filename}")
-                changed = True
             elif new_tracktotal is not None and track.tags.get("tracktotal", []) != [str(new_tracktotal)]:
                 ctx.console.print(f"setting tracktotal on {track.filename}")
+                track_changed = True
+            if track_changed:
                 changed = True
-            if changed:
                 set_basic_tags(path, [("tracktotal", new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
         return changed
 
@@ -122,7 +108,7 @@ class CheckTrackNumbering(Check):
 
         for disc_number in tracks_by_disc.keys():
             tracks = tracks_by_disc[disc_number]
-            expect_track_total = len(tracks)  # will set to tracktotal if higher value is seen
+            expect_track_total = 0
             actual_track_numbers: set[int] = set()
             track_total_counts: dict[int, int] = {}
             duplicate_tracks: list[int] = []
@@ -137,6 +123,11 @@ class CheckTrackNumbering(Check):
                     track_total_counts[tracktotal] = track_total_counts.get(tracktotal, 0) + 1
                     if tracktotal > expect_track_total:
                         expect_track_total = tracktotal
+
+            if expect_track_total == 0:
+                # we will expect tracks to be numbered from 1..track total
+                # if there is no track total, use 1..(# of tracks) or 1..(highest track number), whichever is more tracks
+                expect_track_total = max([len(tracks), *list(actual_track_numbers)])
 
             on_disc_message = f" on disc {disc_number}" if disc_number else ""
             if len(track_total_counts) > 1:
@@ -165,30 +156,14 @@ class CheckTrackNumbering(Check):
             missing_track_numbers = expected_track_numbers - actual_track_numbers
             unexpected_track_numbers = actual_track_numbers - expected_track_numbers
             if actual_track_numbers > expected_track_numbers:
-                return CheckResult(
-                    ProblemCategory.TAGS,
-                    f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}",
-                    TrackNumberFixer(self.ctx, album),
-                )
+                return CheckResult(ProblemCategory.TAGS, f"unexpected track numbers{on_disc_message} {unexpected_track_numbers}")
             elif len(missing_track_numbers) > 0:
                 if duplicate_tracks:
-                    return CheckResult(
-                        ProblemCategory.TAGS,
-                        f"duplicate track numbers{on_disc_message}: {duplicate_tracks}",
-                        TrackNumberFixer(self.ctx, album),
-                    )
+                    return CheckResult(ProblemCategory.TAGS, f"duplicate track numbers{on_disc_message} {duplicate_tracks}")
                 if len(actual_track_numbers) == len(tracks):
                     # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
-                    return CheckResult(
-                        ProblemCategory.OTHER,
-                        f"tracks missing from album{on_disc_message} {missing_track_numbers}",
-                        TrackNumberFixer(self.ctx, album),
-                    )
-                return CheckResult(
-                    ProblemCategory.TAGS,
-                    f"missing track numbers or tags{on_disc_message} {missing_track_numbers}",
-                    TrackNumberFixer(self.ctx, album),
-                )
+                    return CheckResult(ProblemCategory.OTHER, f"tracks missing from album{on_disc_message} {missing_track_numbers}")
+                return CheckResult(ProblemCategory.TAGS, f"missing track numbers or tags{on_disc_message} {missing_track_numbers}")
 
         return None
