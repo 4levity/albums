@@ -69,6 +69,7 @@ mutagen = "^1.47.0"
 simple-term-menu = "^1.6.6"
 rich = "^14.2.0"
 rich-click = "^1.9.5"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.10"
