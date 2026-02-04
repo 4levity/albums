@@ -19,19 +19,22 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
         for check, deps in need_checks.items():
             ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
         raise SystemExit(1)
+    if preview and (automatic or fix or interactive):
+        raise ValueError("invalid preview setting")  # not allowed by cli
+    preview_failed_checks: list[str] = []
 
     def handle_check_result(ctx: app.Context, check: Check, check_result: CheckResult, album: Album):
         fixer = check_result.fixer
         displayed_any = False
         maybe_changed = False
         user_quit = False
-        if preview:
-            if fixer and fixer.option_automatic_index is not None:
-                ctx.console.print(f'[bold]preview automatic fix:[/bold] "{escape(album.path)}" - {escape(check_result.message)}')
-                ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}")
-                displayed_any = True
+        if preview and fixer and fixer.option_automatic_index is not None:
+            ctx.console.print(f'[bold]preview automatic fix {check.name}:[/bold] "{escape(album.path)}"')
+            ctx.console.print(f"    {escape(check_result.message)}")
+            ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}")
+            displayed_any = True
         elif automatic and fixer and fixer.option_automatic_index is not None:
-            ctx.console.print(f'[bold]automatically fixing:[/bold] "{escape(album.path)}" - {escape(check_result.message)}')
+            ctx.console.print(f'[bold]automatically fixing {check.name}:[/bold] "{escape(album.path)}" - {escape(check_result.message)}')
             ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}")
             maybe_changed = fixer.fix(fixer.options[fixer.option_automatic_index])
             displayed_any = True
@@ -40,8 +43,12 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
             (maybe_changed, user_quit) = interact(ctx, check.name, check_result, album)
             displayed_any = True
         else:
-            ctx.console.print(f'{check_result.message} : "{album.path}"', markup=False)
-            displayed_any = True
+            message = f'[bold]{check.name}[/bold] {escape(check_result.message)} : "{escape(album.path)}"'
+            if preview:
+                preview_failed_checks.append(message)
+            else:
+                ctx.console.print(message)
+                displayed_any = True
 
         return (maybe_changed, user_quit, displayed_any)
 
@@ -50,12 +57,15 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
     showed_issues = 0
     for album in ctx.select_albums(True):
         checks_passed: set[str] = set()
+        preview_failed_checks = []
         for check in check_instances:
             if check.name not in album.ignore_checks:
                 missing_dependent_checks = check.must_pass_checks - checks_passed
                 if missing_dependent_checks:
+                    for message in preview_failed_checks:
+                        ctx.console.print(message)
                     ctx.console.print(
-                        f'[bold]dependency not met to check {check.name}[/bold] on "{escape(album.path)}": {" and ".join(missing_dependent_checks)} must pass first'
+                        f'[bold]dependency not met for check {check.name}[/bold] on "{escape(album.path)}": {" and ".join(missing_dependent_checks)} must pass first'
                     )
                     showed_issues += 1
                     continue

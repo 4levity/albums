@@ -4,6 +4,7 @@ import platform
 import subprocess
 from pathlib import Path
 
+from rich.markup import escape
 from rich.prompt import Confirm
 from rich.table import Table
 from simple_term_menu import TerminalMenu
@@ -63,7 +64,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
                 table.add_row(*row)
             ctx.console.print(table)
 
-        ctx.console.print(check_result.message, markup=False)
+        ctx.console.print(f"[bold]{check_name}[/bold]: {escape(check_result.message)}")
 
         prompt_text = fixer.prompt if fixer else "select an option"
         default_option_index = fixer.option_automatic_index if fixer and (fixer.option_automatic_index is not None) else do_nothing_index

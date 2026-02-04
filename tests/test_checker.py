@@ -43,8 +43,8 @@ class TestChecker:
             run_enabled(ctx, False, False, False, False)
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert 'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "Foo/"' in output
-            assert 'dependency not met to check invalid_track_or_disc_number on "Foo/": disc_in_track_number must pass first' in output
-            assert 'dependency not met to check disc_numbering on "Foo/": invalid_track_or_disc_number must pass first' in output
+            assert 'dependency not met for check invalid_track_or_disc_number on "Foo/": disc_in_track_number must pass first' in output
+            assert 'dependency not met for check disc_numbering on "Foo/": invalid_track_or_disc_number must pass first' in output
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()
