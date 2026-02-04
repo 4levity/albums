@@ -1,9 +1,9 @@
 import logging
 import os
+import tomllib
 from pathlib import Path
 
 import click
-import tomllib
 from platformdirs import PlatformDirs
 from rich.logging import RichHandler
 from rich.prompt import Confirm
@@ -55,6 +55,11 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
         logger.info("no configuration file, using default configuration")
         app_context.config = {}
 
+    app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
+    if not app_context.library_root.is_dir():
+        logger.error(f"library directory does not exist: {str(app_context.library_root)}")
+        raise SystemExit(1)
+
     if "database" in app_context.config.get("locations", {}):
         album_db_file = app_context.config["locations"]["database"]
     else:
@@ -81,9 +86,6 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
     app_context.filter_collections = collections
     app_context.filter_paths = paths
     app_context.filter_regex = regex
-
-    # misc
-    app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
 
     return new_database
 
