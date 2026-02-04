@@ -14,8 +14,7 @@ license = "GPL-3.0-or-later"
 license-files = ["COPYING"]
 readme = "README.md"
 keywords = ["flac", "mp3", "id3", "vorbis", "tags", "music", "library"]
-dynamic = []
-version = "0.1.0"
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/4levity/albums"
@@ -48,6 +47,7 @@ pythonPlatform = "Linux"
 pythonVersion = "3.12"
 
 [tool.poetry]
+version = "0.0.0"
 
 [tool.poetry.requires-plugins]
 poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
