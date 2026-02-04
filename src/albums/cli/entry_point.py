@@ -1,6 +1,8 @@
 import rich.traceback
 import rich_click as click
 
+import albums
+
 from .. import app
 from . import cli_context
 from .check import check
@@ -24,9 +26,10 @@ rich.traceback.install(show_locals=True)
 @click.option("--regex", "-r", is_flag=True, help="enable regex match for album paths (default is exact path)")
 @click.option("--config-file", help="specify path to config.toml")
 @click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
+@click.version_option(version=albums.__version__, message="%(prog)s version %(version)s")
 @cli_context.pass_context  # order of these decorators matters
 @click.pass_context
-def albums(ctx: click.Context, app_context: app.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
+def albums_group(ctx: click.Context, app_context: app.Context, collections: list[str], paths: list[str], regex: bool, config_file: str, verbose: int):
     new_database = cli_context.setup(ctx, app_context, verbose, collections, paths, regex, config_file)
 
     rescan = app_context.config.get("options", {}).get("rescan", "auto")
@@ -39,12 +42,12 @@ def albums(ctx: click.Context, app_context: app.Context, collections: list[str],
         ctx.invoke(scan)
 
 
-albums.add_command(check)
-albums.add_command(collections_add)
-albums.add_command(collections_remove)
-albums.add_command(checks_ignore)
-albums.add_command(checks_notice)
-albums.add_command(list_albums)
-albums.add_command(scan)
-albums.add_command(sql)
-albums.add_command(sync)
+albums_group.add_command(check)
+albums_group.add_command(collections_add)
+albums_group.add_command(collections_remove)
+albums_group.add_command(checks_ignore)
+albums_group.add_command(checks_notice)
+albums_group.add_command(list_albums)
+albums_group.add_command(scan)
+albums_group.add_command(sql)
+albums_group.add_command(sync)

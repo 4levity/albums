@@ -1,10 +1,8 @@
 name: Publish Package
 on:
   push:
-    branches:
-      - main
-    # tags:
-    #   - 'v*' # tags starting with 'v'
+    tags:
+      - 'v*' # tags starting with 'v'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,30 +12,34 @@ jobs:
         with:
           python-version: 3.14
       - uses: snok/install-poetry@v1
-      - name: build
+      - name: install dependencies
+        run: make install
+      - name: lint/analyze source
+        run: make lint
+      - name: run tests
         env:
           TERM: 'dumb'
-        run: make build
+        run: make test
+      - name: create package
+        run: make package
       - name: upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: albums-package
           path: dist/
 
-  # publish:
-  #   needs: [build]
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     id-token: write # Use OIDC permissions for trusted publishing
-  #     contents: read
-  #   steps:
-  #     - name: download artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: albums-package
-  #         path: dist/
-
-  #     - name: publish to pypi (test)
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         repository-url: https://test.pypi.org/legacy/
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Use OIDC permissions for trusted publishing
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: albums-package
+          path: dist/
+      - name: publish to pypi (test)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

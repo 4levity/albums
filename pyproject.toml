@@ -1,6 +1,5 @@
 [project]
 name = "albums"
-version = "0.1.0"
 description = "Manage music albums, automatically correct tags, organize and sync copies with interactive command line interface."
 authors = [{name = "Ivan Cooper", email = "ivan@4levity.net"}]
 requires-python = ">= 3.12"
@@ -15,6 +14,8 @@ license = "GPL-3.0-or-later"
 license-files = ["COPYING"]
 readme = "README.md"
 keywords = ["flac", "mp3", "id3", "vorbis", "tags", "music", "library"]
+dynamic = []
+version = "0.1.0"
 
 [project.urls]
 Homepage = "https://github.com/4levity/albums"
@@ -24,11 +25,11 @@ Documentation = "https://4levity.github.io/albums/"
 Changelog = "https://4levity.github.io/albums/changelog/"
 
 [project.scripts]
-albums = "albums.cli.entry_point:albums"
+albums = "albums.cli.entry_point:albums_group"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.black]
 line-length = 150
@@ -45,6 +46,19 @@ typeCheckingMode = "strict"
 stubPath = "typings"
 pythonPlatform = "Linux"
 pythonVersion = "3.12"
+
+[tool.poetry]
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["src/albums/__init__.py"] 
 
 [tool.poetry.dependencies]
 python = "^3.12"

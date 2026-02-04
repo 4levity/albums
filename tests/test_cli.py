@@ -33,7 +33,7 @@ database="{TestCli.library / "albums.db"}"
             )
 
     def run(self, params: list[str], config_filename="config.toml"):
-        return TestCli.runner.invoke(entry_point.albums, ["--config-file", TestCli.library / config_filename] + params)
+        return TestCli.runner.invoke(entry_point.albums_group, ["--config-file", TestCli.library / config_filename] + params)
 
     def test_help(self):
         result = self.run(["--help"])
