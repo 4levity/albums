@@ -2,6 +2,7 @@ from .base_check import Check
 from .check_album_artist import CheckAlbumArtist
 from .check_album_tag import CheckAlbumTag
 from .check_album_under_album import CheckAlbumUnderAlbum
+from .check_artist_tag import CheckArtistTag
 from .check_disc_in_track_number import CheckDiscInTrackNumber
 from .check_disc_numbering import CheckDiscNumbering
 from .check_disctotal_presence import CheckDiscTotalPresence
@@ -23,6 +24,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckDiscTotalPresence,
     CheckAlbumTag,
     CheckAlbumArtist,
+    CheckArtistTag,
     CheckRequiredTags,
     CheckSingleValueTags,
     CheckDiscNumbering,

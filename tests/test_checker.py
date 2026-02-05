@@ -14,9 +14,9 @@ class TestChecker:
         album = Album(
             "Foo/",
             [
-                Track("1.flac", {"album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
-                Track("2.flac", {"album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
-                Track("3.flac", {"album": ["Foo"], "tracknumber": ["03"], "title": ["three"]}),
+                Track("1.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
+                Track("2.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
+                Track("3.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["03"], "title": ["three"]}),
             ],
         )
         ctx = Context()

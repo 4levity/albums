@@ -14,6 +14,19 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
+    def test_check_missing_artist(self):
+        # missing artist does not count as multiple artists, this passes
+        album = Album(
+            "",
+            [
+                Track("1.flac", {"artist": ["A"], "albumartist": ["Foo"]}),
+                Track("2.flac", {"artist": ["B"], "albumartist": ["Foo"]}),
+                Track("3.flac", {"albumartist": ["Foo"]}),
+            ],
+        )
+        result = CheckAlbumArtist(Context()).check(album)
+        assert result is None
+
     def test_check_needs_albumartist__one(self):
         # some tracks with albumartist
         album = Album(

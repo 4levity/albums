@@ -139,6 +139,29 @@ artist, it can be applied automatically when no other problems are detected.
 
 <!-- pyml enable line-length -->
 
+### artist_tag
+
+The "artist" tag should be present on all tracks. If it is missing from any
+track, candidates include values for artist and album artist for all tracks.
+
+If the parent folder containing the album folder is not a prohibited name, it is
+also a candidate. Prohibited names can be configured with an option.
+
+!!!note
+
+    Requires the `album_artist` check to pass first.
+
+**Automatic fix**: If there is exactly one candidate for artist name, apply it
+to all tracks that do not have an artist tag.
+
+<!-- pyml disable line-length -->
+
+| Option                  | Default                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `ignore_parent_folders` | `["compilation", "compilations", "soundtrack", "soundtracks", "various artists"]` |
+
+<!-- pyml enable line-length -->
+
 ### required_tags
 
 All tracks should have one or more values for each of these tags.
