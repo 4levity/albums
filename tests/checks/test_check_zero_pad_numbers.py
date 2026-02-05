@@ -148,3 +148,29 @@ class TestZeroPadNumbers:
             ctx.library_root / album.path / album.tracks[1].filename,
             [("tracknumber", "02"), ("tracktotal", "02"), ("discnumber", "01"), ("disctotal", "01")],
         )
+
+    def test_check_pad_with_id3(self, mocker):
+        album = Album("", [Track("1.mp3", {"tracknumber": ["01"], "tracktotal": ["2"]})])
+        ctx = Context()
+        ctx.config["checks"] = {
+            "zero_pad_numbers": {
+                "enabled": True,
+                "tracknumber_pad": "if_needed",
+                "tracktotal_pad": "never",
+                "discnumber_pad": "never",
+                "disctotal_pad": "never",
+            }
+        }
+        ctx.library_root = Path("/path/to/library")
+        result = CheckZeroPadNumbers(ctx).check(album)
+        assert "incorrect zero padding for 1 track numbers" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Apply policy: tracknumber pad IF_NEEDED"]
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.table
+
+        # automatically fixed
+        mock_set_basic_tags = mocker.patch("albums.checks.check_zero_pad_numbers.set_basic_tags")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[0].filename, [("tracknumber", "1")])

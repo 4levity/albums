@@ -24,6 +24,11 @@ class TestMetadata:
         assert tags["tracknumber"] == ["1"]
         assert tags["tracktotal"] == ["2"]
 
+        assert set_basic_tags(file, [("tracknumber", "3")])
+        tags = get_metadata(file)[0]
+        assert tags["tracknumber"] == ["3"]
+        assert tags["tracktotal"] == ["2"]
+
         # write both at once
         assert set_basic_tags(file, [("tracknumber", "2"), ("tracktotal", "3")])
         tags = get_metadata(file)[0]
@@ -47,14 +52,19 @@ class TestMetadata:
         assert tags["discnumber"] == ["2"]
         assert tags["disctotal"] == ["1"]
 
-        # write both at once
-        assert set_basic_tags(file, [("discnumber", "1"), ("disctotal", "2")])
+        assert set_basic_tags(file, [("discnumber", "1")])
         tags = get_metadata(file)[0]
         assert tags["discnumber"] == ["1"]
+        assert tags["disctotal"] == ["1"]
+
+        # write both at once
+        assert set_basic_tags(file, [("discnumber", "2"), ("disctotal", "2")])
+        tags = get_metadata(file)[0]
+        assert tags["discnumber"] == ["2"]
         assert tags["disctotal"] == ["2"]
 
         # remove total
         assert set_basic_tags(file, [("disctotal", None)])
         tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["1"]
+        assert tags["discnumber"] == ["2"]
         assert "disctotal" not in tags

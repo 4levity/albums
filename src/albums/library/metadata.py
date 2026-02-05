@@ -70,10 +70,19 @@ def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | Non
 
     changed = False
     for name, value in tag_values:
-        if name == "tracktotal" and not capabilities.has_tracktotal:
-            changed |= _set_tracktotal_in_tracknumber(file, value[0] if isinstance(value, list) else value)
-        elif name == "disctotal" and not capabilities.has_disctotal:
-            changed |= _set_disctotal_in_discnumber(file, value[0] if isinstance(value, list) else value)
+        if (name in {"tracknumber", "tracktotal"} and not capabilities.has_tracktotal) or (
+            name in {"discnumber", "disctotal"} and not capabilities.has_disctotal
+        ):
+            tags = _get_tags(file, capabilities)
+            new_value = value[0] if isinstance(value, list) else value
+            if name == "tracknumber":
+                changed |= _set_tracknumber_and_tracktotal(file, new_value, tags.get("tracktotal", [None])[0])
+            if name == "tracktotal":
+                changed |= _set_tracknumber_and_tracktotal(file, tags.get("tracknumber", [None])[0], new_value)
+            if name == "discnumber":
+                changed |= _set_discnumber_and_disctotal(file, new_value, tags.get("disctotal", [None])[0])
+            if name == "disctotal":
+                changed |= _set_discnumber_and_disctotal(file, tags.get("discnumber", [None])[0], new_value)
         elif value is None:
             if name in file:
                 del file[name]
@@ -88,45 +97,45 @@ def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | Non
     return False
 
 
-def _set_disctotal_in_discnumber(file: MutagenFileTypeLike, value: str | None):
-    old_discnumbers: list[str] | None = file["discnumber"] if "discnumber" in file else None
-    if old_discnumbers and len(old_discnumbers) > 1:  # unlikely, we are probably only doing this for MP3 files
-        logger.warning(f"more than one discnumber tag, ignoring all but first: {old_discnumbers}")
+def _set_discnumber_and_disctotal(file: MutagenFileTypeLike, discnumber: str | None, disctotal: str | None):
+    if discnumber is None and disctotal is None:
+        value = None
+    elif disctotal is None:
+        value = discnumber
+    elif discnumber is None:
+        value = f"/{disctotal}"
+    else:
+        value = f"{discnumber}/{disctotal}"
 
-    if value is None:
-        if old_discnumbers and "/" in old_discnumbers[0]:
-            file["discnumber"] = f"{old_discnumbers[0].split('/')[0]}"  # remove / and anything after
-            file.save()
-            return True
-        else:
-            logger.debug("not removing disctotal because there is no discnumber tag to remove it from")
-    elif "discnumber" not in file:
-        logger.warning("failed to set disctotal because there is no discnumber tag")
-    elif old_discnumbers and len(old_discnumbers) > 0:  # old_discnumbers is definitely a non-empty array here, added checks for pyright
-        file["discnumber"] = f"{old_discnumbers[0].split('/')[0]}/{value}"
-        file.save()
+    if value is None and "discnumber" in file:
+        del file["discnumber"]
         return True
+
+    if value is not None and ("discnumber" not in file or file["discnumber"] != [value]):
+        file["discnumber"] = value
+        return True
+
     return False
 
 
-def _set_tracktotal_in_tracknumber(file: MutagenFileTypeLike, value: str | None):
-    tracknumbers: list[str] | None = file["tracknumber"] if "tracknumber" in file else None
-    if tracknumbers and len(tracknumbers) > 1:  # unlikely, we are probably only doing this for MP3 files
-        logger.warning(f"more than one tracknumber tag, ignoring all but first: {tracknumbers}")
+def _set_tracknumber_and_tracktotal(file: MutagenFileTypeLike, tracknumber: str | None, tracktotal: str | None):
+    if tracknumber is None and tracktotal is None:
+        value = None
+    elif tracktotal is None:
+        value = tracknumber
+    elif tracknumber is None:
+        value = f"/{tracktotal}"
+    else:
+        value = f"{tracknumber}/{tracktotal}"
 
-    if value is None:
-        if tracknumbers and "/" in tracknumbers[0]:
-            file["tracknumber"] = f"{tracknumbers[0].split('/')[0]}"  # remove / and anything after
-            file.save()
-            return True
-        else:
-            logger.debug("not removing tracktotal because there is no tracknumber tag to remove it from")
-    elif "tracknumber" not in file:
-        logger.warning("failed to set tracktotal because there is no tracknumber tag")
-    elif tracknumbers and len(tracknumbers) > 0:  # tracknumbers is definitely a non-empty array here, added checks for pyright
-        file["tracknumber"] = f"{tracknumbers[0].split('/')[0]}/{value}"
-        file.save()
+    if value is None and "tracknumber" in file:
+        del file["tracknumber"]
         return True
+
+    if value is not None and ("tracknumber" not in file or file["tracknumber"] != [value]):
+        file["tracknumber"] = value
+        return True
+
     return False
 
 
