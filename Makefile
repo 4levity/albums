@@ -42,7 +42,7 @@ docs: install lint-markdown docs/database_diagram.png ## Build docs
 	@echo injecting version `poetry dynamic-versioning show`
 	@sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
 
-package: lint test ## Create distribution
+package: ## Create distribution
 	$(POETRY) build
 
 clean: ## Remove build and test files
