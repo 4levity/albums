@@ -39,6 +39,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
             maybe_changed = fixer.fix(fixer.options[fixer.option_automatic_index])
             displayed_any = True
         elif interactive or (fixer and fix):
+            ctx.console.print()
             ctx.console.print(f'>> "{album.path}"', markup=False)
             (maybe_changed, user_quit) = interact(ctx, check.name, check_result, album)
             displayed_any = True

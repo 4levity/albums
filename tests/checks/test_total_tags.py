@@ -41,7 +41,7 @@ class TestTotalTags:
         result = self.check(ctx, album, total_tags.Policy.CONSISTENT)
         assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Remove tag tracktotal from all tracks"]
+        assert result.fixer.options == [">> Remove tag tracktotal"]
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
@@ -62,7 +62,7 @@ class TestTotalTags:
         result = self.check(ctx, album, total_tags.Policy.NEVER)
         assert "tracktotal policy=NEVER but it appears on tracks" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Remove tag tracktotal from all tracks"]
+        assert result.fixer.options == [">> Remove tag tracktotal"]
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
@@ -86,7 +86,7 @@ class TestTotalTags:
         result = self.check(ctx, album, total_tags.Policy.NEVER)
         assert "tracktotal appears on tracks without tracknumber" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Remove tag tracktotal from all tracks"]
+        assert result.fixer.options == [">> Remove tag tracktotal"]
         assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_tags = mocker.patch("albums.checks.total_tags.set_basic_tags")

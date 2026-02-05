@@ -107,8 +107,9 @@ class CheckTrackNumbering(Check):
             return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_numbering check must pass first")
         # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric if present
 
-        # apply track total policy (will have automatic fix = remove bad totals as long as policy is not "always")
-        tracktotal_result = total_tags.check_policy(self.ctx, album, self.tracktotal_policy, "tracktotal", "tracknumber")
+        # apply track total policy - will offer automatic fix (remove all track totals) if policy is not "always"
+        one_track_total = len(tracks_by_disc) == 1  # fix will allow manual entry if there is only one disc
+        tracktotal_result = total_tags.check_policy(self.ctx, album, self.tracktotal_policy, "tracktotal", "tracknumber", one_track_total)
         if tracktotal_result:
             # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
             return tracktotal_result

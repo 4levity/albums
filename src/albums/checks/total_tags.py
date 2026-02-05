@@ -23,7 +23,12 @@ class Policy(Enum):
         raise ValueError(f'invalid total_tags.Policy "{selection}"')
 
 
-def check_policy(ctx: Context, album: Album, policy: Policy, tag_name: str, corresponding_index_tag: str) -> CheckResult | None:
+OPTION_REMOVE_TAG = ">> Remove tag"
+
+
+def check_policy(
+    ctx: Context, album: Album, policy: Policy, tag_name: str, corresponding_index_tag: str, option_free_text: bool = False
+) -> CheckResult | None:
     on_all_tracks = all(tag_name in t.tags for t in album.tracks)
     on_any_tracks = any(tag_name in t.tags for t in album.tracks)
     any_total_without_index = any(tag_name in t.tags and corresponding_index_tag not in t.tags for t in album.tracks)
@@ -41,31 +46,33 @@ def check_policy(ctx: Context, album: Album, policy: Policy, tag_name: str, corr
         message = None
 
     if message:
-        if policy == Policy.ALWAYS:
-            # this helper can only remove values, so "always" policy limits automatic fixability
-            return CheckResult(ProblemCategory.TAGS, message)
-        else:
-            option_free_text = False
-            option_automatic_index = 0
+        if option_free_text or policy != Policy.ALWAYS:
+
+            def _fix(option: str) -> bool:
+                if option.startswith(OPTION_REMOVE_TAG):
+                    value = None
+                else:
+                    value = option
+                changed = False
+                for track in album.tracks:
+                    path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
+                    if value is None and tag_name in track.tags:
+                        ctx.console.print(f"removing {tag_name} from {track.filename}")
+                        changed |= set_basic_tags(path, [(tag_name, None)])
+                    if value is not None and (tag_name not in track.tags or track.tags[tag_name] != [value]):
+                        ctx.console.print(f"setting {tag_name} on {track.filename}")
+                        changed |= set_basic_tags(path, [(tag_name, value)])
+                return changed
+
+            options = [] if policy == Policy.ALWAYS else [f"{OPTION_REMOVE_TAG} {tag_name}"]
+            option_automatic_index = 0 if len(options) == 1 else None
+            if policy == Policy.NEVER:
+                option_free_text = False
             table = (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)])
-            return CheckResult(
-                ProblemCategory.TAGS,
-                message,
-                Fixer(
-                    lambda _: _remove_tag(ctx, tag_name, album),
-                    [f">> Remove tag {tag_name} from all tracks"],
-                    option_free_text,
-                    option_automatic_index,
-                    table,
-                ),
-            )
+            fixer = Fixer(lambda option: _fix(option), options, option_free_text, option_automatic_index, table)
+        else:
+            fixer = None
 
+        return CheckResult(ProblemCategory.TAGS, message, fixer)
 
-def _remove_tag(ctx: Context, tag_name: str, album: Album) -> bool:
-    changed = False
-    for track in album.tracks:
-        if tag_name in track.tags:
-            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
-            ctx.console.print(f"removing {tag_name} from {track.filename}")
-            changed |= set_basic_tags(path, [(tag_name, None)])
-    return changed
+    return None

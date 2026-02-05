@@ -7,13 +7,15 @@ icon: lucide/flask-conical
 ## General features
 
 - Scan, check and fix albums outside of library
-  - Operate on folders without using a database
-  - Import newly scanned and fixed albums to library
+    - Operate on folders without using a database
+    - Import newly scanned and fixed albums to library
 - Select/filter albums based on track tags, recent access, other
 - Support additional file formats
-  - Comprehend standard tags (artist, album, title. track)
-  - Better support for MP4 (M4A, M4B, M4P) and other files
-  - Add other extensions to default scan
+    - Comprehend standard tags (artist, album, title. track)
+    - Better support for MP4 (M4A, M4B, M4P) and other files
+    - Add other extensions to default scan
+- Create initial config file from sample/template
+- Migrate config file (move config to database?)
 
 ### More checks and fixes
 

@@ -35,8 +35,9 @@ class CheckDiscNumbering(Check):
             return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
         # now, all tracknumber/tracktotal/discnumber/disctotal tags should be single-valued and numeric
 
-        # apply disc total policy (will have automatic fix = remove bad totals as long as policy is not "always")
-        disctotal_result = total_tags.check_policy(self.ctx, album, self.disctotal_policy, "disctotal", "discnumber")
+        # apply disc total policy - will offer automatic fix (remove all disc totals) if policy is not "always"
+        option_free_text = True  # fix will allow manual entry - this is ignored if policy = "never"
+        disctotal_result = total_tags.check_policy(self.ctx, album, self.disctotal_policy, "disctotal", "discnumber", option_free_text)
         if disctotal_result:
             # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
             return disctotal_result
