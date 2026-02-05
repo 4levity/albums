@@ -17,7 +17,7 @@ This documentation is for `albums` version **%%version_placeholder%%**.
 
 ## Installation
 
-Install with `pip install albums` in an environment with Python 3.12 or newer.
+Install with `pipx install albums` in an environment with Python 3.12 or newer.
 
 ## Minimum setup
 
