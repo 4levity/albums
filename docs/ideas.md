@@ -24,8 +24,3 @@ icon: lucide/flask-conical
 - track filename doesn't match title, doesn't include track/disc number
 - album folder doesn't match album name
 - parent folder doesn't match artist if using artist/album
-
-## Development
-
-- CI/CD, publish wheel
-- vscode config and recommended plugins

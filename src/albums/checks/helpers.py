@@ -1,24 +1,8 @@
-from enum import Enum, auto
+import re
 
 from rich.markup import escape
 
 from ..types import Album, Track
-
-
-class ItemTotalPolicy(Enum):
-    CONSISTENT = auto()
-    ALWAYS = auto()
-    NEVER = auto()
-
-    @classmethod
-    def from_str(cls, selection: str):
-        for policy in cls:
-            if str.lower(policy.name) == str.lower(selection):
-                return policy
-        raise ValueError(f'invalid ItemTotalPolicy "{selection}"')
-
-
-OPTION_APPLY_POLICY = ">> Apply policy"
 
 
 def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
@@ -84,3 +68,25 @@ def show_tag(tag: list[str] | None) -> str:
     if len(tag) == 1:
         return escape(str(tag[0]))
     return escape(str(tag))
+
+
+def parse_filename(filename: str) -> tuple[int | None, int | None, str | None]:
+    filename_parser = "(?P<track1>\\d+)?(?:-(?P<track2>\\d+)?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
+    match = re.fullmatch(filename_parser, filename)
+    if not match:
+        return (None, None, None)
+    title = str(match.group("title"))
+
+    track1 = match.group("track1")
+    track2 = match.group("track2")
+    if track1 and track2:
+        disc = int(track1)
+        track = int(track2)
+    elif track1:
+        disc = None
+        track = int(track1)
+    else:
+        disc = None
+        track = None
+
+    return (disc, track, title if title else None)

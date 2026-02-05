@@ -4,6 +4,8 @@ from typing import Any
 
 from rich.markup import escape
 
+from albums.checks import total_tags
+
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
@@ -34,7 +36,9 @@ class TrackTotalFixer(Fixer):
         discnumber_notice = {f" on disc {discnumber}"} if discnumber is not None else ""
         options = [f"{TrackTotalFixer.OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
         if self.max_tracktotal:
+            # TODO only one option if both proposals are the same
             options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
+        # TODO automatic fix if no conflict
 
         tracks = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
         table = (["track", "filename"], tracks)
@@ -77,7 +81,7 @@ class TrackTotalFixer(Fixer):
 
 class CheckTrackNumbering(Check):
     name = "track_numbering"
-    default_config = {"enabled": True, "ignore_folders": ["misc"], "discs_in_separate_folders": True}
+    default_config = {"enabled": True, "ignore_folders": ["misc"], "tracktotal_policy": "consistent"}
     must_pass_checks = {"disc_numbering"}
 
     def init(self, check_config: dict[str, Any]):
@@ -85,12 +89,10 @@ class CheckTrackNumbering(Check):
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
-            logger.warning(f'album_tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            logger.warning(f'track_numbering.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
-        self.discs_in_separate_folders = check_config.get(
-            "discs_in_separate_folders", CheckTrackNumbering.default_config["discs_in_separate_folders"]
-        )
+        self.tracktotal_policy = total_tags.Policy.from_str(str(check_config.get("tracktotal_policy", self.default_config["tracktotal_policy"])))
 
     def check(self, album: Album):
         folder_str = Path(album.path).name
@@ -103,8 +105,13 @@ class CheckTrackNumbering(Check):
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
             return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_numbering check must pass first")
+        # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric if present
 
-        # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric
+        # apply track total policy (will have automatic fix = remove bad totals as long as policy is not "always")
+        tracktotal_result = total_tags.check_policy(self.ctx, album, self.tracktotal_policy, "tracktotal", "tracknumber")
+        if tracktotal_result:
+            # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
+            return tracktotal_result
 
         for disc_number in tracks_by_disc.keys():
             tracks = tracks_by_disc[disc_number]
@@ -133,24 +140,11 @@ class CheckTrackNumbering(Check):
             if len(track_total_counts) > 1:
                 return CheckResult(
                     ProblemCategory.TAGS,
-                    f"some tracks have different tracktotal values{on_disc_message} - {list(track_total_counts.keys())}",
+                    f"some tracks have different track total values{on_disc_message} - {list(track_total_counts.keys())}",
                     TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
                 )
-            elif len(track_total_counts) == 1:
-                (tracktotal, tracktotal_tagged_count) = list(track_total_counts.items())[0]
-                if tracktotal == len(tracks) and tracktotal != tracktotal_tagged_count:
-                    # tracktotal matches the number of tracks, but not all tracks have tracktotal tag
-                    return CheckResult(
-                        ProblemCategory.TAGS,
-                        f"tracktotal = {tracktotal} is not set on all tracks{on_disc_message}",
-                        TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
-                    )
-                elif tracktotal_tagged_count != len(tracks):  # hmm needs clarification
-                    return CheckResult(
-                        ProblemCategory.TAGS,
-                        f"tracktotal = {tracktotal} is set on {tracktotal_tagged_count}/{len(tracks)} tracks{on_disc_message}",
-                        TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
-                    )
+
+            # if there is a track total for this disc, it is in expect_track_total
 
             expected_track_numbers = set(range(1, expect_track_total + 1))
             missing_track_numbers = expected_track_numbers - actual_track_numbers
@@ -164,6 +158,6 @@ class CheckTrackNumbering(Check):
                     # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
                     return CheckResult(ProblemCategory.OTHER, f"tracks missing from album{on_disc_message} {missing_track_numbers}")
-                return CheckResult(ProblemCategory.TAGS, f"missing track numbers or tags{on_disc_message} {missing_track_numbers}")
+                return CheckResult(ProblemCategory.TAGS, f"missing track numbers{on_disc_message} {missing_track_numbers}")
 
         return None

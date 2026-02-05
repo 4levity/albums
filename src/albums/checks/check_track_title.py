@@ -1,5 +1,4 @@
 import logging
-import re
 from pathlib import Path
 
 from rich.markup import escape
@@ -7,7 +6,7 @@ from rich.markup import escape
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
-from .helpers import show_tag
+from .helpers import parse_filename, show_tag
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +50,10 @@ class CheckTrackTitle(Check):
     def _proposed_title(self, track: Track):
         if track.tags.get("title"):
             return None
-        # TODO: try to handle if spaces or special characters have been converted to underscores
-        filename_parser = "(?P<track1>\\d+)?(?:-(?P<track2>\\d+)?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
-        match = re.fullmatch(filename_parser, track.filename)
-        title = match.group("title") if match else None
-        if title:
-            return str(title)
-        return None
+
+        (_, _, title) = parse_filename(track.filename)
+        # TODO: if it looks like spaces were converted to underscores, consider trying to recover
+        return title
 
     def _fix(self, album: Album, option: str) -> bool:
         changed = False

@@ -37,14 +37,6 @@ enabled = true
 [checks.invalid_track_or_disc_number]
 enabled = true
 
-[checks.tracktotal_presence]
-enabled = true
-policy = "consistent"
-
-[checks.disctotal_presence]
-enabled = true
-policy = "consistent"
-
 [checks.album_tag]
 enabled = true
 ignore_folders = ["misc"]
@@ -65,10 +57,12 @@ tags = ["artist", "title"]
 [checks.disc_numbering]
 enabled = true
 discs_in_separate_folders = false
+disctotal_policy = "consistent"
 
 [checks.track_numbering]
 enabled = true
 ignore_folders = ["misc"]
+tracktotal_policy = "consistent"
 
 [checks.track_title]
 enabled = true

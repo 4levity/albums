@@ -74,30 +74,6 @@ a single value and that value should be a positive number (0 is not valid).
 that are non-numeric or 0. If exactly one unique value remains, save it.
 Otherwise, delete the tag.
 
-### tracktotal_presence
-
-Apply selected policy for whether or not a track total is present on each track.
-Additionally, report if any track has a track total tag without a track number.
-This check does not check whether the track total is correct.
-
-Policies:
-
-- **"consistent"**: either all tracks on an album have track total, or none do
-- **"always"**: all tracks should have track total
-- **"never"**: track total should be removed
-
-**Automatic fix**: If the policy is "consistent" but some tracks are missing
-track total, remove it from all tracks. If the policy is "never", always remove
-the tag. (There is currently no automatic fix if the policy is "always".)
-
-| Option   | Default        | Description                                 |
-| -------- | -------------- | ------------------------------------------- |
-| `policy` | `"consistent"` | Set the tag presence policy for track total |
-
-### disctotal_presence
-
-Exactly the same as `tracktotal_presence` except it is for the disc total.
-
 ### album_tag
 
 Tracks should have `album` tags. The fix attempts to guess album name from tags
@@ -204,6 +180,16 @@ Rules:
 - Disc numbers should start at 1 and be sequential (1, 2, 3...)
 - If present, the disc total should be the number of distinct disc number values
   which should be the same as the highest disc number
+- All tracks with disc total should also have disc number
+- The selected disc total presence policy should apply
+    - **"consistent"**: either all tracks have disc total, or none do
+    - **"always"**: all tracks should have disc total
+    - **"never"**: disc total should be removed
+
+**Automatic fix** for disc total policy: If the disc total policy is
+"consistent" but some tracks are missing disc total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
 
 !!!note
 
@@ -211,9 +197,10 @@ Rules:
 
 <!-- pyml disable line-length -->
 
-| Option                      | Default  | Description                                                  |
-| --------------------------- | -------- | ------------------------------------------------------------ |
-| `discs_in_separate_folders` | **true** | albums with multiple discs may be stored in separate folders |
+| Option                      | Default        | Description                                                  |
+| --------------------------- | -------------- | ------------------------------------------------------------ |
+| `discs_in_separate_folders` | **true**       | albums with multiple discs may be stored in separate folders |
+| `disctotal_policy`          | `"consistent"` | Set the tag presence policy for disc total                   |
 
 <!-- pyml enable line-length -->
 
@@ -233,16 +220,27 @@ The rules are:
 - For each disc, track numbers should start at 1 and be sequential
 - For each disc, if track total is present, it should be the number of tracks on
   that disc
+- All tracks with track total should also have track number
+- The selected track total presence policy should apply:
+    - **"consistent"**: either all tracks have track total, or none do
+    - **"always"**: all tracks should have track total
+    - **"never"**: track total should be removed
+
+**Automatic fix** for track total policy: If the track total policy is
+"consistent" but some tracks are missing track total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
 
 !!!note
 
-    Requires the `invalid_track_or_disc_number` check to pass first.
+    Requires the `disc_numbering` check to pass first.
 
 <!-- pyml disable line-length -->
 
-| Option           | Default    | Description                                                |
-| ---------------- | ---------- | ---------------------------------------------------------- |
-| `ignore_folders` | `["misc"]` | in all folders with these names, ignore track/disc numbers |
+| Option              | Default        | Description                                           |
+| ------------------- | -------------- | ----------------------------------------------------- |
+| `ignore_folders`    | `["misc"]`     | in all folders with these names, ignore track numbers |
+| `tracktotal_policy` | `"consistent"` | Set the tag presence policy for track total           |
 
 <!-- pyml enable line-length -->
 
