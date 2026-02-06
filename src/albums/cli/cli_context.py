@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import tomllib
 from pathlib import Path
 
@@ -51,14 +52,23 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
         with open(config_path, "rb") as file:
             app_context.config = tomllib.load(file)
         logger.info(f"read config from {config_path}")
+        if "options" not in app_context.config:
+            app_context.config["options"] = {}
     else:
         logger.info("no configuration file, using default configuration")
-        app_context.config = {}
+        app_context.config = {"options": {}}
 
     app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
     if not app_context.library_root.is_dir():
         logger.error(f"library directory does not exist: {str(app_context.library_root)}")
         raise SystemExit(1)
+
+    tagger = app_context.config["options"].get("tagger")
+    if tagger:
+        if not shutil.which(tagger):
+            logger.warning(f'configuration specifies a tagger program "{tagger}" but it does not seem to be on the path')
+    elif shutil.which("easytag"):  # could look for others too
+        app_context.config["options"]["tagger"] = "easytag"
 
     if "database" in app_context.config.get("locations", {}):
         album_db_file = app_context.config["locations"]["database"]
