@@ -79,6 +79,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
                 while not Confirm.ask("Done making changes in external program?", console=ctx.console):
                     pass
                 maybe_changed |= True
+                done = True
             elif choice == OPTION_DO_NOTHING:
                 done = True
                 user_quit = True
@@ -92,6 +93,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
                 while not Confirm.ask("Done making changes in external program?", console=ctx.console):
                     pass
                 maybe_changed |= True
+                done = True
             elif choice is None:  # if user pressed esc, confirm
                 done = Confirm.ask("Do you want to move on to the next check?", default=True, console=ctx.console)
                 user_quit = done
