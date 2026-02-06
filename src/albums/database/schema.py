@@ -57,7 +57,6 @@ CREATE TABLE track_tag (
 CREATE INDEX idx_track_tag_track_id ON track_tag(track_id);
 """
 
-CURRENT_SCHEMA_VERSION = 2
 MIGRATIONS = {  # key is target schema version
     2: """
 CREATE TABLE scan_history (
@@ -67,7 +66,19 @@ CREATE TABLE scan_history (
     albums_total INTEGER NOT NULL
 );
 CREATE INDEX idx_scan_history_timestamp ON scan_history(timestamp);
-"""
+""",
+    3: """
+CREATE TABLE track_picture (
+    track_picture_id INTEGER PRIMARY KEY,
+    track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    picture_type INTEGER NOT NULL,
+    format TEXT NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
+    file_size INTEGER NOT NULL
+);
+CREATE INDEX idx_track_picture_track_id ON track_picture(track_id);
+""",
 }
 
 

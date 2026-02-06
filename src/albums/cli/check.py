@@ -46,7 +46,7 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
         for check_name in all.ALL_CHECK_NAMES:
             enabled = check_name in checks
             if check_name not in ctx.config["checks"]:
-                ctx.config["checks"] = {}
+                ctx.config["checks"][check_name] = {}
             ctx.config["checks"][check_name]["enabled"] = enabled
 
         while len(dependent_checks := required_disabled_checks(ctx.config)) > 0:

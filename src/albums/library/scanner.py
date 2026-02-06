@@ -78,18 +78,18 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                 scan_results[result.name] += 1
 
                 if album and result == AlbumScanResult.UNCHANGED:
-                    logger.debug(f"no changes detected for album {album.path}")
+                    logger.debug(f"no changes detected for album {album.path}", extra={"highlighter": None})
                 elif album and result == AlbumScanResult.NEW:
-                    logger.info(f"add album {album.path}")
+                    logger.info(f"add album {album.path}", extra={"highlighter": None})
                     albums.database.operations.add(db, album)
                     any_changes = True
                 elif album and album_id is not None and result == AlbumScanResult.UPDATED:
-                    logger.info(f"update track info for album {album.path}")
+                    logger.info(f"update track info for album {album.path}", extra={"highlighter": None})
                     albums.database.operations.update_tracks(db, album_id, album.tracks)
                     any_changes = True
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:
-                        logger.info(f"remove album {album_id} {stored_album.path}")
+                        logger.info(f"remove album {album_id} {stored_album.path}", extra={"highlighter": None})
                         albums.database.operations.remove(db, album_id)
                         any_changes = True
                 else:

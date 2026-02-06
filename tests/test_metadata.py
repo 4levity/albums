@@ -1,11 +1,15 @@
 import pytest
 
 from albums.library.metadata import get_metadata, set_basic_tags
-from albums.types import Album, Track
+from albums.types import Album, Picture, PictureType, Track
 
 from .fixtures.create_library import create_library
+from .fixtures.empty_files import IMAGE_PNG_400X400
 
-albums = [Album("foo/", [Track("1.mp3", {"tracknumber": ["1/3"], "discnumber": ["2/2"]})])]
+albums = [
+    Album("foo/", [Track("1.mp3", {"tracknumber": ["1/3"], "discnumber": ["2/2"]})]),
+    Album("bar/", [Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0)])]),
+]
 
 
 class TestMetadata:
@@ -68,3 +72,9 @@ class TestMetadata:
         tags = get_metadata(file)[0]
         assert tags["discnumber"] == ["2"]
         assert "disctotal" not in tags
+
+    def test_read_picture(self):
+        file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
+        pictures = get_metadata(file)[2]
+        assert len(pictures) == 1
+        assert pictures[0] == Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400))

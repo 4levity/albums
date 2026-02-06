@@ -5,11 +5,12 @@ from pathlib import Path
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
+from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
 
 from albums.types import Album, Track
 
-from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES
+from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES, IMAGE_PNG_400X400
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
@@ -26,6 +27,15 @@ def create_file(path: Path, spec: Track):
     mut = None
     if filename.suffix == ".flac":
         mut = FLAC(filename)
+        for picture in spec.pictures:
+            pic = FlacPicture()
+            pic.data = IMAGE_PNG_400X400  # TODO generate image of the specified size
+            pic.type = picture.picture_type  # other spec properites ignored
+            pic.mime = "image/png"
+            pic.width = 400
+            pic.height = 400
+            pic.depth = 8
+            mut.add_picture(pic)
     elif filename.suffix == ".mp3":
         mut = MP3(filename, ID3=EasyID3)
     elif filename.suffix == ".wma":

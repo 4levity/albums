@@ -7,9 +7,10 @@ from typing import Any
 import mutagen
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
+from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
 
-from ..types import Album, Stream
+from ..types import Album, Picture, PictureType, Stream
 
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
@@ -30,7 +31,7 @@ class MutagenFileTypeLike(dict[Any, Any]):
     def save(self): ...
 
 
-def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream] | None:
+def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream, list[Picture]] | None:
     file_info = _mutagen_load_file(path)
     if not file_info:
         return None
@@ -38,7 +39,8 @@ def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream] | None:
     (file, codec, capabilities) = file_info
     stream_info = _get_stream_info(file, codec)
     tags = _get_tags(file, capabilities)
-    return (tags, stream_info)
+    pictures = _get_pictures(file)
+    return (tags, stream_info, pictures)
 
 
 def album_is_basic_taggable(album: Album):  # TODO use TagCapabilities instead
@@ -151,7 +153,9 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagCapabil
         codec = "MP3"
         capabilities = TagCapabilities(has_tracktotal=False, has_disctotal=False)
     else:
-        file: MutagenFileTypeLike | None = mutagen.File(path)  # pyright: ignore[reportPrivateImportUsage, reportUnknownMemberType, reportAssignmentType]
+        file: MutagenFileTypeLike | None = mutagen.File(  # pyright: ignore[reportPrivateImportUsage, reportUnknownMemberType, reportAssignmentType]
+            path
+        )
         if file is None:
             return None
         codec = _get_codec(file)
@@ -239,3 +243,26 @@ def _get_stream_info(file: MutagenFileTypeLike, codec: str) -> Stream:
     stream.codec = codec
 
     return stream
+
+
+def _get_pictures(file: MutagenFileTypeLike) -> list[Picture]:
+    pictures: list[Picture] = []
+    if isinstance(file, FLAC):
+        pictures = _get_flac_pictures(file.pictures)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+    return pictures
+
+
+def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> list[Picture]:
+    pictures: list[Picture] = []
+    for picture in flac_pictures:
+        # TODO: image info in the metadata block can be wrong, we should check against image data so we can offer to fix it
+        pictures.append(
+            Picture(
+                PictureType(picture.type),
+                str(picture.mime) if isinstance(picture.mime, str) else "Unknown",  # type: ignore
+                picture.width,
+                picture.height,
+                len(picture.data) if picture.data else 0,  # type: ignore
+            )
+        )
+    return pictures

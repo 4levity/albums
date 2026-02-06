@@ -264,6 +264,30 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
+### cover_art
+
+If any track has any pictures in its metadata, the album should have correct
+front cover art. For the album to have correct front cover art, every track
+should have a COVER_FRONT image ("cover art"). Rules:
+
+- Each track should have **one** cover art image
+- The cover art should be the same on all the tracks
+- It should be exactly square
+- It should be in PNG or JPEG format
+- It should not be very small or very large (see options)
+
+Only checks FLAC files for and does not fix yet.
+
+<!-- pyml disable line-length -->
+
+| Option                 | Default   | Description                                                 |
+| ---------------------- | --------- | ----------------------------------------------------------- |
+| `cover_front_required` | **false** | if **true** every album should have correct front cover art |
+| `min_pixels`           | **100**   | front cover art must be at least this width/height          |
+| `max_pixels`           | **2048**  | front cover art should not be larger than this width/height |
+
+<!-- pyml enable line-length -->
+
 ### zero_pad_numbers
 
 Apply selected policies for zero-padding in the track number/total and disc

@@ -33,7 +33,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     user_quit = False  # user explicitly quit this check
 
     tagger_config = ctx.config.get("options", {}).get("tagger")
-    tagger = str(tagger_config) if check_result.category == ProblemCategory.TAGS and tagger_config else None
+    tagger = str(tagger_config) if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
 
     OPTION_FREE_TEXT = ">> Enter Text"
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
@@ -51,7 +51,6 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     options.append(OPTION_DO_NOTHING)
     if tagger:
         options.append(OPTION_RUN_TAGGER)
-    # if check_result.category != ProblemCategory.TAGS:
     options.append(OPTION_OPEN_FOLDER)
 
     album_path = (ctx.library_root if ctx.library_root else Path(".")) / album.path

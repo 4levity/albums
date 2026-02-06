@@ -2,7 +2,7 @@ import logging
 import sqlite3
 
 from ..checks.all import ALL_CHECK_NAMES
-from ..types import Album, ScanHistoryEntry, Stream, Track
+from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +112,11 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
         for name, values in track.tags.items():
             for value in values:
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
+        for picture in track.pictures:
+            db.execute(
+                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size) VALUES (?, ?, ?, ?, ?, ?);",
+                (track_id, picture.picture_type.value, picture.format, picture.width, picture.height, picture.file_size),
+            )
 
 
 def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
@@ -132,10 +137,12 @@ def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
     ):
         if load_tags:
             tags = _load_tags(db, track_id)
+            pictures = _load_pictures(db, track_id)
         else:
             tags = {}
+            pictures = []
         stream = Stream(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
-        track = Track(filename, tags, file_size, modify_timestamp, stream)
+        track = Track(filename, tags, file_size, modify_timestamp, stream, pictures)
         yield track
 
 
@@ -144,6 +151,15 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
     for name, value in db.execute("SELECT name, value FROM track_tag WHERE track_id = ?;", (track_id,)):
         tags.setdefault(name, []).append(value)
     return tags
+
+
+def _load_pictures(db: sqlite3.Connection, track_id: int):
+    return [
+        Picture(PictureType(picture_type), format, width, height, file_size)
+        for picture_type, format, width, height, file_size in db.execute(
+            "SELECT picture_type, format, width, height, file_size FROM track_picture WHERE track_id = ? ORDER BY picture_type;", (track_id,)
+        )
+    ]
 
 
 def record_full_scan(db: sqlite3.Connection, entry: ScanHistoryEntry):

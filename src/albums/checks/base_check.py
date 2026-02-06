@@ -19,7 +19,8 @@ class Fixer:
 
 
 class ProblemCategory(Enum):
-    TAGS = auto()  # issues with tags
+    TAGS = auto()  # issues with tags (except for picture tags)
+    PICTURES = auto()  # issues with album art
     FILENAMES = auto()  # track filenames
     FOLDERS = auto()  # organization, folder names
     OTHER = auto()  # general problems with the album

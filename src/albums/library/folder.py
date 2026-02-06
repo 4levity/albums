@@ -46,9 +46,10 @@ def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track
         if file_info is None:
             logger.warning(f"couldn't load metadata for track {path}")
         else:
-            (tags, stream_info) = file_info
+            (tags, stream_info, pictures) = file_info
             track.tags = tags
             track.stream = stream_info
+            track.pictures = pictures
 
 
 def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):

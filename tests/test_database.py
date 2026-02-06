@@ -1,7 +1,7 @@
 import contextlib
 
 from albums.database import connection, operations, schema, selector
-from albums.types import Album, ScanHistoryEntry, Stream, Track
+from albums.types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 
 class TestDatabase:
@@ -9,7 +9,7 @@ class TestDatabase:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             schema_version = db.execute("SELECT version FROM _schema;").fetchall()
             assert len(schema_version) == 1
-            assert schema_version[0][0] == schema.CURRENT_SCHEMA_VERSION
+            assert schema_version[0][0] == max(schema.MIGRATIONS.keys())
 
     def test_foreign_key(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
@@ -19,7 +19,7 @@ class TestDatabase:
 
     def test_operations(self):
         def track(filename="1.flac"):
-            return Track(filename, {}, 1, 0, Stream(1.5, 0, 0, "FLAC"))
+            return Track(filename, {"title": ["foo", "bar"]}, 1, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6)])
 
         albums = [Album("foo/", [track()], []), Album("bar/", [track()], ["test"])]
 
@@ -38,6 +38,12 @@ class TestDatabase:
             result = list(selector.select_albums(db, ["test", "anything"], [], False))
             assert len(result) == 1  # initial collection
             assert result[0].path == "bar/"
+            assert sorted(result[0].tracks[0].tags.get("title", [])) == ["bar", "foo"]
+            assert result[0].tracks[0].stream.length == 1.5
+            assert result[0].tracks[0].stream.codec == "FLAC"
+            assert len(result[0].tracks[0].pictures) == 1
+            assert result[0].tracks[0].pictures[0].picture_type == PictureType.COVER_FRONT
+            assert result[0].tracks[0].pictures[0].file_size == 6
 
             assert len(list(selector.select_albums(db, [], ["/"], True))) == 2  # regex match all
             assert len(list(selector.select_albums(db, ["test", "anything"], ["/"], True))) == 1  # regex + collection match
