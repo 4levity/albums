@@ -1,3 +1,4 @@
+import json
 import logging
 import sqlite3
 
@@ -114,8 +115,17 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
         for picture in track.pictures:
             db.execute(
-                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size) VALUES (?, ?, ?, ?, ?, ?);",
-                (track_id, picture.picture_type.value, picture.format, picture.width, picture.height, picture.file_size),
+                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, mismatch) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+                (
+                    track_id,
+                    picture.picture_type.value,
+                    picture.format,
+                    picture.width,
+                    picture.height,
+                    picture.file_size,
+                    picture.file_hash,
+                    json.dumps(picture.mismatch) if picture.mismatch else None,
+                ),
             )
 
 
@@ -155,9 +165,10 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
 
 def _load_pictures(db: sqlite3.Connection, track_id: int):
     return [
-        Picture(PictureType(picture_type), format, width, height, file_size)
-        for picture_type, format, width, height, file_size in db.execute(
-            "SELECT picture_type, format, width, height, file_size FROM track_picture WHERE track_id = ? ORDER BY picture_type;", (track_id,)
+        Picture(PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(mismatch) if mismatch else None)
+        for picture_type, format, width, height, file_size, file_hash, mismatch in db.execute(
+            "SELECT picture_type, format, width, height, file_size, file_hash, mismatch FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
+            (track_id,),
         )
     ]
 

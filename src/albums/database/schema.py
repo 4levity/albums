@@ -75,7 +75,9 @@ CREATE TABLE track_picture (
     format TEXT NOT NULL,
     width INTEGER NOT NULL,
     height INTEGER NOT NULL,
-    file_size INTEGER NOT NULL
+    file_size INTEGER NOT NULL,
+    file_hash BLOB NOT NULL,
+    mismatch TEXT NULL
 );
 CREATE INDEX idx_track_picture_track_id ON track_picture(track_id);
 """,

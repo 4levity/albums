@@ -19,7 +19,9 @@ class TestDatabase:
 
     def test_operations(self):
         def track(filename="1.flac"):
-            return Track(filename, {"title": ["foo", "bar"]}, 1, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6)])
+            return Track(
+                filename, {"title": ["foo", "bar"]}, 1, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"")]
+            )
 
         albums = [Album("foo/", [track()], []), Album("bar/", [track()], ["test"])]
 

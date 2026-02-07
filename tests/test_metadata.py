@@ -1,4 +1,6 @@
 import pytest
+from mutagen.flac import FLAC
+from mutagen.flac import Picture as FlacPicture
 
 from albums.library.metadata import get_metadata, set_basic_tags
 from albums.types import Album, Picture, PictureType, Track
@@ -8,7 +10,7 @@ from .fixtures.empty_files import IMAGE_PNG_400X400
 
 albums = [
     Album("foo/", [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
-    Album("bar/", [Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0)])]),
+    Album("bar/", [Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")])]),
     Album("baz/", [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
 ]
 
@@ -74,11 +76,37 @@ class TestMetadata:
         assert tags["discnumber"] == ["2"]
         assert "disctotal" not in tags
 
-    def test_read_write_picture(self):
+    def test_read_flac_picture(self):
         file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
         pictures = get_metadata(file)[2]
         assert len(pictures) == 1
-        assert pictures[0] == Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400))
+
+        reference = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400), b"")
+        reference.file_hash = pictures[0].file_hash
+        # all other fields are the same:
+        assert pictures[0] == reference
+        assert pictures[0].mismatch is None  # mismatch record is not part of equality check
+
+    def test_read_flac_picture_mismatch(self):
+        file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
+        mut = FLAC(file)
+        mut.clear_pictures()
+        pic = FlacPicture()
+        pic.data = IMAGE_PNG_400X400
+        pic.type = PictureType.COVER_FRONT
+        pic.mime = "image/jpeg"  # wrong
+        pic.width = 401  # wrong
+        pic.height = 401  # wrong
+        pic.depth = 8
+        mut.add_picture(pic)
+        mut.save()
+
+        pictures = get_metadata(file)[2]
+        assert len(pictures) == 1
+        assert pictures[0].format == "image/png"
+        assert pictures[0].width == 400
+        assert pictures[0].height == 400
+        assert pictures[0].mismatch == {"format": "image/jpeg", "width": 401, "height": 401}
 
     def test_read_write_id3_tags(self):
         track = albums[2].tracks[0]

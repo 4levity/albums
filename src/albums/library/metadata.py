@@ -11,11 +11,18 @@ from mutagen.id3._frames import TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
+from albums.library.picture import get_picture_metadata
+
 from ..types import Album, Picture, PictureType, Stream
 
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
-BASIC_TO_ID3 = {"artist": "TPE1", "album": "TALB", "title": "TIT2", "albumartist": "TPE2"}
+BASIC_TO_ID3 = {
+    "artist": "TPE1",
+    "album": "TALB",
+    "title": "TIT2",
+    "albumartist": "TPE2",
+}  # TRCK and TPOS too but they are not 1:1
 
 
 class TagType(Enum):
@@ -305,14 +312,20 @@ def _get_pictures(file: MutagenFileTypeLike) -> list[Picture]:
 def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> list[Picture]:
     pictures: list[Picture] = []
     for picture in flac_pictures:
-        # TODO: image info in the metadata block can be wrong, we should check against image data so we can offer to fix it
-        pictures.append(
-            Picture(
-                PictureType(picture.type),
-                str(picture.mime) if isinstance(picture.mime, str) else "Unknown",  # type: ignore
-                picture.width,
-                picture.height,
-                len(picture.data) if picture.data else 0,  # type: ignore
-            )
-        )
+        picture_type = PictureType(picture.type)
+        image_data: bytes = picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        metadata = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
+
+        # use "real" metadata from the image data but record if data in flac metadata block disagrees
+        mb_mimetype = str(picture.mime) if isinstance(picture.mime, str) else "Unknown"  # type: ignore
+        mismatch = {}
+        if metadata.format != mb_mimetype:
+            mismatch["format"] = mb_mimetype
+        if metadata.width != picture.width or metadata.height != picture.height:
+            mismatch["width"] = picture.width
+            mismatch["height"] = picture.height
+        if mismatch:
+            metadata.mismatch = mismatch
+
+        pictures.append(metadata)
     return pictures

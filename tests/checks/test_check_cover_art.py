@@ -14,7 +14,7 @@ class TestCheckCoverArt:
                     0,
                     0,
                     Stream(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0)],
+                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")],
                 ),
                 Track(
                     "2.flac",
@@ -22,7 +22,7 @@ class TestCheckCoverArt:
                     0,
                     0,
                     Stream(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0)],
+                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")],
                 ),
             ],
         )
@@ -50,9 +50,12 @@ class TestCheckCoverArt:
                     0,
                     0,
                     Stream(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0), Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0)],
+                    [
+                        Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
+                        Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
+                    ],
                 ),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0)]),
+                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
             ],
         )
         result = CheckCoverArt(Context()).check(album)
@@ -63,8 +66,8 @@ class TestCheckCoverArt:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0)]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 500, 500, 0)]),
+                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 500, 500, 0, b"")]),
             ],
         )
         result = CheckCoverArt(Context()).check(album)
@@ -75,8 +78,8 @@ class TestCheckCoverArt:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0)]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0)]),
+                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
             ],
         )
         result = CheckCoverArt(Context()).check(album)
@@ -87,7 +90,7 @@ class TestCheckCoverArt:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0)]),
+                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
                 Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")),
             ],
         )
@@ -96,25 +99,25 @@ class TestCheckCoverArt:
         assert result.message == "some tracks have COVER_FRONT and some do not"
 
     def test_cover_art_not_square(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 401, 400, 0)])])
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 401, 400, 0, b"")])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT is not square (401x400)"
 
     def test_cover_art_format(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/gif", 400, 400, 0)])])
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/gif", 400, 400, 0, b"")])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is not a recommended format (image/gif)"
 
     def test_cover_art_too_small(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0)])])
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0, b"")])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too small (10x10)"
 
     def test_cover_art_too_large(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 9001, 9001, 0)])])
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 9001, 9001, 0, b"")])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too large (9001x9001)"

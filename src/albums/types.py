@@ -51,7 +51,8 @@ class Picture:
     width: int
     height: int
     file_size: int
-    # TODO hash image data
+    file_hash: bytes  # 32 bit xxhash
+    mismatch: dict[str, str | int] | None = None  # not considered for equality
 
     def to_dict(self):
         return self.__dict__
@@ -65,6 +66,7 @@ class Picture:
             and self.width == other.width
             and self.height == other.height
             and self.file_size == other.file_size
+            and self.file_hash == other.file_hash
         )
 
 
