@@ -121,3 +121,21 @@ class TestCheckCoverArt:
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too large (9001x9001)"
+
+    def test_cover_art_metadata_mismatch(self):
+        album = Album(
+            "",
+            [
+                Track(
+                    "1.flac",
+                    {},
+                    0,
+                    0,
+                    Stream(1.5, 0, 0, "FLAC"),
+                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", {"format": "image/jpeg"})],
+                )
+            ],
+        )
+        result = CheckCoverArt(Context()).check(album)
+        assert result is not None
+        assert result.message == "embedded image metadata mismatch, actual image/png 400x400 but container says image/jpeg 400x400"

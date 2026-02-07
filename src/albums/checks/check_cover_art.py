@@ -30,6 +30,10 @@ class CheckCoverArt(Check):
                         track_cover = picture
                     else:
                         issues.add("multiple COVER_FRONT pictures in one track")
+                if picture.mismatch:
+                    actual = f"{picture.format} {picture.width}x{picture.height}"
+                    reported = f"{picture.mismatch.get('format', picture.format)} {picture.mismatch.get('width', picture.width)}x{picture.mismatch.get('height', picture.height)}"
+                    issues.add(f"embedded image metadata mismatch, actual {actual} but container says {reported}")
 
             if track_cover and not album_cover:
                 album_cover = track_cover
@@ -52,7 +56,6 @@ class CheckCoverArt(Check):
                 issues.add(f"COVER_FRONT image is too small ({album_cover.width}x{album_cover.height})")
             if max(album_cover.height, album_cover.width) > self.max_pixels:
                 issues.add(f"COVER_FRONT image is too large ({album_cover.width}x{album_cover.height})")
-            # TODO more configurable + additional validation of image data
         elif self.cover_front_required:
             issues.add("album does not have a COVER_FRONT picture")
 
