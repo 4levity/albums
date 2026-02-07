@@ -45,13 +45,13 @@ class CheckCoverArt(Check):
 
         if album_cover:
             if album_cover.width != album_cover.height:
-                issues.add(f"COVER_FRONT is not square ({album_cover.width}, {album_cover.height})")
+                issues.add(f"COVER_FRONT is not square ({album_cover.width}x{album_cover.height})")
             if album_cover.format not in {"image/png", "image/jpeg"}:
                 issues.add(f"COVER_FRONT image is not a recommended format ({album_cover.format})")
             if min(album_cover.height, album_cover.width) < self.min_pixels:
-                issues.add(f"COVER_FRONT image is too small ({album_cover.width}, {album_cover.height})")
+                issues.add(f"COVER_FRONT image is too small ({album_cover.width}x{album_cover.height})")
             if max(album_cover.height, album_cover.width) > self.max_pixels:
-                issues.add(f"COVER_FRONT image is too large ({album_cover.width}, {album_cover.height})")
+                issues.add(f"COVER_FRONT image is too large ({album_cover.width}x{album_cover.height})")
             # TODO more configurable + additional validation of image data
         elif self.cover_front_required:
             issues.add("album does not have a COVER_FRONT picture")

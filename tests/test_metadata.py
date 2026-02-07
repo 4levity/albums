@@ -7,13 +7,14 @@ from .fixtures.create_library import create_library
 from .fixtures.empty_files import IMAGE_PNG_400X400
 
 albums = [
-    Album("foo/", [Track("1.mp3", {"tracknumber": ["1/3"], "discnumber": ["2/2"]})]),
+    Album("foo/", [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
     Album("bar/", [Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0)])]),
+    Album("baz/", [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
 ]
 
 
 class TestMetadata:
-    @pytest.fixture(scope="module", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def setup_cli_tests(self):
         TestMetadata.library = create_library("metadata", albums)
 
@@ -73,8 +74,27 @@ class TestMetadata:
         assert tags["discnumber"] == ["2"]
         assert "disctotal" not in tags
 
-    def test_read_picture(self):
+    def test_read_write_picture(self):
         file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
         pictures = get_metadata(file)[2]
         assert len(pictures) == 1
         assert pictures[0] == Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400))
+
+    def test_read_write_id3_tags(self):
+        track = albums[2].tracks[0]
+        file = TestMetadata.library / albums[2].path / track.filename
+        tags = get_metadata(file)[0]
+        assert tags["artist"] == track.tags["artist"]
+        assert tags["albumartist"] == track.tags["albumartist"]
+        assert tags["album"] == track.tags["album"]
+        assert tags["title"] == track.tags["title"]
+
+    def test_update_id3_tags(self):
+        track = albums[2].tracks[0]
+        file = TestMetadata.library / albums[2].path / track.filename
+        assert set_basic_tags(file, [("artist", "a1"), ("albumartist", "a2"), ("album", "a3"), ("title", "t")])
+        tags = get_metadata(file)[0]
+        assert tags["artist"] == ["a1"]
+        assert tags["albumartist"] == ["a2"]
+        assert tags["album"] == ["a3"]
+        assert tags["title"] == ["t"]

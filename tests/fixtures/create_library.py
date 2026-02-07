@@ -3,11 +3,11 @@ import shutil
 from pathlib import Path
 
 import mutagen
-from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
 
+from albums.library.metadata import MutagenFileTypeLike, TagType, set_basic_tags_file
 from albums.types import Album, Track
 
 from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES, IMAGE_PNG_400X400
@@ -24,9 +24,11 @@ def create_file(path: Path, spec: Track):
             file.write(EMPTY_MP3_FILE_BYTES)
         elif filename.suffix == ".wma":
             file.write(EMPTY_WMA_FILE_BYTES)
-    mut = None
+    mut: MutagenFileTypeLike | None = None
+    tag_type = TagType.OTHER
     if filename.suffix == ".flac":
-        mut = FLAC(filename)
+        mut = FLAC(filename)  # pyright: ignore[reportAssignmentType]
+        tag_type = TagType.VORBIS_COMMENTS
         for picture in spec.pictures:
             pic = FlacPicture()
             pic.data = IMAGE_PNG_400X400  # TODO generate image of the specified size
@@ -37,13 +39,14 @@ def create_file(path: Path, spec: Track):
             pic.depth = 8
             mut.add_picture(pic)
     elif filename.suffix == ".mp3":
-        mut = MP3(filename, ID3=EasyID3)
+        mut = MP3(filename)  # pyright: ignore[reportAssignmentType]
+        tag_type = TagType.ID3_FRAMES
     elif filename.suffix == ".wma":
         mut = mutagen.File(filename)
 
     if mut is not None:
-        for name, value in spec.tags.items() if spec.tags else []:
-            mut[name] = value
+        set_basic_tags_file(mut, list(spec.tags.items()), tag_type)
+
         # minimum padding ensures small changes to tags will change file size for test
         mut.save(padding=lambda info: 0)
 

@@ -1,34 +1,36 @@
 import logging
 import textwrap
-from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any
 
 import mutagen
-from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
+from mutagen.id3._frames import TALB, TIT2, TPE1, TPE2, TPOS, TRCK
+from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
 from ..types import Album, Picture, PictureType, Stream
 
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
+BASIC_TO_ID3 = {"artist": "TPE1", "album": "TALB", "title": "TIT2", "albumartist": "TPE2"}
 
 
-@dataclass
-class TagCapabilities:
-    has_tracktotal: bool
-    has_disctotal: bool
+class TagType(Enum):
+    VORBIS_COMMENTS = auto()
+    ID3_FRAMES = auto()  # basic tags will be converted to Vorbis comment convention
+    OTHER = auto()  # TODO more
 
 
 class MutagenFileTypeLike(dict[Any, Any]):
     # a type to resemble mutagen FileType objects including FLAC, MP3 and whatever mutagen.File returns
     filename: str
     info: Any
-    tags: dict[str, Any]
+    tags: Any
 
-    def save(self): ...
+    def save(self, **_: Any): ...
 
 
 def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream, list[Picture]] | None:
@@ -36,14 +38,14 @@ def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream, list[Picture]] | N
     if not file_info:
         return None
 
-    (file, codec, capabilities) = file_info
+    (file, codec, tag_type) = file_info
     stream_info = _get_stream_info(file, codec)
-    tags = _get_tags(file, capabilities)
+    tags = _get_tags(file, tag_type)
     pictures = _get_pictures(file)
     return (tags, stream_info, pictures)
 
 
-def album_is_basic_taggable(album: Album):  # TODO use TagCapabilities instead
+def album_is_basic_taggable(album: Album):  # TODO use TagType instead
     ok = True
     for track in album.tracks:
         if not supports_basic_tags(Path(track.filename), track.stream.codec if track.stream else None):
@@ -51,47 +53,83 @@ def album_is_basic_taggable(album: Album):  # TODO use TagCapabilities instead
     return ok
 
 
-def supports_basic_tags(filename: Path, codec: str | None):  # TODO use TagCapabilities instead
+def supports_basic_tags(filename: Path, codec: str | None):  # TODO use TagType instead
     return str.lower(filename.suffix) in [".flac", ".mp3", ".ogg"] and (codec is None or codec in ["FLAC", "MP3", "Ogg Vorbis"])
 
 
 def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | None]]):
-    # remove any tag, only set supported tags
-    for name, value in tag_values:
-        if value is not None and name not in BASIC_TAGS:
-            raise ValueError(f"tag '{name}' is not a supported basic tag")
-
     file_info = _mutagen_load_file(path)
     if not file_info:
         raise ValueError(f"couldn't access {path} to write tags")
 
-    (file, codec, capabilities) = file_info
-    if not supports_basic_tags(path, codec):  # TODO use TagCapabilities instead
-        logger.warning(f"cannot set tags {[name for (name, _) in tag_values]} in {codec} file {path}")
-        return False
+    (file, _, tag_type) = file_info
+    return set_basic_tags_file(file, tag_values, tag_type)
+
+
+def set_basic_tags_file(file: MutagenFileTypeLike, tag_values: list[tuple[str, str | list[str] | None]], tag_type: TagType) -> bool:
+    for name, _ in tag_values:
+        # remove any tag, only set supported tags
+        # if value is not None and name not in BASIC_TAGS:
+        if name not in BASIC_TAGS:
+            raise ValueError(f"tag '{name}' is not a supported basic tag")
 
     changed = False
     for name, value in tag_values:
-        if (name in {"tracknumber", "tracktotal"} and not capabilities.has_tracktotal) or (
-            name in {"discnumber", "disctotal"} and not capabilities.has_disctotal
-        ):
-            tags = _get_tags(file, capabilities)
-            new_value = value[0] if isinstance(value, list) else value
-            if name == "tracknumber":
-                changed |= _set_tracknumber_and_tracktotal(file, new_value, tags.get("tracktotal", [None])[0])
-            if name == "tracktotal":
-                changed |= _set_tracknumber_and_tracktotal(file, tags.get("tracknumber", [None])[0], new_value)
-            if name == "discnumber":
-                changed |= _set_discnumber_and_disctotal(file, new_value, tags.get("disctotal", [None])[0])
-            if name == "disctotal":
-                changed |= _set_discnumber_and_disctotal(file, tags.get("discnumber", [None])[0], new_value)
-        elif value is None:
-            if name in file:
-                del file[name]
+        if tag_type == TagType.ID3_FRAMES:
+            if not file.tags:
+                raise ValueError("")
+            if name in {"tracknumber", "tracktotal", "discnumber", "disctotal"}:
+                tags = _get_tags(file, tag_type)
+                new_value = value[0] if isinstance(value, list) else value
+                if name == "tracknumber":
+                    changed |= _id3_set_tracknumber_and_tracktotal(file, new_value, tags.get("tracktotal", [None])[0])
+                if name == "tracktotal":
+                    changed |= _id3_set_tracknumber_and_tracktotal(file, tags.get("tracknumber", [None])[0], new_value)
+                if name == "discnumber":
+                    changed |= _id3_set_discnumber_and_disctotal(file, new_value, tags.get("disctotal", [None])[0])
+                if name == "disctotal":
+                    changed |= _id3_set_discnumber_and_disctotal(file, tags.get("discnumber", [None])[0], new_value)
+            elif name == "artist":
+                tpe1 = TPE1(encoding=Encoding.UTF8, text=value if isinstance(value, list) else [value])
+                if "TPE1" in file.tags:
+                    file.tags["TPE1"] = tpe1
+                else:
+                    file.tags.add(tpe1)
                 changed = True
+            elif name == "albumartist":
+                tpe2 = TPE2(encoding=Encoding.UTF8, text=value if isinstance(value, list) else [value])
+                if "TPE2" in file.tags:
+                    file.tags["TPE2"] = tpe2
+                else:
+                    file.tags.add(tpe2)
+                changed = True
+            elif name == "album":
+                talb = TALB(encoding=Encoding.UTF8, text=value if isinstance(value, list) else [value])
+                if "TALB" in file.tags:
+                    file.tags["TALB"] = talb
+                else:
+                    file.tags.add(talb)
+                changed = True
+            elif name == "title":
+                tit2 = TIT2(encoding=Encoding.UTF8, text=value if isinstance(value, list) else [value])
+                if "TIT2" in file.tags:
+                    file.tags["TIT2"] = tit2
+                else:
+                    file.tags.add(tit2)
+                changed = True
+            else:
+                logger.error(f"cannot set ID3 tag for {name}")  # shouldn't happen, not in BASIC_TAGS?
+
         else:
-            file[name] = value
-            changed = True
+            if tag_type != TagType.VORBIS_COMMENTS:
+                logger.warning(f"setting maybe unsupported tag {name} in {tag_type} file {file.filename}")
+            if value is None:
+                if name in file:
+                    del file[name]
+                    changed = True
+            else:
+                file[name] = value
+                changed = True
 
     if changed:
         file.save()
@@ -99,7 +137,7 @@ def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | Non
     return False
 
 
-def _set_discnumber_and_disctotal(file: MutagenFileTypeLike, discnumber: str | None, disctotal: str | None):
+def _id3_set_discnumber_and_disctotal(file: MutagenFileTypeLike, discnumber: str | None, disctotal: str | None):
     if discnumber is None and disctotal is None:
         value = None
     elif disctotal is None:
@@ -109,18 +147,21 @@ def _set_discnumber_and_disctotal(file: MutagenFileTypeLike, discnumber: str | N
     else:
         value = f"{discnumber}/{disctotal}"
 
-    if value is None and "discnumber" in file:
-        del file["discnumber"]
+    if value is None and "TPOS" in file:
+        del file["TPOS"]
         return True
 
-    if value is not None and ("discnumber" not in file or file["discnumber"] != [value]):
-        file["discnumber"] = value
+    if value is not None and "TPOS" not in file:
+        file.tags.add(TPOS(encoding=Encoding.UTF8, text=[value]))
+        return True
+    elif value is not None and file["TPOS"].text != [value]:
+        file["TPOS"] = TPOS(encoding=Encoding.UTF8, text=[value])
         return True
 
     return False
 
 
-def _set_tracknumber_and_tracktotal(file: MutagenFileTypeLike, tracknumber: str | None, tracktotal: str | None):
+def _id3_set_tracknumber_and_tracktotal(file: MutagenFileTypeLike, tracknumber: str | None, tracktotal: str | None):
     if tracknumber is None and tracktotal is None:
         value = None
     elif tracktotal is None:
@@ -130,28 +171,31 @@ def _set_tracknumber_and_tracktotal(file: MutagenFileTypeLike, tracknumber: str 
     else:
         value = f"{tracknumber}/{tracktotal}"
 
-    if value is None and "tracknumber" in file:
-        del file["tracknumber"]
+    if value is None and "TRCK" in file:
+        del file["TRCK"]
         return True
 
-    if value is not None and ("tracknumber" not in file or file["tracknumber"] != [value]):
-        file["tracknumber"] = value
+    if value is not None and "TRCK" not in file:
+        file.tags.add(TRCK(encoding=Encoding.UTF8, text=[value]))
+        return True
+    elif value is not None and file["TRCK"].text != [value]:
+        file["TRCK"] = TRCK(encoding=Encoding.UTF8, text=[value])
         return True
 
     return False
 
 
-def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagCapabilities] | None:
+def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagType] | None:
     codec: str | None = None
     suffix = str.lower(path.suffix)
     if suffix == ".flac":
         file = FLAC(path)  # pyright: ignore[reportAssignmentType]
         codec = "FLAC"
-        capabilities = TagCapabilities(has_tracktotal=True, has_disctotal=True)
+        tag_type = TagType.VORBIS_COMMENTS
     elif suffix == ".mp3":
-        file = MP3(path, ID3=EasyID3)  # pyright: ignore[reportAssignmentType]
+        file = MP3(path)  # pyright: ignore[reportAssignmentType]
         codec = "MP3"
-        capabilities = TagCapabilities(has_tracktotal=False, has_disctotal=False)
+        tag_type = TagType.ID3_FRAMES
     else:
         file: MutagenFileTypeLike | None = mutagen.File(  # pyright: ignore[reportPrivateImportUsage, reportUnknownMemberType, reportAssignmentType]
             path
@@ -159,15 +203,15 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagCapabil
         if file is None:
             return None
         codec = _get_codec(file)
-        capabilities = TagCapabilities(has_tracktotal=True, has_disctotal=True)  # TODO this is often NOT true
+        tag_type = TagType.OTHER
 
     if file is not None:
-        return (file, codec, capabilities)
+        return (file, codec, tag_type)
     else:
         return None
 
 
-def _get_tags(file: MutagenFileTypeLike, capabilities: TagCapabilities):
+def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
     def store_value(key: str, value: Any):
         if key == "covr":
             return "binary data not stored"  # TODO: get image metadata
@@ -180,30 +224,36 @@ def _get_tags(file: MutagenFileTypeLike, capabilities: TagCapabilities):
         name = str.lower(tag_name)
         for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
             tags.setdefault(name, []).append(store_value(name, value))
-    _normalize(tags, capabilities)
+    _normalize(tags, file, tag_type)
     return tags
 
 
-def _normalize(tags: dict[str, list[str]], capabilities: TagCapabilities) -> None:
-    tracknumber_tag = tags.get("tracknumber", [None])[0]
-    if not capabilities.has_tracktotal:
-        if "tracktotal" in tags:
-            logger.warning("internal error: tracktotal tag exists but capabilities indicate it should not")
-        # extract tracktotal from ID3/etc tags
-        elif tracknumber_tag and str.count(tracknumber_tag, "/") == 1:
-            [tracknumber, tracktotal] = tracknumber_tag.split("/")
-            tags["tracknumber"] = [tracknumber]
-            tags["tracktotal"] = [tracktotal]
+def _normalize(tags: dict[str, list[str]], file: MutagenFileTypeLike, tag_type: TagType) -> None:
+    if tag_type == TagType.ID3_FRAMES:
+        tracknumber_tag = file.tags.get("TRCK")
+        if tracknumber_tag:
+            tracknumber_value = str(tracknumber_tag.text[0])
+            if str.count(tracknumber_value, "/") == 1:
+                [tracknumber, tracktotal] = tracknumber_value.split("/")
+                tags["tracknumber"] = [tracknumber]
+                tags["tracktotal"] = [tracktotal]
+            else:
+                tags["tracknumber"] = [tracknumber_value]
 
-    if not capabilities.has_disctotal:
-        if "disctotal" in tags:
-            logger.warning("internal error: disctotal tag exists but capabilities indicate it should not")
-        # extract disctotal from ID3 tags
-        discnumber_tag = tags.get("discnumber", [None])[0]
-        if discnumber_tag and "disctotal" not in tags and str.count(discnumber_tag, "/") == 1:
-            [discnumber, disctotal] = discnumber_tag.split("/")
-            tags["discnumber"] = [discnumber]
-            tags["disctotal"] = [disctotal]
+        discnumber_tag = file.tags.get("TPOS")
+        if discnumber_tag:
+            discnumber_value = str(discnumber_tag.text[0])
+            if str.count(discnumber_value, "/") == 1:
+                [discnumber, disctotal] = discnumber_value.split("/")
+                tags["discnumber"] = [discnumber]
+                tags["disctotal"] = [disctotal]
+            elif discnumber_tag:
+                tags["discnumber"] = [discnumber_value]
+
+        for common_tag, id3_tag in BASIC_TO_ID3.items():
+            if id3_tag in file.tags:
+                tag_value: list[str] = file.tags.get(id3_tag).text
+                tags[common_tag] = tag_value
 
 
 def _get_codec(file: MutagenFileTypeLike) -> str:

@@ -99,7 +99,7 @@ class TestCheckCoverArt:
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 401, 400, 0)])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
-        assert result.message == "COVER_FRONT is not square (401, 400)"
+        assert result.message == "COVER_FRONT is not square (401x400)"
 
     def test_cover_art_format(self):
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/gif", 400, 400, 0)])])
@@ -111,10 +111,10 @@ class TestCheckCoverArt:
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0)])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
-        assert result.message == "COVER_FRONT image is too small (10, 10)"
+        assert result.message == "COVER_FRONT image is too small (10x10)"
 
     def test_cover_art_too_large(self):
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 9001, 9001, 0)])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
-        assert result.message == "COVER_FRONT image is too large (9001, 9001)"
+        assert result.message == "COVER_FRONT image is too large (9001x9001)"
