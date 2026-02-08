@@ -158,7 +158,7 @@ class CheckTrackNumbering(Check):
                 if len(actual_track_numbers) == len(tracks):
                     # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
-                    return CheckResult(ProblemCategory.OTHER, f"tracks missing from album{on_disc_message} {missing_track_numbers}")
+                    return CheckResult(ProblemCategory.TAGS, f"tracks missing from album{on_disc_message} {missing_track_numbers}")
                 return CheckResult(ProblemCategory.TAGS, f"missing track numbers{on_disc_message} {missing_track_numbers}")
 
         return None
