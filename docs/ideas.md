@@ -19,10 +19,10 @@ icon: lucide/flask-conical
 
 ### More checks and fixes
 
-- album art (missing, not in desired format, not the same on all tracks, too
-  small/too large)
 - low bitrate or suboptimal codec
 - not all tracks encoded the same (file type or kbps target)
 - track filename doesn't match title, doesn't include track/disc number
 - album folder doesn't match album name
 - parent folder doesn't match artist if using artist/album
+- implement visual similarity check for front cover art, so it can be stored in
+  multiple formats and resolutions without disabling uniqueness check

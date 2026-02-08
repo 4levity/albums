@@ -1,9 +1,9 @@
 from .base_check import Check
+from .check_album_art import CheckAlbumArt
 from .check_album_artist import CheckAlbumArtist
 from .check_album_tag import CheckAlbumTag
 from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_artist_tag import CheckArtistTag
-from .check_cover_art import CheckCoverArt
 from .check_disc_in_track_number import CheckDiscInTrackNumber
 from .check_disc_numbering import CheckDiscNumbering
 from .check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
@@ -27,7 +27,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckDiscNumbering,
     CheckTrackNumbering,
     CheckTrackTitle,
-    CheckCoverArt,
+    CheckAlbumArt,
     # pickier checks, may require correct tags
     CheckZeroPadNumbers,
     # non-tag related

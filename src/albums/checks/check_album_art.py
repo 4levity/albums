@@ -1,18 +1,31 @@
 from collections import defaultdict
 from typing import Any
 
+import humanize
+
 from ..types import Album, Picture, PictureType
 from .base_check import Check, CheckResult, ProblemCategory
 
 
-class CheckCoverArt(Check):
-    name = "cover_art"
-    default_config = {"enabled": True, "cover_front_required": False, "min_pixels": 100, "max_pixels": 2048}
+class CheckAlbumArt(Check):
+    name = "album_art"
+    default_config = {
+        "enabled": True,
+        "cover_front_required": False,
+        "cover_min_pixels": 100,
+        "cover_max_pixels": 2048,
+        "cover_unique": True,
+        "cover_squareness": 0.98,
+        "embedded_size_max": 8 * 1024 * 1024,  # up to 16 MB is OK in ID3v2
+    }
 
     def init(self, check_config: dict[str, Any]):
-        self.cover_front_required = bool(check_config.get("cover_front_required", CheckCoverArt.default_config["cover_front_required"]))
-        self.min_pixels = int(check_config.get("min_pixels", CheckCoverArt.default_config["min_pixels"]))
-        self.max_pixels = int(check_config.get("max_pixels", CheckCoverArt.default_config["max_pixels"]))
+        self.cover_front_required = bool(check_config.get("cover_front_required", CheckAlbumArt.default_config["cover_front_required"]))
+        self.cover_min_pixels = int(check_config.get("cover_min_pixels", CheckAlbumArt.default_config["cover_min_pixels"]))
+        self.cover_max_pixels = int(check_config.get("cover_max_pixels", CheckAlbumArt.default_config["cover_max_pixels"]))
+        self.cover_unique = bool(check_config.get("cover_unique", CheckAlbumArt.default_config["cover_unique"]))
+        self.cover_squareness = float(check_config.get("cover_squareness", CheckAlbumArt.default_config["cover_squareness"]))
+        self.embedded_size_max = int(check_config.get("embedded_size_max", CheckAlbumArt.default_config["embedded_size_max"]))
 
     def check(self, album: Album) -> CheckResult | None:
         if album.codec() != "FLAC" and self.cover_front_required:
@@ -41,6 +54,10 @@ class CheckCoverArt(Check):
                         issues.add(f"embedded image metadata mismatch, actual {actual} but container says {reported}")
                     if picture.format not in {"image/png", "image/jpeg"}:
                         issues.add(f"embedded image {picture.picture_type.name} is not a recommended format ({picture.format})")
+                    if picture.file_size > self.embedded_size_max:
+                        file_size = humanize.naturalsize(picture.file_size, binary=True)
+                        file_size_max = humanize.naturalsize(self.embedded_size_max, binary=True)
+                        issues.add(f"embedded image {picture.picture_type.name} is over the configured limit ({file_size} > {file_size_max})")
             if embedded:
                 if file_cover:
                     tracks_with_cover += 1
@@ -51,15 +68,15 @@ class CheckCoverArt(Check):
                 issues.add("some tracks have COVER_FRONT and some do not")
 
             unique_front_covers = set(front_covers)
-            if len(unique_front_covers) != 1:
+            if self.cover_unique and len(unique_front_covers) != 1:
                 issues.add("COVER_FRONT pictures are not all the same")
 
             for cover in unique_front_covers:
-                if cover.width != cover.height:
+                if not self._cover_square_enough(cover.width, cover.height):
                     issues.add(f"COVER_FRONT is not square ({cover.width}x{cover.height})")
-                if min(cover.height, cover.width) < self.min_pixels:
+                if min(cover.height, cover.width) < self.cover_min_pixels:
                     issues.add(f"COVER_FRONT image is too small ({cover.width}x{cover.height})")
-                if max(cover.height, cover.width) > self.max_pixels:
+                if max(cover.height, cover.width) > self.cover_max_pixels:
                     issues.add(f"COVER_FRONT image is too large ({cover.width}x{cover.height})")
         elif pictures_by_type:
             issues.add("album has pictures but none is COVER_FRONT picture")
@@ -68,3 +85,7 @@ class CheckCoverArt(Check):
 
         if issues:
             return CheckResult(ProblemCategory.PICTURES, ", ".join(list(issues)))
+
+    def _cover_square_enough(self, x: int, y: int) -> bool:
+        aspect = 0 if max(x, y) == 0 else min(x, y) / max(x, y)
+        return aspect > self.cover_squareness

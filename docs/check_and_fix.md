@@ -264,11 +264,12 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
-### cover_art
+### album_art
 
-If any track has any pictures in its metadata, or if there are any image files
-in the folder, the album should have correct front cover art. (Or require for
-all albums, see settings.)
+Embedded files should be stored correctly and a reasonable size. If any track
+has any pictures in its metadata, or if there are any image files in the folder,
+the album should have correct front cover art. (Or require for all albums, see
+settings.)
 
 !!!note
 
@@ -284,13 +285,14 @@ the filename, or both.
 
 Rules:
 
-- Each track should have **one** cover art image, if any track has embedded
-  cover art
-- All cover art associated with the album should be the exact same image
-  (including embedded `COVER_FRONT` and files matching the filenames above)
-- Cover art should be square
-- Cover art should not be very small or very large (see options)
-- **All** embedded images should be in PNG or JPEG format (not GIF or other)
+- Each track should have a cover art image, if any track has embedded cover art
+- All cover art associated with the album should be the exact same image,
+  including embedded `COVER_FRONT` as well as image files matching the filenames
+  above (or see options)
+- The width/height of cover art should not be too small or large (see options)
+- Cover art should be square (see options)
+- **Embedded** images should not be very large files (see options)
+- **Embedded** images should be in PNG or JPEG format (not GIF or other)
 - If the file format (e.g. FLAC) records metadata about an embedded image (MIME
   type, dimensions), that information should match the actual image data
 
@@ -301,11 +303,14 @@ type `OTHER`.
 
 <!-- pyml disable line-length -->
 
-| Option                 | Default   | Description                                                 |
-| ---------------------- | --------- | ----------------------------------------------------------- |
-| `cover_front_required` | **false** | if **true** every album should have correct front cover art |
-| `min_pixels`           | **100**   | front cover art should be at least this width/height        |
-| `max_pixels`           | **2048**  | front cover art should not be larger than this width/height |
+| Option                 | Default     | Description                                                                       |
+| ---------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `cover_front_required` | **false**   | if **true** every album should have correct front cover art                       |
+| `cover_min_pixels`     | **100**     | front cover art should be at least this width/height                              |
+| `cover_max_pixels`     | **2048**    | front cover art should not be larger than this width/height                       |
+| `cover_unique`         | **true**    | if **true** all front cover art should be the exact same image                    |
+| `cover_squareness`     | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
+| `embedded_size_max`    | **8388608** | embedded image data maximum size (not including container encoding)               |
 
 <!-- pyml enable line-length -->
 
