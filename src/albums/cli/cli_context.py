@@ -9,10 +9,8 @@ from platformdirs import PlatformDirs
 from rich.logging import RichHandler
 from rich.prompt import Confirm
 
-import albums.database.connection
-import albums.database.selector
-
 from ..app import Context
+from ..database import connection, selector
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +85,10 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
     else:
         new_database = False
 
-    db = albums.database.connection.open(album_db_file)
-    ctx.call_on_close(lambda: albums.database.connection.close(db))
+    db = connection.open(album_db_file)
+    ctx.call_on_close(lambda: connection.close(db))
     app_context.db = db
-    app_context.select_albums = lambda load_track_tag: albums.database.selector.select_albums(db, collections, paths, regex, load_track_tag)
+    app_context.select_albums = lambda load_track_tag: selector.select_albums(db, collections, paths, regex, load_track_tag)
 
     # filters applied to command
     app_context.filter_collections = collections

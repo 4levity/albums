@@ -14,9 +14,8 @@ if not sys.platform.startswith("win"):
 else:
     simple_term_menu = None
 
-import albums.database.operations
-
 from .. import app
+from ..database import operations
 from ..types import Album
 from .base_check import CheckResult, ProblemCategory
 
@@ -127,7 +126,7 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
     elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console, default=False):
         ignore_checks.append(check_name)
-        albums.database.operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
+        operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
         return True
     return False
 

@@ -8,10 +8,9 @@ from typing import Callable, Iterable
 from rich.markup import escape
 from rich.progress import Progress
 
-import albums.database.operations
-from albums.types import ScanHistoryEntry
-
 from .. import app
+from ..database import operations
+from ..types import ScanHistoryEntry
 from .folder import AlbumScanResult, scan_folder
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                 show_progress = len(paths) > 1
                 expected_path_count = len(paths)
             else:
-                last_scan = albums.database.operations.get_last_scan_info(ctx.db)
+                last_scan = operations.get_last_scan_info(ctx.db)
                 if last_scan:
                     # make scan faster while retaining progress bar by using last scan stats for approx folder count
                     paths = glob.iglob("**/", root_dir=ctx.library_root, recursive=True)
@@ -72,7 +71,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                     stored_album = None
                 else:
                     del unprocessed_albums[path_str]
-                    stored_album = albums.database.operations.load_album(db, album_id, True)
+                    stored_album = operations.load_album(db, album_id, True)
 
                 (album, result) = scan_folder(library_root, path_str, suffixes, stored_album, reread)
                 scan_results[result.name] += 1
@@ -81,18 +80,18 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                     logger.debug(f"no changes detected for album {album.path}", extra={"highlighter": None})
                 elif album and result == AlbumScanResult.NEW:
                     logger.info(f"add album {album.path}", extra={"highlighter": None})
-                    albums.database.operations.add(db, album)
+                    operations.add(db, album)
                     any_changes = True
                 elif album and album_id is not None and result == AlbumScanResult.UPDATED:
                     logger.info(f"update track info for album {album.path}", extra={"highlighter": None})
                     # TODO only update what changed
-                    albums.database.operations.update_tracks(db, album_id, album.tracks)
-                    albums.database.operations.update_picture_files(db, album_id, album.picture_files)
+                    operations.update_tracks(db, album_id, album.tracks)
+                    operations.update_picture_files(db, album_id, album.picture_files)
                     any_changes = True
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:
                         logger.info(f"remove album {album_id} {stored_album.path}", extra={"highlighter": None})
-                        albums.database.operations.remove(db, album_id)
+                        operations.remove(db, album_id)
                         any_changes = True
                 else:
                     raise ValueError(
@@ -116,7 +115,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
         for path, album_id in unprocessed_albums.items():
             if album_id is not None:
                 logger.info(f"remove album {album_id} {path}")
-                albums.database.operations.remove(ctx.db, album_id)
+                operations.remove(ctx.db, album_id)
                 any_changes = True
                 scan_results["REMOVED"] += 1
 
@@ -124,7 +123,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
             albums_total = (
                 scan_results[AlbumScanResult.NEW.name] + scan_results[AlbumScanResult.UPDATED.name] + scan_results[AlbumScanResult.UNCHANGED.name]
             )
-            albums.database.operations.record_full_scan(ctx.db, ScanHistoryEntry(int(time.perf_counter()), scanned, albums_total))
+            operations.record_full_scan(ctx.db, ScanHistoryEntry(int(time.perf_counter()), scanned, albums_total))
 
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")

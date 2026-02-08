@@ -1,8 +1,7 @@
 import rich_click as click
 
-import albums.database.operations
-
 from .. import app
+from ..database import operations
 from . import cli_context
 
 
@@ -26,4 +25,4 @@ def collections_add(ctx: app.Context, collection_names: list[str]):
         if changed:
             if album.album_id is None:
                 raise ValueError(f"unexpected album.album_id=None for {album.path}")
-            albums.database.operations.update_collections(ctx.db, album.album_id, album.collections)
+            operations.update_collections(ctx.db, album.album_id, album.collections)

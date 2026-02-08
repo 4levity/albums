@@ -11,9 +11,8 @@ from mutagen.id3._frames import TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
-from albums.library.picture import get_picture_metadata
-
 from ..types import Album, Picture, PictureType, Stream
+from .picture import get_picture_metadata
 
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}

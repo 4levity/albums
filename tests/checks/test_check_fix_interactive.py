@@ -1,10 +1,9 @@
 import rich
 
-import albums.database.connection
-import albums.database.operations
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
 from albums.checks.interact import interact
+from albums.database import connection, operations
 from albums.types import Album, Stream, Track
 
 
@@ -42,8 +41,8 @@ class TestCheckFixInteractive:
     def test_fix_ignore_check(self, mocker):
         album = Album("/", [Track("1.flac", stream=Stream())], album_id=1)
         ctx = app.Context()
-        ctx.db = albums.database.connection.open(albums.database.connection.MEMORY)
-        album_id = albums.database.operations.add(ctx.db, album)
+        ctx.db = connection.open(connection.MEMORY)
+        album_id = operations.add(ctx.db, album)
 
         fixer = MockFixer(ctx, album)
         mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")

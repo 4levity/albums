@@ -2,10 +2,9 @@ from typing import Any
 
 from rich.markup import escape
 
-import albums.database.operations
-
 from .. import app
 from ..checks.base_check import Check, CheckResult
+from ..database import operations
 from ..library import scanner
 from ..types import Album
 from .all import ALL_CHECKS
@@ -88,7 +87,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
                             maybe_fixable = tracks_changed
                             if maybe_fixable and ctx.db and album.album_id:
                                 # reload album so we can check it again
-                                album = albums.database.operations.load_album(ctx.db, album.album_id, True)
+                                album = operations.load_album(ctx.db, album.album_id, True)
                         else:
                             maybe_fixable = False
                     else:
