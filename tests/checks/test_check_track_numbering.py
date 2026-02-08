@@ -75,28 +75,36 @@ class TestCheckTrackNumbering:
                 Track("3.flac", {"tracknumber": ["3"], "tracktotal": ["3"]}),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckTrackNumbering(ctx).check(album)
+        result = CheckTrackNumbering(Context()).check(album)
         assert "some tracks have different track total values" in result.message
         fixer = result.fixer
         assert fixer
         assert fixer.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 3"]
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_numbering.set_basic_tags")
         assert fixer.fix(fixer.options[0])
-        path = ctx.library_root / album.path
+        path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
             call(path / album.tracks[0].filename, [("tracktotal", "3")]),
             call(path / album.tracks[1].filename, [("tracktotal", "3")]),
         ]
 
-    def test_check_track_number_missing(self):
+    def test_check_track_number_missing(self, mocker):
         album = Album("Foo/", [Track("1.flac"), Track("2.flac"), Track("3.flac")])
         result = CheckTrackNumbering(Context()).check(album)
         assert "missing track numbers {1, 2, 3}" in result.message
-        assert result.fixer is None
+        assert result.fixer
+        assert result.fixer.options == [">> Automatically renumber 3 tracks based on filenames"]
+        assert result.fixer.option_automatic_index == 0
+        mock_set_basic_tags = mocker.patch("albums.checks.check_track_numbering.set_basic_tags")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        path = Path(album.path)
+        assert mock_set_basic_tags.call_args_list == [
+            call(path / album.tracks[0].filename, [("tracknumber", "1")]),
+            call(path / album.tracks[1].filename, [("tracknumber", "2")]),
+            call(path / album.tracks[2].filename, [("tracknumber", "3")]),
+        ]
 
-    def test_check_track_number_missing_on_one_disc(self):
+    def test_check_track_number_missing_on_one_disc(self, mocker):
         album = Album(
             "Foo/",
             [
@@ -107,7 +115,16 @@ class TestCheckTrackNumbering:
         )
         result = CheckTrackNumbering(Context()).check(album)
         assert "missing track numbers on disc 1 {1, 2}" in result.message
-        assert result.fixer is None
+        assert result.fixer
+        assert result.fixer.options == [">> Automatically renumber 2 tracks based on filenames"]
+        assert result.fixer.option_automatic_index == 0
+        mock_set_basic_tags = mocker.patch("albums.checks.check_track_numbering.set_basic_tags")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        path = Path(album.path)
+        assert mock_set_basic_tags.call_args_list == [
+            call(path / album.tracks[0].filename, [("tracknumber", "1")]),
+            call(path / album.tracks[1].filename, [("tracknumber", "2")]),
+        ]
 
     def test_check_unexpected_track_number(self):
         album = Album(

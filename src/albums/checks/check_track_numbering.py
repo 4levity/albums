@@ -10,7 +10,7 @@ from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, Track
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
-from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
+from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +69,9 @@ class TrackTotalFixer(Fixer):
             path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
             track_changed = False
             if new_tracktotal is None and "tracktotal" in track.tags:
-                ctx.console.print(f"removing tracktotal from {track.filename}")
+                ctx.console.print(f"removing tracktotal from {escape(track.filename)}", highlight=False)
             elif new_tracktotal is not None and track.tags.get("tracktotal", []) != [str(new_tracktotal)]:
-                ctx.console.print(f"setting tracktotal on {track.filename}")
+                ctx.console.print(f"setting tracktotal on {escape(track.filename)}", highlight=False)
                 track_changed = True
             if track_changed:
                 changed = True
@@ -159,6 +159,42 @@ class CheckTrackNumbering(Check):
                     # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
                     return CheckResult(ProblemCategory.TAGS, f"tracks missing from album{on_disc_message} {missing_track_numbers}")
-                return CheckResult(ProblemCategory.TAGS, f"missing track numbers{on_disc_message} {missing_track_numbers}")
+
+                # TODO: we can probably offer this fixer in some other cases, also
+                fixer = self._renumber_fixer(album, disc_number, tracks)
+                return CheckResult(ProblemCategory.TAGS, f"missing track numbers{on_disc_message} {missing_track_numbers}", fixer)
 
         return None
+
+    def _renumber_fixer(self, album: Album, disc_number: int, tracks: list[Track]) -> Fixer | None:
+        new_tracknumbers: dict[str, str] = {}
+        for track in tracks:
+            tag_tracknumber = int(track.tags.get("tracknumber", [0])[0])
+            (filename_discnumber, filename_tracknumber, _) = parse_filename(track.filename)
+
+            if filename_discnumber and filename_discnumber != disc_number:
+                return None  # track filename indicates unexpected disc number
+            if not tag_tracknumber and not filename_tracknumber:
+                return None  # track has no track number and there is no guess from filename
+            if filename_tracknumber and tag_tracknumber != filename_tracknumber:
+                new_tracknumbers[track.filename] = str(filename_tracknumber)
+        if not new_tracknumbers:
+            return None
+        options = [f">> Automatically renumber {len(new_tracknumbers)} tracks based on filenames"]
+        option_automatic_index = 0
+
+        table = (
+            ["track", "filename", "proposed new track #"],
+            [[describe_track_number(track), escape(track.filename), new_tracknumbers.get(track.filename, "")] for track in ordered_tracks(album)],
+        )
+
+        return Fixer(lambda _: self._renumber(album, new_tracknumbers), options, False, option_automatic_index, table)
+
+    def _renumber(self, album: Album, new_tracknumbers: dict[str, str]) -> bool:
+        for track in album.tracks:
+            if track.filename in new_tracknumbers:
+                new_tracknumber = new_tracknumbers[track.filename]
+                path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+                self.ctx.console.print(f"setting track number {new_tracknumber} on {track.filename}")
+                set_basic_tags(path, [("tracknumber", new_tracknumber)])
+        return True

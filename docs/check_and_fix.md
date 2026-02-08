@@ -226,6 +226,10 @@ The rules are:
     - **"always"**: all tracks should have track total
     - **"never"**: track total should be removed
 
+**Automatic fix** for missing track numbers: If track number tags are missing
+from some tracks but all track numbers can be guessed from the filename,
+recreate track number tags from filenames.
+
 **Automatic fix** for track total policy: If the track total policy is
 "consistent" but some tracks are missing track total, remove it from all tracks.
 If the policy is "never", always remove the tag. (There is currently no
