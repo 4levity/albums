@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -118,7 +119,7 @@ class CheckTrackNumbering(Check):
             tracks = tracks_by_disc[disc_number]
             expect_track_total = 0
             actual_track_numbers: set[int] = set()
-            track_total_counts: dict[int, int] = {}
+            track_total_counts: defaultdict[int, int] = defaultdict(int)
             duplicate_tracks: list[int] = []
             for track in tracks:
                 if "tracknumber" in track.tags:
@@ -128,7 +129,7 @@ class CheckTrackNumbering(Check):
                     actual_track_numbers.add(tracknumber)
                 if "tracktotal" in track.tags:
                     tracktotal = int(track.tags["tracktotal"][0])
-                    track_total_counts[tracktotal] = track_total_counts.get(tracktotal, 0) + 1
+                    track_total_counts[tracktotal] += 1
                     if tracktotal > expect_track_total:
                         expect_track_total = tracktotal
 

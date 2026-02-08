@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -33,19 +34,19 @@ class CheckAlbumArtist(Check):
         if not album_is_basic_taggable(album):
             return None  # this check is currently not valid for files that don't use "album" tag
 
-        albumartists: dict[str, int] = {}
-        artists: dict[str, int] = {}
+        albumartists: defaultdict[str, int] = defaultdict(int)
+        artists: defaultdict[str, int] = defaultdict(int)
 
         for track in sorted(album.tracks, key=lambda track: track.filename):
             if "artist" in track.tags:
                 for artist in track.tags["artist"]:
-                    artists[artist] = artists.get(artist, 0) + 1
+                    artists[artist] += 1
 
             if "albumartist" in track.tags:
                 for albumartist in track.tags["albumartist"]:
-                    albumartists[albumartist] = albumartists.get(albumartist, 0) + 1
+                    albumartists[albumartist] += 1
             else:
-                albumartists[""] = albumartists.get("", 0) + 1
+                albumartists[""] += 1
 
         # return top 12 artist/album artist matches sorted by how many times they appear on tracks, largest first
         candidates_scores = artists | albumartists

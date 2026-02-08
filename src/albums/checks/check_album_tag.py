@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -33,11 +34,11 @@ class CheckAlbumTag(Check):
         if not album_is_basic_taggable(album):
             return None  # this check is currently not valid for files that don't use "album" tag
 
-        track_album_tags = {"": 0}
+        track_album_tags: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
             if "album" in track.tags:
                 for album_tag in track.tags["album"]:
-                    track_album_tags[album_tag] = track_album_tags.get(album_tag, 0) + 1
+                    track_album_tags[album_tag] += 1
             else:
                 track_album_tags[""] += 1
 

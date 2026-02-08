@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -33,15 +34,15 @@ class CheckArtistTag(Check):
         if not album_is_basic_taggable(album):
             return None  # this check is currently not valid for files that don't use "artist" tag
 
-        artist_values: dict[str, list[str]] = {"": []}
+        artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
             if "artist" in track.tags:
                 for artist_tag in track.tags["artist"]:
-                    artist_values[artist_tag] = artist_values.get(artist_tag, []) + [track.filename]
+                    artist_values[artist_tag].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
             for album_artist_tag in track.tags.get("albumartist", []):
-                artist_values[album_artist_tag] = artist_values.get(album_artist_tag, []) + [track.filename]
+                artist_values[album_artist_tag].append(track.filename)
 
         if not artist_values[""]:  # no tracks missing artist tag
             return None

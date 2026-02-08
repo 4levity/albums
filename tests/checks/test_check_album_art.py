@@ -40,27 +40,26 @@ class TestCheckAlbumArt:
         assert result is not None
         assert result.message == "album does not have a COVER_FRONT picture"
 
-    def test_album_art_multiple_front(self):
-        album = Album(
-            "",
-            [
-                Track(
-                    "1.flac",
-                    {},
-                    0,
-                    0,
-                    Stream(1.5, 0, 0, "FLAC"),
-                    [
-                        Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
-                        Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
-                    ],
-                ),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
-            ],
-        )
+    def test_album_art_multiple_front_in_track(self):
+        pictures = [
+            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"1111"),
+            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"2222"),
+        ]
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
         result = CheckAlbumArt(Context()).check(album)
         assert result is not None
-        assert result.message == "multiple COVER_FRONT pictures in one track"
+        assert "COVER_FRONT pictures are not all the same" in result.message
+        assert "multiple COVER_FRONT pictures in one track" in result.message
+
+    def test_album_art_duplicate_front_in_track(self):
+        pictures = [
+            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
+            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
+        ]
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
+        result = CheckAlbumArt(Context()).check(album)
+        assert result is not None
+        assert result.message == "duplicate COVER_FRONT pictures in one track"
 
     def test_album_art_multiple_unique(self):
         album = Album(

@@ -40,14 +40,16 @@ class CheckAlbumArt(Check):
         album_art = [(True, track.pictures) for track in album.tracks]
         album_art.extend([(False, [picture]) for picture in album.picture_files.values()])
 
-        pictures_by_type: defaultdict[PictureType, list[Picture]] = defaultdict(list)
+        pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
         for embedded, pictures in album_art:
             file_cover: Picture | None = None
             for picture in pictures:
-                pictures_by_type[picture.picture_type].append(picture)
+                pictures_by_type[picture.picture_type].add(picture)
                 if picture.picture_type == PictureType.COVER_FRONT:
                     if file_cover is None:
                         file_cover = picture
+                    elif file_cover == picture:
+                        issues.add("duplicate COVER_FRONT pictures in one track")
                     else:
                         issues.add("multiple COVER_FRONT pictures in one track")
                 if embedded:
@@ -66,11 +68,10 @@ class CheckAlbumArt(Check):
             if tracks_with_cover and tracks_with_cover != len(album.tracks):
                 issues.add("some tracks have COVER_FRONT and some do not")
 
-            unique_front_covers = set(front_covers)
-            if self.cover_unique and len(unique_front_covers) != 1:
+            if self.cover_unique and len(front_covers) != 1:
                 issues.add("COVER_FRONT pictures are not all the same")
 
-            for cover in unique_front_covers:
+            for cover in front_covers:
                 if not self._cover_square_enough(cover.width, cover.height):
                     issues.add(f"COVER_FRONT is not square ({cover.width}x{cover.height})")
                 if min(cover.height, cover.width) < self.cover_min_pixels:

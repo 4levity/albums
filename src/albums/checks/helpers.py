@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 
 from rich.markup import escape
 
@@ -25,11 +26,9 @@ def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
     ):
         return None
 
-    tracks_by_disc: dict[int, list[Track]] = {}
+    tracks_by_disc: defaultdict[int, list[Track]] = defaultdict(list)
     for track in tracks:
         discnumber = int(track.tags.get("discnumber", ["0"])[0])
-        if discnumber not in tracks_by_disc:
-            tracks_by_disc[discnumber] = []
         tracks_by_disc[discnumber].append(track)
 
     for discnumber in tracks_by_disc.keys():
