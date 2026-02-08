@@ -39,9 +39,7 @@ class TestCheckDiscInTrackNumber:
                 Track("2-1.flac", {"tracknumber": ["2-1"]}),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckDiscInTrackNumber(ctx).check(album)
+        result = CheckDiscInTrackNumber(Context()).check(album)
         assert "track numbers formatted as number-dash-number, probably discnumber and tracknumber" in result.message
         fixer = result.fixer
         assert fixer
@@ -51,6 +49,6 @@ class TestCheckDiscInTrackNumber:
         assert fixer.fix(fixer.options[fixer.option_automatic_index])
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (
-            ctx.library_root / album.path / album.tracks[2].filename,
+            Path(album.path) / album.tracks[2].filename,
             [("discnumber", "2"), ("tracknumber", "1")],
         )

@@ -45,9 +45,7 @@ class TestCheckAlbumArtist:
             "album/",
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]}), Track("3.flac", {"artist": ["B"]})],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckAlbumArtist(ctx).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert "multiple artists but no album artist" in result.message
         assert result.fixer is not None
         assert result.fixer.option_free_text
@@ -62,7 +60,7 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix("B")
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("albumartist", "B")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("albumartist", "B")])
 
     def test_check_albumartist_require(self, mocker):
         album_complies = Album(
@@ -73,7 +71,6 @@ class TestCheckAlbumArtist:
 
         ctx = Context()
         ctx.config["checks"] = {"album_artist": {"require_redundant": True}}
-        ctx.library_root = Path("/path/to/library")
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
@@ -98,7 +95,7 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album_auto.path / album_auto.tracks[1].filename, [("albumartist", "A")])
+        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [("albumartist", "A")])
 
     def test_check_albumartist_remove(self, mocker):
         album_auto = Album("c/", [Track("1.mp3", {"artist": ["A"], "albumartist": ["A"]}), Track("2.mp3", {"artist": ["A"], "albumartist": ["A"]})])
@@ -107,7 +104,6 @@ class TestCheckAlbumArtist:
 
         ctx = Context()
         ctx.config["checks"] = {"album_artist": {"remove_redundant": True}}
-        ctx.library_root = Path("/path/to/library")
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
@@ -132,7 +128,7 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album_auto.path / album_auto.tracks[1].filename, [("albumartist", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [("albumartist", None)])
 
     def test_multiple_albumartist(self):
         album = Album(
@@ -160,9 +156,7 @@ class TestCheckAlbumArtist:
                 Track("3.flac", {"artist": ["A"], "albumartist": ["Bar"]}),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckAlbumArtist(ctx).check(album)
+        result = CheckAlbumArtist(Context()).check(album)
         assert "multiple album artist values (['Foo', 'Bar'] ...)" in result.message
         assert result.fixer
         assert result.fixer.options == ["A", "Foo", "Bar", "Various Artists", ">> Copy album artist -> artist"]
@@ -175,7 +169,7 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[4])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("artist", "Bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("artist", "Bar")])
 
     def test_multiple_albumartist__same_artist_2(self):
         album = Album(

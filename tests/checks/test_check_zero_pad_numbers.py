@@ -29,7 +29,6 @@ class TestZeroPadNumbers:
                 "tracknumber_pad": "if_needed",
             }
         }
-        ctx.library_root = Path("/path/to/library")
         result = CheckZeroPadNumbers(ctx).check(album)
         assert "incorrect zero padding for 9 track numbers" in result.message
         assert result.fixer
@@ -42,7 +41,7 @@ class TestZeroPadNumbers:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 9
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[8].filename, [("tracknumber", "09")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[8].filename, [("tracknumber", "09")])
 
     def test_check_pad_remove_all_unnecessary(self, mocker):
         album = Album(
@@ -62,7 +61,6 @@ class TestZeroPadNumbers:
                 "disctotal_pad": "never",
             }
         }
-        ctx.library_root = Path("/path/to/library")
         result = CheckZeroPadNumbers(ctx).check(album)
         assert "incorrect zero padding for 2 disc numbers and 2 disc totals and 2 track numbers and 2 track totals" in result.message
         assert result.fixer
@@ -78,7 +76,7 @@ class TestZeroPadNumbers:
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
-            ctx.library_root / album.path / album.tracks[1].filename,
+            Path(album.path) / album.tracks[1].filename,
             [("tracknumber", "2"), ("tracktotal", "2"), ("discnumber", "1"), ("disctotal", "1")],
         )
 
@@ -96,7 +94,6 @@ class TestZeroPadNumbers:
                 "discnumber_pad": "if_needed",
             }
         }
-        ctx.library_root = Path("/path/to/library")
         result = CheckZeroPadNumbers(ctx).check(album)
         assert "incorrect zero padding for 90 disc numbers and 90 track numbers" in result.message
         assert result.fixer
@@ -109,7 +106,7 @@ class TestZeroPadNumbers:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[98].filename, [("tracknumber", "09")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[98].filename, [("tracknumber", "09")])
 
     def test_check_pad_two_digit_minimum(self, mocker):
         album = Album(
@@ -129,7 +126,6 @@ class TestZeroPadNumbers:
                 "disctotal_pad": "two_digit_minimum",
             }
         }
-        ctx.library_root = Path("/path/to/library")
         result = CheckZeroPadNumbers(ctx).check(album)
         assert "incorrect zero padding for 1 disc numbers and 2 disc totals and 1 track numbers and 2 track totals" in result.message
         assert result.fixer
@@ -145,7 +141,7 @@ class TestZeroPadNumbers:
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
-            ctx.library_root / album.path / album.tracks[1].filename,
+            Path(album.path) / album.tracks[1].filename,
             [("tracknumber", "02"), ("tracktotal", "02"), ("discnumber", "01"), ("disctotal", "01")],
         )
 
@@ -161,7 +157,6 @@ class TestZeroPadNumbers:
                 "disctotal_pad": "never",
             }
         }
-        ctx.library_root = Path("/path/to/library")
         result = CheckZeroPadNumbers(ctx).check(album)
         assert "incorrect zero padding for 1 track numbers" in result.message
         assert result.fixer
@@ -173,4 +168,4 @@ class TestZeroPadNumbers:
         mock_set_basic_tags = mocker.patch("albums.checks.check_zero_pad_numbers.set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[0].filename, [("tracknumber", "1")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", "1")])

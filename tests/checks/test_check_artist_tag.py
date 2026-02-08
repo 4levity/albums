@@ -17,9 +17,7 @@ class TestCheckArtistTag:
 
     def test_artist_tag_automatic(self, mocker):
         album = Album("Foo/Bar/", [Track("1.flac"), Track("2.flac")])
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckArtistTag(ctx).check(album)
+        result = CheckArtistTag(Context()).check(album)
         assert result
         assert "2 tracks missing artist tag" in result.message
         assert result.fixer
@@ -29,7 +27,7 @@ class TestCheckArtistTag:
         mock_set_basic_tags = mocker.patch("albums.checks.check_artist_tag.set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        path = ctx.library_root / album.path
+        path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
             call(path / album.tracks[0].filename, [("artist", "Foo")]),
             call(path / album.tracks[1].filename, [("artist", "Foo")]),

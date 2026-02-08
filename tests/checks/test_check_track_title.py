@@ -21,9 +21,7 @@ class TestCheckTrackTitle:
 
     def test_check_track_title_guess_all(self, mocker):
         album = Album("Foobar/", [Track("1 foo.flac"), Track("2 - bar.flac"), Track("3. baz.flac"), Track("bop.flac")])
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckTrackTitle(ctx).check(album)
+        result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "4 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
@@ -33,7 +31,7 @@ class TestCheckTrackTitle:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 4
-        path = ctx.library_root / album.path
+        path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
             call(path / album.tracks[0].filename, [("title", "foo")]),
             call(path / album.tracks[1].filename, [("title", "bar")]),
@@ -50,9 +48,7 @@ class TestCheckTrackTitle:
                 Track("3.flac"),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckTrackTitle(ctx).check(album)
+        result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
@@ -62,7 +58,7 @@ class TestCheckTrackTitle:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1  # track 3 could not be fixed
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[1].filename, [("title", "bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("title", "bar")])
 
     def test_check_track_title_no_guess(self, mocker):
         album = Album("Foobar/", [Track("1.flac"), Track("2.flac")])
@@ -73,9 +69,7 @@ class TestCheckTrackTitle:
 
     def test_check_track_title_with_disc_number(self, mocker):
         album = Album("Foobar/", [Track("1 foo.flac", {"title": ["foo"]}), Track("2 bar.flac"), Track("3 baz.flac", {"title": ["baz"]})])
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckTrackTitle(ctx).check(album)
+        result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "1 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
@@ -85,4 +79,4 @@ class TestCheckTrackTitle:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[1].filename, [("title", "bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("title", "bar")])

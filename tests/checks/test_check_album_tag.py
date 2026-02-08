@@ -56,9 +56,7 @@ class TestCheckAlbumTag:
                 Track("3.flac"),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckAlbumTag(ctx).check(album)
+        result = CheckAlbumTag(Context()).check(album)
         assert result.fixer is not None
         assert result.fixer.options[0] == "Foo"
         assert result.fixer.option_automatic_index == 0
@@ -67,7 +65,7 @@ class TestCheckAlbumTag:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Foo")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("album", "Foo")])
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
@@ -79,9 +77,7 @@ class TestCheckAlbumTag:
                 Track("3.flac"),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckAlbumTag(ctx).check(album)
+        result = CheckAlbumTag(Context()).check(album)
         assert "1 tracks missing album tag" in str(result.message)
         assert result.fixer is not None
         assert result.fixer.option_automatic_index is None
@@ -96,4 +92,4 @@ class TestCheckAlbumTag:
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (ctx.library_root / album.path / album.tracks[2].filename, [("album", "Bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("album", "Bar")])

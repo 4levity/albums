@@ -32,9 +32,7 @@ class TestCheckSingleValueTags:
                 Track("2.flac", {"artist": ["Alice"], "title": ["red"]}),
             ],
         )
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckSingleValueTags(ctx).check(album)
+        result = CheckSingleValueTags(Context()).check(album)
         assert "multiple values for single value tags" in result.message
         assert result.fixer
         assert result.fixer.option_automatic_index is None
@@ -47,15 +45,13 @@ class TestCheckSingleValueTags:
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
-            ctx.library_root / album.path / album.tracks[0].filename,
+            Path(album.path) / album.tracks[0].filename,
             [("artist", ["Alice / Bob"]), ("title", ["blue / no, yellow"])],
         )
 
     def test_single_value_tags_duplicates(self, mocker):
         album = Album("", [Track("1.flac", {"artist": ["Alice", "Alice", "Bob"], "title": ["blue", "blue", "blue"]})])
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckSingleValueTags(ctx).check(album)
+        result = CheckSingleValueTags(Context()).check(album)
         assert "multiple values for single value tags" in result.message
         assert result.fixer
         assert not result.fixer.option_free_text
@@ -68,6 +64,6 @@ class TestCheckSingleValueTags:
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
-            ctx.library_root / album.path / album.tracks[0].filename,
+            Path(album.path) / album.tracks[0].filename,
             [("artist", ["Alice", "Bob"]), ("title", ["blue"])],
         )

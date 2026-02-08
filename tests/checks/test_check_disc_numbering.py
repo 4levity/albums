@@ -70,17 +70,14 @@ class TestCheckDiscNumbering:
             ],
         )
 
-        ctx = Context()
-        ctx.library_root = Path("/path/to/library")
-        result = CheckDiscNumbering(ctx).check(album)
+        result = CheckDiscNumbering(Context()).check(album)
         assert "inconsistent disc total" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total tag"]
         assert result.fixer.option_automatic_index == 0
         mock_set_basic_tags = mocker.patch("albums.checks.check_disc_numbering.set_basic_tags")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        path = ctx.library_root / album.path
-        assert mock_set_basic_tags.call_args_list == [call(path / album.tracks[2].filename, [("disctotal", "2")])]
+        assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [("disctotal", "2")])]
 
     def test_check_disctotal_inconsistent(self):
         album = Album(
