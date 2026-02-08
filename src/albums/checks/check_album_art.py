@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import Any
 
@@ -5,6 +6,8 @@ import humanize
 
 from ..types import Album, Picture, PictureType
 from .base_check import Check, CheckResult, ProblemCategory
+
+logger = logging.getLogger(__name__)
 
 
 class CheckAlbumArt(Check):
@@ -36,8 +39,8 @@ class CheckAlbumArt(Check):
         issues: set[str] = set()
         album_art = [(True, track.pictures) for track in album.tracks]
         album_art.extend([(False, [picture]) for picture in album.picture_files.values()])
-        pictures_by_type: defaultdict[PictureType, list[Picture]] = defaultdict(list)
 
+        pictures_by_type: defaultdict[PictureType, list[Picture]] = defaultdict(list)
         for embedded, pictures in album_art:
             file_cover: Picture | None = None
             for picture in pictures:
@@ -48,10 +51,6 @@ class CheckAlbumArt(Check):
                     else:
                         issues.add("multiple COVER_FRONT pictures in one track")
                 if embedded:
-                    if picture.mismatch:
-                        actual = f"{picture.format} {picture.width}x{picture.height}"
-                        reported = f"{picture.mismatch.get('format', picture.format)} {picture.mismatch.get('width', picture.width)}x{picture.mismatch.get('height', picture.height)}"
-                        issues.add(f"embedded image metadata mismatch, actual {actual} but container says {reported}")
                     if picture.format not in {"image/png", "image/jpeg"}:
                         issues.add(f"embedded image {picture.picture_type.name} is not a recommended format ({picture.format})")
                     if picture.file_size > self.embedded_size_max:

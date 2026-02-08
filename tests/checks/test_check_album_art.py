@@ -130,26 +130,8 @@ class TestCheckAlbumArt:
     def test_album_art_file_too_large(self):
         album = Album(
             "",
-            [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 64 * 1024 * 1024, b"")])],
+            [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 15 * 1024 * 1024, b"")])],
         )
         result = CheckAlbumArt(Context()).check(album)
         assert result is not None
-        assert result.message == "embedded image COVER_FRONT is over the configured limit (64.0 MiB > 8.0 MiB)"
-
-    def test_album_art_metadata_mismatch(self):
-        album = Album(
-            "",
-            [
-                Track(
-                    "1.flac",
-                    {},
-                    0,
-                    0,
-                    Stream(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", {"format": "image/jpeg"})],
-                )
-            ],
-        )
-        result = CheckAlbumArt(Context()).check(album)
-        assert result is not None
-        assert result.message == "embedded image metadata mismatch, actual image/png 400x400 but container says image/jpeg 400x400"
+        assert result.message == "embedded image COVER_FRONT is over the configured limit (15.0 MiB > 8.0 MiB)"

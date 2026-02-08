@@ -1,6 +1,7 @@
 [locations]
 # Music library root
 # Default is OS-specific default user music folder e.g. ~/Music
+# For Windows path with backslash character, use "\\", for example "D:\\Music"
 library = "/path/to/music"
 
 # Albums database file

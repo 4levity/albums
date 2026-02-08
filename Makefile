@@ -8,10 +8,10 @@ build: install lint test package
 install: ## Install project dependencies
 	$(POETRY) install
 
-lint-markdown: install ## Lint markdown
+lint-markdown: ## Lint markdown
 	$(POETRY) run pymarkdown --strict-config scan *.md **/*.md
 
-lint: install lint-markdown ## Lint and static analysis
+lint: lint-markdown ## Lint and static analysis
 	$(POETRY) run ruff check .
 	$(POETRY) run ruff format . --check
 	$(POETRY) run pyright

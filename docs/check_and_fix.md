@@ -264,6 +264,17 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
+### flac_picture_metadata
+
+The FLAC file format
+[stores metadata about embedded pictures](https://www.rfc-editor.org/rfc/rfc9639.html#name-picture)
+(MIME type, dimensions). The dimensions are not required to be correct according
+to the spec. Nonetheless, this check loads the image data and compares the
+recorded MIME type and dimensions to the real data.
+
+**Automatic fix**: For each affected file, re-embed all the images with the same
+image data and correct metadata.
+
 ### album_art
 
 Embedded files should be stored correctly and a reasonable size. If any track
@@ -293,8 +304,6 @@ Rules:
 - Cover art should be square (see options)
 - **Embedded** images should not be very large files (see options)
 - **Embedded** images should be in PNG or JPEG format (not GIF or other)
-- If the file format (e.g. FLAC) records metadata about an embedded image (MIME
-  type, dimensions), that information should match the actual image data
 
 Tracks may have any number of embedded images that are not marked as
 `COVER_FRONT`. Other image files in the album folder, where the filename does
