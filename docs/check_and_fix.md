@@ -266,25 +266,38 @@ from which a title can be guessed, fill in all empty titles.
 
 ### cover_art
 
-If any track has any pictures in its metadata, the album should have correct
-front cover art. For the album to have correct front cover art, every track
-should have a COVER_FRONT image ("cover art"). Tracks may have any number of
-other embedded images that are not marked as COVER_FRONT. Rules:
-
-- Each track should have **one** cover art image
-- The cover art should be the same on all the tracks
-- It should be exactly square
-- It should be in PNG or JPEG format
-- It should not be very small or very large (see options)
-- If the file format (e.g. FLAC) records metadata about an embedded image (MIME
-  type, dimensions), that information should match the actual image data
-
-Only checks FLAC files for and does not fix yet.
+If any track has any pictures in its metadata, or if there are any image files
+in the folder, the album should have correct front cover art. (Or require for
+all albums, see settings.)
 
 !!!note
 
-    In media formats including FLAC files, embedded images are labeled using the
-    same "picture type" codes originally defined for ID3v2 `APIC` frames.
+    In media formats including FLAC files, embedded images are classified with
+    the "picture type" codes originally defined for ID3v2 `APIC` frames. This
+    check is mostly concerned with images classified as `COVER_FRONT` (0x03).
+
+For the album to have correct front cover art, there should be a single unique
+cover art image associated with the album. Either every track should have an
+embedded `COVER_FRONT` image, or there should be a **png**, **jpeg**/**jpg** or
+**gif** file in the folder, with "folder", "cover", "thumbnail" or "album" in
+the filename, or both.
+
+Rules:
+
+- Each track should have **one** cover art image, if any track has embedded
+  cover art
+- All cover art associated with the album should be the exact same image
+  (including embedded `COVER_FRONT` and files matching the filenames above)
+- Cover art should be square
+- Cover art should not be very small or very large (see options)
+- **All** embedded images should be in PNG or JPEG format (not GIF or other)
+- If the file format (e.g. FLAC) records metadata about an embedded image (MIME
+  type, dimensions), that information should match the actual image data
+
+Tracks may have any number of embedded images that are not marked as
+`COVER_FRONT`. Other image files in the album folder, where the filename does
+not match the expected cover art filenames above, will be treated as picture
+type `OTHER`.
 
 <!-- pyml disable line-length -->
 
@@ -295,6 +308,8 @@ Only checks FLAC files for and does not fix yet.
 | `max_pixels`           | **2048**  | front cover art should not be larger than this width/height |
 
 <!-- pyml enable line-length -->
+
+Currently only checks for embedded images in FLAC files and does not fix yet.
 
 ### zero_pad_numbers
 

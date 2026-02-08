@@ -109,3 +109,4 @@ def setup_logging(ctx: Context, verbose: int):
         logging.basicConfig(level=logging.INFO, format=log_format, handlers=[rich])
     else:
         logging.basicConfig(level=logging.WARNING, format=log_format, handlers=[rich])
+    logging.captureWarnings(True)

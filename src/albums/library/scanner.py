@@ -85,7 +85,9 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                     any_changes = True
                 elif album and album_id is not None and result == AlbumScanResult.UPDATED:
                     logger.info(f"update track info for album {album.path}", extra={"highlighter": None})
+                    # TODO only update what changed
                     albums.database.operations.update_tracks(db, album_id, album.tracks)
+                    albums.database.operations.update_picture_files(db, album_id, album.picture_files)
                     any_changes = True
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:

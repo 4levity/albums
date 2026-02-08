@@ -6,7 +6,7 @@ icon: lucide/rocket
 
 `albums` is a rich text-based interactive tool to help manage a library of
 music, clean up metadata tags and file organization, and sync parts of the
-library to digital audio players
+library to digital audio players.
 
 This documentation is for `albums` version **%%version_placeholder%%**.
 

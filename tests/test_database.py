@@ -18,12 +18,23 @@ class TestDatabase:
             assert foreign_keys[0][0] == 1
 
     def test_operations(self):
+        # TODO this test needs to be split up!
+
         def track(filename="1.flac"):
             return Track(
                 filename, {"title": ["foo", "bar"]}, 1, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"")]
             )
 
-        albums = [Album("foo/", [track()], []), Album("bar/", [track()], ["test"])]
+        albums = [
+            Album("foo/", [track()], []),
+            Album(
+                "bar/",
+                [track()],
+                ["test"],
+                ["artist_tag"],
+                {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", None, 999)},
+            ),
+        ]
 
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             result = list(selector.select_albums(db, [], [], False))
@@ -47,6 +58,16 @@ class TestDatabase:
             assert result[0].tracks[0].pictures[0].picture_type == PictureType.COVER_FRONT
             assert result[0].tracks[0].pictures[0].file_size == 6
 
+            assert len(result[0].picture_files) == 1
+            pic = result[0].picture_files.get("folder.jpg")
+            assert pic
+            assert pic.picture_type == PictureType.COVER_FRONT
+            assert pic.format == "test"
+            assert pic.width == pic.height == 100
+            assert pic.file_size == 1024
+            assert pic.file_hash == b"1234"
+            assert pic.modify_timestamp == 999
+
             assert len(list(selector.select_albums(db, [], ["/"], True))) == 2  # regex match all
             assert len(list(selector.select_albums(db, ["test", "anything"], ["/"], True))) == 1  # regex + collection match
 
@@ -68,6 +89,24 @@ class TestDatabase:
             result = list(selector.select_albums(db, [], [albums[0].path], False))
             assert len(result) == 1
             assert result[0].ignore_checks == []
+
+            cover = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", None, 999)
+            albums[1].picture_files["other.jpg"] = cover
+            operations.update_picture_files(db, albums[1].album_id, albums[1].picture_files)
+            result = list(selector.select_albums(db, [], [albums[1].path], False))
+            assert len(result[0].picture_files) == 2
+            pic_folder = result[0].picture_files.get("folder.jpg")
+            assert pic_folder
+            pic_other = result[0].picture_files.get("other.jpg")
+            assert pic_other
+
+            assert pic_folder.picture_type == PictureType.COVER_FRONT
+            assert pic_other.picture_type == PictureType.OTHER
+            assert pic_other.format == "test"
+            assert pic_other.width == pic_other.height == 200
+            assert pic_other.file_size == 2048
+            assert pic_folder.file_hash == b"1234"
+            assert pic_other.file_hash == b"abcd"
 
             operations.remove(db, albums[1].album_id)
             result = list(selector.select_albums(db, [], [], False))

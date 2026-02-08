@@ -2,6 +2,8 @@ import json
 import logging
 import sqlite3
 
+from albums.library.picture import picture_type_from_filename
+
 from ..checks.all import ALL_CHECK_NAMES
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
@@ -32,8 +34,14 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
                 logger.warning(f'album_id {album_id} has unknown check_name "{name}" in ignore list')
 
         tracks = list(_load_tracks(db, album_id, load_track_tag))
-
-        return Album(path, tracks, collections, ignore_checks, album_id)
+        picture_files: dict[str, Picture] = dict(
+            (filename, Picture(picture_type_from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp))
+            for (filename, file_size, modify_timestamp, file_hash, format, width, height) in db.execute(
+                "SELECT filename, file_size, modify_timestamp, file_hash, format, width, height FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
+                (album_id,),
+            )
+        )
+        return Album(path, tracks, collections, ignore_checks, picture_files, album_id)
 
 
 def add(db: sqlite3.Connection, album: Album) -> int:
@@ -42,6 +50,7 @@ def add(db: sqlite3.Connection, album: Album) -> int:
         _insert_collections(db, album_id, album.collections)
         _insert_ignore_checks(db, album_id, album.ignore_checks)
         _insert_tracks(db, album_id, album.tracks)
+        _insert_picture_files(db, album_id, album.picture_files)
         return album_id
 
 
@@ -127,6 +136,20 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                     json.dumps(picture.mismatch) if picture.mismatch else None,
                 ),
             )
+
+
+def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
+    with db:
+        db.execute("DELETE FROM album_picture_file WHERE album_id = ?;", (album_id,))
+        _insert_picture_files(db, album_id, picture_files)
+
+
+def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
+    for filename, picture in picture_files.items():
+        db.execute(
+            "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            (album_id, filename, picture.file_size, picture.modify_timestamp, picture.file_hash, picture.format, picture.width, picture.height),
+        )
 
 
 def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):

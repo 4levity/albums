@@ -24,7 +24,7 @@ the tool is used, if there is a library in the configured location to scan.
 
 !!!info
 
-    The first time `scan` runs, it will read metadata from every track.
+    The first time `scan` runs, it reads metadata from every track and image.
     This may take a long time if you have thousands of albums. Subsequent scans
     should only take a few seconds. If you interrupt the scan with ^C, it will
     continue where it left off next time.

@@ -84,7 +84,7 @@ class TestCheckCoverArt:
         )
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
-        assert result.message == "track has pictures but none is COVER_FRONT picture"
+        assert result.message == "album has pictures but none is COVER_FRONT picture"
 
     def test_cover_art_inconsistent(self):
         album = Album(
@@ -108,7 +108,7 @@ class TestCheckCoverArt:
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/gif", 400, 400, 0, b"")])])
         result = CheckCoverArt(Context()).check(album)
         assert result is not None
-        assert result.message == "COVER_FRONT image is not a recommended format (image/gif)"
+        assert result.message == "embedded image COVER_FRONT is not a recommended format (image/gif)"
 
     def test_cover_art_too_small(self):
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0, b"")])])

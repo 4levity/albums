@@ -7,7 +7,7 @@ from mutagen.flac import FLAC
 from albums.app import Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
-from albums.types import Album, Track
+from albums.types import Album, Picture, PictureType, Track
 
 from .fixtures.create_library import create_album_in_library, create_library
 
@@ -28,6 +28,9 @@ class TestScanner:
                 Track("2.flac", {"title": ["2"]}),
                 Track("3.flac", {"title": ["3"]}),
             ],
+            [],
+            [],
+            {"cover.png": Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")},
         ),
         Album("foo/", [Track("1.mp3", {"title": ["1"]}), Track("2.mp3", {"title": ["2"]})]),
         Album("baz/", [Track("1.wma", {"title": ["one"]}), Track("2.wma", {"title": ["two"]})]),
@@ -66,6 +69,14 @@ class TestScanner:
             assert result[2].tracks[0].stream.sample_rate == 44100
             assert result[2].tracks[0].stream.codec == "MP3"
             assert result[2].tracks[0].tags["title"] == ["1"]
+
+            # image files in folder
+            assert len(result[0].picture_files) == 1
+            cover_png = result[0].picture_files.get("cover.png")
+            assert cover_png
+            assert cover_png.format == "image/png"
+            assert cover_png.modify_timestamp
+            assert cover_png.picture_type == PictureType.COVER_FRONT
 
     def test_scan_empty(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
@@ -118,7 +129,7 @@ class TestScanner:
             assert len(result) == 2
             assert result[0].path == "bar/"
 
-    def test_scan_remove(self):
+    def test_scan_remove_album(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
@@ -141,6 +152,20 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1
             assert result[0].path == "foo/"
+
+    def test_scan_remove_picture(self):
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+            library = create_library("test_scan_remove_picture", [self.sample_library[0]])
+            ctx = context(db, library)
+            scan(ctx)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result[0].picture_files) == 1
+
+            (library / self.sample_library[0].path / "cover.png").unlink()
+
+            scan(ctx)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result[0].picture_files) == 0
 
     def test_scan_filtered(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:

@@ -80,6 +80,19 @@ CREATE TABLE track_picture (
     mismatch TEXT NULL
 );
 CREATE INDEX idx_track_picture_track_id ON track_picture(track_id);
+
+CREATE TABLE album_picture_file (
+    album_picture_file_id INTEGER PRIMARY KEY,
+    album_id REFERENCES album(album_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    modify_timestamp INTEGER NOT NULL,
+    file_hash BLOB NOT NULL,
+    format TEXT NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL
+);
+CREATE INDEX idx_album_picture_file_album_id ON album_picture_file(album_id);
 """,
 }
 

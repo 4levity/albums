@@ -1,3 +1,4 @@
+import base64
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
@@ -52,22 +53,23 @@ class Picture:
     height: int
     file_size: int
     file_hash: bytes  # 32 bit xxhash
-    mismatch: dict[str, str | int] | None = None  # not considered for equality
+    mismatch: dict[str, str | int] | None = None  # load-time metadata mismatch report is NOT part of equality, only real image data
+    modify_timestamp: int | None = None  # timestamp is NOT part of equality and is only present if the picture is not embedded
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__ | {"file_hash": base64.b64encode(self.file_hash).decode()}
 
+    # Keep modify_timestamp and mismatch info with this object, but also deduplicate images easily (ignoring those two fields)
     def __eq__(self, other: Any):
         if not isinstance(other, Picture):
             return NotImplemented
-        return (
-            self.picture_type == other.picture_type
-            and self.format == other.format
-            and self.width == other.width
-            and self.height == other.height
-            and self.file_size == other.file_size
-            and self.file_hash == other.file_hash
-        )
+        return self._comparable() == other._comparable()
+
+    def __hash__(self):
+        return hash(self._comparable())
+
+    def _comparable(self):
+        return frozenset((k, v) for k, v in self.__dict__.items() if k not in {"mismatch", "modify_timestamp"})
 
 
 @dataclass
@@ -95,10 +97,12 @@ class Album:
     tracks: list[Track] = field(default_factory=list[Track])
     collections: list[str] = field(default_factory=list[str])
     ignore_checks: list[str] = field(default_factory=list[str])
+    picture_files: dict[str, Picture] = field(default_factory=dict[str, Picture])
     album_id: int | None = None
 
     def to_dict(self):
-        return self.__dict__ | {"tracks": [t.to_dict() for t in self.tracks] if self.tracks else []}
+        pictures = dict((filename, picture.to_dict()) for (filename, picture) in self.picture_files.items())
+        return self.__dict__ | {"tracks": [t.to_dict() for t in self.tracks] if self.tracks else []} | {"picture_files": pictures}
 
     def codec(self):
         codecs = {track.stream.codec if track.stream else "unknown" for track in self.tracks}

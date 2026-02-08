@@ -15,7 +15,7 @@ from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
 
-def create_file(path: Path, spec: Track):
+def create_track_file(path: Path, spec: Track):
     filename: Path = path / spec.filename
     with open(filename, "wb") as file:
         if filename.suffix == ".flac":
@@ -51,11 +51,22 @@ def create_file(path: Path, spec: Track):
         mut.save(padding=lambda info: 0)
 
 
+def create_picture_file(path: Path, filename: str):
+    # TODO create size/type specified
+    target = path / filename
+    if str.lower(target.suffix) != ".png":
+        raise NotImplementedError
+    with open(target, "wb") as file:
+        file.write(IMAGE_PNG_400X400)
+
+
 def create_album_in_library(library_path: Path, album: Album):
     path = library_path / album.path
     os.makedirs(path)
     for track in album.tracks:
-        create_file(path, track)
+        create_track_file(path, track)
+    for filename in album.picture_files:
+        create_picture_file(path, filename)
 
 
 def create_library(library_name: str, albums: list[Album]):

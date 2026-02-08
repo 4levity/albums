@@ -7,12 +7,12 @@ import pytest
 from click.testing import CliRunner
 
 from albums.cli import entry_point
-from albums.types import Album, Track
+from albums.types import Album, Picture, PictureType, Track
 
 from .fixtures.create_library import create_library, test_data_path
 
 albums = [
-    Album("foo/", [Track("1.mp3", {"title": ["1"]})]),
+    Album("foo/", [Track("1.mp3", {"title": ["1"]})], [], [], {"folder.png": Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")}),
     Album("bar/", [Track("1.flac", {"title": ["1"]}), Track("2.flac", {"title": ["2"]})]),
 ]
 
