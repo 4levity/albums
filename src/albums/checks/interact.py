@@ -2,12 +2,17 @@ import logging
 import os
 import platform
 import subprocess
+import sys
 from pathlib import Path
 
 from rich.markup import escape
-from rich.prompt import Confirm
+from rich.prompt import Confirm, IntPrompt
 from rich.table import Table
-from simple_term_menu import TerminalMenu
+
+if not sys.platform.startswith("win"):
+    import simple_term_menu
+else:
+    simple_term_menu = None
 
 import albums.database.operations
 
@@ -140,9 +145,16 @@ def os_open_folder(ctx: app.Context, path: Path):
 
 
 def choose_from_menu(ctx: app.Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
-    terminal_menu = TerminalMenu(options, raise_error_on_interrupt=True, title=prompt, cursor_index=default_option_index)
-    option_index = terminal_menu.show()
-    if isinstance(option_index, tuple):
-        raise ValueError("unexpected tuple result from TerminalMenu.show")
+    if simple_term_menu:
+        terminal_menu = simple_term_menu.TerminalMenu(options, raise_error_on_interrupt=True, title=prompt, cursor_index=default_option_index)
+        option_index = terminal_menu.show()
+        if isinstance(option_index, tuple):
+            raise ValueError("unexpected tuple result from TerminalMenu.show")
+        return option_index
 
-    return option_index
+    # else Windows/etc
+    for index, option in enumerate(options):
+        ctx.console.print(f"[{index + 1:2d}] {option}")
+    default_value = (default_option_index + 1) if default_option_index else None
+    selection = IntPrompt.ask(prompt, show_default=True, default=default_value, console=ctx.console)
+    return selection - 1 if selection else None

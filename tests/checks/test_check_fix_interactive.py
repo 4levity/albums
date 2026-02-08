@@ -27,7 +27,7 @@ class TestCheckFixInteractive:
         album = Album("/", [Track("1.flac")])
         ctx = app.Context()
         fixer = MockFixer(ctx, album)
-        mock_TerminalMenu = mocker.patch("albums.checks.interact.TerminalMenu")
+        mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
         mock_menu = mock_TerminalMenu.return_value
         mock_menu.show.return_value = 0
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
@@ -46,7 +46,7 @@ class TestCheckFixInteractive:
         album_id = albums.database.operations.add(ctx.db, album)
 
         fixer = MockFixer(ctx, album)
-        mock_TerminalMenu = mocker.patch("albums.checks.interact.TerminalMenu")
+        mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
         mock_menu = mock_TerminalMenu.return_value
         mock_menu.show.return_value = 3  # fixer has 2 options + free text, next option is ignore check
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
