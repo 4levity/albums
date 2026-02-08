@@ -277,10 +277,10 @@ image data and correct metadata.
 
 ### album_art
 
-Embedded files should be stored correctly and a reasonable size. If any track
-has any pictures in its metadata, or if there are any image files in the folder,
-the album should have correct front cover art. (Or require for all albums, see
-settings.)
+If any track has any pictures in its metadata, or if there are any image files
+in the folder, the album should have correct front cover art. (Or require for
+all albums, see settings.) Embedded files should be a reasonable size and in a
+widely-supported format.
 
 !!!note
 

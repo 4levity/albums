@@ -57,7 +57,8 @@ class Picture:
     modify_timestamp: int | None = None  # timestamp is NOT part of equality and is only present if the picture is not embedded
 
     def to_dict(self):
-        result = dict(self.__dict__ | {"file_hash": base64.b64encode(self.file_hash).decode()})
+        result = dict(self.__dict__)
+        result["file_hash"] = base64.b64encode(self.file_hash).decode()
         if self.mismatch is None:
             del result["mismatch"]
         if self.modify_timestamp is None:

@@ -87,4 +87,4 @@ class CheckAlbumArt(Check):
 
     def _cover_square_enough(self, x: int, y: int) -> bool:
         aspect = 0 if max(x, y) == 0 else min(x, y) / max(x, y)
-        return aspect > self.cover_squareness
+        return aspect >= self.cover_squareness

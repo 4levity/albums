@@ -47,7 +47,7 @@ class CheckFlacPictureMetadata(Check):
             track = album.tracks[track_index]
             file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
             if track.stream and track.stream.codec == "FLAC":
-                self.ctx.console.print(f"re-embedding pictures in {str(file)}")
+                self.ctx.console.print(f"re-embedding pictures in {escape(str(file))}", highlight=False)
                 flac = FLAC(file)
 
                 def fix(flac_pictures: list[FlacPicture]):
