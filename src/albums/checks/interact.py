@@ -4,7 +4,9 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
 
+from rich.console import RenderableType
 from rich.markup import escape
 from rich.prompt import Confirm, IntPrompt
 from rich.table import Table
@@ -61,7 +63,8 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
 
     while not done:
         if fixer and fixer.table:
-            (headers, rows) = fixer.table
+            (headers, get_rows) = fixer.table
+            rows: Sequence[Sequence[RenderableType]] = get_rows if isinstance(get_rows, Sequence) else get_rows()  # pyright: ignore[reportUnknownVariableType]
             table = Table(*headers)
             for row in rows:
                 table.add_row(*row)
@@ -107,9 +110,8 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
             else:
                 option = options[option_index]
 
-            done = Confirm.ask(f'Selected "{option}" - are you sure?', console=ctx.console)
-            if done:
-                maybe_changed |= fixer.fix(option)
+            maybe_changed |= fixer.fix(option)
+            done = maybe_changed  # if that fixer option didn't change anything, loop
 
         # otherwise loop and ask again
 

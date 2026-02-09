@@ -107,4 +107,9 @@ def _missing_metadata(tracks: list[Track]):
     for track in tracks:
         if not track.tags or not track.stream:
             return True
+        if len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0:
+            return True  # images don't have unique embed_ix, needs rescan (circa version 0.1.6, can remove by 1.0)
+        if str.lower(tracks[0].filename).endswith(".mp3") and not any(track.pictures for track in tracks):
+            return True  # TODO REMOVE
+
     return False

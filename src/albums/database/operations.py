@@ -2,9 +2,8 @@ import json
 import logging
 import sqlite3
 
-from albums.library.picture import picture_type_from_filename
-
 from ..checks.all import ALL_CHECK_NAMES
+from ..library.picture import picture_type_from_filename
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
@@ -124,7 +123,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
         for picture in track.pictures:
             db.execute(
-                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, mismatch) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 (
                     track_id,
                     picture.picture_type.value,
@@ -133,7 +132,8 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                     picture.height,
                     picture.file_size,
                     picture.file_hash,
-                    json.dumps(picture.mismatch) if picture.mismatch else None,
+                    json.dumps(picture.load_issue) if picture.load_issue else None,
+                    picture.embed_ix,
                 ),
             )
 
@@ -188,9 +188,11 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
 
 def _load_pictures(db: sqlite3.Connection, track_id: int):
     return [
-        Picture(PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(mismatch) if mismatch else None)
-        for picture_type, format, width, height, file_size, file_hash, mismatch in db.execute(
-            "SELECT picture_type, format, width, height, file_size, file_hash, mismatch FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
+        Picture(
+            PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(load_issue) if load_issue else None, None, embed_ix
+        )
+        for picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix in db.execute(
+            "SELECT picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
             (track_id,),
         )
     ]

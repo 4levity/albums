@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable
+from typing import Any, Callable, Sequence, Tuple
+
+from rich.console import RenderableType
 
 from .. import app
 from ..types import Album
@@ -14,7 +16,9 @@ class Fixer:
     options: list[str]  # at least one option should be provided if "free text" is not an option
     option_free_text: bool = False
     option_automatic_index: int | None = None
-    table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
+    table: Tuple[Sequence[str], Sequence[Sequence[RenderableType]] | Callable[[], Sequence[Sequence[RenderableType]]]] | None = (
+        None  # tuple (headers, rows/rows())
+    )
     prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
 
 

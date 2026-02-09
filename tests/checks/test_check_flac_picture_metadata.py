@@ -52,7 +52,7 @@ class TestCheckFlacPictureMetadata:
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scan(ctx)
             result = list(selector.select_albums(ctx.db, [], [], False))
-            assert result[0].tracks[0].pictures[0].mismatch
+            assert result[0].tracks[0].pictures[0].load_issue
             result = CheckFlacPictureMetadata(ctx).check(result[0])
             assert result is not None
             assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 399x399"
@@ -63,7 +63,7 @@ class TestCheckFlacPictureMetadata:
             scan(ctx)
             result = list(selector.select_albums(ctx.db, [], [], False))
             assert len(result[0].tracks[0].pictures) == 1
-            assert not result[0].tracks[0].pictures[0].mismatch
+            assert not result[0].tracks[0].pictures[0].load_issue
             assert result[0].tracks[0].pictures[0].format == "image/png"
             assert result[0].tracks[0].pictures[0].width == 400
             assert result[0].tracks[0].pictures[0].height == 400

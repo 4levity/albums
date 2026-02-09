@@ -59,7 +59,7 @@ class TestCheckAlbumArt:
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
         result = CheckAlbumArt(Context()).check(album)
         assert result is not None
-        assert result.message == "duplicate COVER_FRONT pictures in one track"
+        assert "duplicate COVER_FRONT pictures in one track" in result.message
 
     def test_album_art_multiple_unique(self):
         album = Album(

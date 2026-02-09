@@ -22,7 +22,12 @@ class TestDatabase:
 
         def track(filename="1.flac"):
             return Track(
-                filename, {"title": ["foo", "bar"]}, 1, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"")]
+                filename,
+                {"title": ["foo", "bar"]},
+                1,
+                0,
+                Stream(1.5, 0, 0, "FLAC"),
+                [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"", None, None, 1)],
             )
 
         albums = [
@@ -57,6 +62,7 @@ class TestDatabase:
             assert len(result[0].tracks[0].pictures) == 1
             assert result[0].tracks[0].pictures[0].picture_type == PictureType.COVER_FRONT
             assert result[0].tracks[0].pictures[0].file_size == 6
+            assert result[0].tracks[0].pictures[0].embed_ix == 1
 
             assert len(result[0].picture_files) == 1
             pic = result[0].picture_files.get("folder.jpg")

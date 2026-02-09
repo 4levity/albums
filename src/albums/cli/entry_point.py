@@ -15,7 +15,7 @@ from .scan import scan
 from .sql import sql
 from .sync import sync
 
-rich.traceback.install(show_locals=True)
+rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_length=10)
 
 
 @click.group(

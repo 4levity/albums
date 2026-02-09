@@ -1,11 +1,19 @@
+import io
 import logging
 from collections import defaultdict
-from typing import Any
+from pathlib import Path
+from typing import Any, Sequence
 
 import humanize
+from PIL import Image
+from rich.console import RenderableType
+from rich.markup import escape
+from rich_pixels import Pixels
+
+from albums.library.metadata import get_embedded_image_data
 
 from ..types import Album, Picture, PictureType
-from .base_check import Check, CheckResult, ProblemCategory
+from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +45,23 @@ class CheckAlbumArt(Check):
 
         tracks_with_cover = 0
         issues: set[str] = set()
-        album_art = [(True, track.pictures) for track in album.tracks]
-        album_art.extend([(False, [picture]) for picture in album.picture_files.values()])
+        album_art = [(track.filename, True, track.pictures) for track in album.tracks]
+        album_art.extend([(filename, False, [picture]) for filename, picture in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        for embedded, pictures in album_art:
+        picture_sources: defaultdict[Picture, list[tuple[str, bool]]] = defaultdict(list)
+        duplicate_in_track = False
+        for filename, embedded, pictures in album_art:
             file_cover: Picture | None = None
             for picture in pictures:
+                picture_sources[picture].append((filename, embedded))
                 pictures_by_type[picture.picture_type].add(picture)
                 if picture.picture_type == PictureType.COVER_FRONT:
                     if file_cover is None:
                         file_cover = picture
                     elif file_cover == picture:
                         issues.add("duplicate COVER_FRONT pictures in one track")
+                        duplicate_in_track = True
                     else:
                         issues.add("multiple COVER_FRONT pictures in one track")
                 if embedded:
@@ -64,12 +76,17 @@ class CheckAlbumArt(Check):
                     tracks_with_cover += 1
 
         front_covers = pictures_by_type.get(PictureType.COVER_FRONT)
+        must_select_one = self.cover_unique and front_covers and len(front_covers) > 1
+        if front_covers and (must_select_one or duplicate_in_track):
+            if must_select_one:
+                message = "COVER_FRONT pictures are not all the same"
+            else:
+                message = "COVER_FRONT picture cleanup needed"
+            issues.add(message)
+
         if front_covers:
             if tracks_with_cover and tracks_with_cover != len(album.tracks):
                 issues.add("some tracks have COVER_FRONT and some do not")
-
-            if self.cover_unique and len(front_covers) != 1:
-                issues.add("COVER_FRONT pictures are not all the same")
 
             for cover in front_covers:
                 if not self._cover_square_enough(cover.width, cover.height):
@@ -84,8 +101,58 @@ class CheckAlbumArt(Check):
             issues.add("album does not have a COVER_FRONT picture")
 
         if issues:
+            if tracks_with_cover:
+                candidates: set[Picture] = front_covers if front_covers else set().union(*pictures_by_type.values())  # pyright: ignore[reportUnknownVariableType]
+                picture_list = sorted(candidates, key=lambda c: c.file_size, reverse=True)
+                options = [self._describe_album_art(picture, picture_sources) for picture in picture_list]
+                fixer = Fixer(
+                    lambda option: self._select_cover(option, album, picture_list, picture_sources),
+                    options,
+                    False,
+                    None,
+                    (options, lambda: self._image_table(album, picture_list, picture_sources)),
+                )
+            else:
+                fixer = None
+            return CheckResult(
+                ProblemCategory.TAGS,
+                ", ".join(list(issues)),
+                fixer,
+            )
             return CheckResult(ProblemCategory.PICTURES, ", ".join(list(issues)))
 
     def _cover_square_enough(self, x: int, y: int) -> bool:
         aspect = 0 if max(x, y) == 0 else min(x, y) / max(x, y)
         return aspect >= self.cover_squareness
+
+    def _image_table(
+        self, album: Album, pictures: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]
+    ) -> Sequence[Sequence[RenderableType]]:
+        pixelses: list[Pixels] = []
+        target_width = int((self.ctx.console.width - 3) / len(pictures))
+        target_height = (self.ctx.console.height - 10) * 2
+        for cover in pictures:
+            (filename, embedded) = picture_sources[cover][0]
+            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / filename
+            if embedded:
+                images = get_embedded_image_data(path)
+                image_data = images[cover.embed_ix]
+            else:
+                with open(path, "rb") as f:
+                    image_data = f.read()
+            image = Image.open(io.BytesIO(image_data))
+            h = (7 / 8) * image.height
+            scale = min(target_width, target_height) / max(image.width, h)
+            pixels = Pixels.from_image(image, (int(image.width * scale), int(h * scale)))
+            pixelses.append(pixels)
+        return [pixelses]
+
+    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool]]]):
+        sources = picture_sources[picture]
+        first_source = f"{escape(sources[0][0])}{f'#{picture.embed_ix}' if picture.embed_ix else ''}"
+        details = f"[{picture.width} x {picture.height}] {humanize.naturalsize(picture.file_size, binary=True)}"
+        return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
+
+    def _select_cover(self, option: str, album: Album, front_covers: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]) -> bool:
+        self.ctx.console.print(option)
+        return False
