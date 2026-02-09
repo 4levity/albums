@@ -1,6 +1,8 @@
 from enum import Enum, auto
 from pathlib import Path
+from typing import List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..app import Context
@@ -68,7 +70,10 @@ def check_policy(
             option_automatic_index = 0 if len(options) == 1 else None
             if policy == Policy.NEVER:
                 option_free_text = False
-            table = (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)])
+            table: tuple[list[str], List[List[RenderableType]]] = (
+                ["track", "filename"],
+                [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)],
+            )
             fixer = Fixer(lambda option: _fix(option), options, option_free_text, option_automatic_index, table)
         else:
             fixer = None

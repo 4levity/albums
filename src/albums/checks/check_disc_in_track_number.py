@@ -1,7 +1,9 @@
 import logging
 import re
 from pathlib import Path
+from typing import List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -26,7 +28,7 @@ class CheckDiscInTrackNumber(Check):
         if all_tracks_discnumber_in_tracknumber(album.tracks):
             option_free_text = False
             option_automatic_index = 0
-            tracks = [
+            tracks: List[List[RenderableType]] = [
                 [describe_track_number(track), escape(track.filename), *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)
             ]
             table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)

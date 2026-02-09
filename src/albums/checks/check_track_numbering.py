@@ -1,8 +1,9 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from .. import app
@@ -40,7 +41,7 @@ class TrackTotalFixer(Fixer):
             options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
         # TODO automatic fix if no conflict
 
-        tracks = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
+        tracks: List[List[RenderableType]] = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
         table = (["track", "filename"], tracks)
         # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
 
@@ -183,7 +184,7 @@ class CheckTrackNumbering(Check):
         options = [f">> Automatically renumber {len(new_tracknumbers)} tracks based on filenames"]
         option_automatic_index = 0
 
-        table = (
+        table: tuple[list[str], List[List[RenderableType]]] = (
             ["track", "filename", "proposed new track #"],
             [[describe_track_number(track), escape(track.filename), new_tracknumbers.get(track.filename, "")] for track in ordered_tracks(album)],
         )

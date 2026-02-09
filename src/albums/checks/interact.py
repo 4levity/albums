@@ -4,9 +4,7 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Sequence
 
-from rich.console import RenderableType
 from rich.markup import escape
 from rich.prompt import Confirm, IntPrompt
 from rich.table import Table
@@ -36,7 +34,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     fixer = check_result.fixer
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
-    user_quit = False  # user explicitly quit this check
+    user_quit = False  # user explicitly quit this checkRenderableType
 
     tagger_config = ctx.config.get("options", {}).get("tagger")
     tagger = str(tagger_config) if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
@@ -62,9 +60,9 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     album_path = (ctx.library_root if ctx.library_root else Path(".")) / album.path
 
     while not done:
-        if fixer and fixer.table:
-            (headers, get_rows) = fixer.table
-            rows: Sequence[Sequence[RenderableType]] = get_rows if isinstance(get_rows, Sequence) else get_rows()  # pyright: ignore[reportUnknownVariableType]
+        table = fixer.get_table() if fixer else None
+        if table:
+            (headers, rows) = table
             table = Table(*headers)
             for row in rows:
                 table.add_row(*row)

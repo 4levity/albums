@@ -1,8 +1,9 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -55,7 +56,7 @@ class CheckArtistTag(Check):
         candidates = sorted(
             filter(lambda v: v and not str.lower(v).startswith("various"), artist_list), key=lambda a: len(artist_values[a]), reverse=True
         )[:6]
-        table: tuple[list[str], list[list[str]]] = (
+        table: tuple[list[str], List[List[RenderableType]]] = (
             ["filename", "album artist", "artist", "proposed artist"],
             [
                 [

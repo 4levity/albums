@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
+from typing import List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -26,7 +28,7 @@ class CheckTrackTitle(Check):
             proposed_titles = list(self._proposed_title(track) for track in album.tracks)
             any_fixable = any(not track.tags.get("title") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
             if any_fixable:
-                table: tuple[list[str], list[list[str]]] = (
+                table: tuple[list[str], List[List[RenderableType]]] = (
                     ["filename", "title", "proposed new title"],
                     [
                         [

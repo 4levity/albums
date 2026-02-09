@@ -2,7 +2,7 @@ import io
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, List
 
 import humanize
 from PIL import Image
@@ -127,8 +127,8 @@ class CheckAlbumArt(Check):
 
     def _image_table(
         self, album: Album, pictures: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]
-    ) -> Sequence[Sequence[RenderableType]]:
-        pixelses: list[Pixels] = []
+    ) -> List[List[RenderableType]]:
+        pixelses: list[RenderableType] = []
         target_width = int((self.ctx.console.width - 3) / len(pictures))
         target_height = (self.ctx.console.height - 10) * 2
         for cover in pictures:

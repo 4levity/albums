@@ -1,8 +1,9 @@
 import logging
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
@@ -65,7 +66,7 @@ class CheckZeroPadNumbers(Check):
             return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
 
         total_discs = len(tracks_by_disc.keys())
-        table_rows: list[list[str]] = []
+        table_rows: List[List[RenderableType]] = []
         fix_tracknumbers = 0
         fix_tracktotals = 0
         fix_discnumbers = 0

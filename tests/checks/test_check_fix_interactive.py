@@ -1,4 +1,7 @@
+from typing import List, Tuple
+
 import rich
+from rich.console import RenderableType
 
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
@@ -9,7 +12,7 @@ from albums.types import Album, Stream, Track
 
 class MockFixer(Fixer):
     def __init__(self, ctx: app.Context, album: Album):
-        table = (["track", "title"], [["1", "one"]])
+        table: Tuple[List[str], List[List[RenderableType]]] = (["track", "title"], [["1", "one"]])
         options = ["A", "B"]
         option_free_text = True
         option_automatic_index = 0

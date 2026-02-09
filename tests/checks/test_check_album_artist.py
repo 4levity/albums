@@ -52,8 +52,8 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["B", "A", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.table[1]) == 3  # tracks
-        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
+        assert len(result.fixer.get_table()[1]) == 3  # tracks
+        assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
 
         # we select "B" and it is fixed
         mock_set_basic_tags = mocker.patch("albums.checks.check_album_artist.set_basic_tags")
@@ -82,8 +82,8 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["A", "B", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.table[1]) == 3  # tracks
-        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
+        assert len(result.fixer.get_table()[1]) == 3  # tracks
+        assert len(result.fixer.table[0]) == len(result.fixer.get_table()[1][0])  # headers
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist would be redundant, but it can be set to A" in result.message
@@ -115,8 +115,8 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["A", "B", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.table[1]) == 3  # tracks
-        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
+        assert len(result.fixer.get_table()[1]) == 3  # tracks
+        assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist is not needed: A" in result.message

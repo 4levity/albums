@@ -1,9 +1,11 @@
 import logging
 from pathlib import Path
+from typing import List
 
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from PIL.ImageFile import ImageFile
+from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.picture import IMAGE_MODE_BPP, get_image
@@ -35,7 +37,9 @@ class CheckFlacPictureMetadata(Check):
         if mismatches:
             options = [f">> Re-embed images in {len(mismatches)} tracks"]
             option_automatic_index = 0
-            tracks = [[escape(track.filename), "**yes**" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)]
+            tracks: List[List[RenderableType]] = [
+                [escape(track.filename), "**yes**" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)
+            ]
             table = (["filename", "image metadata issues"], tracks)
             return CheckResult(
                 ProblemCategory.PICTURES,
