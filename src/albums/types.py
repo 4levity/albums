@@ -118,6 +118,7 @@ class Album:
     ignore_checks: list[str] = field(default_factory=list[str])
     picture_files: dict[str, Picture] = field(default_factory=dict[str, Picture])
     album_id: int | None = None
+    scanner: int = 0
 
     def to_dict(self):
         pictures = dict((filename, picture.to_dict()) for (filename, picture) in self.picture_files.items())

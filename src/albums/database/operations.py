@@ -11,11 +11,11 @@ PICTURE_TYPE_FRONT_COVER_SOURCE_FILE = 200
 
 def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
     with db:
-        row = db.execute("SELECT path FROM album WHERE album_id = ?;", (album_id,)).fetchone()
+        row = db.execute("SELECT path, scanner FROM album WHERE album_id = ?;", (album_id,)).fetchone()
         if row is None:
             raise ValueError(f"load_album called with invalid album_id={album_id}")
 
-        (path,) = row
+        (path, scanner) = row
         collections = [
             name
             for (name,) in db.execute(
@@ -41,12 +41,12 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
                 (album_id,),
             )
         )
-        return Album(path, tracks, collections, ignore_checks, picture_files, album_id)
+        return Album(path, tracks, collections, ignore_checks, picture_files, album_id, scanner)
 
 
 def add(db: sqlite3.Connection, album: Album) -> int:
     with db:
-        (album_id,) = db.execute("INSERT INTO album (path) VALUES (?) RETURNING album_id;", (album.path,)).fetchone()
+        (album_id,) = db.execute("INSERT INTO album (path, scanner) VALUES (?, ?) RETURNING album_id;", (album.path, album.scanner)).fetchone()
         _insert_collections(db, album_id, album.collections)
         _insert_ignore_checks(db, album_id, album.ignore_checks)
         _insert_tracks(db, album_id, album.tracks)
@@ -59,6 +59,13 @@ def remove(db: sqlite3.Connection, album_id: int):
         cur = db.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
         if cur.rowcount == 0:
             logger.warning(f"didn't delete album, not found: {album_id}")
+
+
+def update_scanner(db: sqlite3.Connection, album_id: int, scanner: int):
+    with db:
+        cur = db.execute("UPDATE album SET scanner = ? WHERE album_id = ?;", (scanner, album_id))
+        if cur.rowcount == 0:
+            logger.warning(f"didn't update scanner for album, not found: {album_id}")
 
 
 def update_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
@@ -201,7 +208,7 @@ def _load_pictures(db: sqlite3.Connection, track_id: int):
             PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(load_issue) if load_issue else None, None, embed_ix
         )
         for picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix in db.execute(
-            "SELECT picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
+            "SELECT picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY embed_ix;",
             (track_id,),
         )
     ]
