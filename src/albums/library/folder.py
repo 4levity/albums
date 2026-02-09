@@ -44,7 +44,7 @@ def scan_folder(
             return (Album(album_relpath, found_tracks, [], [], picture_files), AlbumScanResult.NEW)
 
         tracks_modified = _track_files_modified(stored_album.tracks, found_tracks)
-        missing_metadata = _missing_metadata(stored_album.tracks)
+        missing_metadata = _missing_metadata(stored_album)
         pictures_modified = _picture_files_modified(stored_album.picture_files, picture_paths)
         if reread or tracks_modified or missing_metadata or pictures_modified:
             album = copy(stored_album)
@@ -103,13 +103,11 @@ def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):
     return False
 
 
-def _missing_metadata(tracks: list[Track]):
-    for track in tracks:
-        if not track.tags or not track.stream:
-            return True
-        if len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0:
-            return True  # images don't have unique embed_ix, needs rescan (circa version 0.1.6, can remove by 1.0)
-        if str.lower(tracks[0].filename).endswith(".mp3") and not any(track.pictures for track in tracks):
-            return True  # TODO REMOVE
-
-    return False
+def _missing_metadata(album: Album):
+    return any(
+        not track.tags
+        or not track.stream
+        or (not track.pictures and any(name.startswith("apic") for name in track.tags))
+        or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
+        for track in album.tracks
+    )
