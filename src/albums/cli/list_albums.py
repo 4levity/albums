@@ -27,7 +27,7 @@ def list_albums(ctx: app.Context, json: bool):
             if ctx.console.is_terminal:
                 ctx.console.print_json(dumps(album.to_dict()))  # pretty for terminal
             else:
-                ctx.console.print(dumps(album.to_dict()), end="")  # otherwise compact
+                ctx.console.print(dumps(album.to_dict()), end="", highlight=False, markup=False, soft_wrap=True)  # otherwise compact
         else:
             table.add_row(
                 escape(album.path),
