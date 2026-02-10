@@ -74,6 +74,7 @@ pyyaml = "^6.0.3"
 pillow = "^12.1.0"
 xxhash = "^3.6.0"
 rich-pixels = "^3.0.1"
+scikit-image = "^0.26.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.10"

@@ -8,6 +8,8 @@ from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
 
+PICTURE_TYPE_FRONT_COVER_SOURCE_FILE = 200
+
 
 def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
     with db:
@@ -34,9 +36,14 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
 
         tracks = list(_load_tracks(db, album_id, load_track_tag))
         picture_files: dict[str, Picture] = dict(
-            (filename, Picture(picture_type_from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp))
-            for (filename, file_size, modify_timestamp, file_hash, format, width, height) in db.execute(
-                "SELECT filename, file_size, modify_timestamp, file_hash, format, width, height FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
+            (
+                filename,
+                Picture(
+                    picture_type_from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp, 0, bool(cover_source)
+                ),
+            )
+            for (filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) in db.execute(
+                "SELECT filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
                 (album_id,),
             )
         )
@@ -147,8 +154,18 @@ def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: d
 def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
     for filename, picture in picture_files.items():
         db.execute(
-            "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-            (album_id, filename, picture.file_size, picture.modify_timestamp, picture.file_hash, picture.format, picture.width, picture.height),
+            "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            (
+                album_id,
+                filename,
+                picture.file_size,
+                picture.modify_timestamp,
+                picture.file_hash,
+                picture.format,
+                picture.width,
+                picture.height,
+                1 if picture.front_cover_source else 0,
+            ),
         )
 
 

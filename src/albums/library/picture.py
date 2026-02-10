@@ -35,8 +35,8 @@ def picture_from_path(file: Path) -> Picture | None:
 
 def picture_type_from_filename(filename: str) -> PictureType:
     filename_lower = str.lower(filename)
-    for match in ["folder", "cover", "album", "thumbnail"]:
-        if match in filename_lower:
+    for match in ["folder", ".folder", "cover", "album", "thumbnail"]:
+        if filename_lower.startswith(match):
             return PictureType.COVER_FRONT
     return PictureType.OTHER
 

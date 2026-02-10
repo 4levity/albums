@@ -91,15 +91,13 @@ CREATE TABLE album_picture_file (
     format TEXT NOT NULL,
     width INTEGER NOT NULL,
     height INTEGER NOT NULL
+    -- v6 add column cover_source
 );
 CREATE INDEX idx_album_picture_file_album_id ON album_picture_file(album_id);
 """,
-    4: """
-ALTER TABLE track_picture ADD COLUMN embed_ix INTEGER NOT NULL DEFAULT 0;
-""",
-    5: """
-ALTER TABLE track_picture RENAME COLUMN mismatch TO load_issue;
-""",
+    4: "ALTER TABLE track_picture ADD COLUMN embed_ix INTEGER NOT NULL DEFAULT 0;",
+    5: "ALTER TABLE track_picture RENAME COLUMN mismatch TO load_issue;",
+    6: "ALTER TABLE album_picture_file ADD COLUMN cover_source INTEGER NOT NULL DEFAULT 0;",
 }
 
 

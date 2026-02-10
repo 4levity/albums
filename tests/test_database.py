@@ -37,7 +37,7 @@ class TestDatabase:
                 [track()],
                 ["test"],
                 ["artist_tag"],
-                {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", None, 999)},
+                {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", None, 999, 0, True)},
             ),
         ]
 
@@ -73,6 +73,7 @@ class TestDatabase:
             assert pic.file_size == 1024
             assert pic.file_hash == b"1234"
             assert pic.modify_timestamp == 999
+            assert pic.front_cover_source
 
             assert len(list(selector.select_albums(db, [], ["/"], True))) == 2  # regex match all
             assert len(list(selector.select_albums(db, ["test", "anything"], ["/"], True))) == 1  # regex + collection match
@@ -98,11 +99,14 @@ class TestDatabase:
 
             cover = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", None, 999)
             albums[1].picture_files["other.jpg"] = cover
+            assert albums[1].picture_files["folder.jpg"].front_cover_source
+            albums[1].picture_files["folder.jpg"].front_cover_source = False
             operations.update_picture_files(db, albums[1].album_id, albums[1].picture_files)
             result = list(selector.select_albums(db, [], [albums[1].path], False))
             assert len(result[0].picture_files) == 2
             pic_folder = result[0].picture_files.get("folder.jpg")
             assert pic_folder
+            assert not pic_folder.front_cover_source
             pic_other = result[0].picture_files.get("other.jpg")
             assert pic_other
 
