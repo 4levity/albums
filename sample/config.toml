@@ -70,12 +70,15 @@ enabled = true
 
 [checks.album_art]
 enabled = true
-cover_front_required = false
 cover_min_pixels = 100
 cover_max_pixels = 2048
-cover_unique = true
 cover_squareness = 0.98
 embedded_size_max = 8388608
+
+[checks.front_cover_selection]
+enabled = true
+cover_required = false
+unique = true
 
 [checks.zero_pad_numbers]
 enabled = true

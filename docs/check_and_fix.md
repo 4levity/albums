@@ -281,16 +281,39 @@ image data and correct metadata.
 
 ### album_art
 
+Images treated as COVER_FRONT should be square and within a range of acceptable
+sizes. Image files embedded in tracks should be a reasonable size and in a
+widely-supported format.
+
+Rules:
+
+- The width/height of cover art should not be too small or large (see options)
+- Cover art should be square (see options)
+- **Embedded** images should not be very large files (see options)
+- **Embedded** images should be in PNG or JPEG format (not GIF or other)
+
+<!-- pyml disable line-length -->
+
+| Option                 | Default     | Description                                                                       |
+| ---------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `cover_min_pixels`     | **100**     | front cover art should be at least this width/height                              |
+| `cover_max_pixels`     | **2048**    | front cover art should not be larger than this width/height                       |
+| `cover_squareness`     | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
+| `embedded_size_max`    | **8388608** | embedded image data maximum size (not including container encoding)               |
+
+<!-- pyml enable line-length -->
+
+### front_cover_selection
+
 If any track has any pictures in its metadata, or if there are any image files
 in the folder, the album should have correct front cover art. (Or require for
-all albums, see settings.) Embedded files should be a reasonable size and in a
-widely-supported format.
+all albums, see settings.)
 
 !!!note
 
     In media formats including FLAC files, embedded images are classified with
     the "picture type" codes originally defined for ID3v2 `APIC` frames. This
-    check is mostly concerned with images classified as `COVER_FRONT` (0x03).
+    check is concerned with images classified as `COVER_FRONT` (0x03).
 
 For the album to have correct front cover art, there should be a single unique
 cover art image associated with the album. Either every track should have an
@@ -301,13 +324,9 @@ the filename, or both.
 Rules:
 
 - Each track should have a cover art image, if any track has embedded cover art
-- All cover art associated with the album should be the exact same image,
-  including embedded `COVER_FRONT` as well as image files matching the filenames
-  above (or see options)
-- The width/height of cover art should not be too small or large (see options)
-- Cover art should be square (see options)
-- **Embedded** images should not be very large files (see options)
-- **Embedded** images should be in PNG or JPEG format (not GIF or other)
+- All cover art associated with the album should be the same image, including
+  embedded `COVER_FRONT` as well as image files matching the filenames above (or
+  see options)
 
 Tracks may have any number of embedded images that are not marked as
 `COVER_FRONT`. Other image files in the album folder, where the filename does
@@ -316,18 +335,12 @@ type `OTHER`.
 
 <!-- pyml disable line-length -->
 
-| Option                 | Default     | Description                                                                       |
-| ---------------------- | ----------- | --------------------------------------------------------------------------------- |
-| `cover_front_required` | **false**   | if **true** every album should have correct front cover art                       |
-| `cover_min_pixels`     | **100**     | front cover art should be at least this width/height                              |
-| `cover_max_pixels`     | **2048**    | front cover art should not be larger than this width/height                       |
-| `cover_unique`         | **true**    | if **true** all front cover art should be the exact same image                    |
-| `cover_squareness`     | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
-| `embedded_size_max`    | **8388608** | embedded image data maximum size (not including container encoding)               |
+| Option           | Default   | Description                                                    |
+| ---------------- | --------- | -------------------------------------------------------------- |
+| `cover_required` | **false** | if **true** every album should have correct front cover art    |
+| `unique`         | **true**  | if **true** all front cover art should be the exact same image |
 
 <!-- pyml enable line-length -->
-
-Currently only checks for embedded images in FLAC files and does not fix yet.
 
 ### zero_pad_numbers
 
