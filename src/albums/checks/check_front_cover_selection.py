@@ -1,8 +1,9 @@
 import io
 import logging
 from collections import defaultdict
+from os import unlink
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Collection, List
 
 import humanize
 import numpy
@@ -58,24 +59,51 @@ class CheckFrontCoverSelection(Check):
                 if file_cover:
                     tracks_with_cover += 1
 
-        front_covers = pictures_by_type.get(PictureType.COVER_FRONT)
-        if front_covers and len(front_covers) > 1:
+        front_covers = pictures_by_type.get(PictureType.COVER_FRONT, [])
+        front_cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded) in picture_sources[pic]))
+        for pic in front_cover_image_file:
+            sources = sorted(filename for (filename, embedded) in picture_sources[pic] if not embedded)
+            if len(sources) > 1:
+                table = (sources, lambda: self._image_table(album, [pic] * len(sources), picture_sources))
+                option_automatic_index = sources.index(min(sources, key=lambda s: len(s)))  # pick shortest filename
+                return CheckResult(
+                    ProblemCategory.PICTURES,
+                    f"same image data in multiple files: {', '.join(sources)}",
+                    Fixer(
+                        lambda option: self._fix_delete_image_files_except(option, sources, album),
+                        sources,
+                        False,
+                        option_automatic_index,
+                        table,
+                        "Select one file to KEEP and all the other files will be DELETED",
+                    ),
+                )
+
+        if self.unique and len(front_covers) > 1:
             front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded) in picture_sources[pic]))
-            front_cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded) in picture_sources[pic]))
             has_cover_source_file = any(cover.front_cover_source for cover in front_covers)
-            if self.unique:
-                message = None
-                if front_cover_image_file and not has_cover_source_file:
+            message = None
+
+            if front_cover_image_file and not has_cover_source_file:
+                cover_source_candidate = self._source_image_file_candidate(front_cover_image_file, front_cover_embedded)
+                if cover_source_candidate:
+                    options = front_cover_image_file
+                    # option_automatic_index = front_cover_image_file.index(cover_source_candidate)
+
                     # if there is a high resolution cover file, this conflict can be solved or reduced by marking that file as cover source
-                    # but if none of the image files are larger or higher resolution than embedded files, offer to delete them instead
-                    message = "select one of these files as cover source or delete them all"  # TODO fixer
-                elif duplicate_in_track:
-                    message = "COVER_FRONT picture cleanup needed"
-                elif not has_cover_source_file or len(front_cover_image_file) > 1 or len(front_cover_embedded) > 1:
-                    # if there is a cover source and there are multiple cover image files, offer to keep only the largest file
-                    message = "COVER_FRONT pictures are not all the same"
-                if message:
-                    issues.add(message)
+                    message = "fix by selecting a cover source candidate"
+                else:
+                    # if none of the cover image files are larger or higher resolution than embedded covers, offer to delete the files
+                    message = "fix by deleting cover source images"
+
+            elif duplicate_in_track:
+                message = "COVER_FRONT picture cleanup needed"
+            elif not has_cover_source_file or len(front_cover_image_file) > 1 or len(front_cover_embedded) > 1:
+                # TODO if multiple front cover embedded + each track has one, that's probably on purpose and maybe should be ignored?
+                # if there is a cover source and there are multiple cover image files, offer to keep only the cover source
+                message = "COVER_FRONT pictures are not all the same"
+            if message:
+                issues.add(message)
 
         if front_covers:
             if tracks_with_cover and tracks_with_cover != len(album.tracks):
@@ -87,9 +115,7 @@ class CheckFrontCoverSelection(Check):
 
         if issues:
             if tracks_with_cover:
-                candidates: set[Picture] = (  # pyright: ignore[reportUnknownVariableType]
-                    front_covers if front_covers else set().union(*pictures_by_type.values())
-                )
+                candidates: set[Picture] = front_covers if front_covers else set().union(*pictures_by_type.values())  # type: ignore
                 picture_list = sorted(candidates, key=lambda picture: len(picture_sources[picture]), reverse=True)
                 options = [self._describe_album_art(picture, picture_sources) for picture in picture_list]
 
@@ -136,7 +162,7 @@ class CheckFrontCoverSelection(Check):
                 image = None
 
             if image:
-                h = (7 / 8) * image.height
+                h = (7 / 8) * image.height  # TODO try to determine appropriate height scaling for terminal font or make configurable
                 scale = min(target_width, target_height) / max(image.width, h)
                 pixels = Pixels.from_image(image, (int(image.width * scale), int(h * scale)))
                 pixelses.append(pixels)
@@ -146,24 +172,44 @@ class CheckFrontCoverSelection(Check):
                     image = image.convert("RGB")
                     if reference_image is not None:
                         if image.width != reference_width or image.height != reference_height:
-                            differences.append("aspect ratio doesn't match")
+                            differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] aspect ratio doesn't match")
                         else:
                             this_image = numpy.asarray(image)
                             mse = mean_squared_error(reference_image, this_image)
-                            differences.append(f"MSE difference = {mse}")
+                            differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] MSE difference = {mse}")
                     else:
                         reference_image = numpy.asarray(image)
                         (reference_width, reference_height) = image.size
-                        differences.append("reference")
+                        differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] reference")
         return [pixelses, differences] if differences else [pixelses]
 
     def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool]]]):
         sources = picture_sources[picture]
         first_source = f"{escape(sources[0][0])}{f'#{picture.embed_ix}' if picture.embed_ix else ''}"
-        details = f"[{picture.width} x {picture.height}] {humanize.naturalsize(picture.file_size, binary=True)}"
+        details = f"[{picture.width} x {picture.height}] {picture.format}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _select_cover(self, option: str, album: Album, front_covers: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]) -> bool:
         # TODO implement selecting and applying cover, marking a file as front_cover_source, and deleting unwanted cover copies
         self.ctx.console.print(option)
         return False
+
+    def _source_image_file_candidate(self, image_files: Collection[Picture], embedded_images: Collection[Picture]):
+        largest_image_file = max(image_files, key=lambda pic: pic.file_size) if image_files else None
+        largest_embedded_file = max(embedded_images, key=lambda pic: pic.file_size) if embedded_images else None
+        if largest_embedded_file is None or (largest_image_file and largest_image_file.file_size > largest_embedded_file.file_size):
+            return largest_image_file
+        return None
+
+    def _fix_delete_image_files_except(self, option: str, filenames: Collection[str], album: Album):
+        if option not in filenames:
+            raise ValueError(f"invalid option {option} is not one of {filenames}")
+
+        for filename in filenames:
+            if filename == option:
+                self.ctx.console.print(f"Keeping {escape(filename)}")
+            else:
+                self.ctx.console.print(f"Deleting {escape(filename)}")
+                path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / filename
+                unlink(path)
+        return True

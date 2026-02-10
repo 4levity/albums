@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import call
+
 from albums.app import Context
 from albums.checks.check_front_cover_selection import CheckFrontCoverSelection
 from albums.types import Album, Picture, PictureType, Stream, Track
@@ -109,3 +112,19 @@ class TestCheckFrontCoverSelection:
         result = CheckFrontCoverSelection(Context()).check(album)
         assert result is not None
         assert result.message == "some tracks have COVER_FRONT and some do not"
+
+    def test_front_cover_duplicate_files(self, mocker):
+        pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")
+        picture_files = {"folder.png": pic, "cover.png": pic}
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)
+        result = CheckFrontCoverSelection(Context()).check(album)
+        assert result is not None
+        assert result.message == "same image data in multiple files: cover.png, folder.png"
+        assert result.fixer
+        assert result.fixer.options == ["cover.png", "folder.png"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_unlink = mocker.patch("albums.checks.check_front_cover_selection.unlink")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.png")]
