@@ -2,7 +2,6 @@ import json
 import logging
 import sqlite3
 
-from ..checks.all import ALL_CHECK_NAMES
 from ..library.picture import picture_type_from_filename
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
@@ -28,11 +27,7 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
 
         ignore_checks: list[str] = []
         for (name,) in db.execute("SELECT check_name FROM album_ignore_check WHERE album_id = ?;", (album_id,)):
-            if name in ALL_CHECK_NAMES:
-                ignore_checks.append(name)
-            else:
-                # if chack_names changed, a migrationm should have prevented this, but raising an error here will not solve anything
-                logger.warning(f'album_id {album_id} has unknown check_name "{name}" in ignore list')
+            ignore_checks.append(name)
 
         tracks = list(_load_tracks(db, album_id, load_track_tag))
         picture_files: dict[str, Picture] = dict(
@@ -94,8 +89,6 @@ def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: l
 
 def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
     for check_name in ignore_checks:
-        if check_name not in ALL_CHECK_NAMES:
-            raise ValueError(f"check_name {check_name} is not valid")
         db.execute("INSERT INTO album_ignore_check (album_id, check_name) VALUES (?, ?);", (album_id, check_name))
 
 

@@ -13,8 +13,8 @@ from rich.markup import escape
 from rich_pixels import Pixels
 from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
 
-from albums.library.metadata import get_embedded_image_data
-
+from ..database import operations
+from ..library.metadata import get_embedded_image_data
 from ..types import Album, Picture, PictureType
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
@@ -85,13 +85,27 @@ class CheckFrontCoverSelection(Check):
             message = None
 
             if front_cover_image_file and not has_cover_source_file:
+                # at this point every picture in front_cover_image_file should be associated with exactly one file
                 cover_source_candidate = self._source_image_file_candidate(front_cover_image_file, front_cover_embedded)
                 if cover_source_candidate:
-                    options = front_cover_image_file
-                    # option_automatic_index = front_cover_image_file.index(cover_source_candidate)
-
-                    # if there is a high resolution cover file, this conflict can be solved or reduced by marking that file as cover source
-                    message = "fix by selecting a cover source candidate"
+                    # if there is a higher-resolution cover file, this conflict can be solved or reduced by marking that file as cover source
+                    filenames = [
+                        [filename for (filename, embedded) in picture_sources[picture] if not embedded][0] for picture in front_cover_image_file
+                    ]
+                    option_automatic_index = front_cover_image_file.index(cover_source_candidate)
+                    table = (filenames, lambda: self._image_table(album, front_cover_image_file, picture_sources))
+                    return CheckResult(
+                        ProblemCategory.PICTURES,
+                        f"an image file should be set as front cover source if it is being kept: {', '.join(filenames)}",
+                        Fixer(
+                            lambda filename: self._fix_select_cover_source_file(album, filename),
+                            filenames,
+                            False,
+                            option_automatic_index,
+                            table,
+                            "Select an image file to mark as album cover source",
+                        ),
+                    )
                 else:
                     # if none of the cover image files are larger or higher resolution than embedded covers, offer to delete the files
                     message = "fix by deleting cover source images"
@@ -114,22 +128,22 @@ class CheckFrontCoverSelection(Check):
             issues.add("album does not have a COVER_FRONT picture")
 
         if issues:
-            if tracks_with_cover:
-                candidates: set[Picture] = front_covers if front_covers else set().union(*pictures_by_type.values())  # type: ignore
-                picture_list = sorted(candidates, key=lambda picture: len(picture_sources[picture]), reverse=True)
-                options = [self._describe_album_art(picture, picture_sources) for picture in picture_list]
+            # if tracks_with_cover:
+            # candidates: set[Picture] = front_covers if front_covers else set().union(*pictures_by_type.values())  # type: ignore
+            # picture_list = sorted(candidates, key=lambda picture: len(picture_sources[picture]), reverse=True)
+            # options = [self._describe_album_art(picture, picture_sources) for picture in picture_list]
 
-                # TODO options (a) if there are front cover picture files, mark one of them as cover front source
-                # TODO options (b) select one of the images and embed it in all the files (b-plus) after resizing it to 500x500 if larger source is available and compressing it
-                fixer = Fixer(
-                    lambda option: self._select_cover(option, album, picture_list, picture_sources),
-                    options,
-                    False,
-                    None,
-                    (options, lambda: self._image_table(album, picture_list, picture_sources)),
-                )
-            else:
-                fixer = None
+            # TODO options (a) if there are front cover picture files, mark one of them as cover front source
+            # TODO options (b) select one of the images and embed it in all the files (b-plus) after resizing it to 500x500 if larger source is available and compressing it
+            # fixer = Fixer(
+            #     lambda option: self._select_cover(option, album, picture_list, picture_sources),
+            #     options,
+            #     False,
+            #     None,
+            #     (options, lambda: self._image_table(album, picture_list, picture_sources)),
+            # )
+            # else:
+            fixer = None
             return CheckResult(
                 ProblemCategory.PICTURES,
                 ", ".join(list(issues)),
@@ -189,10 +203,13 @@ class CheckFrontCoverSelection(Check):
         details = f"[{picture.width} x {picture.height}] {picture.format}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
-    def _select_cover(self, option: str, album: Album, front_covers: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]) -> bool:
-        # TODO implement selecting and applying cover, marking a file as front_cover_source, and deleting unwanted cover copies
-        self.ctx.console.print(option)
-        return False
+    def _fix_select_cover_source_file(self, album: Album, filename: str) -> bool:
+        if self.ctx.db and album.album_id:
+            for picfile in album.picture_files:
+                album.picture_files[picfile].front_cover_source = picfile == filename
+            self.ctx.console.print(f"setting cover source file to {escape(filename)}")
+            operations.update_picture_files(self.ctx.db, album.album_id, album.picture_files)
+        return True
 
     def _source_image_file_candidate(self, image_files: Collection[Picture], embedded_images: Collection[Picture]):
         largest_image_file = max(image_files, key=lambda pic: pic.file_size) if image_files else None

@@ -128,3 +128,29 @@ class TestCheckFrontCoverSelection:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.png")]
+
+    def test_has_unmarked_cover_source_file(self, mocker):
+        picture_files = {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 10000, b"")}
+        album = Album(
+            "",
+            [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 400, b"")])],
+            [],
+            [],
+            picture_files,
+            999,
+        )
+        ctx = Context()
+        ctx.db = True
+        result = CheckFrontCoverSelection(ctx).check(album)
+        assert result is not None
+        assert result.message == "an image file should be set as front cover source if it is being kept: cover.png"
+        assert result.fixer
+        assert result.fixer.options == ["cover.png"]
+        assert result.fixer.option_automatic_index == 0
+
+        update_picture_files_mock = mocker.patch("albums.checks.check_front_cover_selection.operations.update_picture_files")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert update_picture_files_mock.call_count == 1
+        assert update_picture_files_mock.call_args.args[1] == 999
+        assert update_picture_files_mock.call_args.args[2]["cover.png"].front_cover_source
