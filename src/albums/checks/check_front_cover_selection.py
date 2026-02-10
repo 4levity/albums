@@ -59,14 +59,23 @@ class CheckFrontCoverSelection(Check):
                     tracks_with_cover += 1
 
         front_covers = pictures_by_type.get(PictureType.COVER_FRONT)
-        must_select_one = self.unique and front_covers and len(front_covers) > 1
-        # TODO: if there is a front_cover_source image it is allowed to be different than embedded front covers
-        if front_covers and (must_select_one or duplicate_in_track):
-            if must_select_one:
-                message = "COVER_FRONT pictures are not all the same"
-            else:
-                message = "COVER_FRONT picture cleanup needed"
-            issues.add(message)
+        if front_covers and len(front_covers) > 1:
+            front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded) in picture_sources[pic]))
+            front_cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded) in picture_sources[pic]))
+            has_cover_source_file = any(cover.front_cover_source for cover in front_covers)
+            if self.unique:
+                message = None
+                if front_cover_image_file and not has_cover_source_file:
+                    # if there is a high resolution cover file, this conflict can be solved or reduced by marking that file as cover source
+                    # but if none of the image files are larger or higher resolution than embedded files, offer to delete them instead
+                    message = "select one of these files as cover source or delete them all"  # TODO fixer
+                elif duplicate_in_track:
+                    message = "COVER_FRONT picture cleanup needed"
+                elif not has_cover_source_file or len(front_cover_image_file) > 1 or len(front_cover_embedded) > 1:
+                    # if there is a cover source and there are multiple cover image files, offer to keep only the largest file
+                    message = "COVER_FRONT pictures are not all the same"
+                if message:
+                    issues.add(message)
 
         if front_covers:
             if tracks_with_cover and tracks_with_cover != len(album.tracks):

@@ -53,6 +53,11 @@ def scan_folder(
                 album.tracks = found_tracks
             if pictures_modified:
                 album.picture_files = _load_picture_files(picture_paths)
+                # preserve front_cover_source setting
+                for filename, picture in stored_album.picture_files.items():
+                    if picture.front_cover_source:
+                        album.picture_files[filename].front_cover_source = True
+                        break
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
             # TODO if option reread=True and there were no changes, return UNCHANGED instead
             return (album, AlbumScanResult.UPDATED)
