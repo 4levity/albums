@@ -11,6 +11,8 @@ from .types import Album
 
 logger = logging.getLogger(__name__)
 
+SCANNER_VERSION = 1
+
 
 class Context(dict[Any, Any]):
     console = Console()  # single shared Console

@@ -101,10 +101,10 @@ CREATE INDEX idx_album_picture_file_album_id ON album_picture_file(album_id);
     4: "ALTER TABLE track_picture ADD COLUMN embed_ix INTEGER NOT NULL DEFAULT 0;",
     5: "ALTER TABLE track_picture RENAME COLUMN mismatch TO load_issue;",
     6: "ALTER TABLE album_picture_file ADD COLUMN cover_source INTEGER NOT NULL DEFAULT 0;",
-    7:"""
+    7: """
 CREATE UNIQUE INDEX album_path ON album(path);
 ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
-"""
+""",
 }
 
 

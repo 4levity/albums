@@ -4,7 +4,7 @@ import shutil
 
 from mutagen.flac import FLAC
 
-from albums.app import Context
+from albums.app import SCANNER_VERSION, Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.types import Album, Picture, PictureType, Track
@@ -183,3 +183,24 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 3
             assert result[0].path == delete_album
+
+    def test_scanner_version(self):
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+            library = create_library("test_scanner_version", self.sample_library[:2])
+            ctx = context(db, library)
+            scan(ctx)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 2
+            assert all(album.scanner == SCANNER_VERSION for album in result)
+
+            db.execute("UPDATE album SET scanner=0;")  # first album is unchanged but scanner version should be updated
+            (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # second album changed
+            create_album_in_library(library, self.sample_library[2])  # third album added
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 2  # third not scanned yet
+            assert all(album.scanner == 0 for album in result)
+
+            scan(ctx)
+            result = list(selector.select_albums(db, [], [], False))
+            assert len(result) == 3
+            assert all(album.scanner == SCANNER_VERSION for album in result)
