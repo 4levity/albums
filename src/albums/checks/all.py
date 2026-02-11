@@ -6,6 +6,7 @@ from .check_album_under_album import CheckAlbumUnderAlbum
 from .check_artist_tag import CheckArtistTag
 from .check_disc_in_track_number import CheckDiscInTrackNumber
 from .check_disc_numbering import CheckDiscNumbering
+from .check_duplicate_images import CheckDuplicateImages
 from .check_flac_picture_metadata import CheckFlacPictureMetadata
 from .check_front_cover_selection import CheckFrontCoverSelection
 from .check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
@@ -30,6 +31,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckTrackNumbering,
     CheckTrackTitle,
     CheckFlacPictureMetadata,
+    CheckDuplicateImages,
     CheckAlbumArt,
     CheckFrontCoverSelection,
     # pickier checks, may require correct tags

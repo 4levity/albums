@@ -3,11 +3,16 @@ from copy import copy
 from enum import Enum, auto
 from pathlib import Path
 
-from ..types import Album, Picture, Track
+import humanize
+
+from ..types import Album, Picture, PictureType, Track
 from .metadata import get_metadata
-from .picture import SUPPORTED_IMAGE_SUFFIXES, picture_from_path
+from .picture import get_picture_metadata
 
 logger = logging.getLogger(__name__)
+
+SUPPORTED_IMAGE_SUFFIXES = [".png", ".jpg", ".jpeg", ".gif"]
+MAX_IMAGE_SIZE = 64 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
 
 class AlbumScanResult(Enum):
@@ -68,7 +73,7 @@ def scan_folder(
 def _load_picture_files(paths: list[Path]) -> dict[str, Picture]:
     picture_files: dict[str, Picture] = {}
     for path in paths:
-        picture = picture_from_path(path)
+        picture = _picture_from_path(path)
         if picture:
             picture_files[path.name] = picture
     return picture_files
@@ -116,3 +121,19 @@ def _missing_metadata(album: Album):
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
         for track in album.tracks
     )
+
+
+def _picture_from_path(file: Path) -> Picture | None:
+    stat = file.stat()
+    if stat.st_size > MAX_IMAGE_SIZE:
+        logger.warning(
+            f"skipping image file {str(file)} because it is {humanize.naturalsize(stat.st_size, binary=True)} (albums max = {humanize.naturalsize(MAX_IMAGE_SIZE, binary=True)})"
+        )
+        # TODO: record the existence of the large image even if we do not load its metadata, just like we would with a load error
+        return None
+    with open(file, "rb") as f:
+        image_data = f.read()
+    picture_type = PictureType.from_filename(file.name)
+    picture = get_picture_metadata(image_data, picture_type)  # may or may not load successfully
+    picture.modify_timestamp = int(stat.st_mtime)
+    return picture

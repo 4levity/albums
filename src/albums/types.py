@@ -44,6 +44,12 @@ class PictureType(IntEnum):
     BAND_LOGOTYPE = 19
     PUBLISHER_LOGOTYPE = 20
 
+    @staticmethod
+    def from_filename(filename: str):
+        if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "thumbnail"]):
+            return PictureType.COVER_FRONT
+        return PictureType.OTHER
+
 
 @dataclass
 class Picture:

@@ -1,6 +1,3 @@
-from pathlib import Path
-from unittest.mock import call
-
 from albums.app import Context
 from albums.checks.check_front_cover_selection import CheckFrontCoverSelection
 from albums.types import Album, Picture, PictureType, Stream, Track
@@ -42,27 +39,6 @@ class TestCheckFrontCoverSelection:
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is not None
         assert result.message == "album does not have a COVER_FRONT picture"
-
-    def test_front_cover_multiple_front_in_track(self):
-        pictures = [
-            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"1111"),
-            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"2222"),
-        ]
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
-        result = CheckFrontCoverSelection(Context()).check(album)
-        assert result is not None
-        assert "COVER_FRONT pictures are not all the same" in result.message
-        assert "multiple COVER_FRONT pictures in one track" in result.message
-
-    def test_duplicate_front_cover_in_track(self):
-        pictures = [
-            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
-            Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""),
-        ]
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
-        result = CheckFrontCoverSelection(Context()).check(album)
-        assert result is not None
-        assert "duplicate COVER_FRONT pictures in one track" in result.message
 
     def test_front_cover_multiple_unique(self):
         album = Album(
@@ -113,22 +89,6 @@ class TestCheckFrontCoverSelection:
         assert result is not None
         assert result.message == "some tracks have COVER_FRONT and some do not"
 
-    def test_front_cover_duplicate_files(self, mocker):
-        pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")
-        picture_files = {"folder.png": pic, "cover.png": pic}
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)
-        result = CheckFrontCoverSelection(Context()).check(album)
-        assert result is not None
-        assert result.message == "same image data in multiple files: cover.png, folder.png"
-        assert result.fixer
-        assert result.fixer.options == ["cover.png", "folder.png"]
-        assert result.fixer.option_automatic_index == 0
-
-        mock_unlink = mocker.patch("albums.checks.check_front_cover_selection.unlink")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
-        assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.png")]
-
     def test_has_unmarked_cover_source_file(self, mocker):
         picture_files = {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 10000, b"")}
         album = Album(
@@ -143,9 +103,12 @@ class TestCheckFrontCoverSelection:
         ctx.db = True
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is not None
-        assert result.message == "an image file should be set as front cover source if it is being kept: cover.png"
+        assert (
+            result.message
+            == "multiple cover art images: designate a high-resolution image file as cover art source or delete image files (keep embedded images)"
+        )
         assert result.fixer
-        assert result.fixer.options == ["cover.png"]
+        assert result.fixer.options == [">> Mark as front cover source: cover.png", ">> Delete all cover image files: cover.png"]
         assert result.fixer.option_automatic_index == 0
 
         update_picture_files_mock = mocker.patch("albums.checks.check_front_cover_selection.operations.update_picture_files")
@@ -154,3 +117,28 @@ class TestCheckFrontCoverSelection:
         assert update_picture_files_mock.call_count == 1
         assert update_picture_files_mock.call_args.args[1] == 999
         assert update_picture_files_mock.call_args.args[2]["cover.png"].front_cover_source
+
+    def test_multiple_cover_source_no_embedded(self, mocker):
+        picture_files = {
+            "cover_big.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 100000, b"1111"),
+            "cover_small.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 1000, b"2222"),
+        }
+        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))], [], [], picture_files, 999)
+        ctx = Context()
+        ctx.db = True
+        result = CheckFrontCoverSelection(ctx).check(album)
+        assert result is not None
+        assert (
+            result.message
+            == "multiple cover art images: designate a high-resolution image file as cover art source (tracks do not have embedded images)"
+        )
+        assert result.fixer
+        assert result.fixer.options == [">> Mark as front cover source: cover_big.png", ">> Mark as front cover source: cover_small.png"]
+        assert result.fixer.option_automatic_index == 0
+
+        update_picture_files_mock = mocker.patch("albums.checks.check_front_cover_selection.operations.update_picture_files")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert update_picture_files_mock.call_count == 1
+        assert update_picture_files_mock.call_args.args[1] == 999
+        assert update_picture_files_mock.call_args.args[2]["cover_big.png"].front_cover_source

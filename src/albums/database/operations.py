@@ -2,7 +2,6 @@ import json
 import logging
 import sqlite3
 
-from ..library.picture import picture_type_from_filename
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
             (
                 filename,
                 Picture(
-                    picture_type_from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp, 0, bool(cover_source)
+                    PictureType.from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp, 0, bool(cover_source)
                 ),
             )
             for (filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) in db.execute(
