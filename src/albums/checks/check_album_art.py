@@ -19,6 +19,7 @@ class CheckAlbumArt(Check):
         "cover_squareness": 0.98,
         "embedded_size_max": 8 * 1024 * 1024,  # up to 16 MB is OK in ID3v2
     }
+    must_pass_checks = {"invalid_image"}
 
     def init(self, check_config: dict[str, Any]):
         self.cover_min_pixels = int(check_config.get("cover_min_pixels", CheckAlbumArt.default_config["cover_min_pixels"]))
@@ -39,8 +40,10 @@ class CheckAlbumArt(Check):
                 pictures_by_type[picture.picture_type].add(picture)
                 if embedded:
                     if picture.format not in {"image/png", "image/jpeg"}:
+                        # TODO: extract original to file, then automatically convert to jpg
                         issues.add(f"embedded image {picture.picture_type.name} is not a recommended format ({picture.format})")
                     if picture.file_size > self.embedded_size_max:
+                        # TODO: extract original to file, then resize/compress
                         file_size = humanize.naturalsize(picture.file_size, binary=True)
                         file_size_max = humanize.naturalsize(self.embedded_size_max, binary=True)
                         issues.add(f"embedded image {picture.picture_type.name} is over the configured limit ({file_size} > {file_size_max})")
@@ -49,10 +52,13 @@ class CheckAlbumArt(Check):
         if front_covers:
             for cover in front_covers:
                 if not self._cover_square_enough(cover.width, cover.height):
+                    # TODO: squarify
                     issues.add(f"COVER_FRONT is not square ({cover.width}x{cover.height})")
                 if min(cover.height, cover.width) < self.cover_min_pixels:
+                    # TODO: fix if there is a higher resolution cover source available
                     issues.add(f"COVER_FRONT image is too small ({cover.width}x{cover.height})")
                 if max(cover.height, cover.width) > self.cover_max_pixels:
+                    # TODO: extract original to file, then resize/compress
                     issues.add(f"COVER_FRONT image is too large ({cover.width}x{cover.height})")
 
         if issues:

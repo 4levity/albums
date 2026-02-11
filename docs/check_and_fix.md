@@ -268,6 +268,14 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
+### invalid_image
+
+During the scan, `albums` tries to load every embedded image and supported image
+file. If it fails, the image is probably corrupt and a `load_issue error` will
+be stored. This check reports on all images that could not be loaded. If there
+are separate image files that can't be loaded, there will be an option to delete
+them. Removing corrupt embedded images is not supported yet. No automatic fix.
+
 ### duplicate_image
 
 Each of the tracks in an album may have the same images embedded. But other
@@ -278,6 +286,10 @@ duplicate image data is not useful. Rules:
 - Each of the pictures embedded in a track should be a different image (don't
   have the same image embedded twice)
 - Image files should not be exact duplicates of other image files
+
+!!!note
+
+    Requires the `invalid_image` check to pass first.
 
 <!-- pyml disable line-length -->
 
@@ -298,6 +310,10 @@ recorded MIME type and dimensions to the real data.
 **Automatic fix**: For each affected file, re-embed all the images with the same
 image data and correct metadata.
 
+!!!note
+
+    Requires the `invalid_image` check to pass first.
+
 ### album_art
 
 Images treated as COVER_FRONT should be square and within a range of acceptable
@@ -310,6 +326,10 @@ Rules:
 - Cover art should be square (see options)
 - **Embedded** images should not be very large files (see options)
 - **Embedded** images should be in PNG or JPEG format (not GIF or other)
+
+!!!note
+
+    Requires the `invalid_image` check to pass first.
 
 <!-- pyml disable line-length -->
 
