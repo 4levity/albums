@@ -231,6 +231,7 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagType] |
 
 def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
     def store_value(key: str, value: Any):
+        # TODO if tag is an ID3 text tag containing a list[str], use that
         if key == "covr":
             return "binary data not stored"  # TODO: get image metadata
         if hasattr(value, "pprint"):

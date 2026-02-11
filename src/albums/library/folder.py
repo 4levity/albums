@@ -11,7 +11,10 @@ from .picture import get_picture_metadata
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_IMAGE_SUFFIXES = [".png", ".jpg", ".jpeg", ".gif"]
+# TODO: support more image file types
+# Currently, can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
+SUPPORTED_IMAGE_SUFFIXES = [".png", ".jpg", ".jpeg", ".gif"]  # note extension is not used to guess format
+
 MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
 

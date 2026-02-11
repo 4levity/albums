@@ -50,30 +50,31 @@ class CheckFrontCoverSelection(Check):
                     tracks_with_cover += 1
 
         front_covers: set[Picture] = pictures_by_type.get(PictureType.COVER_FRONT, set())
-        front_cover_image_file = list(
+        front_cover_image_files = list(
             pic
             for pic in sorted(front_covers, key=lambda pic: pic.file_size, reverse=True)
             if any(not embedded for (_, embedded) in picture_sources[pic])
         )
+        cover_image_filenames = [[file for (file, embedded) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_files]
+        cover_source_ix = next((ix for ix, pic in enumerate(front_cover_image_files) if pic.front_cover_source), None)
+        cover_source_filename = cover_image_filenames[cover_source_ix] if cover_source_ix is not None else None
 
         if self.unique and len(front_covers) > 1:
             front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded) in picture_sources[pic]))
-            has_cover_source_file = any(cover.front_cover_source for cover in front_covers)
-            if front_cover_image_file and not has_cover_source_file:
+            if front_cover_image_files and cover_source_filename is None:
                 # at this point every picture in front_cover_image_file should be associated with exactly one file
-                cover_image_filenames = [[file for (file, embedded) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_file]
-                cover_source_candidate = self._source_image_file_candidate(front_cover_image_file, front_cover_embedded)
+                cover_source_candidate = self._source_image_file_candidate(front_cover_image_files, front_cover_embedded)
                 cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
                 options = [f"{OPTION_SELECT_COVER_IMAGE}{filename}" for filename in cover_image_filenames]
                 if front_cover_embedded:
                     options.append(f"{OPTION_DELETE_ALL_COVER_IMAGES}{', '.join(escape(filename) for filename in cover_image_filenames)}")
                 table = (
                     cover_image_filenames + cover_embedded_desc,
-                    lambda: render_image_table(self.ctx, album, front_cover_image_file + front_cover_embedded, picture_sources),
+                    lambda: render_image_table(self.ctx, album, front_cover_image_files + front_cover_embedded, picture_sources),
                 )
                 if cover_source_candidate:
                     # if there is a higher-resolution cover file, this conflict can be solved or reduced by marking that file as cover source
-                    option_automatic_index = front_cover_image_file.index(cover_source_candidate)
+                    option_automatic_index = front_cover_image_files.index(cover_source_candidate)
                     message = "multiple cover art images: designate a high-resolution image file as cover art source"
                     if front_cover_embedded:
                         message += " or delete image files (keep embedded images)"
@@ -94,18 +95,27 @@ class CheckFrontCoverSelection(Check):
                         table,
                     ),
                 )
-            elif has_cover_source_file and len(front_cover_image_file) > 1:
-                # TODO if there is a cover source and there are multiple cover image files, offer to keep only the cover source
-                issues.add("multiple front cover image files, but one of them is marked cover source (delete others)")
-            elif not has_cover_source_file or len(front_cover_image_file) > 1 or len(front_cover_embedded) > 1:
-                # TODO if multiple front cover embedded + each track has one, that's probably on purpose and maybe should be ignored?
+            elif cover_source_filename is not None and len(front_cover_image_files) > 1:
+                other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
+                return CheckResult(
+                    ProblemCategory.PICTURES,
+                    "multiple front cover image files, and one of them is marked cover source (delete others)",
+                    Fixer(
+                        lambda _: delete_files_except(self.ctx, cover_source_filename, album, cover_image_filenames),
+                        [f'>> Keep cover source image "{cover_source_filename}" and delete other cover files: {other_filenames}'],
+                    ),
+                )
+            elif cover_source_filename is None or len(front_cover_image_files) > 1 or len(front_cover_embedded) > 1:
+                # TODO if multiple front cover embedded but every track has one, even if they are different that's probably on purpose?
                 issues.add("COVER_FRONT pictures are not all the same")
 
         if not front_covers:
             if pictures_by_type:
+                # TODO: fixer to select one of the pictures as cover front and write it to "cover.jpg" (can embed in later step)
                 issues.add("album has pictures but none is COVER_FRONT picture")
             elif self.cover_required:
-                issues.add("album does not have a COVER_FRONT picture")
+                # TODO there are no pictures available, check cannot pass. someday [use external tool to] retrieve cover art?
+                issues.add("album does not have a COVER_FRONT picture or any other pictures to use")
 
         # TODO move to later front-cover-embedding check
         if front_covers and tracks_with_cover and tracks_with_cover != len(album.tracks):
