@@ -12,7 +12,7 @@ from .picture import get_picture_metadata
 logger = logging.getLogger(__name__)
 
 SUPPORTED_IMAGE_SUFFIXES = [".png", ".jpg", ".jpeg", ".gif"]
-MAX_IMAGE_SIZE = 64 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
+MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
 
 class AlbumScanResult(Enum):
@@ -119,9 +119,9 @@ def _missing_metadata(album: Album):
         or not track.stream
         or (not track.pictures and any(name.startswith("apic") for name in track.tags))
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
-        or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
+        # or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
         for track in album.tracks
-    ) or any(pic.load_issue and "error" for pic in album.picture_files.values())
+    )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())
 
 
 def _picture_from_path(file: Path) -> Picture | None:
@@ -131,6 +131,7 @@ def _picture_from_path(file: Path) -> Picture | None:
             f"skipping image file {str(file)} because it is {humanize.naturalsize(stat.st_size, binary=True)} (albums max = {humanize.naturalsize(MAX_IMAGE_SIZE, binary=True)})"
         )
         # TODO: record the existence of the large image even if we do not load its metadata, just like we would with a load error
+        # Note: recording images that are valid but lack metadata would cause issues with detecting duplicates and assigning cover art
         return None
     with open(file, "rb") as f:
         image_data = f.read()
