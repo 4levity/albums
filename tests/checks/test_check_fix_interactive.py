@@ -1,4 +1,7 @@
+from typing import List, Tuple
+
 import rich
+from rich.console import RenderableType
 
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
@@ -9,7 +12,7 @@ from albums.types import Album, Stream, Track
 
 class MockFixer(Fixer):
     def __init__(self, ctx: app.Context, album: Album):
-        table = (["track", "title"], [["1", "one"]])
+        table: Tuple[List[str], List[List[RenderableType]]] = (["track", "title"], [["1", "one"]])
         options = ["A", "B"]
         option_free_text = True
         option_automatic_index = 0
@@ -29,14 +32,11 @@ class TestCheckFixInteractive:
         mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
         mock_menu = mock_TerminalMenu.return_value
         mock_menu.show.return_value = 0
-        mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
         (changed, quit) = interact(ctx, "", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
         assert changed
         assert not quit
         assert mock_menu.show.call_count == 1
-        assert mock_ask.call_count == 1
-        assert mock_ask.call_args.args[0] == ('Selected "A" - are you sure?')
 
     def test_fix_ignore_check(self, mocker):
         album = Album("/", [Track("1.flac", stream=Stream())], album_id=1)

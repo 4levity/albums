@@ -34,7 +34,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     fixer = check_result.fixer
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
-    user_quit = False  # user explicitly quit this check
+    user_quit = False  # user explicitly quit this checkRenderableType
 
     tagger_config = ctx.config.get("options", {}).get("tagger")
     tagger = str(tagger_config) if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
@@ -60,8 +60,9 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     album_path = (ctx.library_root if ctx.library_root else Path(".")) / album.path
 
     while not done:
-        if fixer and fixer.table:
-            (headers, rows) = fixer.table
+        table = fixer.get_table() if fixer else None
+        if table:
+            (headers, rows) = table
             table = Table(*headers)
             for row in rows:
                 table.add_row(*row)
@@ -107,9 +108,8 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
             else:
                 option = options[option_index]
 
-            done = Confirm.ask(f'Selected "{option}" - are you sure?', console=ctx.console)
-            if done:
-                maybe_changed |= fixer.fix(option)
+            maybe_changed |= fixer.fix(option)
+            done = maybe_changed  # if that fixer option didn't change anything, loop
 
         # otherwise loop and ask again
 

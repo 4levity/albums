@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable
+from typing import Any, Callable, List, Tuple
+
+from rich.console import RenderableType
 
 from .. import app
 from ..types import Album
@@ -14,8 +16,15 @@ class Fixer:
     options: list[str]  # at least one option should be provided if "free text" is not an option
     option_free_text: bool = False
     option_automatic_index: int | None = None
-    table: tuple[list[str], list[list[str]]] | None = None  # tuple (headers, row data)
+    table: Tuple[List[str], List[List[RenderableType]] | Callable[[], List[List[RenderableType]]]] | None = None  # tuple (headers, rows/rows())
     prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
+
+    def get_table(self) -> Tuple[List[str], List[List[RenderableType]]] | None:
+        if self.table is None:
+            return None
+        (headers, get_rows) = self.table
+        rows: List[List[RenderableType]] = get_rows if isinstance(get_rows, List) else get_rows()  # pyright: ignore[reportUnknownVariableType]
+        return (headers, rows)
 
 
 class ProblemCategory(Enum):

@@ -22,3 +22,12 @@ class TestPicture:
         assert pic.format == "image/png"
         assert pic.height == pic.width == 400
         assert pic.file_hash == xxhash.xxh32_digest(IMAGE_PNG_400X400)
+
+    def test_get_picture_metadata_error(self):
+        badfile = b"not an image file"
+        pic = get_picture_metadata(bytes(badfile), PictureType.ARTIST)
+        assert pic.file_size == len(badfile)
+        assert pic.format == "Unknown"
+        assert pic.height == pic.width == 0
+        assert pic.file_hash == xxhash.xxh32_digest(badfile)
+        assert "cannot identify image file" in str(pic.load_issue["error"])

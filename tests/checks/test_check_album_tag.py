@@ -85,8 +85,8 @@ class TestCheckAlbumTag:
         assert result.fixer.options == ["Bar", "Foo"]
         assert "album name to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.table[1]) == 3  # tracks
-        assert len(result.fixer.table[0]) == len(result.fixer.table[1][0])  # headers
+        assert len(result.fixer.get_table()[1]) == 3  # tracks
+        assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
 
         mock_set_basic_tags = mocker.patch("albums.checks.check_album_tag.set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[0])

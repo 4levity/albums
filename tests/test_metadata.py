@@ -10,7 +10,20 @@ from .fixtures.empty_files import IMAGE_PNG_400X400
 
 albums = [
     Album("foo/", [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
-    Album("bar/", [Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")])]),
+    Album(
+        "bar/",
+        [
+            Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")]),
+            Track(
+                "2.flac",
+                {},
+                0,
+                0,
+                None,
+                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
+            ),
+        ],
+    ),
     Album("baz/", [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
 ]
 
@@ -85,7 +98,20 @@ class TestMetadata:
         reference.file_hash = pictures[0].file_hash
         # all other fields are the same:
         assert pictures[0] == reference
-        assert pictures[0].mismatch is None  # mismatch record is not part of equality check
+        assert pictures[0].load_issue is None
+
+    def test_read_flac_two_pictures(self):
+        file = TestMetadata.library / albums[1].path / albums[1].tracks[1].filename
+        pictures = get_metadata(file)[2]
+        assert len(pictures) == 2
+
+        reference = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400), b"")
+        reference.file_hash = pictures[0].file_hash
+        assert pictures[0] == reference
+        assert pictures[0].embed_ix == 0
+        reference.picture_type = PictureType.COVER_BACK
+        assert pictures[1] == reference
+        assert pictures[1].embed_ix == 1
 
     def test_read_flac_picture_mismatch(self):
         file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
@@ -106,7 +132,7 @@ class TestMetadata:
         assert pictures[0].format == "image/png"
         assert pictures[0].width == 400
         assert pictures[0].height == 400
-        assert pictures[0].mismatch == {"format": "image/jpeg", "width": 401, "height": 401}
+        assert pictures[0].load_issue == {"format": "image/jpeg", "width": 401, "height": 401}
 
     def test_read_write_id3_tags(self):
         track = albums[2].tracks[0]

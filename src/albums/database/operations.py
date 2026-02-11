@@ -2,12 +2,11 @@ import json
 import logging
 import sqlite3
 
-from albums.library.picture import picture_type_from_filename
-
-from ..checks.all import ALL_CHECK_NAMES
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
+
+PICTURE_TYPE_FRONT_COVER_SOURCE_FILE = 200
 
 
 def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
@@ -27,17 +26,18 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
 
         ignore_checks: list[str] = []
         for (name,) in db.execute("SELECT check_name FROM album_ignore_check WHERE album_id = ?;", (album_id,)):
-            if name in ALL_CHECK_NAMES:
-                ignore_checks.append(name)
-            else:
-                # if chack_names changed, a migrationm should have prevented this, but raising an error here will not solve anything
-                logger.warning(f'album_id {album_id} has unknown check_name "{name}" in ignore list')
+            ignore_checks.append(name)
 
         tracks = list(_load_tracks(db, album_id, load_track_tag))
         picture_files: dict[str, Picture] = dict(
-            (filename, Picture(picture_type_from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp))
-            for (filename, file_size, modify_timestamp, file_hash, format, width, height) in db.execute(
-                "SELECT filename, file_size, modify_timestamp, file_hash, format, width, height FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
+            (
+                filename,
+                Picture(
+                    PictureType.from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp, 0, bool(cover_source)
+                ),
+            )
+            for (filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) in db.execute(
+                "SELECT filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
                 (album_id,),
             )
         )
@@ -88,8 +88,6 @@ def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: l
 
 def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
     for check_name in ignore_checks:
-        if check_name not in ALL_CHECK_NAMES:
-            raise ValueError(f"check_name {check_name} is not valid")
         db.execute("INSERT INTO album_ignore_check (album_id, check_name) VALUES (?, ?);", (album_id, check_name))
 
 
@@ -124,7 +122,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
         for picture in track.pictures:
             db.execute(
-                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, mismatch) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 (
                     track_id,
                     picture.picture_type.value,
@@ -133,7 +131,8 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                     picture.height,
                     picture.file_size,
                     picture.file_hash,
-                    json.dumps(picture.mismatch) if picture.mismatch else None,
+                    json.dumps(picture.load_issue) if picture.load_issue else None,
+                    picture.embed_ix,
                 ),
             )
 
@@ -147,8 +146,18 @@ def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: d
 def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
     for filename, picture in picture_files.items():
         db.execute(
-            "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-            (album_id, filename, picture.file_size, picture.modify_timestamp, picture.file_hash, picture.format, picture.width, picture.height),
+            "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            (
+                album_id,
+                filename,
+                picture.file_size,
+                picture.modify_timestamp,
+                picture.file_hash,
+                picture.format,
+                picture.width,
+                picture.height,
+                1 if picture.front_cover_source else 0,
+            ),
         )
 
 
@@ -188,9 +197,11 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
 
 def _load_pictures(db: sqlite3.Connection, track_id: int):
     return [
-        Picture(PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(mismatch) if mismatch else None)
-        for picture_type, format, width, height, file_size, file_hash, mismatch in db.execute(
-            "SELECT picture_type, format, width, height, file_size, file_hash, mismatch FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
+        Picture(
+            PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(load_issue) if load_issue else None, None, embed_ix
+        )
+        for picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix in db.execute(
+            "SELECT picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY picture_type;",
             (track_id,),
         )
     ]

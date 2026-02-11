@@ -44,6 +44,12 @@ class PictureType(IntEnum):
     BAND_LOGOTYPE = 19
     PUBLISHER_LOGOTYPE = 20
 
+    @staticmethod
+    def from_filename(filename: str):
+        if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "thumbnail"]):
+            return PictureType.COVER_FRONT
+        return PictureType.OTHER
+
 
 @dataclass
 class Picture:
@@ -53,19 +59,26 @@ class Picture:
     height: int
     file_size: int
     file_hash: bytes  # 32 bit xxhash
-    mismatch: dict[str, str | int] | None = None  # load-time metadata mismatch report is NOT part of equality, only real image data
+
+    # fields below are not part of equality/identity of the image
+
+    load_issue: dict[str, str | int] | None = None  # load-time issues report is NOT part of equality, only real image data
     modify_timestamp: int | None = None  # timestamp is NOT part of equality and is only present if the picture is not embedded
+    embed_ix: int = 0  # the index of this image (the first image loaded from a file is 0, etc) also NOT part of equality
+    front_cover_source: bool = False  # if this file is the high-resolution source for embedded front cover art (picture_type must be FRONT_COVER)
 
     def to_dict(self):
         result = dict(self.__dict__)
         result["file_hash"] = base64.b64encode(self.file_hash).decode()
-        if self.mismatch is None:
-            del result["mismatch"]
+        if self.load_issue is None:
+            del result["load_issue"]
         if self.modify_timestamp is None:
             del result["modify_timestamp"]
+        if not self.front_cover_source:
+            del result["front_cover_source"]
         return result
 
-    # Keep modify_timestamp and mismatch info with this object, but also deduplicate images easily (ignoring those two fields)
+    # Keep modify_timestamp and load info with this object, but also deduplicate images easily (ignoring those two fields)
     def __eq__(self, other: Any):
         if not isinstance(other, Picture):
             return NotImplemented
@@ -75,7 +88,7 @@ class Picture:
         return hash(self._comparable())
 
     def _comparable(self):
-        return frozenset((k, v) for k, v in self.__dict__.items() if k not in {"mismatch", "modify_timestamp"})
+        return frozenset((k, v) for k, v in self.__dict__.items() if k not in {"load_issue", "modify_timestamp", "embed_ix", "front_cover_source"})
 
 
 @dataclass

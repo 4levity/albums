@@ -1,7 +1,12 @@
 import re
 from collections import defaultdict
+from os import unlink
+from pathlib import Path
+from typing import Collection
 
 from rich.markup import escape
+
+from albums.app import Context
 
 from ..types import Album, Track
 
@@ -89,3 +94,19 @@ def parse_filename(filename: str) -> tuple[int | None, int | None, str | None]:
         track = None
 
     return (disc, track, title if title else None)
+
+
+def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, filenames: Collection[str]):
+    if keep_filename is not None and keep_filename not in filenames:
+        raise ValueError(f"invalid option {keep_filename} is not one of {filenames}")
+
+    changed = False
+    for filename in filenames:
+        if filename == keep_filename:
+            ctx.console.print(f"Keeping {escape(filename)}")
+        else:
+            ctx.console.print(f"Deleting {escape(filename)}")
+            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / filename
+            unlink(path)
+            changed = True
+    return changed
