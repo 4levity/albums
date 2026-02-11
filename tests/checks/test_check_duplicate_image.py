@@ -2,12 +2,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.check_duplicate_images import CheckDuplicateImages
+from albums.checks.check_duplicate_image import CheckDuplicateImage
 from albums.types import Album, Picture, PictureType, Stream, Track
 
 
-class TestCheckDuplicateImages:
-    def test_duplicate_images_ok(self):
+class TestCheckDuplicateImage:
+    def test_duplicate_image_ok(self):
         album = Album(
             "",
             [
@@ -29,7 +29,7 @@ class TestCheckDuplicateImages:
                 ),
             ],
         )
-        assert not CheckDuplicateImages(Context()).check(album)
+        assert not CheckDuplicateImage(Context()).check(album)
 
     def test_multiple_images_in_track(self):
         pictures = [
@@ -37,7 +37,7 @@ class TestCheckDuplicateImages:
             Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"2222"),
         ]
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
-        result = CheckDuplicateImages(Context()).check(album)
+        result = CheckDuplicateImage(Context()).check(album)
         assert result is not None
         assert "there are 2 different images for COVER_BACK in one or more files" in result.message
 
@@ -47,7 +47,7 @@ class TestCheckDuplicateImages:
             Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b""),
         ]
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), pictures)])
-        result = CheckDuplicateImages(Context()).check(album)
+        result = CheckDuplicateImage(Context()).check(album)
         assert result is not None
         assert "duplicate embedded image data in one or more files: COVER_BACK" in result.message
 
@@ -55,7 +55,7 @@ class TestCheckDuplicateImages:
         pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")
         picture_files = {"folder.png": pic, "cover.png": pic}
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)
-        result = CheckDuplicateImages(Context()).check(album)
+        result = CheckDuplicateImage(Context()).check(album)
         assert result is not None
         assert result.message == "same image data in multiple files: cover.png, folder.png"
         assert result.fixer

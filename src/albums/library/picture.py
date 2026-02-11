@@ -19,7 +19,8 @@ def get_image(image_data: bytes) -> tuple[ImageFile, str] | str:
             return f"couldn't guess MIME type for image format {image.format}"
         return (image, mimetype)
     except UnidentifiedImageError as ex:
-        return repr(ex)
+        exception_description = repr(ex)
+        return "cannot identify image file" if "cannot identify image file" in exception_description else exception_description
 
 
 def get_picture_metadata(image_data: bytes, picture_type: PictureType):

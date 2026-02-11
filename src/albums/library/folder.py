@@ -119,8 +119,9 @@ def _missing_metadata(album: Album):
         or not track.stream
         or (not track.pictures and any(name.startswith("apic") for name in track.tags))
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
+        or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
         for track in album.tracks
-    )
+    ) or any(pic.load_issue and "error" for pic in album.picture_files.values())
 
 
 def _picture_from_path(file: Path) -> Picture | None:

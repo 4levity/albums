@@ -20,6 +20,7 @@ IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I
 class CheckFlacPictureMetadata(Check):
     name = "flac_picture_metadata"
     default_config = {"enabled": True}
+    must_pass_checks = {"invalid_image"}
 
     def check(self, album: Album) -> CheckResult | None:
         mismatches: list[int] = []

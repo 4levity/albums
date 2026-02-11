@@ -15,12 +15,13 @@ OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
 OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
-class CheckDuplicateImages(Check):
-    name = "duplicate_images"
+class CheckDuplicateImage(Check):
+    name = "duplicate_image"
     default_config = {"enabled": True, "front_cover_only": False}
+    must_pass_checks = {"invalid_image"}
 
     def init(self, check_config: dict[str, Any]):
-        self.front_cover_only = bool(check_config.get("front_cover_only", CheckDuplicateImages.default_config["front_cover_only"]))
+        self.front_cover_only = bool(check_config.get("front_cover_only", CheckDuplicateImage.default_config["front_cover_only"]))
 
     def check(self, album: Album) -> CheckResult | None:
         album_art = [(track.filename, True, track.pictures) for track in album.tracks]

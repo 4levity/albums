@@ -268,7 +268,7 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
-### duplicate_images
+### duplicate_image
 
 Each of the tracks in an album may have the same images embedded. But other
 duplicate image data is not useful. Rules:
@@ -334,7 +334,7 @@ concerned with images classified as `COVER_FRONT` (0x03).
 
 !!!note
 
-    Requires the `duplicate_images` check to pass first.
+    Requires the `duplicate_image` check to pass first.
 
 For the album to have correct front cover art, there should be a single unique
 cover art image associated with the album. Either every track should have an
