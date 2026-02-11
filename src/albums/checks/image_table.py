@@ -54,14 +54,26 @@ def render_image_table(
                 image = image.convert("RGB")
                 if reference_image is not None:
                     if image.width != reference_width or image.height != reference_height:
-                        caption += " aspect ratio doesn't match"
+                        caption += " [bold italic]aspect ratio doesn't match[/bold italic]"
                     else:
                         this_image = numpy.asarray(image)
                         rmse = sqrt(mean_squared_error(reference_image, this_image))
-                        caption += f" RMSE pixel difference={rmse:.2f}"
+                        caption += f" {_describe_rmse(rmse)}"
                 else:
                     reference_image = numpy.asarray(image)
                     (reference_width, reference_height) = image.size
-                    caption += " reference"
+                    caption += " [bold]reference[/bold]"
             captions.append(caption)
     return [pixelses, captions] if captions else [pixelses]
+
+
+def _describe_rmse(rmse: float) -> str:
+    if rmse > 40:
+        qualitative = "[bold red]different[/bold red]"
+    elif rmse > 10:
+        qualitative = "[bold]similar[/bold]"
+    elif rmse > 1:
+        qualitative = "[bold green]very similar[/bold green]"
+    else:
+        qualitative = "[bold green]same[/bold green]"
+    return f"{qualitative} [italic]RMSE={rmse:.1f}[/italic]"
