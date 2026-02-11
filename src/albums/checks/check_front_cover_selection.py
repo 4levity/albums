@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from os import unlink
 from pathlib import Path
-from typing import Any, Collection, List
+from typing import Any, Collection, List, Sequence
 
 import humanize
 import numpy
@@ -19,6 +19,9 @@ from ..types import Album, Picture, PictureType
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
 logger = logging.getLogger(__name__)
+
+OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
+OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
 class CheckFrontCoverSelection(Check):
@@ -86,20 +89,18 @@ class CheckFrontCoverSelection(Check):
 
             if front_cover_image_file and not has_cover_source_file:
                 # at this point every picture in front_cover_image_file should be associated with exactly one file
+                cover_image_filename = [[file for (file, embedded) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_file]
                 cover_source_candidate = self._source_image_file_candidate(front_cover_image_file, front_cover_embedded)
                 if cover_source_candidate:
                     # if there is a higher-resolution cover file, this conflict can be solved or reduced by marking that file as cover source
-                    filenames = [
-                        [filename for (filename, embedded) in picture_sources[picture] if not embedded][0] for picture in front_cover_image_file
-                    ]
                     option_automatic_index = front_cover_image_file.index(cover_source_candidate)
-                    table = (filenames, lambda: self._image_table(album, front_cover_image_file, picture_sources))
+                    table = (cover_image_filename, lambda: self._image_table(album, front_cover_image_file, picture_sources))
                     return CheckResult(
                         ProblemCategory.PICTURES,
-                        f"an image file should be set as front cover source if it is being kept: {', '.join(filenames)}",
+                        f"an image file should be set as front cover source if it is being kept: {', '.join(cover_image_filename)}",
                         Fixer(
                             lambda filename: self._fix_select_cover_source_file(album, filename),
-                            filenames,
+                            cover_image_filename,
                             False,
                             option_automatic_index,
                             table,
@@ -107,8 +108,27 @@ class CheckFrontCoverSelection(Check):
                         ),
                     )
                 else:
-                    # if none of the cover image files are larger or higher resolution than embedded covers, offer to delete the files
-                    message = "fix by deleting cover source images"
+                    # if none of the cover image files are larger than embedded covers, offer to delete them or mark one as cover front source
+                    options = [f"{OPTION_SELECT_COVER_IMAGE}{filename}" for filename in cover_image_filename] + [
+                        f"{OPTION_DELETE_ALL_COVER_IMAGES}{', '.join(escape(filename) for filename in cover_image_filename)}"
+                    ]
+                    cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
+                    table = (
+                        cover_image_filename + cover_embedded_desc,
+                        lambda: self._image_table(album, front_cover_image_file + front_cover_embedded, picture_sources),
+                    )
+                    option_automatic_index = None
+                    return CheckResult(
+                        ProblemCategory.PICTURES,
+                        "there are cover image files with the album, but none bigger than embedded cover images",
+                        Fixer(
+                            lambda option: self._fix_select_cover_source_or_delete(album, option, options, cover_image_filename),
+                            options,
+                            False,
+                            option_automatic_index,
+                            table,
+                        ),
+                    )
 
             elif duplicate_in_track:
                 message = "COVER_FRONT picture cleanup needed"
@@ -157,7 +177,7 @@ class CheckFrontCoverSelection(Check):
         pixelses: list[RenderableType] = []
         target_width = int((self.ctx.console.width - 3) / len(pictures))
         target_height = (self.ctx.console.height - 10) * 2
-        differences: list[RenderableType] = []
+        captions: list[RenderableType] = []
         reference_image: numpy.ndarray[Any] | None = None
         reference_width = reference_height = 0
         for cover in pictures:
@@ -180,27 +200,29 @@ class CheckFrontCoverSelection(Check):
                 scale = min(target_width, target_height) / max(image.width, h)
                 pixels = Pixels.from_image(image, (int(image.width * scale), int(h * scale)))
                 pixelses.append(pixels)
+                caption = f"[{cover.width} x {cover.height}] {humanize.naturalsize(len(image_data), binary=True)}"
                 if len(pictures) > 1:
                     COMPARISON_BOX_SIZE = 75
                     image.thumbnail((COMPARISON_BOX_SIZE, COMPARISON_BOX_SIZE), Image.Resampling.BOX)
                     image = image.convert("RGB")
                     if reference_image is not None:
                         if image.width != reference_width or image.height != reference_height:
-                            differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] aspect ratio doesn't match")
+                            caption += " aspect ratio doesn't match"
                         else:
                             this_image = numpy.asarray(image)
                             mse = mean_squared_error(reference_image, this_image)
-                            differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] MSE difference = {mse}")
+                            caption += f" mean-squared-error difference={mse:.2f}"
                     else:
                         reference_image = numpy.asarray(image)
                         (reference_width, reference_height) = image.size
-                        differences.append(f"[{humanize.naturalsize(len(image_data), binary=True)}] reference")
-        return [pixelses, differences] if differences else [pixelses]
+                        caption += " reference"
+                captions.append(caption)
+        return [pixelses, captions] if captions else [pixelses]
 
     def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool]]]):
         sources = picture_sources[picture]
         first_source = f"{escape(sources[0][0])}{f'#{picture.embed_ix}' if picture.embed_ix else ''}"
-        details = f"[{picture.width} x {picture.height}] {picture.format}"
+        details = f"{picture.format}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _fix_select_cover_source_file(self, album: Album, filename: str) -> bool:
@@ -218,8 +240,8 @@ class CheckFrontCoverSelection(Check):
             return largest_image_file
         return None
 
-    def _fix_delete_image_files_except(self, option: str, filenames: Collection[str], album: Album):
-        if option not in filenames:
+    def _fix_delete_image_files_except(self, option: str | None, filenames: Collection[str], album: Album):
+        if option is not None and option not in filenames:
             raise ValueError(f"invalid option {option} is not one of {filenames}")
 
         for filename in filenames:
@@ -230,3 +252,11 @@ class CheckFrontCoverSelection(Check):
                 path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / filename
                 unlink(path)
         return True
+
+    def _fix_select_cover_source_or_delete(self, album: Album, option: str, options: Sequence[str], all_filenames: Sequence[str]) -> bool:
+        if option.startswith(OPTION_DELETE_ALL_COVER_IMAGES):
+            return self._fix_delete_image_files_except(None, all_filenames, album)
+        elif option.startswith(OPTION_SELECT_COVER_IMAGE):
+            filename = all_filenames[options.index(option)]
+            return self._fix_select_cover_source_file(album, filename)
+        raise ValueError(f"invalid option {option}")
