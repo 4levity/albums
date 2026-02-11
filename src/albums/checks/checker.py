@@ -66,6 +66,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
                 if missing_dependent_checks:
                     for message in preview_failed_checks:
                         ctx.console.print(message, highlight=False)
+                    preview_failed_checks = []
                     ctx.console.print(
                         f'[bold]dependency not met for check {check.name}[/bold] on "{escape(album.path)}": {" and ".join(missing_dependent_checks)} must pass first',
                         highlight=False,
