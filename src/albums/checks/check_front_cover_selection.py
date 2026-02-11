@@ -61,17 +61,17 @@ class CheckFrontCoverSelection(Check):
 
         if self.unique and len(front_covers) > 1:
             front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded) in picture_sources[pic]))
+            cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
+            table = (
+                cover_image_filenames + cover_embedded_desc,
+                lambda: render_image_table(self.ctx, album, front_cover_image_files + front_cover_embedded, picture_sources),
+            )
             if front_cover_image_files and cover_source_filename is None:
                 # at this point every picture in front_cover_image_file should be associated with exactly one file
                 cover_source_candidate = self._source_image_file_candidate(front_cover_image_files, front_cover_embedded)
-                cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
                 options = [f"{OPTION_SELECT_COVER_IMAGE}{filename}" for filename in cover_image_filenames]
                 if front_cover_embedded:
                     options.append(f"{OPTION_DELETE_ALL_COVER_IMAGES}{', '.join(escape(filename) for filename in cover_image_filenames)}")
-                table = (
-                    cover_image_filenames + cover_embedded_desc,
-                    lambda: render_image_table(self.ctx, album, front_cover_image_files + front_cover_embedded, picture_sources),
-                )
                 if cover_source_candidate:
                     # if there is a higher-resolution cover file, this conflict can be solved or reduced by marking that file as cover source
                     option_automatic_index = front_cover_image_files.index(cover_source_candidate)
@@ -103,6 +103,9 @@ class CheckFrontCoverSelection(Check):
                     Fixer(
                         lambda _: delete_files_except(self.ctx, cover_source_filename, album, cover_image_filenames),
                         [f'>> Keep cover source image "{cover_source_filename}" and delete other cover files: {other_filenames}'],
+                        False,
+                        None,
+                        table,
                     ),
                 )
             elif cover_source_filename is None or len(front_cover_image_files) > 1 or len(front_cover_embedded) > 1:
