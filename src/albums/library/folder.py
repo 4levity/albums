@@ -5,6 +5,7 @@ from pathlib import Path
 
 import humanize
 
+from ..app import SCANNER_VERSION
 from ..types import Album, Picture, PictureType, Track
 from .metadata import get_metadata
 from .picture import get_picture_metadata
@@ -49,7 +50,7 @@ def scan_folder(
         if stored_album is None:
             _load_track_metadata(scan_root, album_relpath, found_tracks)
             picture_files = _load_picture_files(picture_paths)
-            return (Album(album_relpath, found_tracks, [], [], picture_files), AlbumScanResult.NEW)
+            return (Album(album_relpath, found_tracks, [], [], picture_files, None, SCANNER_VERSION), AlbumScanResult.NEW)
 
         tracks_modified = _track_files_modified(stored_album.tracks, found_tracks)
         missing_metadata = _missing_metadata(stored_album)

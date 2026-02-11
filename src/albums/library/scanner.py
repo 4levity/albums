@@ -8,18 +8,17 @@ from typing import Callable, Iterable
 from rich.markup import escape
 from rich.progress import Progress
 
-from .. import app
+from ..app import SCANNER_VERSION, Context
 from ..database import operations
 from ..types import ScanHistoryEntry
 from .folder import AlbumScanResult, scan_folder
 
 logger = logging.getLogger(__name__)
 
-
 DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 
 
-def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int | None]]] | None = None, reread: bool = False) -> tuple[int, bool]:
+def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | None]]] | None = None, reread: bool = False) -> tuple[int, bool]:
     if not ctx.db:
         raise ValueError("scan called without db connection")
     if not ctx.library_root:
@@ -76,8 +75,9 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                 (album, result) = scan_folder(library_root, path_str, suffixes, stored_album, reread)
                 scan_results[result.name] += 1
 
-                if album and result == AlbumScanResult.UNCHANGED:
+                if album and album_id is not None and result == AlbumScanResult.UNCHANGED:
                     logger.debug(f"no changes detected for album {album.path}", extra={"highlighter": None})
+                    operations.update_scanner(db, album_id, SCANNER_VERSION)
                 elif album and result == AlbumScanResult.NEW:
                     logger.info(f"add album {album.path}", extra={"highlighter": None})
                     operations.add(db, album)
@@ -87,6 +87,7 @@ def scan(ctx: app.Context, path_selector: Callable[[], Iterable[tuple[str, int |
                     # TODO only update what changed
                     operations.update_tracks(db, album_id, album.tracks)
                     operations.update_picture_files(db, album_id, album.picture_files)
+                    operations.update_scanner(db, album_id, SCANNER_VERSION)
                     any_changes = True
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:

@@ -31,13 +31,15 @@ class TestDatabase:
             )
 
         albums = [
-            Album("foo/", [track()], []),
+            Album("foo/", [track()]),
             Album(
                 "bar/",
                 [track()],
                 ["test"],
                 ["artist_tag"],
                 {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", None, 999, 0, True)},
+                None,
+                3,
             ),
         ]
 
@@ -56,6 +58,7 @@ class TestDatabase:
             result = list(selector.select_albums(db, ["test", "anything"], [], False))
             assert len(result) == 1  # initial collection
             assert result[0].path == "bar/"
+            assert result[0].scanner == 3
             assert sorted(result[0].tracks[0].tags.get("title", [])) == ["bar", "foo"]
             assert result[0].tracks[0].stream.length == 1.5
             assert result[0].tracks[0].stream.codec == "FLAC"
@@ -136,3 +139,9 @@ class TestDatabase:
             assert entry.timestamp == 3
             assert entry.folders_scanned == 2
             assert entry.albums_total == 1
+
+            result = list(selector.select_albums(db, [], [albums[0].path], False))
+            assert result[0].scanner == 0
+            operations.update_scanner(db, albums[0].album_id, 4)
+            result = list(selector.select_albums(db, [], [albums[0].path], False))
+            assert result[0].scanner == 4

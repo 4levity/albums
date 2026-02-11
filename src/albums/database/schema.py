@@ -12,7 +12,9 @@ INSERT INTO _schema (version) VALUES (1);
 CREATE TABLE album (
     album_id INTEGER PRIMARY KEY,
     path TEXT UNIQUE NOT NULL
+    -- v7 add column scanner
 );
+-- v7 add album.path index
 
 CREATE TABLE collection (
     collection_id INTEGER PRIMARY KEY,
@@ -77,6 +79,7 @@ CREATE TABLE track_picture (
     height INTEGER NOT NULL,
     file_size INTEGER NOT NULL,
     file_hash BLOB NOT NULL,
+    -- v4 add embed_ix
     mismatch TEXT NULL -- v5 renamed to "load_issue"
 );
 CREATE INDEX idx_track_picture_track_id ON track_picture(track_id);
@@ -98,6 +101,10 @@ CREATE INDEX idx_album_picture_file_album_id ON album_picture_file(album_id);
     4: "ALTER TABLE track_picture ADD COLUMN embed_ix INTEGER NOT NULL DEFAULT 0;",
     5: "ALTER TABLE track_picture RENAME COLUMN mismatch TO load_issue;",
     6: "ALTER TABLE album_picture_file ADD COLUMN cover_source INTEGER NOT NULL DEFAULT 0;",
+    7: """
+CREATE UNIQUE INDEX album_path ON album(path);
+ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
+""",
 }
 
 
