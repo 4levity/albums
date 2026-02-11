@@ -15,7 +15,7 @@ class CheckAlbumArt(Check):
     default_config = {
         "enabled": True,
         "cover_min_pixels": 100,
-        "cover_max_pixels": 2048,
+        "cover_max_pixels": 4096,
         "cover_squareness": 0.98,
         "embedded_size_max": 8 * 1024 * 1024,  # up to 16 MB is OK in ID3v2
     }

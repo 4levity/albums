@@ -94,9 +94,11 @@ class CheckFrontCoverSelection(Check):
                         table,
                     ),
                 )
+            elif has_cover_source_file and len(front_cover_image_file) > 1:
+                # TODO if there is a cover source and there are multiple cover image files, offer to keep only the cover source
+                issues.add("multiple front cover image files, but one of them is marked cover source (delete others)")
             elif not has_cover_source_file or len(front_cover_image_file) > 1 or len(front_cover_embedded) > 1:
                 # TODO if multiple front cover embedded + each track has one, that's probably on purpose and maybe should be ignored?
-                # if there is a cover source and there are multiple cover image files, offer to keep only the cover source
                 issues.add("COVER_FRONT pictures are not all the same")
 
         if not front_covers:
