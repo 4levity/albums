@@ -268,6 +268,25 @@ the whole filename except for the extension.
 **Automatic fix**: If every tag that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
+### duplicate_images
+
+Each of the tracks in an album may have the same images embedded. But other
+duplicate image data is not useful. Rules:
+
+- Each track should only have one embedded picture per picture-type (don't have
+  two COVER_FRONT images in the same track)
+- Each of the pictures embedded in a track should be a different image (don't
+  have the same image embedded twice)
+- Image files should not be exact duplicates of other image files
+
+<!-- pyml disable line-length -->
+
+| Option             | Default   | Description                                                            |
+| ------------------ | --------- | ---------------------------------------------------------------------- |
+| `front_cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
+
+<!-- pyml enable line-length -->
+
 ### flac_picture_metadata
 
 The FLAC file format
@@ -294,12 +313,12 @@ Rules:
 
 <!-- pyml disable line-length -->
 
-| Option                 | Default     | Description                                                                       |
-| ---------------------- | ----------- | --------------------------------------------------------------------------------- |
-| `cover_min_pixels`     | **100**     | front cover art should be at least this width/height                              |
-| `cover_max_pixels`     | **2048**    | front cover art should not be larger than this width/height                       |
-| `cover_squareness`     | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
-| `embedded_size_max`    | **8388608** | embedded image data maximum size (not including container encoding)               |
+| Option              | Default     | Description                                                                       |
+| ------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `cover_min_pixels`  | **100**     | front cover art should be at least this width/height                              |
+| `cover_max_pixels`  | **2048**    | front cover art should not be larger than this width/height                       |
+| `cover_squareness`  | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
+| `embedded_size_max` | **8388608** | embedded image data maximum size (not including container encoding)               |
 
 <!-- pyml enable line-length -->
 
@@ -309,11 +328,13 @@ If any track has any pictures in its metadata, or if there are any image files
 in the folder, the album should have correct front cover art. (Or require for
 all albums, see settings.)
 
+In media formats including FLAC files, embedded images are classified with the
+"picture type" codes originally defined for ID3v2 `APIC` frames. This check is
+concerned with images classified as `COVER_FRONT` (0x03).
+
 !!!note
 
-    In media formats including FLAC files, embedded images are classified with
-    the "picture type" codes originally defined for ID3v2 `APIC` frames. This
-    check is concerned with images classified as `COVER_FRONT` (0x03).
+    Requires the `duplicate_images` check to pass first.
 
 For the album to have correct front cover art, there should be a single unique
 cover art image associated with the album. Either every track should have an
@@ -323,10 +344,14 @@ the filename, or both.
 
 Rules:
 
-- Each track should have a cover art image, if any track has embedded cover art
-- All cover art associated with the album should be the same image, including
-  embedded `COVER_FRONT` as well as image files matching the filenames above (or
-  see options)
+- If any track has an embedded front cover image, every track should have
+  embedded front cover image
+- All front cover art associated with the album should be the same image,
+  including embedded `COVER_FRONT` as well as image files matching the filenames
+  above, UNLESS one of these is true:
+    - The `unique` setting is disabled for this check
+    - One image file may be marked as "front cover source" and then that one
+      file will not count as a duplicate (like a high-res version of the cover)
 
 Tracks may have any number of embedded images that are not marked as
 `COVER_FRONT`. Other image files in the album folder, where the filename does

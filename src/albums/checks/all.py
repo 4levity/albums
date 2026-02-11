@@ -30,8 +30,8 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckDiscNumbering,
     CheckTrackNumbering,
     CheckTrackTitle,
-    CheckFlacPictureMetadata,
     CheckDuplicateImages,
+    CheckFlacPictureMetadata,
     CheckAlbumArt,
     CheckFrontCoverSelection,
     # pickier checks, may require correct tags
