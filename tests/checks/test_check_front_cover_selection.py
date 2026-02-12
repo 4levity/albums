@@ -159,9 +159,9 @@ class TestCheckFrontCoverSelection:
         assert result.message == "multiple front cover image files, and one of them is marked cover source (delete others)"
         assert result.fixer
         assert result.fixer.options == ['>> Keep cover source image "cover_big.png" and delete other cover files: cover_small.png']
-        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_automatic_index == 0
 
         mock_unlink = mocker.patch("albums.checks.helpers.unlink")
-        fix_result = result.fixer.fix(result.fixer.options[0])
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_unlink.call_args_list == [call(Path(album.path) / "cover_small.png")]

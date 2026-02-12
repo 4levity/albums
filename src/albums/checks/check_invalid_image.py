@@ -75,7 +75,7 @@ class CheckInvalidImage(Check):
     #     return False
 
     # def _remove_embedded_image_flac(self, track_path: Path, pic: Picture):
-    #     # TODO implement
+    #     # TODO implement, see also embedded_picture_metadata
     #     return False
 
     # def _remove_embedded_image_mp3(self, track_path: Path, pic: Picture):

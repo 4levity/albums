@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
 
 
-class CheckFlacPictureMetadata(Check):
-    name = "flac_picture_metadata"
+class CheckEmbeddedPictureMetadata(Check):
+    name = "embedded_picture_metadata"
     default_config = {"enabled": True}
     must_pass_checks = {"invalid_image"}
 
@@ -38,16 +38,22 @@ class CheckFlacPictureMetadata(Check):
                 mismatches.append(track_index)
 
         if mismatches:
-            options = [f">> Re-embed images in {len(mismatches)} tracks"]
-            option_automatic_index = 0
-            tracks: List[List[RenderableType]] = [
-                [escape(track.filename), "**yes**" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)
-            ]
-            table = (["filename", "image metadata issues"], tracks)
+            if album.codec() == "FLAC":
+                options = [f">> Re-embed images in {len(mismatches)} tracks"]
+                option_automatic_index = 0
+                tracks: List[List[RenderableType]] = [
+                    [escape(track.filename), "**yes**" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)
+                ]
+                table = (["filename", "image metadata issues"], tracks)
+                fixer = Fixer(lambda _: self._fix(album, mismatches), options, False, option_automatic_index, table)
+            else:
+                # TODO implement for MP3 too, see also invalid_image
+                fixer = None
+
             return CheckResult(
                 ProblemCategory.PICTURES,
                 f"embedded image metadata mismatch on {len(mismatches)} tracks, example {example}",
-                Fixer(lambda _: self._fix(album, mismatches), options, False, option_automatic_index, table),
+                fixer,
             )
 
     def _fix(self, album: Album, mismatch_tracks: list[int]):

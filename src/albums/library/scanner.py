@@ -128,6 +128,7 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
 
     except KeyboardInterrupt:
         logger.error("scan interrupted, exiting")
+        raise SystemExit(1)
 
     if ctx.verbose:
         ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")

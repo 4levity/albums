@@ -97,6 +97,7 @@ class CheckFrontCoverSelection(Check):
                 )
             elif cover_source_filename is not None and len(front_cover_image_files) > 1:
                 other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
+                option_automatic_index = 0  # YOLO
                 return CheckResult(
                     ProblemCategory.PICTURES,
                     "multiple front cover image files, and one of them is marked cover source (delete others)",
@@ -104,7 +105,7 @@ class CheckFrontCoverSelection(Check):
                         lambda _: delete_files_except(self.ctx, cover_source_filename, album, cover_image_filenames),
                         [f'>> Keep cover source image "{cover_source_filename}" and delete other cover files: {other_filenames}'],
                         False,
-                        None,
+                        option_automatic_index,
                         table,
                     ),
                 )

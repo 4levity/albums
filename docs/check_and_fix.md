@@ -299,7 +299,7 @@ duplicate image data is not useful. Rules:
 
 <!-- pyml enable line-length -->
 
-### flac_picture_metadata
+### embedded_picture_metadata
 
 The FLAC file format
 [stores metadata about embedded pictures](https://www.rfc-editor.org/rfc/rfc9639.html#name-picture)
