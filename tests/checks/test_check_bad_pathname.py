@@ -37,6 +37,19 @@ class TestCheckBadPathname:
         assert "invalid characters found: invalids=('/')" in result.message
         assert "platform=universal" in result.message
 
+    def test_pathname_reserved_name_Windows(self):
+        result = CheckBadPathname(Context()).check(Album("Foo" + os.sep, [Track("CON.flac")]))
+        assert result is not None
+        assert "'CON' is a reserved name" in result.message
+        assert "platform=universal" in result.message
+
+    def test_pathname_reserved_character_Windows(self):
+        result = CheckBadPathname(Context()).check(Album("Foo" + os.sep, [Track("a:b.flac")]))
+        assert result is not None
+        assert "invalid characters found: invalids=(':')" in result.message
+        # not sure why pathvalidate reports this as "Windows" when platform="universal", while CON.flac validation reports as "universal"?
+        assert "platform=Windows" in result.message
+
     def test_pathname_ok_Linux(self):
         ctx = Context()
         ctx.config["checks"] = {CheckBadPathname.name: {"compatibility": "Linux"}}
