@@ -21,7 +21,12 @@ BASIC_TO_ID3 = {
     "album": "talb",
     "title": "tit2",
     "albumartist": "tpe2",
+    "composer": "tcom",
+    "genre": "tcon",
+    "encoder": "tenc",
+    "date": "tdrc",  # maybe this should be recordingdate
 }  # TRCK and TPOS too but they are not 1:1
+PROCESSED_ID3_TAGS = set(list(BASIC_TO_ID3.values()) + ["trck", "tpos", "apic", "covr"])
 
 
 class TagType(Enum):
@@ -233,17 +238,19 @@ def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
     def store_value(key: str, value: Any):
         if hasattr(value, "text") and isinstance(value.text, list) and len(value.text):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             return [str(text) for text in value.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
-        if key == "covr":
-            return "binary data not stored"  # TODO: get image metadata
         if hasattr(value, "pprint"):
             return str(value.pprint())
+        if isinstance(value, list):
+            return [textwrap.shorten(str(v), width=4096) for v in values]
         return textwrap.shorten(str(value), width=4096)
 
     tags: dict[str, list[str]] = {}
     for tag_name, tag_value in file.tags.items():
         name = str.lower(tag_name)
+        if name.startswith("apic") or name == "covr":
+            continue
         for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
-            values = store_value(name, value)
+            values: str | list[str] = store_value(name, value)
             if isinstance(values, list):
                 tags.setdefault(name, []).extend(values)
             else:

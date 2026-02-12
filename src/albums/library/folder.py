@@ -7,7 +7,7 @@ import humanize
 
 from ..app import SCANNER_VERSION
 from ..types import Album, Picture, PictureType, Track
-from .metadata import get_metadata
+from .metadata import PROCESSED_ID3_TAGS, get_metadata
 from .picture import get_picture_metadata
 
 logger = logging.getLogger(__name__)
@@ -69,9 +69,6 @@ def scan_folder(
                         break
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
             # TODO if option reread=True and there were no changes, return UNCHANGED instead
-            logger.info(
-                f"updated album. reread={reread}, tracks_modified={tracks_modified}, missing_metadata={missing_metadata}, pictures_modified={pictures_modified}"
-            )
             return (album, AlbumScanResult.UPDATED)
         return (stored_album, AlbumScanResult.UNCHANGED)
     return (None, AlbumScanResult.NO_TRACKS)
@@ -128,6 +125,8 @@ def _missing_metadata(album: Album):
         or not track.stream
         or (not track.pictures and any(name.startswith("apic") for name in track.tags))
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
+        or any(tag in track.tags for tag in PROCESSED_ID3_TAGS)  # rescan to remove redundant values
+        or any(tag.startswith("apic") for tag in track.tags)
         # or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
         for track in album.tracks
     )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())
