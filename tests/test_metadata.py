@@ -144,6 +144,8 @@ class TestMetadata:
         assert tags["albumartist"] == track.tags["albumartist"]
         assert tags["album"] == track.tags["album"]
         assert tags["title"] == track.tags["title"]
+        assert "TALB" not in tags
+        assert "talb" not in tags
 
     def test_update_id3_tags(self):
         track = albums[2].tracks[0]
@@ -154,3 +156,5 @@ class TestMetadata:
         assert tags["albumartist"] == ["a2"]
         assert tags["album"] == ["a3"]
         assert tags["title"] == ["t"]
+        assert "TALB" not in tags
+        assert "talb" not in tags

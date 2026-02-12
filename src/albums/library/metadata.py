@@ -17,10 +17,10 @@ from .picture import get_picture_metadata
 logger = logging.getLogger(__name__)
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
 BASIC_TO_ID3 = {
-    "artist": "TPE1",
-    "album": "TALB",
-    "title": "TIT2",
-    "albumartist": "TPE2",
+    "artist": "tpe1",
+    "album": "talb",
+    "title": "tit2",
+    "albumartist": "tpe2",
 }  # TRCK and TPOS too but they are not 1:1
 
 
@@ -231,7 +231,8 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagType] |
 
 def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
     def store_value(key: str, value: Any):
-        # TODO if tag is an ID3 text tag containing a list[str], use that
+        if hasattr(value, "text") and isinstance(value.text, list) and len(value.text):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            return [str(text) for text in value.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
         if key == "covr":
             return "binary data not stored"  # TODO: get image metadata
         if hasattr(value, "pprint"):
@@ -242,37 +243,39 @@ def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
     for tag_name, tag_value in file.tags.items():
         name = str.lower(tag_name)
         for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
-            tags.setdefault(name, []).append(store_value(name, value))
-    _normalize(tags, file, tag_type)
-    return tags
+            values = store_value(name, value)
+            if isinstance(values, list):
+                tags.setdefault(name, []).extend(values)
+            else:
+                tags.setdefault(name, []).append(values)
 
-
-def _normalize(tags: dict[str, list[str]], file: MutagenFileTypeLike, tag_type: TagType) -> None:
     if tag_type == TagType.ID3_FRAMES:
-        tracknumber_tag = file.tags.get("TRCK")
-        if tracknumber_tag:
-            tracknumber_value = str(tracknumber_tag.text[0])
+        if "trck" in tags:
+            tracknumber_value = tags["trck"][0]
             if str.count(tracknumber_value, "/") == 1:
                 [tracknumber, tracktotal] = tracknumber_value.split("/")
                 tags["tracknumber"] = [tracknumber]
                 tags["tracktotal"] = [tracktotal]
             else:
                 tags["tracknumber"] = [tracknumber_value]
+            del tags["trck"]
 
-        discnumber_tag = file.tags.get("TPOS")
-        if discnumber_tag:
-            discnumber_value = str(discnumber_tag.text[0])
+        if "tpos" in tags:
+            discnumber_value = tags["tpos"][0]
             if str.count(discnumber_value, "/") == 1:
                 [discnumber, disctotal] = discnumber_value.split("/")
                 tags["discnumber"] = [discnumber]
                 tags["disctotal"] = [disctotal]
-            elif discnumber_tag:
+            elif discnumber_value:
                 tags["discnumber"] = [discnumber_value]
+            del tags["tpos"]
 
         for common_tag, id3_tag in BASIC_TO_ID3.items():
-            if id3_tag in file.tags:
-                tag_value: list[str] = file.tags.get(id3_tag).text
-                tags[common_tag] = tag_value
+            if id3_tag in tags:
+                tags[common_tag] = tags[id3_tag]
+                del tags[id3_tag]
+
+    return tags
 
 
 def _get_codec(file: MutagenFileTypeLike) -> str:
