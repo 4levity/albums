@@ -79,9 +79,10 @@ class TestCheckTrackNumbering:
         assert "some tracks have different track total values" in result.message
         fixer = result.fixer
         assert fixer
-        assert fixer.options == [">> Set tracktotal to number of tracks: 3", ">> Set tracktotal to maximum value seen: 3"]
+        assert fixer.options == [">> Set tracktotal to number of tracks: 3"]
+        assert fixer.option_automatic_index == 0
         mock_set_basic_tags = mocker.patch("albums.checks.check_track_numbering.set_basic_tags")
-        assert fixer.fix(fixer.options[0])
+        assert fixer.fix(fixer.options[fixer.option_automatic_index])
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
             call(path / album.tracks[0].filename, [("tracktotal", "3")]),

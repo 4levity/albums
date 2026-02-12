@@ -36,10 +36,11 @@ class TrackTotalFixer(Fixer):
         )
         discnumber_notice = {f" on disc {discnumber}"} if discnumber is not None else ""
         options = [f"{TrackTotalFixer.OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
-        if self.max_tracktotal:
-            # TODO only one option if both proposals are the same
+        option_automatic_index = None
+        if self.max_tracktotal and len(self.tracks) != self.max_tracktotal:
             options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
-        # TODO automatic fix if no conflict
+        elif not self.max_tracktotal or len(self.tracks) == self.max_tracktotal:
+            option_automatic_index = 0
 
         tracks: List[List[RenderableType]] = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
         table = (["track", "filename"], tracks)
@@ -49,7 +50,7 @@ class TrackTotalFixer(Fixer):
             lambda option: self._fix(ctx, album, option),
             options,
             True,
-            None,
+            option_automatic_index,
             table,
             f"select option to apply to {len(self.tracks)} tracks{discnumber_notice}",
         )
