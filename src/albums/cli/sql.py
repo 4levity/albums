@@ -19,6 +19,7 @@ def sql(ctx: app.Context, sql_command: str, json: bool):
         raise ValueError("sql requires database connection")
 
     try:
+        ctx.db.autocommit = True
         with ctx.db:
             cursor = ctx.db.execute(sql_command)
             if json:
@@ -28,7 +29,7 @@ def sql(ctx: app.Context, sql_command: str, json: bool):
                 column_names = list([str(description[0]) for description in (cursor.description if cursor.description else [("results",)])])
                 table = Table(*column_names)
                 for row in cursor:
-                    table.add_row(*[f"{escape(str(v) + ' ')} yes" for v in row])
+                    table.add_row(*[f"{escape(str(v) + ' ')}" for v in row])
                 ctx.console.print(table)
     except OperationalError as err:
         ctx.console.print(Panel(f"[bold]SQL error | [red]{escape(str(err))}", expand=False))
