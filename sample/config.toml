@@ -47,6 +47,9 @@ enabled = true
 remove_redundant = false
 require_redundant = false
 
+[checks.artist_tag]
+enabled = true
+
 [checks.required_tags]
 enabled = false
 tags = ["artist", "title"]
@@ -66,6 +69,16 @@ ignore_folders = ["misc"]
 tracktotal_policy = "consistent"
 
 [checks.track_title]
+enabled = true
+
+[checks.invalid_image]
+enabled = true
+
+[checks.duplicate_image]
+enabled = true
+front_cover_only = false
+
+[checks.flac_picture_metadata]
 enabled = true
 
 [checks.album_art]
