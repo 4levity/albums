@@ -30,7 +30,7 @@ def list_albums(ctx: app.Context, json: bool):
                 ctx.console.print(dumps(album.to_dict()), end="", highlight=False, markup=False, soft_wrap=True)  # otherwise compact
         else:
             table.add_row(
-                escape(album.path),
+                escape(album.path + " ").strip(),
                 str(len(album.tracks)),
                 "{:02}:{:02}".format(*divmod(int(tracks_length) // 60, 60)),
                 humanize.naturalsize(tracks_size, binary=True),

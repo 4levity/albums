@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import call
 
@@ -9,7 +10,7 @@ from albums.types import Album, Track
 class TestCheckTrackNumbering:
     def test_check_track_numbering_ok(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"]}),
                 Track("2.flac", {"tracknumber": ["2"]}),
@@ -21,7 +22,7 @@ class TestCheckTrackNumbering:
 
     def test_check_track_number_total_ok(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["3"]}),
                 Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["3"]}),
@@ -68,7 +69,7 @@ class TestCheckTrackNumbering:
 
     def test_check_track_total_inconsistent(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["2"]}),
                 Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["2"]}),
@@ -90,7 +91,7 @@ class TestCheckTrackNumbering:
         ]
 
     def test_check_track_number_missing(self, mocker):
-        album = Album("Foo/", [Track("1.flac"), Track("2.flac"), Track("3.flac")])
+        album = Album("foo" + os.sep, [Track("1.flac"), Track("2.flac"), Track("3.flac")])
         result = CheckTrackNumbering(Context()).check(album)
         assert "missing track numbers {1, 2, 3}" in result.message
         assert result.fixer
@@ -107,7 +108,7 @@ class TestCheckTrackNumbering:
 
     def test_check_track_number_missing_on_one_disc(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"discnumber": ["1"]}),
                 Track("1-2.flac", {"discnumber": ["1"]}),
@@ -129,7 +130,7 @@ class TestCheckTrackNumbering:
 
     def test_check_unexpected_track_number(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["2"]}),
                 Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["2"]}),
@@ -142,7 +143,7 @@ class TestCheckTrackNumbering:
 
     def test_check_duplicate_track_number(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1 foo.flac", {"tracknumber": ["1"]}),
                 Track("2 bar.flac", {"tracknumber": ["2"]}),
@@ -155,7 +156,7 @@ class TestCheckTrackNumbering:
 
     def test_check_missing_track_with_totals(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["4"]}),
                 Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["4"]}),
@@ -167,7 +168,7 @@ class TestCheckTrackNumbering:
 
     def test_check_missing_track_in_set(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"tracknumber": ["1"], "discnumber": ["1"]}),
                 Track("1-2.flac", {"tracknumber": ["2"], "discnumber": ["1"]}),
@@ -181,7 +182,7 @@ class TestCheckTrackNumbering:
 
     def test_check_missing_track_without_totals(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"tracknumber": ["1"]}),
                 Track("4.flac", {"tracknumber": ["4"]}),

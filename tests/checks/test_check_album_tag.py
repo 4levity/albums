@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from albums.app import Context
@@ -8,7 +9,7 @@ from albums.types import Album, Track
 class TestCheckAlbumTag:
     def test_check_needs_album__all(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac"),
                 Track("2.flac"),
@@ -49,7 +50,7 @@ class TestCheckAlbumTag:
     def test_check_needs_album__fix_auto(self, mocker):
         # album can be guessed from folder, no conflicting tags
         album = Album(
-            "Foo/",
+            "Foo" + os.sep,
             [
                 Track("1.flac"),
                 Track("2.flac"),
@@ -70,7 +71,7 @@ class TestCheckAlbumTag:
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
         album = Album(
-            "Foo/",
+            "Foo" + os.sep,
             [
                 Track("1.flac", {"album": ["Bar"]}),
                 Track("2.flac", {"album": ["Bar"]}),

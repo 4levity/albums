@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from albums.app import Context
@@ -8,7 +9,7 @@ from albums.types import Album, Track
 class TestCheckDiscInTrackNumber:
     def test_check_track_number_disc_in_tracknumber_ok(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"tracknumber": ["1"], "discnumber": ["1"]}),
                 Track("1-2.flac", {"tracknumber": ["2"], "discnumber": ["1"]}),
@@ -20,7 +21,7 @@ class TestCheckDiscInTrackNumber:
 
     def test_check_track_number_disc_in_tracknumber_unfixable(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"tracknumber": ["1-1"], "discnumber": ["1"]}),
                 Track("1-2.flac", {"tracknumber": ["1-2"], "discnumber": ["1"]}),
@@ -32,7 +33,7 @@ class TestCheckDiscInTrackNumber:
 
     def test_check_track_number_disc_in_tracknumber(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"tracknumber": ["1-1"]}),
                 Track("1-2.flac", {"tracknumber": ["1-2"]}),

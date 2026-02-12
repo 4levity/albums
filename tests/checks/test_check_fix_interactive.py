@@ -1,5 +1,8 @@
+import os
+import sys
 from typing import List, Tuple
 
+import pytest
 import rich
 from rich.console import RenderableType
 
@@ -25,8 +28,9 @@ class MockFixer(Fixer):
 
 
 class TestCheckFixInteractive:
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     def test_fix_interactive(self, mocker):
-        album = Album("/", [Track("1.flac")])
+        album = Album(os.sep, [Track("1.flac")])
         ctx = app.Context()
         fixer = MockFixer(ctx, album)
         mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
@@ -38,8 +42,9 @@ class TestCheckFixInteractive:
         assert not quit
         assert mock_menu.show.call_count == 1
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     def test_fix_ignore_check(self, mocker):
-        album = Album("/", [Track("1.flac", stream=Stream())], album_id=1)
+        album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
         ctx = app.Context()
         ctx.db = connection.open(connection.MEMORY)
         album_id = operations.add(ctx.db, album)

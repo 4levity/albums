@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import call
 
@@ -9,7 +10,7 @@ from albums.types import Album, Track
 class TestCheckTrackTitle:
     def test_check_track_title_ok(self):
         album = Album(
-            "Foobar/",
+            "Foobar" + os.sep,
             [
                 Track("1 foo.mp3", {"title": ["foo"]}),
                 Track("2 bar.mp3", {"title": ["bar"]}),
@@ -20,7 +21,7 @@ class TestCheckTrackTitle:
         assert result is None
 
     def test_check_track_title_guess_all(self, mocker):
-        album = Album("Foobar/", [Track("1 foo.flac"), Track("2 - bar.flac"), Track("3. baz.flac"), Track("bop.flac")])
+        album = Album("Foobar" + os.sep, [Track("1 foo.flac"), Track("2 - bar.flac"), Track("3. baz.flac"), Track("bop.flac")])
         result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "4 tracks missing title" in result.message
@@ -41,7 +42,7 @@ class TestCheckTrackTitle:
 
     def test_check_track_title_guess_some(self, mocker):
         album = Album(
-            "Foobar/",
+            "Foobar" + os.sep,
             [
                 Track("1 foo.flac", {"title": ["foo"]}),
                 Track("2 bar.flac"),
@@ -61,14 +62,14 @@ class TestCheckTrackTitle:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("title", "bar")])
 
     def test_check_track_title_no_guess(self, mocker):
-        album = Album("Foobar/", [Track("1.flac"), Track("2.flac")])
+        album = Album("Foobar" + os.sep, [Track("1.flac"), Track("2.flac")])
         result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert not result.fixer
 
     def test_check_track_title_with_disc_number(self, mocker):
-        album = Album("Foobar/", [Track("1 foo.flac", {"title": ["foo"]}), Track("2 bar.flac"), Track("3 baz.flac", {"title": ["baz"]})])
+        album = Album("Foobar" + os.sep, [Track("1 foo.flac", {"title": ["foo"]}), Track("2 bar.flac"), Track("3 baz.flac", {"title": ["baz"]})])
         result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "1 tracks missing title" in result.message

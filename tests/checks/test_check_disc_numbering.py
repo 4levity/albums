@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import call
 
@@ -97,7 +98,7 @@ class TestCheckDiscNumbering:
 
     def test_check_discnumber_inconsistent(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"discnumber": ["1"]}),
                 Track("1-2.flac"),
@@ -111,7 +112,7 @@ class TestCheckDiscNumbering:
 
     def test_check_discnumber_missing_disc(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"discnumber": ["1"]}),
                 Track("1-2.flac", {"discnumber": ["1"]}),
@@ -125,7 +126,7 @@ class TestCheckDiscNumbering:
 
     def test_check_discnumber_unexpected_disc(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
                 Track("2-1.flac", {"discnumber": ["2"], "disctotal": ["2"]}),
@@ -138,7 +139,7 @@ class TestCheckDiscNumbering:
 
     def test_check_missing_disc_with_discs_in_separate_folders_default_true(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]})],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -146,7 +147,7 @@ class TestCheckDiscNumbering:
 
     def test_check_missing_disc_with_discs_in_separate_folders_false(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]})],
         )
         ctx = Context()

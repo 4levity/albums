@@ -45,7 +45,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
             (maybe_changed, user_quit) = interact(ctx, check.name, check_result, album)
             displayed_any = True
         else:
-            message = f'[bold]{check.name}[/bold] {escape(check_result.message)} : "{escape(album.path)}"'
+            message = f'[bold]{check.name}[/bold] {escape(check_result.message)} : "{escape(album.path + " ").strip()}"'
             if preview:
                 preview_failed_checks.append(message)
             else:
@@ -68,7 +68,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
                         ctx.console.print(message, highlight=False)
                     preview_failed_checks = []
                     ctx.console.print(
-                        f'[bold]dependency not met for check {check.name}[/bold] on "{escape(album.path)}": {" and ".join(missing_dependent_checks)} must pass first',
+                        f'[bold]dependency not met for check {check.name}[/bold] on "{escape(album.path + " ").strip()}": {" and ".join(missing_dependent_checks)} must pass first',
                         highlight=False,
                     )
                     showed_issues += 1

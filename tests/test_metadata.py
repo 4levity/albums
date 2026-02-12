@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
@@ -9,9 +11,9 @@ from .fixtures.create_library import create_library
 from .fixtures.empty_files import IMAGE_PNG_400X400
 
 albums = [
-    Album("foo/", [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
+    Album("foo" + os.sep, [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
     Album(
-        "bar/",
+        "bar" + os.sep,
         [
             Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")]),
             Track(
@@ -24,7 +26,7 @@ albums = [
             ),
         ],
     ),
-    Album("baz/", [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
+    Album("baz" + os.sep, [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
 ]
 
 

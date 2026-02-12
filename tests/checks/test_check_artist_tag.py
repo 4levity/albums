@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import call
 
@@ -9,14 +10,14 @@ from albums.types import Album, Track
 class TestCheckArtistTag:
     def test_artist_tag_ok(self):
         album = Album(
-            "A/",
+            "A" + os.sep,
             [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]})],
         )
         result = CheckArtistTag(Context()).check(album)
         assert result is None
 
     def test_artist_tag_automatic(self, mocker):
-        album = Album("Foo/Bar/", [Track("1.flac"), Track("2.flac")])
+        album = Album(f"Foo{os.sep}Bar{os.sep}", [Track("1.flac"), Track("2.flac")])
         result = CheckArtistTag(Context()).check(album)
         assert result
         assert "2 tracks missing artist tag" in result.message
@@ -34,7 +35,7 @@ class TestCheckArtistTag:
         ]
 
     def test_artist_tag_conflict(self, mocker):
-        album = Album("Foo/Bar/", [Track("1.flac", {"artist": ["Baz"]}), Track("2.flac", {"artist": ["Baz"]}), Track("3.flac")])
+        album = Album(f"Foo{os.sep}Bar{os.sep}", [Track("1.flac", {"artist": ["Baz"]}), Track("2.flac", {"artist": ["Baz"]}), Track("3.flac")])
         result = CheckArtistTag(Context()).check(album)
         assert result
         assert "1 tracks missing artist tag" in result.message

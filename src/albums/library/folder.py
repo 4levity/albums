@@ -69,6 +69,9 @@ def scan_folder(
                         break
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
             # TODO if option reread=True and there were no changes, return UNCHANGED instead
+            logger.info(
+                f"updated album. reread={reread}, tracks_modified={tracks_modified}, missing_metadata={missing_metadata}, pictures_modified={pictures_modified}"
+            )
             return (album, AlbumScanResult.UPDATED)
         return (stored_album, AlbumScanResult.UNCHANGED)
     return (None, AlbumScanResult.NO_TRACKS)
@@ -110,8 +113,10 @@ def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track
 def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):
     if len(tracks1) != len(tracks2):
         return True
-    for index, t1 in enumerate(tracks1):
-        t2 = tracks2[index]
+    sorted_t1 = sorted(tracks1, key=lambda track: track.filename)
+    sorted_t2 = sorted(tracks2, key=lambda track: track.filename)
+    for index, t1 in enumerate(sorted_t1):
+        t2 = sorted_t2[index]
         if t1.filename != t2.filename or t1.file_size != t2.file_size or t1.modify_timestamp != t2.modify_timestamp:
             return True
     return False

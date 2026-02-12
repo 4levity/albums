@@ -1,4 +1,5 @@
 import contextlib
+import os
 
 import pytest
 from rich.text import Text
@@ -12,7 +13,7 @@ from albums.types import Album, Track
 class TestChecker:
     def test_run_enabled_all_ok(self):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [
                 Track("1.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
                 Track("2.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
@@ -28,7 +29,7 @@ class TestChecker:
 
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(
-            "Foo/",
+            "foo" + os.sep,
             [  # disc_in_track_number fails -> invalid_track_or_disc_number does not run -> other checks do not run
                 Track("1.flac", {"album": ["Foo"], "tracknumber": ["1-01"], "title": ["one"]}),
                 Track("2.flac", {"album": ["Foo"], "tracknumber": ["1-02"], "title": ["two"]}),
@@ -42,9 +43,9 @@ class TestChecker:
             print_spy = mocker.spy(ctx.console, "print")
             run_enabled(ctx, False, False, False, False)
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
-            assert 'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "Foo/"' in output
-            assert 'dependency not met for check invalid_track_or_disc_number on "Foo/": disc_in_track_number must pass first' in output
-            assert 'dependency not met for check disc_numbering on "Foo/": invalid_track_or_disc_number must pass first' in output
+            assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
+            assert f'dependency not met for check invalid_track_or_disc_number on "foo{os.sep}": disc_in_track_number must pass first' in output
+            assert f'dependency not met for check disc_numbering on "foo{os.sep}": invalid_track_or_disc_number must pass first' in output
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()

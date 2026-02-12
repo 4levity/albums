@@ -1,4 +1,6 @@
 import contextlib
+import os
+import re
 
 from albums.database import connection, operations, schema, selector
 from albums.types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
@@ -31,9 +33,9 @@ class TestDatabase:
             )
 
         albums = [
-            Album("foo/", [track()]),
+            Album("foo" + os.sep, [track()]),
             Album(
-                "bar/",
+                "bar" + os.sep,
                 [track()],
                 ["test"],
                 ["artist_tag"],
@@ -49,15 +51,16 @@ class TestDatabase:
             albums[0].album_id = operations.add(db, albums[0])
             assert isinstance(albums[0].album_id, int)
             albums[1].album_id = operations.add(db, albums[1])
+            regex_sep = re.escape(os.sep)
             assert len(list(selector.select_albums(db, [], [], False))) == 2  # all
-            assert len(list(selector.select_albums(db, [], ["foo/"], False))) == 1  # exact match
-            assert len(list(selector.select_albums(db, [], ["oo/"], False))) == 0  # no partial match
-            assert len(list(selector.select_albums(db, [], ["o./"], True))) == 1  # regex match
-            assert len(list(selector.select_albums(db, [], ["x./"], True))) == 0  # no regex match
+            assert len(list(selector.select_albums(db, [], ["foo" + os.sep], False))) == 1  # exact match
+            assert len(list(selector.select_albums(db, [], ["oo" + os.sep], False))) == 0  # no partial match
+            assert len(list(selector.select_albums(db, [], ["o." + regex_sep], True))) == 1  # regex match
+            assert len(list(selector.select_albums(db, [], ["x." + regex_sep], True))) == 0  # no regex match
 
             result = list(selector.select_albums(db, ["test", "anything"], [], False))
             assert len(result) == 1  # initial collection
-            assert result[0].path == "bar/"
+            assert result[0].path == "bar" + os.sep
             assert result[0].scanner == 3
             assert sorted(result[0].tracks[0].tags.get("title", [])) == ["bar", "foo"]
             assert result[0].tracks[0].stream.length == 1.5
@@ -78,8 +81,8 @@ class TestDatabase:
             assert pic.modify_timestamp == 999
             assert pic.front_cover_source
 
-            assert len(list(selector.select_albums(db, [], ["/"], True))) == 2  # regex match all
-            assert len(list(selector.select_albums(db, ["test", "anything"], ["/"], True))) == 1  # regex + collection match
+            assert len(list(selector.select_albums(db, [], [regex_sep], True))) == 2  # regex match all
+            assert len(list(selector.select_albums(db, ["test", "anything"], [regex_sep], True))) == 1  # regex + collection match
 
             operations.update_collections(db, albums[0].album_id, ["test"])
             assert len(list(selector.select_albums(db, ["test", "anything"], [], False))) == 2  # added to collection
@@ -87,7 +90,7 @@ class TestDatabase:
             operations.update_collections(db, albums[1].album_id, [])
             result = list(selector.select_albums(db, ["test", "anything"], [], False))
             assert len(result) == 1  # removed from collection
-            assert result[0].path == "foo/"
+            assert result[0].path == "foo" + os.sep
 
             set_ignore_checks = ["album_artist", "required_tags"]
             operations.update_ignore_checks(db, albums[0].album_id, set_ignore_checks)
@@ -124,7 +127,7 @@ class TestDatabase:
             operations.remove(db, albums[1].album_id)
             result = list(selector.select_albums(db, [], [], False))
             assert len(result) == 1  # album removed
-            assert result[0].path == "foo/"
+            assert result[0].path == "foo" + os.sep
 
             assert len(result[0].tracks) == 1
             albums[0].tracks.append(track("2.flac"))

@@ -11,9 +11,9 @@ class CheckAlbumUnderAlbum(Check):
             raise ValueError("CheckAlbumUnderAlbum.check called without a db connection")
 
         path = album.path
-        like_path = path.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        like_path = path.replace("|", "||").replace("%", "|%").replace("_", "|_") + "%"
         (matches,) = self.ctx.db.execute(
-            "SELECT COUNT(*) FROM album WHERE path != ? AND path LIKE ? ESCAPE '\\';",
+            "SELECT COUNT(*) FROM album WHERE path != ? AND path LIKE ? ESCAPE '|';",
             (
                 path,
                 like_path,
