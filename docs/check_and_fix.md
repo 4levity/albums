@@ -49,6 +49,27 @@ checks to pass first.
 
 The checks run in the order they appear in this document.
 
+### bad_pathname
+
+Filenames should not include invalid characters or be operating system reserved
+words. What is allowed depends on the platform. This check flags filenames that
+might cause a problem. To allow reserved characters that only cause issues on
+Windows (and only in some cases), see the `compatibility` option.
+
+The compatibility options come from
+[pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).
+They are:
+
+- `"Linux"`
+- `"Windows"`
+- `"macOS"`
+- `"POSIX"`
+- `"universal"`
+
+| Option          | Default       | Description                            |
+| --------------- | ------------- | -------------------------------------- |
+| `compatibility` | `"universal"` | Configure what is allowed in filenames |
+
 ### disc_in_track_number
 
 If the disc number and track number are combined in the track number tag with a

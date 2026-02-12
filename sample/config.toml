@@ -32,6 +32,10 @@ supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
 ##############################################################################
 # See documentation for instructions on configuring checks.
 # If there is no configuration for a check, it will use defaults (including whether it is enabled).
+[checks.bad_pathname]
+enabled = true
+compatibility = "universal"
+
 [checks.disc_in_track_number]
 enabled = true
 
