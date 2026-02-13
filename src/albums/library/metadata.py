@@ -7,9 +7,11 @@ from typing import Any
 import mutagen
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
+from mutagen.id3 import ID3
 from mutagen.id3._frames import APIC, TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
+from mutagen.oggvorbis import OggVorbis
 
 from ..types import Album, Picture, PictureType, Stream
 from .picture import get_picture_metadata
@@ -100,7 +102,7 @@ def set_basic_tags_file(file: MutagenFileTypeLike, tag_values: list[tuple[str, s
     for name, value in tag_values:
         if tag_type == TagType.ID3_FRAMES:
             if not file.tags:
-                raise ValueError("")
+                file.tags = ID3()
             if name in {"tracknumber", "tracktotal", "discnumber", "disctotal"}:
                 tags = _get_tags(file, tag_type)
                 new_value = value[0] if isinstance(value, list) else value
@@ -219,16 +221,20 @@ def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagType] |
         file = MP3(path)  # pyright: ignore[reportAssignmentType]
         codec = "MP3"
         tag_type = TagType.ID3_FRAMES
+    elif suffix == ".ogg":
+        file = OggVorbis(path)  # pyright: ignore[reportAssignmentType]
+        tag_type = TagType.VORBIS_COMMENTS
     else:
         file: MutagenFileTypeLike | None = mutagen.File(  # pyright: ignore[reportPrivateImportUsage, reportUnknownMemberType, reportAssignmentType]
             path
         )
         if file is None:
             return None
-        codec = _get_codec(file)
         tag_type = TagType.OTHER
 
     if file is not None:
+        if codec is None:
+            codec = _get_codec(file)
         return (file, codec, tag_type)
     else:
         return None
@@ -245,16 +251,17 @@ def _get_tags(file: MutagenFileTypeLike, tag_type: TagType):
         return textwrap.shorten(str(value), width=4096)
 
     tags: dict[str, list[str]] = {}
-    for tag_name, tag_value in file.tags.items():
-        name = str.lower(tag_name)
-        if name.startswith("apic") or name == "covr":
-            continue
-        for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
-            values: str | list[str] = store_value(name, value)
-            if isinstance(values, list):
-                tags.setdefault(name, []).extend(values)
-            else:
-                tags.setdefault(name, []).append(values)
+    if file.tags:
+        for tag_name, tag_value in file.tags.items():
+            name = str.lower(tag_name)
+            if name.startswith("apic") or name == "covr":
+                continue
+            for value in tag_value if isinstance(tag_value, list) else [tag_value]:  # pyright: ignore[reportUnknownVariableType]
+                values: str | list[str] = store_value(name, value)
+                if isinstance(values, list):
+                    tags.setdefault(name, []).extend(values)
+                else:
+                    tags.setdefault(name, []).append(values)
 
     if tag_type == TagType.ID3_FRAMES:
         if "trck" in tags:
@@ -361,7 +368,7 @@ def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> list[Picture]:
 def _get_id3_pictures(file: MP3) -> list[Picture]:
     pictures: list[Picture] = []
 
-    picture_frames: list[APIC] = file.tags.getall("APIC")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportOptionalMemberAccess]
+    picture_frames: list[APIC] = file.tags.getall("APIC") if file.tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportOptionalMemberAccess]
     for embed_ix, frame in enumerate(picture_frames):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         image_data: bytes = frame.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
         picture_type = PictureType(frame.type)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]

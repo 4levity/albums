@@ -123,10 +123,9 @@ def _missing_metadata(album: Album):
     return any(
         not track.tags
         or not track.stream
-        or (not track.pictures and any(name.startswith("apic") for name in track.tags))
+        or any(name.startswith("apic") for name in track.tags)
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
         or any(tag in track.tags for tag in PROCESSED_ID3_TAGS)  # rescan to remove redundant values
-        or any(tag.startswith("apic") for tag in track.tags)
         # or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
         for track in album.tracks
     )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())

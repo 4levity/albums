@@ -6,11 +6,12 @@ import mutagen
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
+from mutagen.oggvorbis import OggVorbis
 
 from albums.library.metadata import MutagenFileTypeLike, TagType, set_basic_tags_file
 from albums.types import Album, Track
 
-from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_WMA_FILE_BYTES, IMAGE_PNG_400X400
+from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_OGG_VORBIS_FILE_BYTES, EMPTY_WMA_FILE_BYTES, IMAGE_PNG_400X400
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
@@ -24,6 +25,8 @@ def create_track_file(path: Path, spec: Track):
             file.write(EMPTY_MP3_FILE_BYTES)
         elif filename.suffix == ".wma":
             file.write(EMPTY_WMA_FILE_BYTES)
+        elif filename.suffix == ".ogg":
+            file.write(EMPTY_OGG_VORBIS_FILE_BYTES)
     mut: MutagenFileTypeLike | None = None
     tag_type = TagType.OTHER
     if filename.suffix == ".flac":
@@ -41,6 +44,9 @@ def create_track_file(path: Path, spec: Track):
     elif filename.suffix == ".mp3":
         mut = MP3(filename)  # pyright: ignore[reportAssignmentType]
         tag_type = TagType.ID3_FRAMES
+    elif filename.suffix == ".ogg":
+        mut = OggVorbis(filename)  # pyright: ignore[reportAssignmentType]
+        tag_type = TagType.VORBIS_COMMENTS
     elif filename.suffix == ".wma":
         mut = mutagen.File(filename)
 

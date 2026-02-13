@@ -27,6 +27,7 @@ albums = [
         ],
     ),
     Album("baz" + os.sep, [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
+    Album("foobar" + os.sep, [Track("1.ogg", {"tracknumber": ["1"], "tracktotal": ["1"], "artist": ["C"], "title": ["one"], "album": ["foobar"]})]),
 ]
 
 
@@ -158,3 +159,16 @@ class TestMetadata:
         assert tags["title"] == ["t"]
         assert "TALB" not in tags
         assert "talb" not in tags
+
+    def test_read_oggvorbis(self):
+        file = TestMetadata.library / albums[3].path / albums[3].tracks[0].filename
+        info = get_metadata(file)
+        assert info
+        (tags, stream, pics) = info
+        assert stream.codec == "Ogg Vorbis"
+        assert pics == []
+        assert tags["artist"] == ["C"]
+        assert tags["title"] == ["one"]
+        assert tags["album"] == ["foobar"]
+        assert tags["tracknumber"] == ["1"]
+        assert tags["tracktotal"] == ["1"]

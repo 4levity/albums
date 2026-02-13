@@ -89,11 +89,16 @@ class TestScanner:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library(
                 "test_scan_no_tags",
-                [Album("bar" + os.sep, [Track("1.flac")]), Album("foo" + os.sep, [Track("1.mp3")]), Album("baz" + os.sep, [Track("1.wma")])],
+                [
+                    Album("bar" + os.sep, [Track("1.flac")]),
+                    Album("foo" + os.sep, [Track("1.mp3")]),
+                    Album("baz" + os.sep, [Track("1.wma")]),
+                    Album("foobar" + os.sep, [Track("1.ogg")]),
+                ],
             )
             scan(context(db, library))
             result = list(selector.select_albums(db, [], [], False))
-            assert len(result) == 3
+            assert len(result) == 4
 
     def test_scan_update(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
