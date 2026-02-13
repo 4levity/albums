@@ -1,8 +1,9 @@
+import base64
 import logging
 import textwrap
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import mutagen
 from mutagen.flac import FLAC
@@ -55,7 +56,7 @@ def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream, list[Picture]] | N
     stream_info = _get_stream_info(file, codec)
     tags = _get_tags(file, tag_type)
     pictures = _get_pictures(file)
-    return (tags, stream_info, pictures)
+    return (tags, stream_info, list(pictures))
 
 
 def get_embedded_image_data(path: Path) -> list[bytes]:
@@ -64,18 +65,16 @@ def get_embedded_image_data(path: Path) -> list[bytes]:
         return []
     (file, _, _) = file_info
     if isinstance(file, FLAC):
-        return [picture.data for picture in file.pictures]  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        return [flac_picture.data for flac_picture in file.pictures]  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    if isinstance(file, OggVorbis):
+        return [flac_picture.data for flac_picture in _get_metadata_picture_blocks_from_ogg_vorbis(file)]  # pyright: ignore[reportUnknownMemberType]
     if isinstance(file, MP3):
         return [frame.data for frame in file.tags.getall("APIC")]
     return []
 
 
 def album_is_basic_taggable(album: Album):  # TODO use TagType instead
-    ok = True
-    for track in album.tracks:
-        if not supports_basic_tags(Path(track.filename), track.stream.codec if track.stream else None):
-            ok = False
-    return ok
+    return all(supports_basic_tags(Path(track.filename), track.stream.codec if track.stream else None) for track in album.tracks)
 
 
 def supports_basic_tags(filename: Path, codec: str | None):  # TODO use TagType instead
@@ -331,55 +330,66 @@ def _get_stream_info(file: MutagenFileTypeLike, codec: str) -> Stream:
     return stream
 
 
-def _get_pictures(file: MutagenFileTypeLike) -> list[Picture]:
-    pictures: list[Picture] = []
+def _get_pictures(file: MutagenFileTypeLike) -> Generator[Picture, None, None]:
     if isinstance(file, FLAC):
-        pictures = _get_flac_pictures(file.pictures)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-    elif isinstance(file, MP3):
-        pictures = _get_id3_pictures(file)
-    return pictures
+        yield from _get_flac_pictures(file.pictures)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+    elif isinstance(file, MP3) and file.tags:
+        yield from _get_id3_pictures(file.tags)
+    elif isinstance(file, OggVorbis):
+        yield from _get_ogg_vorbis_pictures(file)
 
 
-def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> list[Picture]:
-    pictures: list[Picture] = []
+def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> Generator[Picture, None, None]:
     for embed_ix, picture in enumerate(flac_pictures):
-        picture_type = PictureType(picture.type)
-        image_data: bytes = picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        metadata_from_image_data = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
-        metadata_from_image_data.embed_ix = embed_ix
-
-        load_error = metadata_from_image_data.load_issue.get("error") if metadata_from_image_data.load_issue else None
-        if not load_error:
-            # use "real" metadata from the image data but record if data in flac metadata block disagrees
-            metadata_block_mimetype = str(picture.mime) if isinstance(picture.mime, str) else "Unknown"  # type: ignore
-            mismatch = {}
-            if metadata_from_image_data.format != metadata_block_mimetype:
-                mismatch["format"] = metadata_block_mimetype
-            if metadata_from_image_data.width != picture.width or metadata_from_image_data.height != picture.height:
-                mismatch["width"] = picture.width
-                mismatch["height"] = picture.height
-            if mismatch:
-                metadata_from_image_data.load_issue = mismatch
-
-        pictures.append(metadata_from_image_data)
-    return pictures
+        yield _flac_picture(embed_ix, picture)
 
 
-def _get_id3_pictures(file: MP3) -> list[Picture]:
-    pictures: list[Picture] = []
+def _flac_picture(embed_ix: int, flac_picture: FlacPicture):
+    picture_type = PictureType(flac_picture.type)
+    image_data: bytes = flac_picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    picture = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
+    picture.embed_ix = embed_ix
 
-    picture_frames: list[APIC] = file.tags.getall("APIC") if file.tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportOptionalMemberAccess]
+    load_error = picture.load_issue.get("error") if picture.load_issue else None
+    if not load_error:
+        # use "real" metadata from the image data but record if data in flac metadata block disagrees
+        metadata_block_mimetype = str(flac_picture.mime) if isinstance(flac_picture.mime, str) else "Unknown"  # type: ignore
+        mismatch = {}
+        if picture.format != metadata_block_mimetype:
+            mismatch["format"] = metadata_block_mimetype
+        if picture.width != flac_picture.width or picture.height != flac_picture.height:
+            mismatch["width"] = flac_picture.width
+            mismatch["height"] = flac_picture.height
+        if mismatch:
+            picture.load_issue = mismatch
+    return picture
+
+
+def _get_id3_pictures(tags: ID3) -> Generator[Picture, None, None]:
+    picture_frames: list[APIC] = tags.getall("APIC")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
     for embed_ix, frame in enumerate(picture_frames):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         image_data: bytes = frame.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
         picture_type = PictureType(frame.type)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-        metadata = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
-        metadata.embed_ix = embed_ix
-        load_error = metadata.load_issue.get("error") if metadata.load_issue else None
+        picture = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
+        picture.embed_ix = embed_ix
+        load_error = picture.load_issue.get("error") if picture.load_issue else None
         if not load_error:
             # use "real" metadata from the image data but record if data in flac metadata block disagrees
             apic_mimetype = str(frame.mime) if isinstance(frame.mime, str) else "Unknown"  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-            if metadata.format != apic_mimetype:
-                metadata.load_issue = {"format": apic_mimetype}
+            if picture.format != apic_mimetype:
+                picture.load_issue = {"format": apic_mimetype}
 
-        pictures.append(metadata)
-    return pictures
+        yield picture
+
+
+def _get_ogg_vorbis_pictures(file: OggVorbis) -> Generator[Picture, None, None]:
+    for embed_ix, flac_picture in enumerate(_get_metadata_picture_blocks_from_ogg_vorbis(file)):
+        yield _flac_picture(embed_ix, flac_picture)
+
+
+def _get_metadata_picture_blocks_from_ogg_vorbis(file: OggVorbis) -> Generator[FlacPicture, None, None]:
+    b64_pictures: list[str] = file.get("metadata_block_picture", [])  # pyright: ignore[reportUnknownVariableType, reportAssignmentType, reportUnknownMemberType]
+    # TODO improve error handling here
+    for b64_data in b64_pictures:
+        metadata_block_raw = base64.b64decode(b64_data)
+        yield FlacPicture(metadata_block_raw)

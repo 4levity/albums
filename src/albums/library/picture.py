@@ -7,6 +7,8 @@ from PIL.ImageFile import ImageFile
 
 from ..types import Picture, PictureType
 
+IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
+
 
 def get_image(image_data: bytes) -> tuple[ImageFile, str] | str:
     try:

@@ -8,13 +8,11 @@ from PIL.ImageFile import ImageFile
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ..library.picture import get_image
+from ..library.picture import IMAGE_MODE_BPP, get_image
 from ..types import Album, PictureType
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
 logger = logging.getLogger(__name__)
-
-IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
 
 
 class CheckEmbeddedPictureMetadata(Check):
@@ -47,7 +45,7 @@ class CheckEmbeddedPictureMetadata(Check):
                 table = (["filename", "image metadata issues"], tracks)
                 fixer = Fixer(lambda _: self._fix(album, mismatches), options, False, option_automatic_index, table)
             else:
-                # TODO implement for MP3 too, see also invalid_image
+                # TODO implement for MP3 and Ogg Vorbis too, see also invalid_image
                 fixer = None
 
             return CheckResult(

@@ -24,8 +24,8 @@ Most features require each album (soundtrack, mixtape...) to be in a folder.
 Any album with recognized media files can be scanned. However, most of the check
 features require `albums` to understand the tags. FLAC, Ogg Vorbis, and other
 files with Vorbis comment metadata using standard names are supported. ID3 is
-supported but many tags are ignored. Other media files have limited support and
-checks may be skipped.
+supported. JPEG, PNG and GIF files in the album folder are scanned. Other media
+files have limited support and checks may be skipped.
 
 ## System Requirements
 

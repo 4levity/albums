@@ -322,14 +322,16 @@ duplicate image data is not useful. Rules:
 
 ### embedded_picture_metadata
 
-The FLAC file format
-[stores metadata about embedded pictures](https://www.rfc-editor.org/rfc/rfc9639.html#name-picture)
-(MIME type, dimensions). The dimensions are not required to be correct according
-to the spec. Nonetheless, this check loads the image data and compares the
-recorded MIME type and dimensions to the real data.
+FLAC files
+[store metadata about embedded pictures](https://www.rfc-editor.org/rfc/rfc9639.html#name-picture)
+(MIME type, dimensions). Ogg Vorbis uses a comment with the same structure. ID3
+tags include the MIME type of the image in the APIC frame. This check loads the
+image data and compares the reported MIME type and dimensions (if present) to
+the real image data.
 
-**Automatic fix**: For each affected file, re-embed all the images with the same
-image data and correct metadata.
+**Automatic fix**: For each FLAC file with incorrect metadata, re-embed all the
+images with the same image data and correct metadata. Fix not yet available for
+other formats.
 
 !!!note
 

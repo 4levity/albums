@@ -26,8 +26,32 @@ albums = [
             ),
         ],
     ),
-    Album("baz" + os.sep, [Track("1.mp3", {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]})]),
-    Album("foobar" + os.sep, [Track("1.ogg", {"tracknumber": ["1"], "tracktotal": ["1"], "artist": ["C"], "title": ["one"], "album": ["foobar"]})]),
+    Album(
+        "baz" + os.sep,
+        [
+            Track(
+                "1.mp3",
+                {"artist": ["A"], "albumartist": ["AA"], "title": ["T"], "album": ["baz"]},
+                0,
+                0,
+                None,
+                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")],
+            )
+        ],
+    ),
+    Album(
+        "foobar" + os.sep,
+        [
+            Track(
+                "1.ogg",
+                {"tracknumber": ["1"], "tracktotal": ["1"], "artist": ["C"], "title": ["one"], "album": ["foobar"]},
+                0,
+                0,
+                None,
+                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")],
+            )
+        ],
+    ),
 ]
 
 
@@ -140,7 +164,10 @@ class TestMetadata:
     def test_read_write_id3_tags(self):
         track = albums[2].tracks[0]
         file = TestMetadata.library / albums[2].path / track.filename
-        tags = get_metadata(file)[0]
+        info = get_metadata(file)
+        assert info
+        (tags, stream, pics) = info
+        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
         assert tags["artist"] == track.tags["artist"]
         assert tags["albumartist"] == track.tags["albumartist"]
         assert tags["album"] == track.tags["album"]
@@ -166,7 +193,7 @@ class TestMetadata:
         assert info
         (tags, stream, pics) = info
         assert stream.codec == "Ogg Vorbis"
-        assert pics == []
+        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
         assert tags["artist"] == ["C"]
         assert tags["title"] == ["one"]
         assert tags["album"] == ["foobar"]

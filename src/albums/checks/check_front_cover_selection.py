@@ -26,7 +26,7 @@ class CheckFrontCoverSelection(Check):
         self.unique = int(check_config.get("unique", CheckFrontCoverSelection.default_config["unique"]))
 
     def check(self, album: Album) -> CheckResult | None:
-        if album.codec() not in {"FLAC", "MP3"} and self.cover_required:
+        if album.codec() not in {"FLAC", "MP3", "Ogg Vorbis"} and self.cover_required:
             # if cover is required, only run check on albums where embedded pictures are supported
             return None
 
@@ -112,6 +112,8 @@ class CheckFrontCoverSelection(Check):
             elif cover_source_filename is None or len(front_cover_image_files) > 1 or len(front_cover_embedded) > 1:
                 # TODO if multiple front cover embedded but every track has one, even if they are different that's probably on purpose?
                 issues.add("COVER_FRONT pictures are not all the same")
+                # no automatic fixer yet, but this shows the issue:
+                # return CheckResult(ProblemCategory.PICTURES, "COVER_FRONT not all the same", Fixer(lambda _: False, [], False, None, table))
 
         if not front_covers:
             if pictures_by_type:
