@@ -16,7 +16,7 @@ PRAGMA foreign_keys = ON;
 SQL_CLEANUP = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
 
 
-def open(filename: str):
+def open(filename: str | Path):
     new_database = filename == MEMORY or not Path(filename).exists()
 
     db = sqlite3.connect(filename, autocommit=True)

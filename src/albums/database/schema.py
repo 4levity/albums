@@ -109,19 +109,22 @@ ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
     8: "ALTER TABLE track_picture ADD COLUMN description TEXT NOT NULL DEFAULT '';",
 }
 
+CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())
+
 
 def migrate(db: sqlite3.Connection):
-    current_version = max(MIGRATIONS.keys())
     (db_version,) = db.execute("SELECT version FROM _schema;").fetchone()
-    if db_version == current_version:
+    if db_version > CURRENT_SCHEMA_VERSION:
+        raise RuntimeError(f"the database is newer than this version of albums ({db_version} > {CURRENT_SCHEMA_VERSION})")
+    if db_version == CURRENT_SCHEMA_VERSION:
         return
 
-    migrations = range(db_version + 1, current_version + 1)
+    migrations = range(db_version + 1, CURRENT_SCHEMA_VERSION + 1)
     logger.debug(f"database schema version {db_version}, migrations to perform: {migrations}")
     for migration in migrations:
         _do_migration(db, migration)
     with db:
-        db.execute("UPDATE _schema SET version = ?", (current_version,))
+        db.execute("UPDATE _schema SET version = ?", (CURRENT_SCHEMA_VERSION,))
 
 
 def _do_migration(db: sqlite3.Connection, migration: int):

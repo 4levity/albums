@@ -1,6 +1,9 @@
 import contextlib
 import os
 import re
+from pathlib import Path
+
+import pytest
 
 from albums.database import connection, operations, schema, selector
 from albums.types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
@@ -11,13 +14,28 @@ class TestDatabase:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             schema_version = db.execute("SELECT version FROM _schema;").fetchall()
             assert len(schema_version) == 1
-            assert schema_version[0][0] == max(schema.MIGRATIONS.keys())
+            assert schema_version[0][0] == max(schema.MIGRATIONS.keys()) == (len(schema.MIGRATIONS) + 1) == schema.CURRENT_SCHEMA_VERSION
 
     def test_foreign_key(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             foreign_keys = db.execute("PRAGMA foreign_keys;").fetchall()
             assert len(foreign_keys) == 1
             assert foreign_keys[0][0] == 1
+
+    def test_schema_too_new(self):
+        test_data_path = Path(__file__).resolve().parent / "fixtures" / "libraries"
+        os.makedirs(test_data_path, exist_ok=True)
+        db_file = test_data_path / "test_database.db"
+        if db_file.exists():
+            db_file.unlink()
+        with contextlib.closing(connection.open(db_file)) as db:
+            newer_version = schema.CURRENT_SCHEMA_VERSION + 1
+            db.execute("UPDATE _schema SET version = ?;", (newer_version,))
+            db.commit()
+            assert db.execute("SELECT version FROM _schema;").fetchall()[0][0] == newer_version
+        with pytest.raises(RuntimeError):
+            with contextlib.closing(connection.open(db_file)) as db:
+                assert False  # shouldn't get this far
 
     def test_operations(self):
         # TODO this test needs to be split up!
