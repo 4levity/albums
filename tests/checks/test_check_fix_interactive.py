@@ -1,14 +1,12 @@
 import os
-import sys
 from typing import List, Tuple
 
-import pytest
 import rich
 from rich.console import RenderableType
 
 from albums import app
 from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
-from albums.checks.interact import interact
+from albums.checks.interact import OPTION_IGNORE_CHECK, interact
 from albums.database import connection, operations
 from albums.types import Album, Stream, Track
 
@@ -28,21 +26,17 @@ class MockFixer(Fixer):
 
 
 class TestCheckFixInteractive:
-    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     def test_fix_interactive(self, mocker):
         album = Album(os.sep, [Track("1.flac")])
         ctx = app.Context()
         fixer = MockFixer(ctx, album)
-        mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
-        mock_menu = mock_TerminalMenu.return_value
-        mock_menu.show.return_value = 0
+        mock_choice = mocker.patch("albums.checks.interact.choice", return_value=fixer.options[0])
 
         (changed, quit) = interact(ctx, "", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
         assert changed
         assert not quit
-        assert mock_menu.show.call_count == 1
+        assert mock_choice.call_count == 1
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     def test_fix_ignore_check(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
         ctx = app.Context()
@@ -50,15 +44,13 @@ class TestCheckFixInteractive:
         album_id = operations.add(ctx.db, album)
 
         fixer = MockFixer(ctx, album)
-        mock_TerminalMenu = mocker.patch("albums.checks.interact.simple_term_menu.TerminalMenu")
-        mock_menu = mock_TerminalMenu.return_value
-        mock_menu.show.return_value = 3  # fixer has 2 options + free text, next option is ignore check
+        mock_choice = mocker.patch("albums.checks.interact.choice", return_value=OPTION_IGNORE_CHECK)
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
         (changed, quit) = interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
         assert not changed
         assert quit
-        assert mock_menu.show.call_count == 1
+        assert mock_choice.call_count == 1
         assert mock_ask.call_count == 1
         assert mock_ask.call_args.args[0] == ('Do you want to ignore the check "album_tag" for this album in the future?')
 

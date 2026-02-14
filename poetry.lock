@@ -740,6 +740,21 @@ dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
+name = "prompt-toolkit"
+version = "3.0.52"
+description = "Library for building powerful interactive command lines in Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955"},
+    {file = "prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855"},
+]
+
+[package.dependencies]
+wcwidth = "*"
+
+[[package]]
 name = "py-walk"
 version = "0.3.3"
 description = "Filter filesystem paths based on gitignore-like patterns"
@@ -1391,18 +1406,6 @@ doc = ["intersphinx_registry", "jupyterlite-pyodide-kernel", "jupyterlite-sphinx
 test = ["Cython", "array-api-strict (>=2.3.1)", "asv", "gmpy2", "hypothesis (>=6.30)", "meson", "mpmath", "ninja ; sys_platform != \"emscripten\"", "pooch", "pytest (>=8.0.0)", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
-name = "simple-term-menu"
-version = "1.6.6"
-description = "A Python package which creates simple interactive menus on the command line."
-optional = false
-python-versions = "~=3.5"
-groups = ["main"]
-files = [
-    {file = "simple_term_menu-1.6.6-py3-none-any.whl", hash = "sha256:c2a869efa7a9f7e4a9c25858b42ca6974034951c137d5e281f5339b06ed8c9c2"},
-    {file = "simple_term_menu-1.6.6.tar.gz", hash = "sha256:9813d36f5749d62d200a5599b1ec88469c71378312adc084c00c00bfbb383893"},
-]
-
-[[package]]
 name = "sly"
 version = "0.5"
 description = "\"SLY - Sly Lex Yacc\""
@@ -1622,7 +1625,7 @@ version = "0.5.3"
 description = "Measures the displayed width of unicode strings in a terminal"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "wcwidth-0.5.3-py3-none-any.whl", hash = "sha256:d584eff31cd4753e1e5ff6c12e1edfdb324c995713f75d26c29807bb84bf649e"},
     {file = "wcwidth-0.5.3.tar.gz", hash = "sha256:53123b7af053c74e9fe2e92ac810301f6139e64379031f7124574212fb3b4091"},
@@ -1812,4 +1815,4 @@ pyyaml = ">=6.0.2"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "456e4dba836038e1c2fec3e23a198f7727823a1e5523c15aca26887de0f77382"
+content-hash = "ac64ab1914285b3bf18775935d5c4bb0dfb6f929b3cc886efa403b70ea376070"

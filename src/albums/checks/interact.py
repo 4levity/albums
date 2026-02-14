@@ -2,17 +2,12 @@ import logging
 import os
 import platform
 import subprocess
-import sys
 from pathlib import Path
 
+from prompt_toolkit.shortcuts import choice
 from rich.markup import escape
-from rich.prompt import Confirm, IntPrompt
+from rich.prompt import Confirm
 from rich.table import Table
-
-if not sys.platform.startswith("win"):
-    import simple_term_menu
-else:
-    simple_term_menu = None
 
 from .. import app
 from ..database import operations
@@ -20,6 +15,11 @@ from ..types import Album
 from .base_check import CheckResult, ProblemCategory
 
 logger = logging.getLogger(__name__)
+
+OPTION_FREE_TEXT = ">> Enter Text"
+OPTION_OPEN_FOLDER = ">> Open folder and see all files"
+OPTION_DO_NOTHING = ">> Do nothing"
+OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
 def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album: Album) -> tuple[bool, bool]:
@@ -39,11 +39,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     tagger_config = ctx.config.get("options", {}).get("tagger")
     tagger = str(tagger_config) if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
 
-    OPTION_FREE_TEXT = ">> Enter Text"
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
-    OPTION_OPEN_FOLDER = ">> Open folder and see all files"
-    OPTION_DO_NOTHING = ">> Do nothing"
-    OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
     options: list[str] = []
     if fixer:
@@ -143,16 +139,6 @@ def os_open_folder(ctx: app.Context, path: Path):
 
 
 def choose_from_menu(ctx: app.Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
-    if simple_term_menu:
-        terminal_menu = simple_term_menu.TerminalMenu(options, raise_error_on_interrupt=True, title=prompt, cursor_index=default_option_index)
-        option_index = terminal_menu.show()
-        if isinstance(option_index, tuple):
-            raise ValueError("unexpected tuple result from TerminalMenu.show")
-        return option_index
-
-    # else Windows/etc
-    for index, option in enumerate(options):
-        ctx.console.print(f"[{index + 1:2d}] {option}")
-    default_value = (default_option_index + 1) if default_option_index else None
-    selection = IntPrompt.ask(prompt, show_default=True, default=default_value, console=ctx.console)
-    return selection - 1 if selection else None
+    default_option = options[default_option_index] if default_option_index is not None else None
+    selection = choice(message=prompt, options=[(o, o) for o in options], default=default_option)
+    return options.index(selection)

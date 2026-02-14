@@ -24,7 +24,7 @@ class TestCheckCheckInvalidImage:
         assert len(result.fixer.options) == 1
         assert "Remove/delete all invalid images" in result.fixer.options[0]
 
-        mock_remove_embedded_image = mocker.patch("albums.checks.check_invalid_image.remove_embedded_image")
+        mock_remove_embedded_image = mocker.patch("albums.checks.check_invalid_image.remove_embedded_image", return_value=True)
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_remove_embedded_image.call_args_list == [call(Path(album.path) / album.tracks[0].filename, "FLAC", pic)]
