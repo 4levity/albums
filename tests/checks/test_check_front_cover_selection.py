@@ -1,9 +1,14 @@
+import os
 from pathlib import Path
 from unittest.mock import call
+
+from rich_pixels import Pixels
 
 from albums.app import Context
 from albums.checks.check_front_cover_selection import CheckFrontCoverSelection
 from albums.types import Album, Picture, PictureType, Stream, Track
+
+from ..fixtures.create_library import create_library
 
 
 class TestCheckFrontCoverSelection:
@@ -95,7 +100,7 @@ class TestCheckFrontCoverSelection:
     def test_has_unmarked_cover_source_file(self, mocker):
         picture_files = {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 10000, b"")}
         album = Album(
-            "",
+            "foo" + os.sep,
             [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 400, b"")])],
             [],
             [],
@@ -104,6 +109,7 @@ class TestCheckFrontCoverSelection:
         )
         ctx = Context()
         ctx.db = True
+        ctx.library_root = create_library("front_cover", [album])
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is not None
         assert (
@@ -113,6 +119,16 @@ class TestCheckFrontCoverSelection:
         assert result.fixer
         assert result.fixer.options == [">> Mark as front cover source: cover.png", ">> Delete all cover image files: cover.png"]
         assert result.fixer.option_automatic_index == 0
+        table = result.fixer.get_table()
+        assert table
+        (headers, rows) = table
+        assert len(headers) == 2
+        assert len(rows) == 2
+        assert len(rows[0]) == 2
+        assert isinstance(rows[0][0], Pixels)
+        assert isinstance(rows[0][1], Pixels)
+        assert "1000 x 1000" in str(rows[1][0])
+        assert "400 x 400" in str(rows[1][1])
 
         update_picture_files_mock = mocker.patch("albums.checks.check_front_cover_selection.operations.update_picture_files")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
