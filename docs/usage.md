@@ -46,11 +46,12 @@ containing albums to sync to a Digital Audio Player, use for example
 ## Tag Conversion
 
 `albums` attempts to apply some of the same checks and rules with Vorbis
-comments (e.g. FLAC) and ID3 tags (MP3). To enable this, common tags like track
-number are converted to the typical Vorbis comment tag names. For example, the
-ID3 tags TPE1 "Artist" and TPE2 "Band" are referenced by the standard tag names
-"artist" and "albumartist". Or in other words, if `albums` writes a new "album
-artist" to your MP3, behind the scenes it's actually writing to the TPE2 tag.
+comments (FLAC, Ogg Vorbis) and ID3 tags (MP3). To enable this, common tags like
+track number are converted to the typical Vorbis comment tag names. For example,
+the ID3 tags TPE1 "Artist" and TPE2 "Band" are referenced by the standard tag
+names "artist" and "albumartist". Or in other words, if `albums` writes a new
+"album artist" to your MP3, behind the scenes it's actually writing to the TPE2
+tag.
 
 ### Track total and disc total
 

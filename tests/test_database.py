@@ -29,7 +29,7 @@ class TestDatabase:
                 1,
                 0,
                 Stream(1.5, 0, 0, "FLAC"),
-                [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"", None, None, 1)],
+                [Picture(PictureType.COVER_FRONT, "test", 4, 5, 6, b"", "", None, None, 1)],
             )
 
         albums = [
@@ -39,7 +39,7 @@ class TestDatabase:
                 [track()],
                 ["test"],
                 ["artist_tag"],
-                {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", None, 999, 0, True)},
+                {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 1024, b"1234", "", None, 999, 0, True)},
                 None,
                 3,
             ),
@@ -103,7 +103,7 @@ class TestDatabase:
             assert len(result) == 1
             assert result[0].ignore_checks == []
 
-            cover = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", None, 999)
+            cover = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", "", None, 999)
             albums[1].picture_files["other.jpg"] = cover
             assert albums[1].picture_files["folder.jpg"].front_cover_source
             albums[1].picture_files["folder.jpg"].front_cover_source = False

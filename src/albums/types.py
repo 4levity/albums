@@ -59,6 +59,7 @@ class Picture:
     height: int
     file_size: int
     file_hash: bytes  # 32 bit xxhash
+    description: str = ""
 
     # fields below are not part of equality/identity of the image
 

@@ -1,18 +1,22 @@
-import base64
 import os
 import shutil
 from pathlib import Path
-from typing import Iterable
 
 import mutagen
 from mutagen._vorbis import VCommentDict
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
-from mutagen.id3 import APIC, ID3
 from mutagen.mp3 import MP3
 from mutagen.oggvorbis import OggVorbis
 
-from albums.library.metadata import MutagenFileTypeLike, TagType, set_basic_tags_file
+from albums.library.metadata import (
+    Iterable,
+    MutagenFileTypeLike,
+    TagType,
+    add_id3_pictures,
+    flac_picture_to_vorbis_comment_value,
+    set_basic_tags_file,
+)
 from albums.types import Album, Picture, Track
 
 from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_OGG_VORBIS_FILE_BYTES, EMPTY_WMA_FILE_BYTES, IMAGE_PNG_400X400
@@ -37,15 +41,17 @@ def create_track_file(path: Path, spec: Track):
         mut = FLAC(filename)  # pyright: ignore[reportAssignmentType]
         if mut.tags is None:
             mut.add_tags()
-        _add_flac_pictures(mut, spec.pictures)  # pyright: ignore[reportArgumentType]
+        add_flac_pictures(mut, spec.pictures)  # pyright: ignore[reportArgumentType]
         tag_type = TagType.VORBIS_COMMENTS
     elif filename.suffix == ".mp3":
         mut = MP3(filename)  # pyright: ignore[reportAssignmentType]
-        _add_id3_pictures(mut, spec.pictures)  # pyright: ignore[reportArgumentType]
+        if mut.tags is None:
+            mut.add_tags()
+        add_id3_pictures(mut.tags, [(pic, bytes(IMAGE_PNG_400X400)) for pic in spec.pictures])
         tag_type = TagType.ID3_FRAMES
     elif filename.suffix == ".ogg":
         mut = OggVorbis(filename)  # pyright: ignore[reportAssignmentType]
-        _add_vorbis_comment_pictures(mut.tags, spec.pictures)
+        add_vorbis_comment_pictures(mut.tags, spec.pictures)
         tag_type = TagType.VORBIS_COMMENTS
     elif filename.suffix == ".wma":
         mut = mutagen.File(filename)
@@ -57,35 +63,26 @@ def create_track_file(path: Path, spec: Track):
         mut.save(padding=lambda info: 0)
 
 
-def _add_flac_pictures(flac: FLAC, pictures: Iterable[Picture]):
+def add_flac_pictures(flac: FLAC, pictures: Iterable[Picture]):
     for picture in pictures:
-        flac.add_picture(_make_flac_picture(picture))
+        flac.add_picture(_make_flac_picture(picture))  # pyright: ignore[reportUnknownMemberType]
 
 
-def _add_id3_pictures(mp3: MP3, pictures: Iterable[Picture]):
-    if mp3.tags is None:
-        mp3.add_tags()
-    tags: ID3 = mp3.tags  # pyright: ignore[reportAssignmentType]
-    for picture in pictures:
-        # TODO generate image of the specified size
-        apic = APIC(mime="image/png", type=picture.picture_type, data=bytes(IMAGE_PNG_400X400))
-        while apic.HashKey in tags:
-            apic.salt += "x"
-        tags.add(apic)
+def add_vorbis_comment_pictures(tags: VCommentDict, pictures: Iterable[Picture]):
+    _add_flac_pictures_to_vorbis_comments(tags, (_make_flac_picture(picture) for picture in pictures))
 
 
-def _add_vorbis_comment_pictures(tags: VCommentDict, pictures: Iterable[Picture]):
+def _add_flac_pictures_to_vorbis_comments(tags: VCommentDict, flac_pictures: Iterable[FlacPicture]):
     comment_values: list[str] = []
-    for picture in pictures:
-        flac_picture = _make_flac_picture(picture)
-        comment_values.append(base64.b64encode(flac_picture.write()).decode("ascii"))
+    for flac_picture in flac_pictures:
+        comment_values.append(flac_picture_to_vorbis_comment_value(flac_picture))
     if comment_values:
         tags["metadata_block_picture"] = comment_values
 
 
 def _make_flac_picture(picture: Picture) -> FlacPicture:
     pic = FlacPicture()
-    pic.data = IMAGE_PNG_400X400  # TODO generate image of the specified size
+    pic.data = IMAGE_PNG_400X400
     pic.type = picture.picture_type  # other spec properites ignored
     pic.mime = "image/png"
     pic.width = 400

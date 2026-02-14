@@ -3,7 +3,7 @@ import logging
 import textwrap
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, Iterable, Sequence, Tuple
 
 import mutagen
 from mutagen.flac import FLAC
@@ -55,8 +55,8 @@ def get_metadata(path: Path) -> tuple[dict[Any, Any], Stream, list[Picture]] | N
     (file, codec, tag_type) = file_info
     stream_info = _get_stream_info(file, codec)
     tags = _get_tags(file, tag_type)
-    pictures = _get_pictures(file)
-    return (tags, stream_info, list(pictures))
+    pictures = list(picture for (picture, _) in _get_pictures(file))
+    return (tags, stream_info, pictures)
 
 
 def get_embedded_image_data(path: Path) -> list[bytes]:
@@ -330,7 +330,7 @@ def _get_stream_info(file: MutagenFileTypeLike, codec: str) -> Stream:
     return stream
 
 
-def _get_pictures(file: MutagenFileTypeLike) -> Generator[Picture, None, None]:
+def _get_pictures(file: MutagenFileTypeLike) -> Generator[Tuple[Picture, bytes], None, None]:
     if isinstance(file, FLAC):
         yield from _get_flac_pictures(file.pictures)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
     elif isinstance(file, MP3) and file.tags:
@@ -339,12 +339,13 @@ def _get_pictures(file: MutagenFileTypeLike) -> Generator[Picture, None, None]:
         yield from _get_ogg_vorbis_pictures(file)
 
 
-def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> Generator[Picture, None, None]:
+def _get_flac_pictures(flac_pictures: list[FlacPicture]) -> Generator[Tuple[Picture, bytes], None, None]:
     for embed_ix, picture in enumerate(flac_pictures):
-        yield _flac_picture(embed_ix, picture)
+        image_data: bytes = picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        yield (_flac_picture_to_picture(embed_ix, picture), image_data)
 
 
-def _flac_picture(embed_ix: int, flac_picture: FlacPicture):
+def _flac_picture_to_picture(embed_ix: int, flac_picture: FlacPicture):
     picture_type = PictureType(flac_picture.type)
     image_data: bytes = flac_picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
     picture = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
@@ -365,13 +366,14 @@ def _flac_picture(embed_ix: int, flac_picture: FlacPicture):
     return picture
 
 
-def _get_id3_pictures(tags: ID3) -> Generator[Picture, None, None]:
+def _get_id3_pictures(tags: ID3) -> Generator[Tuple[Picture, bytes], None, None]:
     picture_frames: list[APIC] = tags.getall("APIC")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
     for embed_ix, frame in enumerate(picture_frames):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         image_data: bytes = frame.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
         picture_type = PictureType(frame.type)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         picture = get_picture_metadata(image_data, picture_type)  # pyright: ignore[reportUnknownArgumentType]
         picture.embed_ix = embed_ix
+        picture.description = frame.desc  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         load_error = picture.load_issue.get("error") if picture.load_issue else None
         if not load_error:
             # use "real" metadata from the image data but record if data in flac metadata block disagrees
@@ -379,12 +381,13 @@ def _get_id3_pictures(tags: ID3) -> Generator[Picture, None, None]:
             if picture.format != apic_mimetype:
                 picture.load_issue = {"format": apic_mimetype}
 
-        yield picture
+        yield (picture, image_data)
 
 
-def _get_ogg_vorbis_pictures(file: OggVorbis) -> Generator[Picture, None, None]:
+def _get_ogg_vorbis_pictures(file: OggVorbis) -> Generator[Tuple[Picture, bytes], None, None]:
     for embed_ix, flac_picture in enumerate(_get_metadata_picture_blocks_from_ogg_vorbis(file)):
-        yield _flac_picture(embed_ix, flac_picture)
+        image_data: bytes = flac_picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        yield (_flac_picture_to_picture(embed_ix, flac_picture), image_data)
 
 
 def _get_metadata_picture_blocks_from_ogg_vorbis(file: OggVorbis) -> Generator[FlacPicture, None, None]:
@@ -393,3 +396,113 @@ def _get_metadata_picture_blocks_from_ogg_vorbis(file: OggVorbis) -> Generator[F
     for b64_data in b64_pictures:
         metadata_block_raw = base64.b64decode(b64_data)
         yield FlacPicture(metadata_block_raw)
+
+
+def remove_embedded_image(path: Path, codec: str, pic: Picture):
+    if codec == "FLAC":
+        return _remove_embedded_image_flac(path, pic)
+    if codec == "MP3":
+        return _remove_embedded_image_mp3(path, pic)
+    if codec == "Ogg Vorbis":
+        return _remove_embedded_image_ogg_vorbis(path, pic)
+    logger.warning(f"cannot remove embedded image from {path.name} because file type not yet supported: {codec}")
+    return False
+
+
+def _remove_embedded_image_flac(path: Path, remove_pic: Picture):
+    flac = FLAC(path)
+    flac_pictures: list[FlacPicture] = flac.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    (match_ix, error) = _get_flac_picture_index(flac_pictures, remove_pic)
+    if match_ix is None:
+        logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: {error}")
+        return False
+    del flac_pictures[match_ix]
+    flac.clear_pictures()
+    for flac_picture in flac_pictures:
+        flac.add_picture(flac_picture)  # pyright: ignore[reportUnknownMemberType]
+    flac.save()  # pyright: ignore[reportUnknownMemberType]
+    return True
+
+
+def _remove_embedded_image_ogg_vorbis(path: Path, remove_pic: Picture):
+    oggvorbis = OggVorbis(path)
+    if not oggvorbis.tags:
+        logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: no vorbis comments found")
+        return False
+    flac_pictures = list(_get_metadata_picture_blocks_from_ogg_vorbis(oggvorbis))
+    (match_ix, error) = _get_flac_picture_index(flac_pictures, remove_pic)
+    if match_ix is None:
+        logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: {error}")
+        return False
+    del flac_pictures[match_ix]
+    new_pictures = [flac_picture_to_vorbis_comment_value(pic) for pic in flac_pictures]
+    oggvorbis.tags["metadata_block_picture"] = new_pictures
+    oggvorbis.save()  # pyright: ignore[reportUnknownMemberType]
+    return True
+
+
+def _get_flac_picture_index(flac_pictures: Sequence[FlacPicture], match: Picture) -> tuple[int | None, str | None]:
+    match_ix: int | None = None
+    for ix, flac_picture in enumerate(flac_pictures):
+        if ix == match.embed_ix:
+            if match == _flac_picture_to_picture(ix, flac_picture):
+                match_ix = ix
+                break
+            else:
+                return (None, f"wrong picture at index {ix} (scan again)")
+    if match_ix is None:
+        return (None, f"no picture at index {match.embed_ix} (scan again)")
+    return (match_ix, None)
+
+
+def _remove_embedded_image_mp3(path: Path, remove_pic: Picture):
+    mp3 = MP3(path)
+    if not mp3.tags:  # pyright: ignore[reportUnknownMemberType]
+        logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: no ID3 tag")
+        return False
+    id3: ID3 = mp3.tags  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    pictures = list(_get_id3_pictures(id3))  # pyright: ignore[reportUnknownArgumentType]
+    (match_ix, error) = _get_id3_picture_index(pictures, remove_pic)
+    if match_ix is None:
+        logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: {error}")
+        return False
+    del pictures[match_ix]
+    id3.delall("APIC")  # pyright: ignore[reportUnknownMemberType]
+    add_id3_pictures(id3, pictures)  # pyright: ignore[reportUnknownArgumentType]
+    mp3.save()  # pyright: ignore[reportUnknownMemberType]
+    return True
+
+
+def _get_id3_picture_index(pictures: Sequence[Tuple[Picture, bytes]], match: Picture) -> tuple[int | None, str | None]:
+    match_ix: int | None = None
+    for ix, pic_info in enumerate(pictures):
+        (pic, _) = pic_info
+        if ix == match.embed_ix:
+            if match == pic:
+                match_ix = ix
+                break
+            else:
+                return (None, f"wrong picture at index {ix} (scan again)")
+    if match_ix is None:
+        return (None, f"no picture at index {match.embed_ix} (scan again)")
+    return (match_ix, None)
+
+
+def add_id3_pictures(tags: ID3, pictures: Iterable[Tuple[Picture, bytes]]):
+    for picture_info in pictures:
+        (picture, image_data) = picture_info
+        description = picture.description
+        apic = APIC(mime="image/png", type=picture.picture_type, data=image_data, desc=description)
+
+        # with future mutagen 1.48 or later, docs indicate we will be able to ensure distinct hash key like this:
+        # while apic.HashKey in tags:
+        #     apic.salt += "x"  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        while apic.HashKey in tags:  # TODO don't alter description
+            description += " "
+            apic = APIC(mime="image/png", type=picture.picture_type, data=image_data, desc=description)
+
+        tags.add(apic)  # pyright: ignore[reportUnknownMemberType]
+
+
+def flac_picture_to_vorbis_comment_value(flac_picture: FlacPicture) -> str:
+    return base64.b64encode(flac_picture.write()).decode("ascii")

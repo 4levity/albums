@@ -33,7 +33,17 @@ def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = Tru
             (
                 filename,
                 Picture(
-                    PictureType.from_filename(filename), format, width, height, file_size, file_hash, None, modify_timestamp, 0, bool(cover_source)
+                    PictureType.from_filename(filename),
+                    format,
+                    width,
+                    height,
+                    file_size,
+                    file_hash,
+                    "",
+                    None,
+                    modify_timestamp,
+                    0,
+                    bool(cover_source),
                 ),
             )
             for (filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) in db.execute(
@@ -129,7 +139,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                 db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
         for picture in track.pictures:
             db.execute(
-                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                "INSERT INTO track_picture (track_id, picture_type, format, width, height, file_size, file_hash, description, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 (
                     track_id,
                     picture.picture_type.value,
@@ -138,6 +148,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
                     picture.height,
                     picture.file_size,
                     picture.file_hash,
+                    picture.description,
                     json.dumps(picture.load_issue) if picture.load_issue else None,
                     picture.embed_ix,
                 ),
@@ -205,10 +216,19 @@ def _load_tags(db: sqlite3.Connection, track_id: int):
 def _load_pictures(db: sqlite3.Connection, track_id: int):
     return [
         Picture(
-            PictureType(picture_type), format, width, height, file_size, file_hash, json.loads(load_issue) if load_issue else None, None, embed_ix
+            PictureType(picture_type),
+            format,
+            width,
+            height,
+            file_size,
+            file_hash,
+            description,
+            json.loads(load_issue) if load_issue else None,
+            None,
+            embed_ix,
         )
-        for picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix in db.execute(
-            "SELECT picture_type, format, width, height, file_size, file_hash, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY embed_ix;",
+        for picture_type, format, width, height, file_size, file_hash, description, load_issue, embed_ix in db.execute(
+            "SELECT picture_type, format, width, height, file_size, file_hash, description, load_issue, embed_ix FROM track_picture WHERE track_id = ? ORDER BY embed_ix;",
             (track_id,),
         )
     ]

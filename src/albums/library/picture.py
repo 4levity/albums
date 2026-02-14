@@ -30,7 +30,7 @@ def get_picture_metadata(image_data: bytes, picture_type: PictureType):
     xhash = xxhash.xxh32_digest(image_data)
     image_info = get_image(image_data)
     if isinstance(image_info, str):
-        return Picture(picture_type, "Unknown", 0, 0, file_size, xhash, {"error": image_info})
+        return Picture(picture_type, "Unknown", 0, 0, file_size, xhash, "", {"error": image_info})
     else:
         (image, mimetype) = image_info
         return Picture(picture_type, mimetype, image.width, image.height, file_size, xhash)

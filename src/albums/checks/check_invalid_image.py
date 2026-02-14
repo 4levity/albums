@@ -6,6 +6,8 @@ from typing import List
 from rich.console import RenderableType
 from rich.markup import escape
 
+from albums.library.metadata import remove_embedded_image
+
 from ..types import Album
 from .base_check import Check, CheckResult, Fixer, ProblemCategory
 
@@ -34,23 +36,23 @@ class CheckInvalidImage(Check):
                     table_rows.append([source, picture.picture_type.name, error])
                     # normally wouldn't include filename in issue list but user can't see table for embedded files until there is a fixer
                     # TODO: consider removing source filename when this check has a fixer for embedded corrupt images
-                    issues.add(error + (f' "{source}"' if embedded else ""))
+                    issues.add(error)
                     any_bad_embedded_images |= embedded
                     any_bad_image_files |= not embedded
         if issues:
-            if any_bad_image_files:
-                fixer = Fixer(
-                    lambda _: self._fix_delete_error_images(album),
-                    [f">> Remove/delete the invalid image files{' (embedded fix not available yet)' if any_bad_embedded_images else ''}"],
+            return CheckResult(
+                ProblemCategory.PICTURES,
+                f"image load errors: {', '.join(issues)}",
+                Fixer(
+                    lambda _: self._fix_remove_bad_images(album),
+                    [">> Remove/delete all invalid images"],
                     False,
                     None,
                     (["File", "Type", "Error"], table_rows),
-                )
-            else:
-                fixer = None  # TODO support for embedded also, see below
-            return CheckResult(ProblemCategory.PICTURES, f"image load errors: {', '.join(issues)}", fixer)
+                ),
+            )
 
-    def _fix_delete_error_images(self, album: Album):
+    def _fix_remove_bad_images(self, album: Album):
         changed = False
         for filename, pic in album.picture_files.items():
             if pic.load_issue and "error" in pic.load_issue:
@@ -58,26 +60,17 @@ class CheckInvalidImage(Check):
                 path = self.ctx.library_root if self.ctx.library_root else Path(".") / album.path / filename
                 unlink(path)
                 changed = True
-        # for track in album.tracks:
-        #     for pic in track.pictures:
-        #         if pic.load_issue and "error" in pic.load_issue:
-        #             self.ctx.console.print(f"Deleting {pic.picture_type.name} embedded image #{pic.embed_ix} from {escape(track.filename)}")
-        #             album_path = self.ctx.library_root if self.ctx.library_root else Path(".") / album.path
-        #             changed |= self._remove_embedded_image(album_path, track, pic)
+        for track in album.tracks:
+            for pic in track.pictures:
+                if pic.load_issue and "error" in pic.load_issue:
+                    if track.stream and track.stream.codec:
+                        if track.stream.codec in {"FLAC", "Ogg Vorbis", "MP3"}:
+                            self.ctx.console.print(f"Removing {pic.picture_type.name} embedded image #{pic.embed_ix} from {escape(track.filename)}")
+                            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+                            changed |= remove_embedded_image(path, track.stream.codec, pic)
+                        else:
+                            logger.warning(f"cannot remove embedded image from {track.filename} because {track.stream.codec} not supported yet")
+                    else:
+                        logger.warning(f"cannot remove embedded image from {track.filename} because track.stream.codec is not set")
+
         return changed
-
-    # def _remove_embedded_image(self, album_path: Path, track: Track, pic: Picture):
-    #     if track.stream and track.stream.codec == "FLAC":
-    #         return self._remove_embedded_image_flac(album_path / track.filename, pic)
-    #     if track.stream and track.stream.codec == "MP3":
-    #         return self._remove_embedded_image_mp3(album_path / track.filename, pic)
-    #     logger.warning(f"cannot remove embedded image from {track.filename}")
-    #     return False
-
-    # def _remove_embedded_image_flac(self, track_path: Path, pic: Picture):
-    #     # TODO implement, see also embedded_picture_metadata
-    #     return False
-
-    # def _remove_embedded_image_mp3(self, track_path: Path, pic: Picture):
-    #     # TODO this is gonna be a little tricky
-    #     return False

@@ -80,6 +80,7 @@ CREATE TABLE track_picture (
     file_size INTEGER NOT NULL,
     file_hash BLOB NOT NULL,
     -- v4 add embed_ix
+    -- v8 add description
     mismatch TEXT NULL -- v5 renamed to "load_issue"
 );
 CREATE INDEX idx_track_picture_track_id ON track_picture(track_id);
@@ -105,6 +106,7 @@ CREATE INDEX idx_album_picture_file_album_id ON album_picture_file(album_id);
 CREATE UNIQUE INDEX album_path ON album(path);
 ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
 """,
+    8: "ALTER TABLE track_picture ADD COLUMN description TEXT NOT NULL DEFAULT '';",
 }
 
 

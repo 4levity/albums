@@ -4,7 +4,7 @@ import pytest
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 
-from albums.library.metadata import get_metadata, set_basic_tags
+from albums.library.metadata import get_metadata, remove_embedded_image, set_basic_tags
 from albums.types import Album, Picture, PictureType, Track
 
 from .fixtures.create_library import create_library
@@ -35,7 +35,7 @@ albums = [
                 0,
                 0,
                 None,
-                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")],
+                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
             )
         ],
     ),
@@ -48,7 +48,7 @@ albums = [
                 0,
                 0,
                 None,
-                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")],
+                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
             )
         ],
     ),
@@ -166,8 +166,15 @@ class TestMetadata:
         file = TestMetadata.library / albums[2].path / track.filename
         info = get_metadata(file)
         assert info
-        (tags, stream, pics) = info
-        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
+        (tags, _, pics) = info
+        assert len(pics) == 2
+        assert any(pic.description.endswith(" ") for pic in pics)  # ID3 frame hash was made unique by modifying description
+        for pic in pics:
+            pic.description = ""
+        assert set(pics) == {
+            Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
+            Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
+        }
         assert tags["artist"] == track.tags["artist"]
         assert tags["albumartist"] == track.tags["albumartist"]
         assert tags["album"] == track.tags["album"]
@@ -193,9 +200,73 @@ class TestMetadata:
         assert info
         (tags, stream, pics) = info
         assert stream.codec == "Ogg Vorbis"
-        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
+        assert pics == [
+            Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
+            Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
+        ]
         assert tags["artist"] == ["C"]
         assert tags["title"] == ["one"]
         assert tags["album"] == ["foobar"]
         assert tags["tracknumber"] == ["1"]
         assert tags["tracktotal"] == ["1"]
+
+    def test_remove_only_flac_pic(self):
+        track = albums[1].tracks[0]
+        file = TestMetadata.library / albums[1].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pics) = info
+        assert stream.codec == "FLAC"
+        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
+        assert remove_embedded_image(file, stream.codec, pics[0])
+
+        pics = get_metadata(file)[2]
+        assert pics == []
+
+    def test_remove_one_flac_pic(self):
+        track = albums[1].tracks[1]
+        file = TestMetadata.library / albums[1].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pics) = info
+        assert stream.codec == "FLAC"
+        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        assert pics == [pic1, pic2]
+        assert remove_embedded_image(file, stream.codec, pic1)
+
+        pics = get_metadata(file)[2]
+        assert pics == [pic2]
+
+    def test_remove_one_id3_pic(self):
+        track = albums[2].tracks[0]
+        file = TestMetadata.library / albums[2].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pics) = info
+        assert stream.codec == "MP3"
+        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T", description=" ")
+        assert set(pics) == {pic1, pic2}
+
+        assert remove_embedded_image(file, stream.codec, pic1)
+
+        pics = get_metadata(file)[2]
+        assert pics == [pic2]
+
+    def test_remove_one_ogg_vorbis_pic(self):
+        track = albums[3].tracks[0]
+        file = TestMetadata.library / albums[3].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pics) = info
+        assert stream.codec == "Ogg Vorbis"
+        assert len(pics) == 2
+        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        assert pics == [pic1, pic2]
+
+        assert remove_embedded_image(file, stream.codec, pic1)
+
+        pics = get_metadata(file)[2]
+        assert pics == [pic2]

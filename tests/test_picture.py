@@ -8,7 +8,7 @@ from .fixtures.empty_files import IMAGE_PNG_400X400
 
 class TestPicture:
     def test_picture_eq(self):
-        pic1 = Picture(PictureType.COVER_FRONT, "image/png", 100, 100, 1024, b"abcd", {"format": "incorrect"}, 999)
+        pic1 = Picture(PictureType.COVER_FRONT, "image/png", 100, 100, 1024, b"abcd", load_issue={"format": "incorrect"}, modify_timestamp=999)
         pic2 = Picture(PictureType.COVER_FRONT, "image/png", 100, 100, 1024, b"abcd")
         assert pic1 == pic2  # metadata mismatch details and file modification timestamp don't count
 

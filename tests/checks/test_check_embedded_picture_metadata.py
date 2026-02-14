@@ -24,7 +24,7 @@ class TestCheckEmbeddedPictureMetadata:
                     0,
                     0,
                     Stream(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", {"format": "image/jpeg"})],
+                    [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", "", {"format": "image/jpeg"})],
                 )
             ],
         )

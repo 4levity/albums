@@ -148,7 +148,7 @@ class TestCheckFrontCoverSelection:
 
     def test_multiple_cover_image_files_with_cover_source(self, mocker):
         picture_files = {
-            "cover_big.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 100000, b"1111", None, None, 0, True),
+            "cover_big.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 100000, b"1111", "", None, None, 0, True),
             "cover_small.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 1000, b"2222"),
         }
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))], [], [], picture_files, 999)
