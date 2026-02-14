@@ -107,6 +107,26 @@ CREATE UNIQUE INDEX album_path ON album(path);
 ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
 """,
     8: "ALTER TABLE track_picture ADD COLUMN description TEXT NOT NULL DEFAULT '';",
+    9: """
+CREATE TABLE setting (
+    name TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+) WITHOUT ROWID;
+""",
+    10: """
+CREATE TABLE checks (
+    check_name TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL
+) WITHOUT ROWID;
+""",
+    11: """
+CREATE TABLE check_setting (
+    check_name REFERENCES checks(check_name) ON UPDATE CASCADE ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    value_json TEXT NOT NULL,
+    PRIMARY KEY (check_name, name)
+) WITHOUT ROWID;
+""",
 }
 
 CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())
