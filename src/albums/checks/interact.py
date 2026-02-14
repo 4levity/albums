@@ -135,7 +135,6 @@ def os_open_folder(ctx: app.Context, path: Path):
     open_folder_command = ctx.config.get("options", {}).get("open_folder_command")
     if not open_folder_command and platform.system() == "Windows":
         # type warnings because startfile only exists on Windows
-        # TODO try this on Windows someday
         os.startfile(path)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     elif not open_folder_command and platform.system() == "Darwin":
         subprocess.Popen(["open", path])

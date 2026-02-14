@@ -9,8 +9,7 @@ from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.types import Album, Picture, PictureType, Stream, Track
 
-from ..fixtures.create_library import create_library
-from ..fixtures.empty_files import IMAGE_PNG_400X400
+from ..fixtures.create_library import create_library, make_image_data
 
 
 class TestCheckEmbeddedPictureMetadata:
@@ -40,7 +39,7 @@ class TestCheckEmbeddedPictureMetadata:
         file = ctx.library_root / album.path / album.tracks[0].filename
         flac = FLAC(file)
         pic = FlacPicture()
-        pic.data = IMAGE_PNG_400X400
+        pic.data = make_image_data(width=400, height=400, format="PNG")
         pic.type = PictureType.COVER_FRONT
         pic.mime = "image/jpeg"
         pic.width = 399

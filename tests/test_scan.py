@@ -30,7 +30,7 @@ class TestScanner:
             ],
             [],
             [],
-            {"cover.png": Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")},
+            {"cover.jpg": Picture(PictureType.COVER_FRONT, "ignored", 410, 410, 0, b"")},
         ),
         Album("foo" + os.sep, [Track("1.mp3", {"title": ["1"]}), Track("2.mp3", {"title": ["2"]})]),
         Album("baz" + os.sep, [Track("1.wma", {"title": ["one"]}), Track("2.wma", {"title": ["two"]})]),
@@ -72,9 +72,9 @@ class TestScanner:
 
             # image files in folder
             assert len(result[0].picture_files) == 1
-            cover_png = result[0].picture_files.get("cover.png")
+            cover_png = result[0].picture_files.get("cover.jpg")
             assert cover_png
-            assert cover_png.format == "image/png"
+            assert cover_png.format == "image/jpeg"
             assert cover_png.modify_timestamp
             assert cover_png.picture_type == PictureType.COVER_FRONT
 
@@ -166,7 +166,7 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
             assert len(result[0].picture_files) == 1
 
-            (library / self.sample_library[0].path / "cover.png").unlink()
+            (library / self.sample_library[0].path / "cover.jpg").unlink()
 
             scan(ctx)
             result = list(selector.select_albums(db, [], [], False))

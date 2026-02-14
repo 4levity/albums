@@ -34,8 +34,6 @@ class CheckInvalidImage(Check):
                     source = f"{filename}{f'#{picture.embed_ix}' if embedded else ''}"
                     error = str(picture.load_issue["error"])
                     table_rows.append([source, picture.picture_type.name, error])
-                    # normally wouldn't include filename in issue list but user can't see table for embedded files until there is a fixer
-                    # TODO: consider removing source filename when this check has a fixer for embedded corrupt images
                     issues.add(error)
                     any_bad_embedded_images |= embedded
                     any_bad_image_files |= not embedded

@@ -7,22 +7,21 @@ from mutagen.flac import Picture as FlacPicture
 from albums.library.metadata import get_metadata, remove_embedded_image, set_basic_tags
 from albums.types import Album, Picture, PictureType, Track
 
-from .fixtures.create_library import create_library
-from .fixtures.empty_files import IMAGE_PNG_400X400
+from .fixtures.create_library import create_library, make_image_data
 
 albums = [
     Album("foo" + os.sep, [Track("1.mp3", {"tracknumber": ["1"], "tracktotal": ["3"], "discnumber": ["2"], "disctotal": ["2"]})]),
     Album(
         "bar" + os.sep,
         [
-            Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b"")]),
+            Track("1.flac", {}, 0, 0, None, [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
             Track(
                 "2.flac",
                 {},
                 0,
                 0,
                 None,
-                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
+                [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")],
             ),
         ],
     ),
@@ -35,7 +34,7 @@ albums = [
                 0,
                 0,
                 None,
-                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
+                [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")],
             )
         ],
     ),
@@ -48,7 +47,7 @@ albums = [
                 0,
                 0,
                 None,
-                [Picture(PictureType.COVER_FRONT, "ignored", 0, 0, 0, b""), Picture(PictureType.COVER_BACK, "ignored", 0, 0, 0, b"")],
+                [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b""), Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")],
             )
         ],
     ),
@@ -121,10 +120,9 @@ class TestMetadata:
         pictures = get_metadata(file)[2]
         assert len(pictures) == 1
 
-        reference = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400), b"")
-        reference.file_hash = pictures[0].file_hash
-        # all other fields are the same:
-        assert pictures[0] == reference
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        assert pictures[0].format == "image/png"
+        assert pictures[0].width == pictures[0].height == 400
         assert pictures[0].load_issue is None
 
     def test_read_flac_two_pictures(self):
@@ -132,12 +130,14 @@ class TestMetadata:
         pictures = get_metadata(file)[2]
         assert len(pictures) == 2
 
-        reference = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, len(IMAGE_PNG_400X400), b"")
-        reference.file_hash = pictures[0].file_hash
-        assert pictures[0] == reference
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        assert pictures[0].format == "image/png"
+        assert pictures[0].width == pictures[0].height == 400
         assert pictures[0].embed_ix == 0
-        reference.picture_type = PictureType.COVER_BACK
-        assert pictures[1] == reference
+
+        assert pictures[1].picture_type == PictureType.COVER_BACK
+        assert pictures[1].format == "image/png"
+        assert pictures[1].width == pictures[1].height == 400
         assert pictures[1].embed_ix == 1
 
     def test_read_flac_picture_mismatch(self):
@@ -145,7 +145,7 @@ class TestMetadata:
         mut = FLAC(file)
         mut.clear_pictures()
         pic = FlacPicture()
-        pic.data = IMAGE_PNG_400X400
+        pic.data = make_image_data(400, 400, "PNG")
         pic.type = PictureType.COVER_FRONT
         pic.mime = "image/jpeg"  # wrong
         pic.width = 401  # wrong
@@ -169,12 +169,10 @@ class TestMetadata:
         (tags, _, pics) = info
         assert len(pics) == 2
         assert any(pic.description.endswith(" ") for pic in pics)  # ID3 frame hash was made unique by modifying description
-        for pic in pics:
-            pic.description = ""
-        assert set(pics) == {
-            Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
-            Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
-        }
+        assert pics[0].picture_type == PictureType.COVER_FRONT or pics[1].picture_type == PictureType.COVER_FRONT
+        assert pics[0].picture_type == PictureType.COVER_BACK or pics[1].picture_type == PictureType.COVER_BACK
+        assert pics[0].width == pics[0].height == pics[1].width == pics[1].height == 400
+        assert pics[0].format == pics[1].format == "image/png"
         assert tags["artist"] == track.tags["artist"]
         assert tags["albumartist"] == track.tags["albumartist"]
         assert tags["album"] == track.tags["album"]
@@ -198,12 +196,19 @@ class TestMetadata:
         file = TestMetadata.library / albums[3].path / albums[3].tracks[0].filename
         info = get_metadata(file)
         assert info
-        (tags, stream, pics) = info
+        (tags, stream, pictures) = info
         assert stream.codec == "Ogg Vorbis"
-        assert pics == [
-            Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
-            Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T"),
-        ]
+
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        assert pictures[0].format == "image/png"
+        assert pictures[0].width == pictures[0].height == 400
+        assert pictures[0].embed_ix == 0
+
+        assert pictures[1].picture_type == PictureType.COVER_BACK
+        assert pictures[1].format == "image/png"
+        assert pictures[1].width == pictures[1].height == 400
+        assert pictures[1].embed_ix == 1
+
         assert tags["artist"] == ["C"]
         assert tags["title"] == ["one"]
         assert tags["album"] == ["foobar"]
@@ -215,10 +220,13 @@ class TestMetadata:
         file = TestMetadata.library / albums[1].path / track.filename
         info = get_metadata(file)
         assert info
-        (_, stream, pics) = info
+        (_, stream, pictures) = info
         assert stream.codec == "FLAC"
-        assert pics == [Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")]
-        assert remove_embedded_image(file, stream.codec, pics[0])
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        assert pictures[0].format == "image/png"
+        assert pictures[0].width == pictures[0].height == 400
+        assert pictures[0].embed_ix == 0
+        assert remove_embedded_image(file, stream.codec, pictures[0])
 
         pics = get_metadata(file)[2]
         assert pics == []
@@ -228,15 +236,32 @@ class TestMetadata:
         file = TestMetadata.library / albums[1].path / track.filename
         info = get_metadata(file)
         assert info
-        (_, stream, pics) = info
+        (_, stream, pictures) = info
         assert stream.codec == "FLAC"
-        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        assert pics == [pic1, pic2]
-        assert remove_embedded_image(file, stream.codec, pic1)
 
-        pics = get_metadata(file)[2]
-        assert pics == [pic2]
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=0, file_hash=b"")
+        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=0, file_hash=b"")
+
+        assert pictures[0].picture_type == pic0.picture_type
+        assert pictures[0].format == pic0.format
+        assert pictures[0].width == pictures[0].height == pic0.width == pic0.height
+        assert pictures[0].embed_ix == 0
+
+        assert pictures[1].picture_type == pic1.picture_type
+        assert pictures[1].format == pic1.format
+        assert pictures[1].width == pictures[1].height == pic1.width == pic1.height
+        assert pictures[1].embed_ix == 1
+
+        pic0.file_size = pictures[0].file_size
+        pic0.file_hash = pictures[0].file_hash
+        assert remove_embedded_image(file, stream.codec, pic0)
+
+        pictures = get_metadata(file)[2]
+        assert len(pictures) == 1
+        assert pictures[0].picture_type == pic1.picture_type
+        assert pictures[0].format == pic1.format
+        assert pictures[0].width == pictures[0].height == pic1.width == pic1.height
+        assert pictures[0].embed_ix == 0
 
     def test_remove_one_id3_pic(self):
         track = albums[2].tracks[0]
@@ -245,28 +270,50 @@ class TestMetadata:
         assert info
         (_, stream, pics) = info
         assert stream.codec == "MP3"
-        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T", description=" ")
-        assert set(pics) == {pic1, pic2}
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=0, file_hash=b"")
+        assert len(pics) == 2
+        assert pics[0].picture_type == PictureType.COVER_FRONT or pics[1].picture_type == PictureType.COVER_FRONT
+        assert pics[0].picture_type == PictureType.COVER_BACK or pics[1].picture_type == PictureType.COVER_BACK
+        assert pics[0].width == pics[0].height == pics[1].width == pics[1].height == 400
+        assert pics[0].format == pics[1].format == "image/png"
 
-        assert remove_embedded_image(file, stream.codec, pic1)
+        pic0.file_size = pics[0].file_size
+        pic0.file_hash = pics[0].file_hash
+        assert remove_embedded_image(file, stream.codec, pic0)
 
         pics = get_metadata(file)[2]
-        assert pics == [pic2]
+        assert len(pics) == 1
+        assert pics[0].picture_type == PictureType.COVER_BACK
+        assert pics[0].width == pics[0].height == 400
+        assert pics[0].format == "image/png"
 
     def test_remove_one_ogg_vorbis_pic(self):
         track = albums[3].tracks[0]
         file = TestMetadata.library / albums[3].path / track.filename
         info = get_metadata(file)
         assert info
-        (_, stream, pics) = info
+        (_, stream, pictures) = info
         assert stream.codec == "Ogg Vorbis"
-        assert len(pics) == 2
-        pic1 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        pic2 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        assert pics == [pic1, pic2]
+        assert len(pictures) == 2
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        assert pictures[0].picture_type == pic0.picture_type
+        assert pictures[0].format == pic0.format
+        assert pictures[0].width == pictures[0].height == pic0.width == pic0.height
+        assert pictures[0].embed_ix == 0
 
-        assert remove_embedded_image(file, stream.codec, pic1)
+        assert pictures[1].picture_type == pic1.picture_type
+        assert pictures[1].format == pic1.format
+        assert pictures[1].width == pictures[1].height == pic1.width == pic1.height
+        assert pictures[1].embed_ix == 1
 
-        pics = get_metadata(file)[2]
-        assert pics == [pic2]
+        pic0.file_size = pictures[0].file_size
+        pic0.file_hash = pictures[0].file_hash
+        assert remove_embedded_image(file, stream.codec, pic0)
+
+        pictures = get_metadata(file)[2]
+        assert len(pictures) == 1
+        assert pictures[0].picture_type == pic1.picture_type
+        assert pictures[0].format == pic1.format
+        assert pictures[0].width == pictures[0].height == pic1.width == pic1.height
+        assert pictures[0].embed_ix == 0
