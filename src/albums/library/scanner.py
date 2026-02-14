@@ -15,8 +15,6 @@ from .folder import AlbumScanResult, scan_folder
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SUPPORTED_FILE_TYPES = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
-
 
 def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | None]]] | None = None, reread: bool = False) -> tuple[int, bool]:
     if not ctx.db:
@@ -24,7 +22,6 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
     if not ctx.library_root:
         raise ValueError("scan called without library_root set")
 
-    suffixes = set(str.lower(suffix) for suffix in ctx.config.get("locations", {}).get("supported_file_types", DEFAULT_SUPPORTED_FILE_TYPES))
     start_time = time.perf_counter()
 
     if path_selector is not None:
@@ -72,7 +69,7 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
                     del unprocessed_albums[path_str]
                     stored_album = operations.load_album(db, album_id, True)
 
-                (album, result) = scan_folder(library_root, path_str, suffixes, stored_album, reread)
+                (album, result) = scan_folder(library_root, path_str, stored_album, reread)
                 scan_results[result.name] += 1
 
                 if album and album_id is not None and result == AlbumScanResult.UNCHANGED:

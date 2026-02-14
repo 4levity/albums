@@ -12,9 +12,11 @@ from .picture import get_picture_metadata
 
 logger = logging.getLogger(__name__)
 
+SUPPORTED_FILE_TYPES = {".flac", ".mp3", ".m4a", ".wma", ".ogg"}
+
 # TODO: support more image file types
 # Currently, can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
-SUPPORTED_IMAGE_SUFFIXES = [".png", ".jpg", ".jpeg", ".gif"]  # note extension is not used to guess format
+SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif"}  # note extension is not used to guess format
 
 MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
@@ -26,9 +28,7 @@ class AlbumScanResult(Enum):
     UNCHANGED = auto()
 
 
-def scan_folder(
-    scan_root: Path, album_relpath: str, track_suffixes: set[str], stored_album: Album | None, reread: bool = False
-) -> tuple[Album | None, AlbumScanResult]:
+def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None, reread: bool = False) -> tuple[Album | None, AlbumScanResult]:
     album_path = scan_root / album_relpath
     logger.debug(f"checking {album_path}")
 
@@ -37,12 +37,10 @@ def scan_folder(
     for entry in album_path.iterdir():
         if entry.is_file():
             suffix = str.lower(entry.suffix)
-            if suffix in track_suffixes:
+            if suffix in SUPPORTED_FILE_TYPES:
                 track_files.append(entry)
             elif suffix in SUPPORTED_IMAGE_SUFFIXES:
                 picture_paths.append(entry)
-
-    track_files = [entry for entry in album_path.iterdir() if entry.is_file() and str.lower(entry.suffix) in track_suffixes]
 
     if len(track_files) > 0:
         found_tracks = [Track.from_path(file) for file in sorted(track_files)]

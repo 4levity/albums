@@ -8,10 +8,6 @@ library = "/path/to/music"
 # Default is OS-specific user storage e.g. ~/.config/albums/albums.db
 database = "/path/to/albums.db"
 
-# Extensions to scan (if the file type isn't supported by mutagen, there may be errors)
-# Defaults to these extensions:
-supported_file_types = [".flac", ".mp3", ".m4a", ".wma", ".ogg"]
-
 [options]
 # Rescan the library before performing other operations. If the operation is filtered then only
 # selected albums will be rescanned. Options:
