@@ -293,9 +293,17 @@ from which a title can be guessed, fill in all empty titles.
 
 During the scan, `albums` tries to load every embedded image and supported image
 file. If it fails, the image is probably corrupt and a `load_issue error` will
-be stored. This check reports on all images that could not be loaded. If there
-are separate image files that can't be loaded, there will be an option to delete
-them. Removing corrupt embedded images is not supported yet. No automatic fix.
+be stored. This check reports on all images that could not be loaded.
+
+!!!note
+
+    `albums` does not rely on the file extension or the reported MIME type to
+    load images. If the image data is valid, it should be able to load them.
+    When the MIME type is wrong, it will be reported (and can be fixed) by the
+    `embedded_picture_metadata` check.
+
+The fix will list and offer to delete all image files that cannot be loaded, and
+remove all embedded images that cannot be loaded.
 
 ### duplicate_image
 
