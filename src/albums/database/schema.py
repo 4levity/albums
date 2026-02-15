@@ -110,21 +110,7 @@ ALTER TABLE album ADD COLUMN scanner INTEGER NOT NULL DEFAULT 0;
     9: """
 CREATE TABLE setting (
     name TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-) WITHOUT ROWID;
-""",
-    10: """
-CREATE TABLE checks (
-    check_name TEXT PRIMARY KEY,
-    enabled INTEGER NOT NULL
-) WITHOUT ROWID;
-""",
-    11: """
-CREATE TABLE check_setting (
-    check_name REFERENCES checks(check_name) ON UPDATE CASCADE ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    value_json TEXT NOT NULL,
-    PRIMARY KEY (check_name, name)
+    value_json TEXT NOT NULL
 ) WITHOUT ROWID;
 """,
 }

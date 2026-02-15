@@ -44,5 +44,5 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckAlbumUnderAlbum,
 )
 
-ALL_CHECK_NAMES = [check.name for check in ALL_CHECKS]
+ALL_CHECK_NAMES = {check.name for check in ALL_CHECKS}
 DEFAULT_CHECK_CONFIGS = dict((check.name, check.default_config) for check in ALL_CHECKS)
