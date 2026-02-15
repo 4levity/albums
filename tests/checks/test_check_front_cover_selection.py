@@ -43,7 +43,7 @@ class TestCheckFrontCoverSelection:
     def test_front_cover_missing_required(self):
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))])
         ctx = Context()
-        ctx.config["checks"] = {CheckFrontCoverSelection.name: {"cover_required": True}}
+        ctx.config.checks = {CheckFrontCoverSelection.name: {"cover_required": True}}
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is not None
         assert "album does not have a COVER_FRONT picture" in result.message
@@ -69,7 +69,7 @@ class TestCheckFrontCoverSelection:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {CheckFrontCoverSelection.name: {"unique": False}}
+        ctx.config.checks = {CheckFrontCoverSelection.name: {"unique": False}}
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is None
 
@@ -109,7 +109,7 @@ class TestCheckFrontCoverSelection:
         )
         ctx = Context()
         ctx.db = True
-        ctx.library_root = create_library("front_cover", [album])
+        ctx.config.library = create_library("front_cover", [album])
         result = CheckFrontCoverSelection(ctx).check(album)
         assert result is not None
         assert (

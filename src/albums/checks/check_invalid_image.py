@@ -1,6 +1,5 @@
 import logging
 from os import unlink
-from pathlib import Path
 from typing import List
 
 from rich.console import RenderableType
@@ -55,7 +54,7 @@ class CheckInvalidImage(Check):
         for filename, pic in album.picture_files.items():
             if pic.load_issue and "error" in pic.load_issue:
                 self.ctx.console.print(f"Deleting image file {escape(filename)}")
-                path = self.ctx.library_root if self.ctx.library_root else Path(".") / album.path / filename
+                path = self.ctx.config.library / album.path / filename
                 unlink(path)
                 changed = True
         for track in album.tracks:
@@ -64,7 +63,7 @@ class CheckInvalidImage(Check):
                     if track.stream and track.stream.codec:
                         if track.stream.codec in {"FLAC", "Ogg Vorbis", "MP3"}:
                             self.ctx.console.print(f"Removing {pic.picture_type.name} embedded image #{pic.embed_ix} from {escape(track.filename)}")
-                            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+                            path = self.ctx.config.library / album.path / track.filename
                             changed |= remove_embedded_image(path, track.stream.codec, pic)
                         else:
                             logger.warning(f"cannot remove embedded image from {track.filename} because {track.stream.codec} not supported yet")

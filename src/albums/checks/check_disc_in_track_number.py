@@ -1,6 +1,5 @@
 import logging
 import re
-from pathlib import Path
 from typing import List
 
 from rich.console import RenderableType
@@ -45,7 +44,7 @@ class CheckDiscInTrackNumber(Check):
             raise ValueError(f"invalid option {option}")
 
         for track in album.tracks:
-            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            path = self.ctx.config.library / album.path / track.filename
             self.ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
             (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
             set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])

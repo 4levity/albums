@@ -46,21 +46,21 @@ class TestCheckTrackNumbering:
             [Track("1.flac", {"tracknumber": ["1"]}), Track("2.flac", {"tracknumber": ["2"]})],
         )
         ctx = Context()
-        ctx.config["checks"] = {CheckTrackNumbering.name: {"tracktotal_policy": "consistent"}}  # default
+        ctx.config.checks = {CheckTrackNumbering.name: {"tracktotal_policy": "consistent"}}  # default
         check = CheckTrackNumbering(ctx)
         result = check.check(album_with_all)
         assert result is None
         result = check.check(album_with_none)
         assert result is None
 
-        ctx.config["checks"] = {CheckTrackNumbering.name: {"tracktotal_policy": "always"}}
+        ctx.config.checks = {CheckTrackNumbering.name: {"tracktotal_policy": "always"}}
         check = CheckTrackNumbering(ctx)
         assert check.check(album_with_all) is None
         result = check.check(album_with_none)
         assert result
         assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
 
-        ctx.config["checks"] = {CheckTrackNumbering.name: {"tracktotal_policy": "never"}}
+        ctx.config.checks = {CheckTrackNumbering.name: {"tracktotal_policy": "never"}}
         check = CheckTrackNumbering(ctx)
         assert check.check(album_with_none) is None
         result = check.check(album_with_all)

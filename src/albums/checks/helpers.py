@@ -1,7 +1,6 @@
 import re
 from collections import defaultdict
 from os import unlink
-from pathlib import Path
 from typing import Collection
 
 from rich.markup import escape
@@ -106,7 +105,7 @@ def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, f
             ctx.console.print(f"Keeping {escape(filename)}")
         else:
             ctx.console.print(f"Deleting {escape(filename)}")
-            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / filename
+            path = ctx.config.library / album.path / filename
             unlink(path)
             changed = True
     return changed

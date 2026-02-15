@@ -35,8 +35,8 @@ class TestCheckEmbeddedPictureMetadata:
     def test_album_art_metadata_mismatch_fix(self):
         album = Album("foo", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))])
         ctx = Context()
-        ctx.library_root = create_library("embedded_picture_metadata", [album])
-        file = ctx.library_root / album.path / album.tracks[0].filename
+        ctx.config.library = create_library("embedded_picture_metadata", [album])
+        file = ctx.config.library / album.path / album.tracks[0].filename
         flac = FLAC(file)
         pic = FlacPicture()
         pic.data = make_image_data(width=400, height=400, format="PNG")

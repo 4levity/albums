@@ -23,7 +23,7 @@ class TestZeroPadNumbers:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {
+        ctx.config.checks = {
             "zero_pad_numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
@@ -52,7 +52,7 @@ class TestZeroPadNumbers:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {
+        ctx.config.checks = {
             "zero_pad_numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
@@ -87,7 +87,7 @@ class TestZeroPadNumbers:
                 album.tracks.append(Track(f"{discnumber}-{tracknumber}.flac", {"discnumber": [str(discnumber)], "tracknumber": [str(tracknumber)]}))
         assert len(album.tracks) == 100
         ctx = Context()
-        ctx.config["checks"] = {
+        ctx.config.checks = {
             "zero_pad_numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
@@ -117,7 +117,7 @@ class TestZeroPadNumbers:
             ],
         )
         ctx = Context()
-        ctx.config["checks"] = {
+        ctx.config.checks = {
             "zero_pad_numbers": {
                 "enabled": True,
                 "tracknumber_pad": "TWO_DIGIT_MINIMUM",
@@ -148,7 +148,7 @@ class TestZeroPadNumbers:
     def test_check_pad_with_id3(self, mocker):
         album = Album("", [Track("1.mp3", {"tracknumber": ["01"], "tracktotal": ["2"]})])
         ctx = Context()
-        ctx.config["checks"] = {
+        ctx.config.checks = {
             "zero_pad_numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",

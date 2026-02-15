@@ -1,6 +1,5 @@
 import logging
 from enum import Enum, auto
-from pathlib import Path
 from typing import Any, List
 
 from rich.console import RenderableType
@@ -151,7 +150,7 @@ class CheckZeroPadNumbers(Check):
         total_discs = len(tracks_by_disc)
         for disc in tracks_by_disc.values():
             for track in disc:
-                file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+                file = self.ctx.config.library / album.path / track.filename
                 new_values: list[tuple[str, str | list[str] | None]] = []
                 if self.tracknumber_pad != ZeroPadPolicy.IGNORE and "tracknumber" in track.tags:
                     new_tracknumber = self._apply_pad_policy(track.tags["tracknumber"][0], self.tracknumber_pad, len(disc))

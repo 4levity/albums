@@ -1,21 +1,22 @@
 import contextlib
 import os
 import shutil
+import sqlite3
 
 from mutagen.flac import FLAC
 
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
-from albums.types import Album, Picture, PictureType, Track
+from albums.types import Album, Path, Picture, PictureType, Track
 
 from .fixtures.create_library import create_album_in_library, create_library
 
 
-def context(db, library):
+def context(db: sqlite3.Connection, library: Path):
     context = Context()
     context.db = db
-    context.library_root = library
+    context.config.library = library
     return context
 
 

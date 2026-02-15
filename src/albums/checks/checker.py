@@ -1,6 +1,6 @@
-from typing import Any
-
 from rich.markup import escape
+
+from albums.config import CheckConfiguration
 
 from .. import app
 from ..checks.base_check import Check, CheckResult
@@ -12,7 +12,7 @@ from .interact import interact
 
 
 def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
-    need_checks = required_disabled_checks(ctx.config)
+    need_checks = required_disabled_checks(ctx.config.checks)
     if need_checks:
         ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")
         for check, deps in need_checks.items():
@@ -54,7 +54,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
 
         return (maybe_changed, user_quit, displayed_any)
 
-    check_instances = [check(ctx) for check in ALL_CHECKS if _enabled_check(ctx.config, check)]
+    check_instances = [check(ctx) for check in ALL_CHECKS if ctx.config.checks[check.name]["enabled"]]
 
     showed_issues = 0
     for album in ctx.select_albums(True):
@@ -99,8 +99,8 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
     return showed_issues
 
 
-def required_disabled_checks(config: dict[str, dict[str, Any]]):
-    check_classes = [check for check in ALL_CHECKS if _enabled_check(config, check)]
+def required_disabled_checks(config: dict[str, CheckConfiguration]):
+    check_classes = [check for check in ALL_CHECKS if config[check.name]["enabled"]]
     enabled = set(check.name for check in check_classes)
     required_disabled: dict[str, list[str]] = {}
     for check in check_classes:
@@ -111,7 +111,3 @@ def required_disabled_checks(config: dict[str, dict[str, Any]]):
                 else:
                     required_disabled[dep] = [check.name]
     return required_disabled
-
-
-def _enabled_check(config: dict[str, dict[str, Any]], check: type[Check]) -> bool:
-    return config.get("checks", {}).get(check.name, {}).get("enabled", check.default_config["enabled"])

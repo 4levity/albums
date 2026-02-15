@@ -24,16 +24,12 @@ class TestCli:
     def setup_cli_tests(self):
         TestCli.runner = CliRunner()
         TestCli.library = create_library("cli", albums)
-        with open(TestCli.library / "config.toml", "w") as config_file:  # create a config.toml for cli invocation
-            config_file.write(
-                f"""[locations]
-library="{str(TestCli.library).replace("\\", "\\\\")}"
-database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
-"""
-            )
 
-    def run(self, params: list[str], config_filename="config.toml"):
-        return TestCli.runner.invoke(entry_point.albums_group, ["--config-file", TestCli.library / config_filename] + params)
+    def run(self, params: list[str], db_file="albums.db", init=False):
+        return TestCli.runner.invoke(
+            entry_point.albums_group,
+            ["--db-file", TestCli.library / db_file] + (["--library", str(TestCli.library)] if init else []) + params,
+        )
 
     def test_help(self):
         result = self.run(["--help"])
@@ -41,7 +37,7 @@ database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
         assert "Usage: albums [OPTIONS] COMMAND [ARGS]" in result.output
 
     def test_scan(self):
-        result = self.run(["scan"])
+        result = self.run(["scan"], init=True)
         assert result.exit_code == 0
         assert result.output.startswith("creating database")
         assert "Scanning" in result.output
@@ -62,17 +58,7 @@ database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
     def test_check_automatically_enabled_dependencies(self):
-        config_filename = "config_invalid_number_disabled.toml"
-        with open(TestCli.library / config_filename, "w") as config_file:
-            config_file.write(
-                f"""[locations]
-library="{str(TestCli.library).replace("\\", "\\\\")}"
-database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
-checks.invalid_track_or_disc_number.enabled = false
-"""
-            )
-
-        result = self.run(["check", "disc_numbering"], config_filename)
+        result = self.run(["check", "disc_numbering"])
         assert result.exit_code == 0
         assert "automatically enabling check invalid_track_or_disc_number" in result.output
 

@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool, force: bool):
-    if not ctx.db or not ctx.library_root:
-        raise ValueError("do_sync called without db connection and library_root")
+    if not ctx.db or str(ctx.config.library) in {"", "."}:
+        raise ValueError("do_sync called without db connection + library")
 
     existing_dest_paths = set(dest.rglob("*"))
     skipped_tracks = 0
@@ -49,7 +49,7 @@ def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool,
                 copy_track = True
             if copy_track:
                 total_size += track.file_size
-                source_track_path = ctx.library_root / album.path / track.filename
+                source_track_path = ctx.config.library / album.path / track.filename
                 tracks.append((source_track_path, dest_track_path, track.file_size))
 
     if delete and len(existing_dest_paths) > 0:

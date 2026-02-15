@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -71,7 +70,7 @@ class CheckSingleValueTags(Check):
 
         changed = False
         for track in album.tracks:
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            file = self.ctx.config.library / album.path / track.filename
             new_values: list[tuple[str, str | list[str] | None]] = []
             for tag_name in self.single_value_tags:
                 if tag_name in track.tags and len(track.tags[tag_name]) > 1:

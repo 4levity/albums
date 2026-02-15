@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict
-from pathlib import Path
 from typing import Any, List
 
 from rich.console import RenderableType
@@ -128,7 +127,7 @@ class CheckAlbumArtist(Check):
     def _fix(self, album: Album, album_artist_value: str) -> bool:
         changed = False
         for track in sorted(album.tracks, key=lambda track: track.filename):
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            file = self.ctx.config.library / album.path / track.filename
             if album_artist_value == OPTION_REMOVE_ALBUM_ARTIST:
                 if "albumartist" in track.tags:
                     self.ctx.console.print(f"removing albumartist from {track.filename}", markup=False)

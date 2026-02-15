@@ -39,21 +39,21 @@ class TestCheckDiscNumbering:
         )
         album_with_none = Album("", [Track("1.flac"), Track("2.flac")])
         ctx = Context()
-        ctx.config["checks"] = {CheckDiscNumbering.name: {"disctotal_policy": "consistent"}}  # default
+        ctx.config.checks = {CheckDiscNumbering.name: {"disctotal_policy": "consistent"}}  # default
         check = CheckDiscNumbering(ctx)
         result = check.check(album_with_all)
         assert result is None
         result = check.check(album_with_none)
         assert result is None
 
-        ctx.config["checks"] = {CheckDiscNumbering.name: {"disctotal_policy": "always"}}
+        ctx.config.checks = {CheckDiscNumbering.name: {"disctotal_policy": "always"}}
         check = CheckDiscNumbering(ctx)
         assert check.check(album_with_all) is None
         result = check.check(album_with_none)
         assert result
         assert "disctotal policy=ALWAYS but it is not on all tracks" in result.message
 
-        ctx.config["checks"] = {CheckDiscNumbering.name: {"disctotal_policy": "never"}}
+        ctx.config.checks = {CheckDiscNumbering.name: {"disctotal_policy": "never"}}
         check = CheckDiscNumbering(ctx)
         assert check.check(album_with_none) is None
         result = check.check(album_with_all)
@@ -151,7 +151,7 @@ class TestCheckDiscNumbering:
             [Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]})],
         )
         ctx = Context()
-        ctx.config["checks"] = {CheckDiscNumbering.name: {"discs_in_separate_folders": False}}
+        ctx.config.checks = {CheckDiscNumbering.name: {"discs_in_separate_folders": False}}
         result = CheckDiscNumbering(ctx).check(album)
         assert "album only has a single disc 1 of 2" in result.message
         assert result.fixer is None

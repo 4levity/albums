@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-import tomllib
 from pathlib import Path
 
 import click
@@ -10,7 +9,7 @@ from rich.logging import RichHandler
 from rich.prompt import Confirm
 
 from ..app import Context
-from ..database import connection, selector
+from ..database import configuration, connection, selector
 
 logger = logging.getLogger(__name__)
 
@@ -19,63 +18,49 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
 PLATFORM_DIRS = PlatformDirs("albums", "4levity")
-DEFAULT_CONFIG_FILE_LOCATIONS = [
-    "config.toml",
-    str(PLATFORM_DIRS.user_config_path / "config.toml"),
-    str(PLATFORM_DIRS.site_config_path / "config.toml"),
-]
+DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 
-def setup(ctx: click.Context, app_context: Context, verbose: int, collections: list[str], paths: list[str], regex: bool, config_file: str):
+def setup(
+    ctx: click.Context,
+    app_context: Context,
+    verbose: int,
+    collections: list[str],
+    paths: list[str],
+    regex: bool,
+    new_library: str | None,
+    db_file: str | None,
+):
     app_context.click_ctx = ctx
     app_context.verbose = verbose
     setup_logging(app_context, verbose)
     logger.info("starting albums")
 
-    config_path = None
-
-    if config_file:  # use config file from command line, ignore others
-        config_path = Path(config_file)
-        if not config_path.exists() or not config_path.is_file():
-            logger.error(f"specified configuration file does not exist: {config_file}")
-            ctx.abort()
-    else:  # use most-local configuration file from standard locations
-        for f in DEFAULT_CONFIG_FILE_LOCATIONS:
-            candidate = Path(f)
-            if candidate.exists() and candidate.is_file():
-                config_path = candidate
-                break
-
-    if config_path:
-        with open(config_path, "rb") as file:
-            app_context.config = tomllib.load(file)
-        logger.info(f"read config from {config_path}")
-        if "options" not in app_context.config:
-            app_context.config["options"] = {}
-    else:
-        logger.info("no configuration file, using default configuration")
-        app_context.config = {"options": {}}
-
-    app_context.library_root = Path(app_context.config.get("locations", {}).get("library", str(Path.home() / "Music")))
-    if not app_context.library_root.is_dir():
-        logger.error(f"library directory does not exist: {str(app_context.library_root)}")
-        raise SystemExit(1)
-
-    tagger = app_context.config["options"].get("tagger")
-    if tagger:
-        if not shutil.which(tagger):
-            logger.warning(f'configuration specifies a tagger program "{tagger}" but it does not seem to be on the path')
-    elif shutil.which("easytag"):  # could look for others too
-        app_context.config["options"]["tagger"] = "easytag"
-
-    if "database" in app_context.config.get("locations", {}):
-        album_db_file = app_context.config["locations"]["database"]
-    else:
-        album_db_file = str(PLATFORM_DIRS.user_config_path / "albums.db")
-        logger.info(f"using default database location {album_db_file}")
-
+    album_db_file = db_file if db_file is not None else os.environ.get("ALBUMS_DB")
+    if album_db_file is None:
+        if Path("albums.db").is_file():
+            album_db_file = "albums.db"
+    if album_db_file is None:
+        album_db_file = DEFAULT_DB_LOCATION
     album_db_path = Path(album_db_file)
+    new_library_path: Path | None = None
     if not album_db_path.exists():
+        if new_library:
+            path = Path(new_library)
+            if path.is_dir():
+                new_library_path = path
+            else:
+                app_context.console.print(f"Must be a directory: {new_library}")
+        else:
+            if PLATFORM_DIRS.user_music_path.is_dir():
+                if Confirm.ask(
+                    f"No library path specifed with --library, do you want to use {str(PLATFORM_DIRS.user_music_path)} ?", console=app_context.console
+                ):
+                    new_library_path = PLATFORM_DIRS.user_music_path
+        if not new_library_path:
+            logger.error("No library specifed, use --library option")
+            raise SystemExit(1)
+
         if app_context.console.is_interactive and not Confirm.ask(
             f"No database file found at {album_db_file}. Create this file?", console=app_context.console
         ):
@@ -83,10 +68,29 @@ def setup(ctx: click.Context, app_context: Context, verbose: int, collections: l
         os.makedirs(album_db_path.parent, exist_ok=True)
         new_database = True
     else:
+        if new_library:
+            logger.error("the --library option may only be used when creating a database")
+            raise SystemExit(1)
         new_database = False
 
+    logger.info(f"using database {album_db_file}")
     db = connection.open(album_db_file)
     ctx.call_on_close(lambda: connection.close(db))
+    app_context.config = configuration.load(db)
+    if new_library_path:
+        app_context.config.library = new_library_path
+        configuration.save(db, app_context.config)
+
+    if not app_context.config.library.is_dir():
+        logger.error(f"library directory does not exist: {str(app_context.config.library)}")
+        raise SystemExit(1)
+
+    if app_context.config.tagger:
+        if not shutil.which(app_context.config.tagger):
+            logger.warning(f'configuration specifies a tagger program "{app_context.config.tagger}" but it does not seem to be on the path')
+    elif shutil.which("easytag"):  # could look for others too
+        app_context.config.tagger = "easytag"
+
     app_context.db = db
     app_context.select_albums = lambda load_track_tag: selector.select_albums(db, collections, paths, regex, load_track_tag)
 

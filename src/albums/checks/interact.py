@@ -36,8 +36,8 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     maybe_changed = False
     user_quit = False  # user explicitly quit this checkRenderableType
 
-    tagger_config = ctx.config.get("options", {}).get("tagger")
-    tagger = str(tagger_config) if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
+    tagger_config = ctx.config.tagger
+    tagger = tagger_config if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
 
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
 
@@ -53,7 +53,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
         options.append(OPTION_RUN_TAGGER)
     options.append(OPTION_OPEN_FOLDER)
 
-    album_path = (ctx.library_root if ctx.library_root else Path(".")) / album.path
+    album_path = ctx.config.library / album.path
 
     while not done:
         table = fixer.get_table() if fixer else None
@@ -128,7 +128,7 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
 
 
 def os_open_folder(ctx: app.Context, path: Path):
-    open_folder_command = ctx.config.get("options", {}).get("open_folder_command")
+    open_folder_command = ctx.config.open_folder_command
     if not open_folder_command and platform.system() == "Windows":
         # type warnings because startfile only exists on Windows
         os.startfile(path)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]

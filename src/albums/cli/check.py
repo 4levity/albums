@@ -1,15 +1,18 @@
 import rich_click as click
 
+from albums.config import RescanOption
+
 from .. import app
-from ..checks import all
+from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import required_disabled_checks, run_enabled
+from ..config import default_checks_config
 from . import cli_context
 from .scan import scan
 
 
 @click.command(
     help="report and sometimes fix issues in selected albums",
-    epilog=f"If CHECKS are provided, those checks (only) will be enabled. Valid CHECKS are: {', '.join(all.ALL_CHECK_NAMES)}",
+    epilog=f"If CHECKS are provided, those checks (only) will be enabled. Valid CHECKS are: {', '.join(ALL_CHECK_NAMES)}",
 )
 @click.option("--default", is_flag=True, help="use default settings for all checks, including whether they are enabled")
 @click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")
@@ -26,35 +29,29 @@ def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: 
         ctx.console.print("--preview cannot be used with other fix options")
         raise SystemExit(1)
 
-    if ctx.rescan_auto and ctx.click_ctx:
+    if ctx.config.rescan == RescanOption.AUTO and ctx.click_ctx:
         ctx.click_ctx.invoke(scan)
 
-    if default or "checks" not in ctx.config:
+    if default:
         ctx.console.print("using default check config")
-        ctx.config["checks"] = all.DEFAULT_CHECK_CONFIGS
-
+        ctx.config.checks = default_checks_config()
     if len(checks) > 0:
         # validate check names
         for check_name in checks:
-            if check_name not in all.ALL_CHECK_NAMES:
+            if check_name not in ALL_CHECK_NAMES:
                 ctx.console.print(f"invalid check name: {check_name}")
                 return
-            # use default if no configuration present
-            if check_name not in ctx.config["checks"]:
-                ctx.config["checks"][check_name] = all.DEFAULT_CHECK_CONFIGS[check_name]
         # enable only specified checks
-        for check_name in all.ALL_CHECK_NAMES:
+        for check_name in ALL_CHECK_NAMES:
             enabled = check_name in checks
-            if check_name not in ctx.config["checks"]:
-                ctx.config["checks"][check_name] = {}
-            ctx.config["checks"][check_name]["enabled"] = enabled
+            ctx.config.checks[check_name]["enabled"] = enabled
 
-        while len(dependent_checks := required_disabled_checks(ctx.config)) > 0:
+        while len(dependent_checks := required_disabled_checks(ctx.config.checks)) > 0:
             for dep, required_by in dependent_checks.items():
                 ctx.console.print(
                     f"automatically enabling check [italic]{dep}[/italic] required by {' and '.join(f'[italic]{check}[/italic]' for check in required_by)}"
                 )
-                ctx.config["checks"][dep]["enabled"] = True
+                ctx.config.checks[dep]["enabled"] = True
 
     issues = run_enabled(ctx, automatic, preview, fix, interactive)
     if issues == 0:

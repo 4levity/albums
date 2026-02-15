@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import List
 
 from rich.console import RenderableType
@@ -60,7 +59,7 @@ class CheckTrackTitle(Check):
     def _fix(self, album: Album, option: str) -> bool:
         changed = False
         for track in album.tracks:
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            file = self.ctx.config.library / album.path / track.filename
             new_title = self._proposed_title(track)
             if new_title:
                 self.ctx.console.print(f"setting title on {track.filename}")

@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import List
 
 from mutagen.flac import FLAC
@@ -57,7 +56,7 @@ class CheckEmbeddedPictureMetadata(Check):
     def _fix(self, album: Album, mismatch_tracks: list[int]):
         for track_index in mismatch_tracks:
             track = album.tracks[track_index]
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            file = self.ctx.config.library / album.path / track.filename
             if track.stream and track.stream.codec == "FLAC":
                 self.ctx.console.print(f"re-embedding pictures in {escape(str(file))}", highlight=False)
                 flac = FLAC(file)

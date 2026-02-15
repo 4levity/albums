@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | None]]] | None = None, reread: bool = False) -> tuple[int, bool]:
     if not ctx.db:
         raise ValueError("scan called without db connection")
-    if not ctx.library_root:
-        raise ValueError("scan called without library_root set")
+    if str(ctx.config.library) in {".", ""}:
+        raise ValueError("scan called without library set")
 
     start_time = time.perf_counter()
 
@@ -40,21 +40,21 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
     scan_results: dict[str, int] = dict([(r.name, 0) for r in AlbumScanResult] + [("REMOVED", 0)])
     try:
         with ctx.console.status(
-            f"finding folders in {'specified folders' if path_selector else escape(str(ctx.library_root))}", spinner="bouncingBar"
+            f"finding folders in {'specified folders' if path_selector else escape(str(ctx.config.library))}", spinner="bouncingBar"
         ):
             if path_selector is not None:
-                paths = list(path for path in unprocessed_albums.keys() if (ctx.library_root / path).exists())
+                paths = list(path for path in unprocessed_albums.keys() if (ctx.config.library / path).exists())
                 show_progress = len(paths) > 1
                 expected_path_count = len(paths)
             else:
                 last_scan = operations.get_last_scan_info(ctx.db)
                 if last_scan:
                     # make scan faster while retaining progress bar by using last scan stats for approx folder count
-                    paths = glob.iglob("**/", root_dir=ctx.library_root, recursive=True)
+                    paths = glob.iglob("**/", root_dir=ctx.config.library, recursive=True)
                     # estimate more folders than last scan to maybe avoid progress bar hanging at 100% if albums were added
                     expected_path_count = int(last_scan.folders_scanned * 1.01)
                 else:
-                    paths = glob.glob("**/", root_dir=ctx.library_root, recursive=True)
+                    paths = glob.glob("**/", root_dir=ctx.config.library, recursive=True)
                     expected_path_count = len(paths)
                 show_progress = True
 
@@ -103,11 +103,11 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
         if show_progress:
             with Progress(console=ctx.console) as progress:
                 scan_task = progress.add_task("Scanning", total=expected_path_count)
-                (scanned, any_changes) = scan_all(ctx.db, ctx.library_root, lambda: progress.update(scan_task, advance=1))
+                (scanned, any_changes) = scan_all(ctx.db, ctx.config.library, lambda: progress.update(scan_task, advance=1))
                 progress.update(scan_task, completed=expected_path_count)
         else:
             with ctx.console.status("Scanning album", spinner="bouncingBar"):
-                (scanned, any_changes) = scan_all(ctx.db, ctx.library_root, lambda: None)
+                (scanned, any_changes) = scan_all(ctx.db, ctx.config.library, lambda: None)
 
         # remaining entries in unchecked_albums are apparently no longer in the library
         for path, album_id in unprocessed_albums.items():
@@ -128,7 +128,7 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
         raise SystemExit(1)
 
     if ctx.verbose:
-        ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.library_root))} in {int(time.perf_counter() - start_time)}s.")
+        ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.config.library))} in {int(time.perf_counter() - start_time)}s.")
         ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))
 
     return (scanned, any_changes)

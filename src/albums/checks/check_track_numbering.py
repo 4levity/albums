@@ -68,7 +68,7 @@ class TrackTotalFixer(Fixer):
 
         changed = False
         for track in self.tracks:
-            path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
+            path = ctx.config.library / album.path / track.filename
             track_changed = False
             if new_tracktotal is None and "tracktotal" in track.tags:
                 ctx.console.print(f"removing tracktotal from {escape(track.filename)}", highlight=False)
@@ -196,7 +196,7 @@ class CheckTrackNumbering(Check):
         for track in album.tracks:
             if track.filename in new_tracknumbers:
                 new_tracknumber = new_tracknumbers[track.filename]
-                path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+                path = self.ctx.config.library / album.path / track.filename
                 self.ctx.console.print(f"setting track number {new_tracknumber} on {track.filename}")
                 set_basic_tags(path, [("tracknumber", new_tracknumber)])
         return True
