@@ -14,7 +14,7 @@ than individual files.
 It scans the media library and creates a database. It supports adding albums to
 "collections," for example to make a list of albums to sync to a digital audio
 player. It can also perform the sync. There are automated checks and interactive
-fixes for metadata related issues sich as track numbering (sequence, totals,
+fixes for metadata related issues such as track numbering (sequence, totals,
 disc numbers), album-artist tags, etc.
 
 ## Supported Media
@@ -29,4 +29,6 @@ files have limited support and checks may be skipped.
 
 ## System Requirements
 
-Requires Python 3.12+. Developed/tested on Linux, will support other systems.
+Requires Python 3.12+. Primarily tested on Linux and Windows. Should work on any
+64-bit x86 or ARM system with Linux, macOS or Windows. (For wider support, one
+could remove the dependency on non-essential library `scikit-image`.)
