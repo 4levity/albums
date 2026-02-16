@@ -8,8 +8,8 @@ from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.picture import IMAGE_MODE_BPP, get_image
-from ..types import Album, PictureType
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from ..types import Album, CheckResult, Fixer, PictureType, ProblemCategory
+from .base_check import Check
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,7 @@ from rich.markup import escape
 
 from ..app import Context
 from ..library.metadata import set_basic_tags
-from ..types import Album
-from .base_check import CheckResult, Fixer, ProblemCategory
+from ..types import Album, CheckResult, Fixer, ProblemCategory
 from .helpers import describe_track_number, ordered_tracks
 
 

@@ -11,8 +11,7 @@ from rich.table import Table
 
 from .. import app
 from ..database import operations
-from ..types import Album
-from .base_check import CheckResult, ProblemCategory
+from ..types import Album, CheckResult, ProblemCategory
 
 logger = logging.getLogger(__name__)
 

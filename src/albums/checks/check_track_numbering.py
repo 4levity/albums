@@ -8,9 +8,9 @@ from rich.markup import escape
 
 from .. import app
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
-from ..types import Album, Track
+from ..types import Album, CheckResult, Fixer, ProblemCategory, Track
 from . import total_tags
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .base_check import Check
 from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
 
 logger = logging.getLogger(__name__)

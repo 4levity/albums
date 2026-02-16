@@ -4,8 +4,8 @@ from typing import Any
 
 import humanize
 
-from ..types import Album, Picture, PictureType
-from .base_check import Check, CheckResult, ProblemCategory
+from ..types import Album, CheckResult, Picture, PictureType, ProblemCategory
+from .base_check import Check
 
 logger = logging.getLogger(__name__)
 

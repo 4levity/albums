@@ -5,10 +5,9 @@ import rich
 from rich.console import RenderableType
 
 from albums import app
-from albums.checks.base_check import CheckResult, Fixer, ProblemCategory
-from albums.checks.interact import OPTION_IGNORE_CHECK, interact
 from albums.database import connection, operations
-from albums.types import Album, Stream, Track
+from albums.interactive.interact import OPTION_IGNORE_CHECK, interact
+from albums.types import Album, CheckResult, Fixer, ProblemCategory, Stream, Track
 
 
 class MockFixer(Fixer):
@@ -30,7 +29,7 @@ class TestCheckFixInteractive:
         album = Album(os.sep, [Track("1.flac")])
         ctx = app.Context()
         fixer = MockFixer(ctx, album)
-        mock_choice = mocker.patch("albums.checks.interact.choice", return_value=fixer.options[0])
+        mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=fixer.options[0])
 
         (changed, quit) = interact(ctx, "", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
         assert changed
@@ -44,7 +43,7 @@ class TestCheckFixInteractive:
         album_id = operations.add(ctx.db, album)
 
         fixer = MockFixer(ctx, album)
-        mock_choice = mocker.patch("albums.checks.interact.choice", return_value=OPTION_IGNORE_CHECK)
+        mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_IGNORE_CHECK)
         mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
         (changed, quit) = interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)

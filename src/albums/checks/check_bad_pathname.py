@@ -4,8 +4,8 @@ from typing import Any
 
 from pathvalidate import ValidationError, validate_filename
 
-from ..types import Album
-from .base_check import Check, CheckResult, ProblemCategory
+from ..types import Album, CheckResult, ProblemCategory
+from .base_check import Check
 
 logger = logging.getLogger(__name__)
 

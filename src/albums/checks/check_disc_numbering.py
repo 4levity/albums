@@ -4,9 +4,9 @@ from typing import Any
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
-from ..types import Album
+from ..types import Album, CheckResult, Fixer, ProblemCategory
 from . import total_tags
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from .base_check import Check
 from .helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 
 logger = logging.getLogger(__name__)

@@ -5,8 +5,8 @@ import yaml
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
-from ..types import Album
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from ..types import Album, CheckResult, Fixer, ProblemCategory
+from .base_check import Check
 from .helpers import describe_track_number, ordered_tracks
 
 OPTION_CONCATENATE_SLASH = ">> Concatenate unique values into one with '/' between"

@@ -1,5 +1,5 @@
-from ..types import Album
-from .base_check import Check, CheckResult, ProblemCategory
+from ..types import Album, CheckResult, ProblemCategory
+from .base_check import Check
 
 
 class CheckAlbumUnderAlbum(Check):

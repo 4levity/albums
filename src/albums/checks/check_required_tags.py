@@ -1,8 +1,8 @@
 from typing import Any
 
 from ..library.metadata import album_is_basic_taggable
-from ..types import Album
-from .base_check import Check, CheckResult, ProblemCategory
+from ..types import Album, CheckResult, ProblemCategory
+from .base_check import Check
 
 
 # deprecated, replace with checks for individual important tags

@@ -7,8 +7,8 @@ from rich.markup import escape
 
 from albums.library.metadata import remove_embedded_image
 
-from ..types import Album
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from ..types import Album, CheckResult, Fixer, ProblemCategory
+from .base_check import Check
 
 logger = logging.getLogger(__name__)
 

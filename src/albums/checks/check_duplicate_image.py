@@ -4,10 +4,10 @@ from typing import Any
 
 from rich.markup import escape
 
-from ..types import Album, Picture, PictureType
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from ..interactive.image_table import render_image_table
+from ..types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
+from .base_check import Check
 from .helpers import delete_files_except
-from .image_table import render_image_table
 
 logger = logging.getLogger(__name__)
 

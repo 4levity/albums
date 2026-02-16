@@ -1,14 +1,14 @@
 from rich.markup import escape
 
 from albums.config import CheckConfiguration
+from albums.interactive.interact import interact
 
 from .. import app
-from ..checks.base_check import Check, CheckResult
+from ..checks.base_check import Check
 from ..database import operations
 from ..library import scanner
-from ..types import Album
+from ..types import Album, CheckResult
 from .all import ALL_CHECKS
-from .interact import interact
 
 
 def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, interactive: bool):

@@ -1,8 +1,10 @@
 import base64
 from dataclasses import dataclass, field
-from enum import IntEnum
+from enum import Enum, IntEnum, auto
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
+
+from rich.console import RenderableType
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, List[str]]]
 
@@ -137,3 +139,35 @@ class ScanHistoryEntry:
     timestamp: int
     folders_scanned: int
     albums_total: int
+
+
+class ProblemCategory(Enum):
+    TAGS = auto()  # issues with tags (except for picture tags)
+    PICTURES = auto()  # issues with album art
+    FILENAMES = auto()  # track filenames
+    FOLDERS = auto()  # organization, folder names
+    OTHER = auto()  # general problems with the album
+
+
+@dataclass
+class Fixer:
+    fix: Callable[[str], bool]
+    options: list[str]  # at least one option should be provided if "free text" is not an option
+    option_free_text: bool = False
+    option_automatic_index: int | None = None
+    table: Tuple[List[str], List[List[RenderableType]] | Callable[[], List[List[RenderableType]]]] | None = None  # tuple (headers, rows/rows())
+    prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
+
+    def get_table(self) -> Tuple[List[str], List[List[RenderableType]]] | None:
+        if self.table is None:
+            return None
+        (headers, get_rows) = self.table
+        rows: List[List[RenderableType]] = get_rows if isinstance(get_rows, List) else get_rows()  # pyright: ignore[reportUnknownVariableType]
+        return (headers, rows)
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    category: ProblemCategory
+    message: str
+    fixer: Fixer | None = None

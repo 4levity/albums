@@ -6,8 +6,8 @@ from rich.console import RenderableType
 from rich.markup import escape
 
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
-from ..types import Album, Track
-from .base_check import Check, CheckResult, Fixer, ProblemCategory
+from ..types import Album, CheckResult, Fixer, ProblemCategory, Track
+from .base_check import Check
 from .check_track_numbering import describe_track_number
 from .helpers import get_tracks_by_disc
 
