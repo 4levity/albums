@@ -17,4 +17,3 @@ uv.lock
 *.db
 *.db-journal
 *.db.bak
-/config.toml

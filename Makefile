@@ -27,7 +27,8 @@ test: install ## Run all tests
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
 sample/albums.db: src/albums/database/schema.py
-	rm -rf sample/albums.db
+	@rm -rf sample/albums.db
+	@mkdir -p sample
 	$(POETRY) run python src/albums/database/connection.py sample/albums.db
 
 docs/database_diagram.png: sample/albums.db
@@ -56,3 +57,4 @@ clean: ## Remove build and test files
 	rm -rf .coverage
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
+	rm -rf sample/albums.db

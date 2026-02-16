@@ -19,13 +19,12 @@ This documentation is for `albums` version **%%version_placeholder%%**.
 
 Install with `pipx install albums` in an environment with Python 3.12 or newer.
 
-## Minimum setup
+## Getting started
 
-If your music library happens to be in the operating system reported default
-user music directory (e.g. `~/Music`) and you don't mind the `albums.db`
-database file being created in the default user config directory (e.g.
-`home/ivan/.config/albums/`), you can start immediately by running
-`albums scan`. Otherwise, you need a configuration file. See [Usage](./usage.md)
+Run `albums scan` to get started. It will ask you to confirm whether your music
+library is in the default user home directory location (e.g. `~/Music`). If it
+isn't, run `albums --library "/path/to/library" scan` instead. It may take
+several minutes to index a large collection. See [Usage](./usage.md)
 
 ## Risks
 

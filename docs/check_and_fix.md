@@ -13,11 +13,9 @@ unintended results. If it goes very badly, simply restore your backup.
 
 ## Configuration
 
-Each check can be configured in the `[checks.<check name>]` section of
-config.toml. See
-[sample/config.toml](https://github.com/4levity/albums/blob/main/sample/config.toml)
-for examples. Every check has an `enabled` setting which may be `true` or
-`false`. It may have other settings, described below.
+Check configuration is stored in the `albums` database. Every check has an
+`enabled` setting which may be `true` or `false`. It may have other settings,
+described below. To enable, disable or configure checks, use `albums config`.
 
 ## Check Command
 
