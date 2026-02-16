@@ -2,13 +2,14 @@ import rich.traceback
 import rich_click as click
 
 import albums
-from albums.config import RescanOption
 
 from .. import app
+from ..config import RescanOption
 from . import cli_context
 from .check import check
 from .checks_ignore import checks_ignore
 from .checks_notice import checks_notice
+from .click_custom import InvisibleCountParam
 from .collections_add import collections_add
 from .collections_remove import collections_remove
 from .config import config
@@ -26,7 +27,7 @@ rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_lengt
 @click.option("--regex", "-r", is_flag=True, help="enable regex match for album paths (default is exact path)")
 @click.option("--library", help="specify path to music library (use when initializing database)")
 @click.option("--db-file", help="specify path to albums.db (advanced)")
-@click.option("--verbose", "-v", count=True, help="enable verbose logging (-vv for more)")
+@click.option("--verbose", "-v", type=InvisibleCountParam(), count=True, help="enable verbose logging (-vv for more)")
 @click.version_option(version=albums.__version__, message="%(prog)s version %(version)s")
 @cli_context.pass_context  # order of these decorators matters
 @click.pass_context
