@@ -29,8 +29,8 @@ class Configuration:
     tagger: str = ""
     open_folder_command: str = ""
 
-    def to_values(self) -> Dict[str, Union[str, int, bool, List[str]]]:
-        values: Dict[str, Union[str, int, bool, List[str]]] = {
+    def to_values(self) -> Dict[str, Union[str, int, float, bool, List[str]]]:
+        values: Dict[str, Union[str, int, float, bool, List[str]]] = {
             "settings.library": str(self.library),
             "settings.rescan": str(self.rescan),
             "settings.tagger": self.tagger,
@@ -49,7 +49,7 @@ class Configuration:
         return values
 
     @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, bool, List[str]]]]):
+    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, List[str]]]]):
         config = Configuration()
         for k, value in values:
             tokens = k.split(".")

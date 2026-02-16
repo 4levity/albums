@@ -2,7 +2,7 @@ POETRY := poetry
 
 .PHONY: build install lint lint-markdown fix test integration-test preview docs package clean
 
-build: install lint test package
+build: install lint test
 	@echo "build complete"
 
 install: ## Install project dependencies

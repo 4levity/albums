@@ -11,6 +11,7 @@ from .checks_ignore import checks_ignore
 from .checks_notice import checks_notice
 from .collections_add import collections_add
 from .collections_remove import collections_remove
+from .config import config
 from .list_albums import list_albums
 from .scan import scan
 from .sql import sql
@@ -43,6 +44,7 @@ albums_group.add_command(collections_add)
 albums_group.add_command(collections_remove)
 albums_group.add_command(checks_ignore)
 albums_group.add_command(checks_notice)
+albums_group.add_command(config)
 albums_group.add_command(list_albums)
 albums_group.add_command(scan)
 albums_group.add_command(sql)

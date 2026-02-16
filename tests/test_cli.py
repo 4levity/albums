@@ -82,11 +82,11 @@ class TestCli:
         assert f'1 tracks missing album tag : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
-    def ftest_check_automatic_fix(self):
+    def test_check_automatic_fix(self):
         result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
-        assert '"foo" + os.sep - 1 tracks missing album tag' in result.output
-        assert '"bar" + os.sep - 2 tracks missing album tag' in result.output
+        assert f'"foo{os.sep}" - 1 tracks missing album tag' in result.output
+        assert f'"bar{os.sep}" - 2 tracks missing album tag' in result.output
         assert "setting album on 1.flac" in result.output
 
         result = self.run(["--verbose", "scan"])

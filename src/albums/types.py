@@ -4,7 +4,7 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-type CheckConfiguration = Dict[str, Union[str, int, bool, List[str]]]
+type CheckConfiguration = Dict[str, Union[str, int, float, bool, List[str]]]
 
 
 @dataclass
