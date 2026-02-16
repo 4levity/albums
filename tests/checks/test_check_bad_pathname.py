@@ -52,12 +52,12 @@ class TestCheckBadPathname:
 
     def test_pathname_ok_Linux(self):
         ctx = Context()
-        ctx.config["checks"] = {CheckBadPathname.name: {"compatibility": "Linux"}}
+        ctx.config.checks = {CheckBadPathname.name: {"compatibility": "Linux"}}
         assert not CheckBadPathname(ctx).check(Album("Foo" + os.sep, [Track(":.flac")]))
 
     def test_pathname_reserved_character_Linux(self):
         ctx = Context()
-        ctx.config["checks"] = {CheckBadPathname.name: {"compatibility": "Linux"}}
+        ctx.config.checks = {CheckBadPathname.name: {"compatibility": "Linux"}}
         result = CheckBadPathname(ctx).check(Album("Foo" + os.sep, [Track("a/b.flac")]))
         assert result is not None
         assert "invalid characters found: invalids=('/')" in result.message

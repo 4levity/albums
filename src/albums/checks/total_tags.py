@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from pathlib import Path
 from typing import List
 
 from rich.console import RenderableType
@@ -57,7 +56,7 @@ def check_policy(
                     value = option
                 changed = False
                 for track in album.tracks:
-                    path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / track.filename
+                    path = ctx.config.library / album.path / track.filename
                     if value is None and tag_name in track.tags:
                         ctx.console.print(f"removing {tag_name} from {track.filename}")
                         changed |= set_basic_tags(path, [(tag_name, None)])

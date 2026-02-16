@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import Any
 
 from rich.markup import escape
@@ -19,7 +18,7 @@ OPTION_SET_DISC_TOTAL = ">> Set disc total"
 
 class CheckDiscNumbering(Check):
     name = "disc_numbering"
-    default_config = {"enabled": "true", "discs_in_separate_folders": True, "disctotal_policy": "consistent"}
+    default_config = {"enabled": True, "discs_in_separate_folders": True, "disctotal_policy": "consistent"}
     must_pass_checks = {"invalid_track_or_disc_number"}
 
     def init(self, check_config: dict[str, Any]):
@@ -117,7 +116,7 @@ class CheckDiscNumbering(Check):
 
         changed = False
         for track in album.tracks:
-            path = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            path = self.ctx.config.library / album.path / track.filename
             if value is None and "disctotal" in track.tags:
                 self.ctx.console.print(f"removing disctotal from {track.filename}")
                 changed |= set_basic_tags(path, [("disctotal", None)])

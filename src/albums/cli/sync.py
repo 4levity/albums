@@ -4,6 +4,7 @@ from pathlib import Path
 import rich_click as click
 
 from .. import app
+from ..config import RescanOption
 from ..library import synchronizer
 from . import cli_context
 from .scan import scan
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 def sync(ctx: app.Context, destination: str, delete: bool, force: bool):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
-        if ctx.rescan_auto and ctx.click_ctx:
+        if ctx.config.rescan == RescanOption.AUTO and ctx.click_ctx:
             ctx.click_ctx.invoke(scan)
 
         synchronizer.do_sync(ctx, ctx.select_albums(False), dest, delete, force)

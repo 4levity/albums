@@ -24,16 +24,12 @@ class TestCli:
     def setup_cli_tests(self):
         TestCli.runner = CliRunner()
         TestCli.library = create_library("cli", albums)
-        with open(TestCli.library / "config.toml", "w") as config_file:  # create a config.toml for cli invocation
-            config_file.write(
-                f"""[locations]
-library="{str(TestCli.library).replace("\\", "\\\\")}"
-database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
-"""
-            )
 
-    def run(self, params: list[str], config_filename="config.toml"):
-        return TestCli.runner.invoke(entry_point.albums_group, ["--config-file", TestCli.library / config_filename] + params)
+    def run(self, params: list[str], db_file="albums.db", init=False):
+        return TestCli.runner.invoke(
+            entry_point.albums_group,
+            ["--db-file", TestCli.library / db_file] + (["--library", str(TestCli.library)] if init else []) + params,
+        )
 
     def test_help(self):
         result = self.run(["--help"])
@@ -41,7 +37,7 @@ database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
         assert "Usage: albums [OPTIONS] COMMAND [ARGS]" in result.output
 
     def test_scan(self):
-        result = self.run(["scan"])
+        result = self.run(["scan"], init=True)
         assert result.exit_code == 0
         assert result.output.startswith("creating database")
         assert "Scanning" in result.output
@@ -62,17 +58,7 @@ database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
     def test_check_automatically_enabled_dependencies(self):
-        config_filename = "config_invalid_number_disabled.toml"
-        with open(TestCli.library / config_filename, "w") as config_file:
-            config_file.write(
-                f"""[locations]
-library="{str(TestCli.library).replace("\\", "\\\\")}"
-database="{str(TestCli.library / "albums.db").replace("\\", "\\\\")}"
-checks.invalid_track_or_disc_number.enabled = false
-"""
-            )
-
-        result = self.run(["check", "disc_numbering"], config_filename)
+        result = self.run(["check", "disc_numbering"])
         assert result.exit_code == 0
         assert "automatically enabling check invalid_track_or_disc_number" in result.output
 
@@ -96,11 +82,11 @@ checks.invalid_track_or_disc_number.enabled = false
         assert f'1 tracks missing album tag : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
-    def ftest_check_automatic_fix(self):
+    def test_check_automatic_fix(self):
         result = self.run(["check", "--automatic", "album_tag"])
         assert result.exit_code == 0
-        assert '"foo" + os.sep - 1 tracks missing album tag' in result.output
-        assert '"bar" + os.sep - 2 tracks missing album tag' in result.output
+        assert f'"foo{os.sep}" - 1 tracks missing album tag' in result.output
+        assert f'"bar{os.sep}" - 2 tracks missing album tag' in result.output
         assert "setting album on 1.flac" in result.output
 
         result = self.run(["--verbose", "scan"])
@@ -186,3 +172,76 @@ checks.invalid_track_or_disc_number.enabled = false
         assert "foo" + os.sep in result.output
         assert "album_id" in result.output  # shows column names
         assert "path" in result.output
+
+    def test_config(self):
+        def assert_setting(output: str, name: str, value: str):
+            assert re.search(f"│ {re.escape(name)}\\s+│ {re.escape(value)}", output)
+
+        result = self.run(["config", "--show"])
+        assert_setting(result.output, "settings.library", str(TestCli.library)[:16])
+        assert_setting(result.output, "settings.rescan", "auto")
+        assert_setting(result.output, "settings.tagger", "easytag")
+        assert_setting(result.output, "settings.open_folder_command", " ")
+        assert_setting(result.output, "album_art.cover_min_pixels", "100")
+        assert_setting(result.output, "album_art.cover_squareness", "0.98")
+        assert_setting(result.output, "required_tags.enabled", "False")
+
+        result = self.run(["config", "settings.library", "."])
+        assert result.exit_code == 0
+        assert "settings.library = ." in result.output
+        result = self.run(["config", "settings.rescan", "never"])
+        assert "settings.rescan = never" in result.output
+        result = self.run(["config", "settings.tagger", "mp3tag"])
+        assert "settings.tagger = mp3tag" in result.output
+        result = self.run(["config", "settings.open_folder_command", "xdg-open"])
+        assert "settings.open_folder_command = xdg-open" in result.output
+
+        result = self.run(["config", "album_art.cover_min_pixels", "42"])
+        assert "album_art.cover_min_pixels = 42" in result.output
+        result = self.run(["config", "album_art.cover_squareness", "0.42"])
+        assert "album_art.cover_squareness = 0.42" in result.output
+        result = self.run(["config", "required_tags.enabled", "True"])
+        assert "required_tags.enabled = True" in result.output
+
+        result = self.run(["config", "--show"])
+        assert_setting(result.output, "settings.library", ".")
+        assert_setting(result.output, "settings.rescan", "never")
+        assert_setting(result.output, "settings.tagger", "mp3tag")
+        assert_setting(result.output, "settings.open_folder_command", "xdg-open")
+        assert_setting(result.output, "album_art.cover_min_pixels", "42")
+        assert_setting(result.output, "album_art.cover_squareness", "0.42")
+        assert_setting(result.output, "required_tags.enabled", "True")
+        self.run(["config", "settings.library", str(TestCli.library)])
+
+    def test_config_invalid(self):
+        result = self.run(["config", "settings.library"])
+        assert result.exit_code == 1
+        assert "both name and value" in result.output
+
+        result = self.run(["config", "settings.foo", "bar"])
+        assert result.exit_code == 1
+        assert "not a valid setting" in result.output
+
+        result = self.run(["config", "library", "."])
+        assert result.exit_code == 1
+        assert "invalid setting" in result.output
+
+        result = self.run(["config", "foo.enabled", "true"])
+        assert result.exit_code == 1
+        assert "foo is not a valid check name" in result.output
+
+        result = self.run(["config", "invalid_image.foo", "1"])
+        assert result.exit_code == 1
+        assert "foo is not a valid option for check invalid_image" in result.output
+
+        result = self.run(["config", "invalid_image.enabled", "foo"])
+        assert result.exit_code == 1
+        assert "invalid_image.enabled must be true or false" in result.output
+
+        result = self.run(["config", "album_art.cover_squareness", "foo"])
+        assert result.exit_code == 1
+        assert "album_art.cover_squareness must be a non-negative floating point number" in result.output
+
+        result = self.run(["config", "album_art.cover_min_pixels", "99.9"])
+        assert result.exit_code == 1
+        assert "album_art.cover_min_pixels must be a non-negative integer" in result.output

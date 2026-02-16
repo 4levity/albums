@@ -85,7 +85,7 @@ class CheckArtistTag(Check):
 
     def _fix(self, album: Album, option: str, filenames: list[str]) -> bool:
         for filename in filenames:
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / filename
+            file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {filename}")
             set_basic_tags(file, [("artist", option)])
         return True

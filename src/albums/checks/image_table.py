@@ -1,7 +1,6 @@
 import io
 import logging
 from math import sqrt
-from pathlib import Path
 from typing import Any, List
 
 import humanize
@@ -29,7 +28,7 @@ def render_image_table(
     reference_width = reference_height = 0
     for cover in pictures:
         (filename, embedded) = picture_sources[cover][0]
-        path = (ctx.library_root if ctx.library_root else Path(".")) / album.path / filename
+        path = ctx.config.library / album.path / filename
         if embedded:
             images = get_embedded_image_data(path)
             image_data = images[cover.embed_ix]

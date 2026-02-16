@@ -4,6 +4,7 @@ from typing import Generator
 import rich_click as click
 
 from .. import app
+from ..config import RescanOption
 from ..library import scanner
 from . import cli_context
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 @click.option("--reread", "-r", is_flag=True, help="reread tracks even if size/timestamp are unchanged")
 @cli_context.pass_context
 def scan(ctx: app.Context, reread: bool):
-    if ctx.config.get("options", {}).get("always_scan", False):
+    if ctx.config.rescan == RescanOption.ALWAYS:
         ctx.console.print("scan already done, not scanning again")
         return
 

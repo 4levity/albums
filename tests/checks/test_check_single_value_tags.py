@@ -8,7 +8,7 @@ from albums.types import Album, Track
 def context(checks, db=None):
     ctx = Context()
     ctx.db = db
-    ctx.config["checks"] = checks
+    ctx.config.checks = checks
     return ctx
 
 

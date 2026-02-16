@@ -40,10 +40,8 @@ folder. Also, Prettier is useful to automatically reflow Markdown text.
 
 ## Tips
 
-- Copy
-  [sample/config.toml](https://github.com/4levity/albums/blob/main/sample/config.toml)
-  to the project root and edit it to configure a local environment for manual
-  testing or regular use.
+- Create an `albums.db` file in the project root for a local test environment
+  (if there is an `albums.db` file in the working directory it will be used)
 - `make fix` to automatically fix lint and format errors
 - `make preview` to preview these docs (requires
   [GraphViz](https://graphviz.org/))

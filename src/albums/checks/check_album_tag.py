@@ -82,7 +82,7 @@ class CheckAlbumTag(Check):
     def _fix(self, album: Album, option: str) -> bool:
         changed = False
         for track in album.tracks:
-            file = (self.ctx.library_root if self.ctx.library_root else Path(".")) / album.path / track.filename
+            file = self.ctx.config.library / album.path / track.filename
             if track.tags.get("album", []) != [option]:
                 self.ctx.console.print(f"setting album on {track.filename}")
                 set_basic_tags(file, [("album", option)])

@@ -7,7 +7,7 @@ from typing import Any, Callable, List, Tuple
 from rich.console import RenderableType
 
 from .. import app
-from ..types import Album
+from ..types import Album, CheckConfiguration
 
 
 @dataclass
@@ -52,16 +52,15 @@ class Check:
 
     # subclass may use these instance values
     ctx: app.Context
-    check_config: dict[str, Any]
 
     # subclass must override check()
     def check(self, album: Album) -> CheckResult | None:
         raise NotImplementedError(f"check not implemented for {self.name}")
 
     # subclass should override init if there is configuration to validate or other one-time initialization
-    def init(self, check_config: dict[str, Any]):
+    def init(self, check_config: CheckConfiguration):
         pass
 
     def __init__(self, ctx: app.Context):
         self.ctx = ctx
-        self.init(ctx.config.get("checks", {}).get(self.name, self.default_config))
+        self.init(ctx.config.checks[self.name])

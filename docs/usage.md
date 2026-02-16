@@ -7,12 +7,8 @@ icon: lucide/user
 ## Configuration
 
 `albums` needs to know where your albums are. The default is the
-operating-system defined user's music directory. To use a library in another
-location, create a `config.toml` file. See example in
-[sample/config.toml](https://github.com/4levity/albums/blob/main/sample/config.toml).
-
-At the bottom of the output from `albums --help` it will show the list of
-locations where `albums` will automatically search for the `config.toml` file.
+operating-system defined user's music directory. When initializing, the
+`--library` option allows you to set the location of the library.
 
 ## Basic commands
 
@@ -33,15 +29,44 @@ Most commands can be filtered. For example, to list albums matching a path
 (relative path within the library), run
 `albums --regex --path "Freezepop" list`.
 
-Get a list of issues with `albums check`. Adjust the settings in `config.toml`
-to configure the checks. Learn about using `albums` to fix problems in
-[Check and Fix](./check_and_fix.md).
+Get a list of issues with `albums check`. Learn about using `albums` to fix
+problems in [Check and Fix](./check_and_fix.md).
 
 Albums can be in sets called "collections". To create a collection named "DAP"
 containing albums to sync to a Digital Audio Player, use for example
 `albums -rp "Freezepop" add DAP`. Review the collection with
 `albums --collection DAP list`. To copy/sync it to an SD card, see
 [Synchronize](./sync.md).
+
+To set up `albums` configuration options interactively, run `albums config`. See
+`albums config --help` for other ways to configure.
+
+## Global Settings
+
+In addition to options for individual checks (described in
+[Check and Fix](./check_and_fix.md)), there are a few global settings:
+
+- `rescan`: Rescan the library before performing other operations. If the
+  operation is filtered then only selected albums will be rescanned. Options:
+    - `always`: always scan the library so you never need to run "albums scan"
+      but may be slow
+    - `never`: never automatically scan the library, you must run "albums scan"
+      if it's changed
+    - `auto`: scan on first run and before "check" or "sync" operations
+- `tagger`: If this option is set, whenever there is an interactive tag fix,
+  there will be a menu option to execute this external tagging program. The path
+  of the album will be the first parameter.
+
+<!-- pyml disable line-length -->
+
+| Name                  | Default                    | Description                                        |
+| --------------------- | -------------------------- | -------------------------------------------------- |
+| `library`             | n/a                        | Location of the music library.                     |
+| `rescan`              | **auto**                   | When to automatically rescan the library           |
+| `tagger`              | **easytag** (if installed) | External tagging program to launch when requested. |
+| `open_folder_command` | Use OS default             | Program to open to browse an album folder.         |
+
+<!-- pyml enable line-length -->
 
 ## Tag Conversion
 
