@@ -38,7 +38,10 @@ def list_albums(ctx: app.Context, json: bool):
         total_size += tracks_size
         total_length += tracks_length
     if json:
-        ctx.console.print("]")
+        if total_size == 0:
+            ctx.console.print("[]")
+        else:
+            ctx.console.print("]")
     else:
         ctx.console.print(table)
         ctx.console.print(f"total: {humanize.naturalsize(total_size, binary=True)}, length = {humanize.naturaldelta(total_length)}")

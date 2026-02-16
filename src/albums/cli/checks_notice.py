@@ -1,4 +1,5 @@
 import rich_click as click
+from rich.markup import escape
 from rich.prompt import Confirm
 
 from .. import app
@@ -20,19 +21,21 @@ def checks_notice(ctx: app.Context, force: bool, check_names: list[str]):
         error = False
         for target_check in check_names:
             if target_check not in ALL_CHECK_NAMES:
-                ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help')
+                ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help[/bold]')
                 error = True
             if target_check in album.ignore_checks:
                 album.ignore_checks.remove(target_check)
-                ctx.console.print(f"album {album.path} will stop ignoring {target_check}")
+                ctx.console.print(f"album {escape(album.path)} will stop ignoring {target_check}")
                 changed = True
             elif ctx.is_filtered():  # don't show individual albums if operating on all albums (confirm below)
-                ctx.console.print(f"album {album.path} will continue ignoring {target_check}")
+                ctx.console.print(f"album {escape(album.path)} was already not ignoring {target_check}")
 
         if changed and not error:
             if force or ctx.is_filtered() or Confirm.ask(f"stop ignoring checks {check_names} for all albums?", console=ctx.console):
                 if album.album_id is None:
-                    raise ValueError(f"unexpected album.album_id=None for {album.path}")
+                    raise ValueError(f"unexpected album.album_id=None for {escape(album.path)}")
                 operations.update_ignore_checks(ctx.db, album.album_id, album.ignore_checks)
+        elif not error and ctx.is_filtered():
+            ctx.console.print(f"no changes to album {escape(album.path)}")
         elif error:
             ctx.console.print("changes not saved because some options were invalid")
