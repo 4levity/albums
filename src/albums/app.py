@@ -6,8 +6,7 @@ from typing import Any, Callable
 import click
 from rich.console import Console
 
-from .config import Configuration
-from .types import Album
+from .types import Album, Configuration
 
 logger = logging.getLogger(__name__)
 

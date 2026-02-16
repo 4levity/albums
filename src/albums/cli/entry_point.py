@@ -4,7 +4,7 @@ import rich_click as click
 import albums
 
 from .. import app
-from ..config import RescanOption
+from ..types import RescanOption
 from . import cli_context
 from .check import check
 from .checks_ignore import checks_ignore

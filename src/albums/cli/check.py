@@ -1,11 +1,9 @@
 import rich_click as click
 
-from albums.config import RescanOption
-
 from .. import app
 from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import required_disabled_checks, run_enabled
-from ..config import default_checks_config
+from ..types import RescanOption, default_checks_config
 from . import cli_context
 from .scan import scan
 

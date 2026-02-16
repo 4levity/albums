@@ -5,9 +5,9 @@ import pytest
 
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.check_album_tag import CheckAlbumTag
-from albums.config import Configuration, RescanOption
 from albums.database import connection
 from albums.database.configuration import load, save
+from albums.types import Configuration, RescanOption
 
 
 class TestDatabaseConfig:
