@@ -335,9 +335,9 @@ tags include the MIME type of the image in the APIC frame. This check loads the
 image data and compares the reported MIME type and dimensions (if present) to
 the real image data.
 
-**Automatic fix**: For each FLAC file with incorrect metadata, re-embed all the
-images with the same image data and correct metadata. Fix not yet available for
-other formats.
+**Automatic fix**: For each FLAC or MP3 file with incorrect metadata, re-embed
+all the images with the same image data and correct metadata. Fix not yet
+available for other formats.
 
 !!!note
 

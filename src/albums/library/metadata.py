@@ -334,7 +334,7 @@ def _get_pictures(file: MutagenFileTypeLike) -> Generator[Tuple[Picture, bytes],
     if isinstance(file, FLAC):
         yield from _get_flac_pictures(file.pictures)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
     elif isinstance(file, MP3) and file.tags:
-        yield from _get_id3_pictures(file.tags)
+        yield from get_id3_pictures(file.tags)
     elif isinstance(file, OggVorbis):
         yield from _get_ogg_vorbis_pictures(file)
 
@@ -366,7 +366,7 @@ def _flac_picture_to_picture(embed_ix: int, flac_picture: FlacPicture):
     return picture
 
 
-def _get_id3_pictures(tags: ID3) -> Generator[Tuple[Picture, bytes], None, None]:
+def get_id3_pictures(tags: ID3) -> Generator[Tuple[Picture, bytes], None, None]:
     picture_frames: list[APIC] = tags.getall("APIC")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
     for embed_ix, frame in enumerate(picture_frames):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         image_data: bytes = frame.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
@@ -461,7 +461,7 @@ def _remove_embedded_image_mp3(path: Path, remove_pic: Picture):
         logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: no ID3 tag")
         return False
     id3: ID3 = mp3.tags  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-    pictures = list(_get_id3_pictures(id3))  # pyright: ignore[reportUnknownArgumentType]
+    pictures = list(get_id3_pictures(id3))  # pyright: ignore[reportUnknownArgumentType]
     (match_ix, error) = _get_id3_picture_index(pictures, remove_pic)
     if match_ix is None:
         logger.warning(f"could not remove {remove_pic.picture_type.name} picture from {path.name}: {error}")
@@ -492,14 +492,14 @@ def add_id3_pictures(tags: ID3, pictures: Iterable[Tuple[Picture, bytes]]):
     for picture_info in pictures:
         (picture, image_data) = picture_info
         description = picture.description
-        apic = APIC(mime="image/png", type=picture.picture_type, data=image_data, desc=description)
+        apic = APIC(mime=picture.format, type=picture.picture_type, data=image_data, desc=description)
 
         # with future mutagen 1.48 or later, docs indicate we will be able to ensure distinct hash key like this:
         # while apic.HashKey in tags:
         #     apic.salt += "x"  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         while apic.HashKey in tags:  # TODO don't alter description
             description += " "
-            apic = APIC(mime="image/png", type=picture.picture_type, data=image_data, desc=description)
+            apic = APIC(mime=picture.format, type=picture.picture_type, data=image_data, desc=description)
 
         tags.add(apic)  # pyright: ignore[reportUnknownMemberType]
 
