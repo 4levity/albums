@@ -6,7 +6,7 @@ from typing import Any, List
 from rich.console import RenderableType
 from rich.markup import escape
 
-from .. import app
+from ..app import Context
 from ..library.metadata import album_is_basic_taggable, set_basic_tags
 from ..types import Album, CheckResult, Fixer, ProblemCategory, Track
 from . import total_tags
@@ -20,7 +20,7 @@ class TrackTotalFixer(Fixer):
     OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
     OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
 
-    def __init__(self, ctx: app.Context, album: Album, discnumber: int | None):
+    def __init__(self, ctx: Context, album: Album, discnumber: int | None):
         self.tracks: list[Track] = []
         for track in ordered_tracks(album):
             if discnumber is None or (track.tags.get("discnumber", [""])[0].isdecimal() and int(track.tags["discnumber"][0]) == discnumber):
@@ -55,7 +55,7 @@ class TrackTotalFixer(Fixer):
             f"select option to apply to {len(self.tracks)} tracks{discnumber_notice}",
         )
 
-    def _fix(self, ctx: app.Context, album: Album, option: str | None):
+    def _fix(self, ctx: Context, album: Album, option: str | None):
         if option is None:
             new_tracktotal = None
         elif option.startswith(TrackTotalFixer.OPTION_USE_TRACK_COUNT):

@@ -6,14 +6,14 @@ import rich_click as click
 from rich.markup import escape
 from rich.table import Table
 
-from .. import app
+from ..app import Context
 from . import cli_context
 
 
 @click.command("list", help="print matching albums")
 @click.option("--json", "-j", is_flag=True, help="output all stored details in JSON")
 @cli_context.pass_context
-def list_albums(ctx: app.Context, json: bool):
+def list_albums(ctx: Context, json: bool):
     total_size = 0
     total_length = 0
     table = Table("path in library", "tracks", "length", "size")

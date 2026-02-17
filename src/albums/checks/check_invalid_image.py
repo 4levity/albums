@@ -5,8 +5,7 @@ from typing import List
 from rich.console import RenderableType
 from rich.markup import escape
 
-from albums.library.metadata import remove_embedded_image
-
+from ..library.metadata import remove_embedded_image
 from ..types import Album, CheckResult, Fixer, ProblemCategory
 from .base_check import Check
 

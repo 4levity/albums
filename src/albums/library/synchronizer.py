@@ -9,13 +9,13 @@ from rich.markup import escape
 from rich.progress import Progress, TransferSpeedColumn
 from rich.prompt import Confirm
 
-from .. import app
+from ..app import Context
 from ..types import Album
 
 logger = logging.getLogger(__name__)
 
 
-def do_sync(ctx: app.Context, albums: Iterator[Album], dest: Path, delete: bool, force: bool):
+def do_sync(ctx: Context, albums: Iterator[Album], dest: Path, delete: bool, force: bool):
     if not ctx.db or str(ctx.config.library) in {"", "."}:
         raise ValueError("do_sync called without db connection + library")
 

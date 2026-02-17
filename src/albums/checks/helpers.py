@@ -5,8 +5,7 @@ from typing import Collection
 
 from rich.markup import escape
 
-from albums.app import Context
-
+from ..app import Context
 from ..types import Album, Track
 
 

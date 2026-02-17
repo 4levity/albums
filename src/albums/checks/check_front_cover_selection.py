@@ -6,10 +6,9 @@ from typing import Any, Collection, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
-from albums.library.metadata import get_embedded_image_data
-
 from ..database import operations
 from ..interactive.image_table import render_image_table
+from ..library.metadata import get_embedded_image_data
 from ..types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from .base_check import Check
 from .helpers import delete_files_except

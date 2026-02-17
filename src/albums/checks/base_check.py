@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .. import app
+from ..app import Context
 from ..types import Album, CheckConfiguration, CheckResult
 
 
@@ -15,7 +15,7 @@ class Check:
     must_pass_checks: set[str] = set()
 
     # subclass may use these instance values
-    ctx: app.Context
+    ctx: Context
 
     # subclass must override check()
     def check(self, album: Album) -> CheckResult | None:
@@ -25,6 +25,6 @@ class Check:
     def init(self, check_config: CheckConfiguration):
         pass
 
-    def __init__(self, ctx: app.Context):
+    def __init__(self, ctx: Context):
         self.ctx = ctx
         self.init(ctx.config.checks[self.name])

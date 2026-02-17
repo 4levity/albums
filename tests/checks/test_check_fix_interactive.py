@@ -4,14 +4,14 @@ from typing import List, Tuple
 import rich
 from rich.console import RenderableType
 
-from albums import app
+from albums.app import Context
 from albums.database import connection, operations
 from albums.interactive.interact import OPTION_IGNORE_CHECK, interact
 from albums.types import Album, CheckResult, Fixer, ProblemCategory, Stream, Track
 
 
 class MockFixer(Fixer):
-    def __init__(self, ctx: app.Context, album: Album):
+    def __init__(self, ctx: Context, album: Album):
         table: Tuple[List[str], List[List[RenderableType]]] = (["track", "title"], [["1", "one"]])
         options = ["A", "B"]
         option_free_text = True
@@ -27,7 +27,7 @@ class MockFixer(Fixer):
 class TestCheckFixInteractive:
     def test_fix_interactive(self, mocker):
         album = Album(os.sep, [Track("1.flac")])
-        ctx = app.Context()
+        ctx = Context()
         fixer = MockFixer(ctx, album)
         mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=fixer.options[0])
 
@@ -38,7 +38,7 @@ class TestCheckFixInteractive:
 
     def test_fix_ignore_check(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
-        ctx = app.Context()
+        ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
         album_id = operations.add(ctx.db, album)
 

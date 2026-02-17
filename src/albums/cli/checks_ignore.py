@@ -1,7 +1,7 @@
 import rich_click as click
 from rich.prompt import Confirm
 
-from .. import app
+from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
 from ..database import operations
 from . import cli_context
@@ -11,7 +11,7 @@ from . import cli_context
 @click.option("--force", "-f", is_flag=True, help="always skip confirmation")
 @click.argument("check_names", nargs=-1)
 @cli_context.pass_context
-def checks_ignore(ctx: app.Context, force: bool, check_names: list[str]):
+def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
     if not ctx.db:
         raise ValueError("ignore requires database connection")
 

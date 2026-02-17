@@ -1,6 +1,6 @@
 from rich.markup import escape
 
-from .. import app
+from ..app import Context
 from ..checks.base_check import Check
 from ..database import operations
 from ..interactive.interact import interact
@@ -9,7 +9,7 @@ from ..types import Album, CheckConfiguration, CheckResult
 from .all import ALL_CHECKS
 
 
-def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
+def run_enabled(ctx: Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
     need_checks = required_disabled_checks(ctx.config.checks)
     if need_checks:
         ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")
@@ -20,7 +20,7 @@ def run_enabled(ctx: app.Context, automatic: bool, preview: bool, fix: bool, int
         raise ValueError("invalid preview setting")  # not allowed by cli
     preview_failed_checks: list[str] = []
 
-    def handle_check_result(ctx: app.Context, check: Check, check_result: CheckResult, album: Album):
+    def handle_check_result(ctx: Context, check: Check, check_result: CheckResult, album: Album):
         fixer = check_result.fixer
         displayed_any = False
         maybe_changed = False

@@ -1,6 +1,6 @@
 import rich_click as click
 
-from .. import app
+from ..app import Context
 from ..database import operations
 from . import cli_context
 
@@ -8,7 +8,7 @@ from . import cli_context
 @click.command("remove", help="remove selected albums from collections")
 @click.argument("collection_names", nargs=-1)
 @cli_context.pass_context
-def collections_remove(ctx: app.Context, collection_names: list[str]):
+def collections_remove(ctx: Context, collection_names: list[str]):
     if not ctx.db:
         raise ValueError("remove requires database connection")
 

@@ -6,7 +6,7 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from .. import app
+from ..app import Context
 from . import cli_context
 
 
@@ -14,7 +14,7 @@ from . import cli_context
 @click.argument("sql-command", required=True)
 @click.option("--json", "-j", is_flag=True, help="output result as JSON object")
 @cli_context.pass_context
-def sql(ctx: app.Context, sql_command: str, json: bool):
+def sql(ctx: Context, sql_command: str, json: bool):
     if not ctx.db:
         raise ValueError("sql requires database connection")
 

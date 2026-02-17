@@ -9,8 +9,7 @@ from PIL.ImageFile import ImageFile
 from rich.console import RenderableType
 from rich.markup import escape
 
-from albums.library.metadata import add_id3_pictures, get_id3_pictures
-
+from ..library.metadata import add_id3_pictures, get_id3_pictures
 from ..library.picture import IMAGE_MODE_BPP, get_image
 from ..types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from .base_check import Check

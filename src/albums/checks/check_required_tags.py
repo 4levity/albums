@@ -5,7 +5,7 @@ from ..types import Album, CheckResult, ProblemCategory
 from .base_check import Check
 
 
-# deprecated, replace with checks for individual important tags
+# TODO deprecate, replace with checks for individual important tags
 class CheckRequiredTags(Check):
     name = "required_tags"
     default_config = {"enabled": False, "tags": ["artist", "title"]}

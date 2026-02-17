@@ -1,6 +1,6 @@
 import rich_click as click
 
-from .. import app
+from ..app import Context
 from ..database import operations
 from . import cli_context
 
@@ -8,7 +8,7 @@ from . import cli_context
 @click.command("add", help="add selected albums to collections")
 @click.argument("collection_names", nargs=-1)
 @cli_context.pass_context
-def collections_add(ctx: app.Context, collection_names: list[str]):
+def collections_add(ctx: Context, collection_names: list[str]):
     if not ctx.db:
         raise ValueError("add requires database connection")
 

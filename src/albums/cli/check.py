@@ -1,6 +1,6 @@
 import rich_click as click
 
-from .. import app
+from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import required_disabled_checks, run_enabled
 from ..types import RescanOption, default_checks_config
@@ -19,7 +19,7 @@ from .scan import scan
 @click.option("--interactive", "-i", is_flag=True, help="ask what to do even if the only options are manual (implies -f)")
 @click.argument("checks", nargs=-1)
 @cli_context.pass_context
-def check(ctx: app.Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
+def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
     if interactive and automatic:
         ctx.console.print("cannot use --interactive with --automatic")
         raise SystemExit(1)

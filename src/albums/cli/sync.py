@@ -3,7 +3,7 @@ from pathlib import Path
 
 import rich_click as click
 
-from .. import app
+from ..app import Context
 from ..library import synchronizer
 from ..types import RescanOption
 from . import cli_context
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @click.option("--delete", is_flag=True, help="delete unrecognized paths in destination")
 @click.option("--force", is_flag=True, help="skip confirmation when deleting files")
 @cli_context.pass_context
-def sync(ctx: app.Context, destination: str, delete: bool, force: bool):
+def sync(ctx: Context, destination: str, delete: bool, force: bool):
     dest = Path(destination)
     if dest.exists() and dest.is_dir():
         if ctx.config.rescan == RescanOption.AUTO and ctx.click_ctx:

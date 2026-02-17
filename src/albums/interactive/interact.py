@@ -9,7 +9,7 @@ from rich.markup import escape
 from rich.prompt import Confirm
 from rich.table import Table
 
-from .. import app
+from ..app import Context
 from ..database import operations
 from ..types import Album, CheckResult, ProblemCategory
 
@@ -21,7 +21,7 @@ OPTION_DO_NOTHING = ">> Do nothing"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
-def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album: Album) -> tuple[bool, bool]:
+def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album) -> tuple[bool, bool]:
     # if there is a fixer, offer the options it provides
     # always offer these options:
     #  - do nothing
@@ -111,7 +111,7 @@ def interact(ctx: app.Context, check_name: str, check_result: CheckResult, album
     return (maybe_changed, user_quit)
 
 
-def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
+def prompt_ignore_checks(ctx: Context, album: Album, check_name: str):
     if not ctx.db:
         raise ValueError("prompt_ignore_checks requires a database connection")
     if album.album_id is None:
@@ -126,7 +126,7 @@ def prompt_ignore_checks(ctx: app.Context, album: Album, check_name: str):
     return False
 
 
-def os_open_folder(ctx: app.Context, path: Path):
+def os_open_folder(ctx: Context, path: Path):
     open_folder_command = ctx.config.open_folder_command
     if not open_folder_command and platform.system() == "Windows":
         # type warnings because startfile only exists on Windows
@@ -137,7 +137,7 @@ def os_open_folder(ctx: app.Context, path: Path):
         subprocess.Popen([open_folder_command if open_folder_command else "xdg-open", path])
 
 
-def choose_from_menu(ctx: app.Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
+def choose_from_menu(ctx: Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
     default_option = options[default_option_index] if default_option_index is not None else None
     selection = choice(message=prompt, options=[(o, o) for o in options], default=default_option)
     return options.index(selection)
