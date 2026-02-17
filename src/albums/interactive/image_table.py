@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def render_image_table(
-    ctx: Context, album: Album, pictures: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool]]]
+    ctx: Context, album: Album, pictures: list[Picture], picture_sources: dict[Picture, list[tuple[str, bool, int]]]
 ) -> List[List[RenderableType]]:
     pixelses: list[RenderableType] = []
     target_width = int((ctx.console.width - 3) / len(pictures))
@@ -27,11 +27,11 @@ def render_image_table(
     reference_image: numpy.ndarray[Any] | None = None
     reference_width = reference_height = 0
     for cover in pictures:
-        (filename, embedded) = picture_sources[cover][0]
+        (filename, embedded, embed_ix) = picture_sources[cover][0]
         path = ctx.config.library / album.path / filename
         if embedded:
             images = get_embedded_image_data(path)
-            image_data = images[cover.embed_ix]
+            image_data = images[embed_ix]
         else:
             with open(path, "rb") as f:
                 image_data = f.read()
@@ -54,6 +54,7 @@ def render_image_table(
                 if reference_image is not None:
                     if image.width != reference_width or image.height != reference_height:
                         caption += " [bold italic]aspect ratio doesn't match[/bold italic]"
+                        # TODO: if it's close, stretch and compare
                     else:
                         this_image = numpy.asarray(image)
                         rmse = sqrt(mean_squared_error(reference_image, this_image))

@@ -38,6 +38,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckEmbeddedPictureMetadata,
     CheckAlbumArt,
     CheckFrontCoverSelection,
+    # TODO check/fix to embed front cover in tracks that don't have it
     # pickier checks, may require correct tags
     CheckZeroPadNumbers,
     # non-tag related

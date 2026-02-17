@@ -53,7 +53,7 @@ class PictureType(IntEnum):
 
     @staticmethod
     def from_filename(filename: str):
-        if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "thumbnail"]):
+        if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "front", "thumbnail"]):
             return PictureType.COVER_FRONT
         return PictureType.OTHER
 

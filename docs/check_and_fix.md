@@ -407,6 +407,21 @@ Tracks may have any number of embedded images that are not marked as
 not match the expected cover art filenames above, will be treated as picture
 type `OTHER`.
 
+**Automatic fix**: If there are multiple cover images but one of them is a file
+that is larger than the other files and/or embedded images, mark that file as
+"front cover source" so that file will no longer count as a duplicate. This
+might not completely fix the check if there are more front cover images. The
+next automatic fix would delete the other image files identified as cover art:
+
+**Automatic fix**: If there are multiple image files (not embedded) recognized
+as front cover source by their filenames, and one of them has already been
+marked as "front cover source", delete the other front cover art image files.
+
+**Automatic fix**: If the album has no front cover art, but there is exactly one
+unique image (embedded and/or image file), make that image the cover art by
+renaming the image file to `cover.jpg`/`.png`/`.gif` **or** by extracting the
+embedded image from one of the tracks to `cover.jpg` or `.png`.
+
 <!-- pyml disable line-length -->
 
 | Option           | Default   | Description                                                    |

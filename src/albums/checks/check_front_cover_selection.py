@@ -1,8 +1,12 @@
 import logging
+import mimetypes
 from collections import defaultdict
-from typing import Any, Collection, Sequence
+from os import rename
+from typing import Any, Collection, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
+
+from albums.library.metadata import get_embedded_image_data
 
 from ..database import operations
 from ..interactive.image_table import render_image_table
@@ -14,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
 OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
+
+FRONT_COVER_FILENAME = "cover"
 
 
 class CheckFrontCoverSelection(Check):
@@ -36,11 +42,11 @@ class CheckFrontCoverSelection(Check):
         album_art.extend([(filename, False, [picture]) for filename, picture in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        picture_sources: defaultdict[Picture, list[tuple[str, bool]]] = defaultdict(list)
+        picture_sources: defaultdict[Picture, list[tuple[str, bool, int]]] = defaultdict(list)
         for filename, embedded, pictures in album_art:
             file_cover: Picture | None = None
             for picture in pictures:
-                picture_sources[picture].append((filename, embedded))
+                picture_sources[picture].append((filename, embedded, picture.embed_ix))
                 pictures_by_type[picture.picture_type].add(picture)
                 if picture.picture_type == PictureType.COVER_FRONT:
                     if file_cover is None:
@@ -53,14 +59,14 @@ class CheckFrontCoverSelection(Check):
         front_cover_image_files = list(
             pic
             for pic in sorted(front_covers, key=lambda pic: pic.file_size, reverse=True)
-            if any(not embedded for (_, embedded) in picture_sources[pic])
+            if any(not embedded for (_, embedded, _ix) in picture_sources[pic])
         )
-        cover_image_filenames = [[file for (file, embedded) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_files]
+        cover_image_filenames = [[file for (file, embedded, _) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_files]
         cover_source_ix = next((ix for ix, pic in enumerate(front_cover_image_files) if pic.front_cover_source), None)
         cover_source_filename = cover_image_filenames[cover_source_ix] if cover_source_ix is not None else None
 
         if self.unique and len(front_covers) > 1:
-            front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded) in picture_sources[pic]))
+            front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded, _ix) in picture_sources[pic]))
             cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
             table = (
                 cover_image_filenames + cover_embedded_desc,
@@ -117,8 +123,24 @@ class CheckFrontCoverSelection(Check):
 
         if not front_covers:
             if pictures_by_type:
-                # TODO: fixer to select one of the pictures as cover front and write it to "cover.jpg" (can embed in later step)
-                issues.add("album has pictures but none is COVER_FRONT picture")
+                pics = [k for k, _ in picture_sources.items()]
+                headers = [self._describe_album_art(pic, picture_sources) for pic in pics]
+                table = (headers, lambda: render_image_table(self.ctx, album, pics, picture_sources))
+                has_embedded = any(track.pictures for track in album.tracks)
+                option_automatic_index = 0 if len(headers) == 1 else None
+                message = f"album has pictures but none is COVER_FRONT picture{' (embedded)' if has_embedded else ''}"
+                return CheckResult(
+                    ProblemCategory.PICTURES,
+                    message,
+                    Fixer(
+                        lambda option: self._fix_set_cover(album, option, headers, pics, picture_sources),
+                        headers,
+                        False,
+                        option_automatic_index,
+                        table,
+                        "Select an image to be renamed or extracted to cover.jpg/cover.png/cover.gif",
+                    ),
+                )
             elif self.cover_required:
                 # TODO there are no pictures available, check cannot pass. someday [use external tool to] retrieve cover art?
                 issues.add("album does not have a COVER_FRONT picture or any other pictures to use")
@@ -130,10 +152,11 @@ class CheckFrontCoverSelection(Check):
         if issues:
             return CheckResult(ProblemCategory.PICTURES, ", ".join(list(issues)))
 
-    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool]]]):
+    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool, int]]]):
         sources = picture_sources[picture]
-        first_source = f"{escape(sources[0][0])}{f'#{picture.embed_ix}' if picture.embed_ix else ''}"
-        details = f"{picture.format}"
+        (filename, embedded, embed_ix) = sources[0]
+        first_source = f"{escape(filename)}{f'#{embed_ix}' if embedded else ''}"
+        details = f"{picture.format} {picture.picture_type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _source_image_file_candidate(self, image_files: Collection[Picture], embedded_images: Collection[Picture]):
@@ -154,3 +177,31 @@ class CheckFrontCoverSelection(Check):
             operations.update_picture_files(self.ctx.db, album.album_id, album.picture_files)
             return True
         raise ValueError(f"invalid option {option}")
+
+    def _fix_set_cover(
+        self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, List[Tuple[str, bool, int]]]
+    ):
+        ix = options.index(option)
+        pic = pics[ix]
+        file_sources = [filename for filename, embedded, _ in sources[pic] if not embedded]
+        if file_sources:
+            path = self.ctx.config.library / album.path / file_sources[0]
+            new_filename = f"{FRONT_COVER_FILENAME}{path.suffix}"
+            self.ctx.console.print(f"Renaming {file_sources[0]} to {new_filename}")
+            rename(path, self.ctx.config.library / album.path / new_filename)
+        else:
+            (filename, _, embed_ix) = sources[pic][0]
+            path = self.ctx.config.library / album.path / filename
+            images = get_embedded_image_data(path)
+            image_data = images[embed_ix]
+            suffix = mimetypes.guess_extension(pic.format)
+            new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
+            self.ctx.console.print(f"Creating {len(image_data)} byte {pic.format} file {new_filename}")
+            new_path = self.ctx.config.library / album.path / new_filename
+            if new_path.exists():
+                self.ctx.console.print(f"Error: the file {escape(str(new_path))} already exists (scan again)")
+                raise SystemExit(1)
+            with open(new_path, "wb") as f:
+                f.write(image_data)
+
+        return True
