@@ -1,5 +1,7 @@
 import io
 import mimetypes
+from copy import copy
+from typing import Dict, Tuple
 
 import xxhash
 from PIL import Image, UnidentifiedImageError
@@ -26,12 +28,24 @@ def get_image(image_data: bytes) -> tuple[ImageFile, str] | str:
         return "cannot identify image file" if "cannot identify image file" in exception_description else exception_description
 
 
-def get_picture_metadata(image_data: bytes, picture_type: PictureType):
+type PictureCache = Dict[Tuple[int, bytes], Picture]
+
+
+def get_picture_metadata(image_data: bytes, picture_type: PictureType, metadata_cache: PictureCache):
     file_size = len(image_data)
     xhash = xxhash.xxh32_digest(image_data)
+    key = (file_size, xhash)
+    if key in metadata_cache:
+        pic = copy(metadata_cache[key])
+        pic.picture_type = picture_type
+        return pic
+
     image_info = get_image(image_data)
     if isinstance(image_info, str):
-        return Picture(picture_type, "Unknown", 0, 0, file_size, xhash, "", {"error": image_info})
+        pic = Picture(picture_type, "Unknown", 0, 0, file_size, xhash, "", {"error": image_info})
     else:
         (image, mimetype) = image_info
-        return Picture(picture_type, mimetype, image.width, image.height, file_size, xhash)
+        pic = Picture(picture_type, mimetype, image.width, image.height, file_size, xhash)
+
+    metadata_cache[key] = pic
+    return pic

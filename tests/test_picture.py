@@ -1,6 +1,6 @@
 import xxhash
 
-from albums.library.picture import get_picture_metadata
+from albums.library.picture import PictureCache, get_picture_metadata
 from albums.types import Picture, PictureType
 
 from .fixtures.create_library import make_image_data
@@ -18,7 +18,7 @@ class TestPicture:
 
     def test_get_picture_metadata(self):
         image_data = make_image_data(400, 400, "PNG")
-        pic = get_picture_metadata(image_data, PictureType.ARTIST)
+        pic = get_picture_metadata(image_data, PictureType.ARTIST, {})
         assert pic.file_size == len(image_data)
         assert pic.format == "image/png"
         assert pic.height == pic.width == 400
@@ -26,9 +26,19 @@ class TestPicture:
 
     def test_get_picture_metadata_error(self):
         badfile = b"not an image file"
-        pic = get_picture_metadata(bytes(badfile), PictureType.ARTIST)
+        pic = get_picture_metadata(bytes(badfile), PictureType.ARTIST, {})
         assert pic.file_size == len(badfile)
         assert pic.format == "Unknown"
         assert pic.height == pic.width == 0
         assert pic.file_hash == xxhash.xxh32_digest(badfile)
         assert "cannot identify image file" in str(pic.load_issue["error"])
+
+    def test_get_picture_metadata_cache(self, mocker):
+        image_data = make_image_data(400, 400, "PNG")
+        cache: PictureCache = {}
+        get_image_mock = mocker.patch("albums.library.picture.get_image", return_value="test error")
+        pic1 = get_picture_metadata(image_data, PictureType.ARTIST, cache)
+        assert get_image_mock.call_count == 1
+        pic2 = get_picture_metadata(image_data, PictureType.ARTIST, cache)
+        assert get_image_mock.call_count == 1
+        assert pic1 == pic2

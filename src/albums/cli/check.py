@@ -10,7 +10,7 @@ from .scan import scan
 
 @click.command(
     help="report and sometimes fix issues in selected albums",
-    epilog=f"If CHECKS are provided, those checks (only) will be enabled. Valid CHECKS are: {', '.join(ALL_CHECK_NAMES)}",
+    epilog=f"If CHECKS are provided, those checks (only) will be enabled. Valid CHECKS are: {', '.join(sorted(ALL_CHECK_NAMES))}",
 )
 @click.option("--default", is_flag=True, help="use default settings for all checks, including whether they are enabled")
 @click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")

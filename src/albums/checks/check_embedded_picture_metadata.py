@@ -108,7 +108,7 @@ class CheckEmbeddedPictureMetadata(Check):
     def _re_embed_mp3(self, file: Path):
         mp3 = MP3(file)
         pics: list[tuple[Picture, bytes]] = []
-        for ix, (pic, image_data) in enumerate(get_id3_pictures(mp3.tags)):  # pyright: ignore[reportArgumentType, reportUnknownMemberType]
+        for ix, (pic, image_data) in enumerate(get_id3_pictures(mp3.tags, {})):  # pyright: ignore[reportArgumentType, reportUnknownMemberType]
             image_info = get_image(image_data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             if isinstance(image_info, str):
                 logger.error(f"failed to load ID3 picture #{ix} because: {image_info}")

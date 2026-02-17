@@ -8,7 +8,7 @@ import humanize
 from ..app import SCANNER_VERSION
 from ..types import Album, Picture, PictureType, Track
 from .metadata import PROCESSED_ID3_TAGS, get_metadata
-from .picture import get_picture_metadata
+from .picture import PictureCache, get_picture_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
 
     track_files: list[Path] = []
     picture_paths: list[Path] = []
+    picture_cache: PictureCache = {}
     for entry in album_path.iterdir():
         if entry.is_file():
             suffix = str.lower(entry.suffix)
@@ -46,8 +47,8 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
         found_tracks = [Track.from_path(file) for file in sorted(track_files)]
 
         if stored_album is None:
-            _load_track_metadata(scan_root, album_relpath, found_tracks)
-            picture_files = _load_picture_files(picture_paths)
+            _load_track_metadata(scan_root, album_relpath, found_tracks, picture_cache)
+            picture_files = _load_picture_files(picture_paths, picture_cache)
             return (Album(album_relpath, found_tracks, [], [], picture_files, None, SCANNER_VERSION), AlbumScanResult.NEW)
 
         tracks_modified = _track_files_modified(stored_album.tracks, found_tracks)
@@ -56,10 +57,10 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
         if reread or tracks_modified or missing_metadata or pictures_modified:
             album = copy(stored_album)
             if reread or tracks_modified or missing_metadata:
-                _load_track_metadata(scan_root, album_relpath, found_tracks)
+                _load_track_metadata(scan_root, album_relpath, found_tracks, picture_cache)
                 album.tracks = found_tracks
             if pictures_modified:
-                album.picture_files = _load_picture_files(picture_paths)
+                album.picture_files = _load_picture_files(picture_paths, picture_cache)
                 # preserve front_cover_source setting
                 for filename, picture in stored_album.picture_files.items():
                     if picture.front_cover_source:
@@ -72,10 +73,10 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
     return (None, AlbumScanResult.NO_TRACKS)
 
 
-def _load_picture_files(paths: list[Path]) -> dict[str, Picture]:
+def _load_picture_files(paths: list[Path], cache: PictureCache) -> dict[str, Picture]:
     picture_files: dict[str, Picture] = {}
     for path in paths:
-        picture = _picture_from_path(path)
+        picture = _picture_from_path(path, cache)
         if picture:
             picture_files[path.name] = picture
     return picture_files
@@ -92,10 +93,10 @@ def _picture_files_modified(picture_files: dict[str, Picture], picture_paths: li
     return False
 
 
-def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track]):
+def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track], picture_cache: PictureCache):
     for track in tracks:
         path = library_root / album_path / track.filename
-        file_info = get_metadata(path)
+        file_info = get_metadata(path, picture_cache)
         if file_info is None:
             logger.warning(f"couldn't load metadata for track {path}")
         else:
@@ -129,7 +130,7 @@ def _missing_metadata(album: Album):
     )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())
 
 
-def _picture_from_path(file: Path) -> Picture | None:
+def _picture_from_path(file: Path, cache: PictureCache) -> Picture | None:
     stat = file.stat()
     if stat.st_size > MAX_IMAGE_SIZE:
         logger.warning(
@@ -141,6 +142,6 @@ def _picture_from_path(file: Path) -> Picture | None:
     with open(file, "rb") as f:
         image_data = f.read()
     picture_type = PictureType.from_filename(file.name)
-    picture = get_picture_metadata(image_data, picture_type)  # may or may not load successfully
+    picture = get_picture_metadata(image_data, picture_type, cache)  # may or may not load successfully
     picture.modify_timestamp = int(stat.st_mtime)
     return picture
