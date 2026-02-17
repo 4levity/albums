@@ -345,14 +345,11 @@ available for other formats.
 
 ### album_art
 
-Images treated as COVER_FRONT should be square and within a range of acceptable
-sizes. Image files embedded in tracks should be a reasonable size and in a
+Image files embedded in tracks should be a reasonable size and in a
 widely-supported format.
 
 Rules:
 
-- The width/height of cover art should not be too small or large (see options)
-- Cover art should be square (see options)
 - **Embedded** images should not be very large files (see options)
 - **Embedded** images should be in PNG or JPEG format (not GIF or other)
 
@@ -362,12 +359,9 @@ Rules:
 
 <!-- pyml disable line-length -->
 
-| Option              | Default     | Description                                                                       |
-| ------------------- | ----------- | --------------------------------------------------------------------------------- |
-| `cover_min_pixels`  | **100**     | front cover art should be at least this width/height                              |
-| `cover_max_pixels`  | **2048**    | front cover art should not be larger than this width/height                       |
-| `cover_squareness`  | **0.98**    | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
-| `embedded_size_max` | **8388608** | embedded image data maximum size (not including container encoding)               |
+| Option              | Default     | Description                                                         |
+| ------------------- | ----------- | ------------------------------------------------------------------- |
+| `embedded_size_max` | **8388608** | embedded image data maximum size (not including container encoding) |
 
 <!-- pyml enable line-length -->
 
@@ -428,6 +422,30 @@ embedded image from one of the tracks to `cover.jpg` or `.png`.
 | ---------------- | --------- | -------------------------------------------------------------- |
 | `cover_required` | **false** | if **true** every album should have correct front cover art    |
 | `unique`         | **true**  | if **true** all front cover art should be the exact same image |
+
+<!-- pyml enable line-length -->
+
+### front_cover_dimensions
+
+Images treated as COVER_FRONT should be square and within a range of acceptable
+sizes.
+
+Rules:
+
+- The width/height of cover art should not be too small or large (see options)
+- Cover art should be square (see options)
+
+!!!note
+
+    Requires the `front_cover_selection` check to pass first.
+
+<!-- pyml disable line-length -->
+
+| Option       | Default  | Description                                                                       |
+| ------------ | -------- | --------------------------------------------------------------------------------- |
+| `min_pixels` | **100**  | front cover art should be at least this width/height                              |
+| `max_pixels` | **2048** | front cover art should not be larger than this width/height                       |
+| `squareness` | **0.98** | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
 
 <!-- pyml enable line-length -->
 
