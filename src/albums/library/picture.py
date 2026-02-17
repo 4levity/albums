@@ -13,6 +13,7 @@ IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I
 def get_image(image_data: bytes) -> tuple[ImageFile, str] | str:
     try:
         image = Image.open(io.BytesIO(image_data))
+        image.load()
         mimetype: str | None = None
         if image.format:
             mimetype, _ = mimetypes.guess_type(f"_.{image.format}")
@@ -20,7 +21,7 @@ def get_image(image_data: bytes) -> tuple[ImageFile, str] | str:
             # we don't use container-specified MIME type except to note if it is wrong
             return f"couldn't guess MIME type for image format {image.format}"
         return (image, mimetype)
-    except UnidentifiedImageError as ex:
+    except (IOError, OSError, UnidentifiedImageError, Image.DecompressionBombError) as ex:
         exception_description = repr(ex)
         return "cannot identify image file" if "cannot identify image file" in exception_description else exception_description
 
