@@ -1,11 +1,15 @@
 import base64
+import io
 import logging
+import mimetypes
 import textwrap
+from copy import copy
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Generator, Iterable, Sequence, Tuple
+from typing import Any, Dict, Generator, Iterable, Sequence, Tuple
 
 import mutagen
+import xxhash
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from mutagen.id3 import ID3
@@ -13,11 +17,14 @@ from mutagen.id3._frames import APIC, TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 from mutagen.oggvorbis import OggVorbis
+from PIL import Image, UnidentifiedImageError
 
 from ..types import Album, Picture, PictureType, Stream
-from .picture import PictureCache, get_picture_metadata
+
+type PictureCache = Dict[Tuple[int, bytes], Picture]
 
 logger = logging.getLogger(__name__)
+
 BASIC_TAGS = {"artist", "album", "title", "albumartist", "tracknumber", "tracktotal", "discnumber", "disctotal"}
 BASIC_TO_ID3 = {
     "artist": "tpe1",
@@ -345,6 +352,26 @@ def _get_flac_pictures(flac_pictures: list[FlacPicture], cache: PictureCache) ->
         yield (_flac_picture_to_picture(embed_ix, picture, cache), image_data)
 
 
+def get_picture_metadata(image_data: bytes, picture_type: PictureType, metadata_cache: PictureCache):
+    file_size = len(image_data)
+    xhash = xxhash.xxh32_digest(image_data)
+    key = (file_size, xhash)
+    if key in metadata_cache:
+        pic = copy(metadata_cache[key])
+        pic.picture_type = picture_type
+        return pic
+
+    image_info = get_image(image_data)
+    if isinstance(image_info, str):
+        pic = Picture(picture_type, "Unknown", 0, 0, file_size, xhash, "", {"error": image_info})
+    else:
+        (image, mimetype) = image_info
+        pic = Picture(picture_type, mimetype, image.width, image.height, file_size, xhash)
+
+    metadata_cache[key] = pic
+    return pic
+
+
 def _flac_picture_to_picture(embed_ix: int, flac_picture: FlacPicture, cache: PictureCache):
     picture_type = PictureType(flac_picture.type)
     image_data: bytes = flac_picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
@@ -506,3 +533,37 @@ def add_id3_pictures(tags: ID3, pictures: Iterable[Tuple[Picture, bytes]]):
 
 def flac_picture_to_vorbis_comment_value(flac_picture: FlacPicture) -> str:
     return base64.b64encode(flac_picture.write()).decode("ascii")
+
+
+def get_image(image_data: bytes) -> tuple[Image.Image, str] | str:
+    try:
+        image = Image.open(io.BytesIO(image_data))
+        image.load()
+        mimetype: str | None = None
+        if image.format:
+            mimetype, _ = mimetypes.guess_type(f"_.{image.format}")
+        if not mimetype:
+            # we don't use container-specified MIME type except to note if it is wrong
+            return f"couldn't guess MIME type for image format {image.format}"
+        return (image, mimetype)
+    except (IOError, OSError, UnidentifiedImageError, Image.DecompressionBombError) as ex:
+        exception_description = repr(ex)
+        return "cannot identify image file" if "cannot identify image file" in exception_description else exception_description
+
+
+def read_image(path: Path, embedded: bool, embed_ix: int) -> Tuple[Image.Image, bytes] | None:
+    if embedded:
+        images = get_embedded_image_data(path)
+        image_data = images[embed_ix]
+    else:
+        with open(path, "rb") as f:
+            image_data = f.read()
+    try:
+        image = Image.open(io.BytesIO(image_data))
+    except UnidentifiedImageError as ex:
+        logger.error(f"failed to read image {str(path)}: {repr(ex)}")
+        image = None
+    return (image, image_data) if image else None
+
+
+IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}

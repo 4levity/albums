@@ -435,17 +435,30 @@ Rules:
 - The width/height of cover art should not be too small or large (see options)
 - Cover art should be square (see options)
 
+**Automatic fix**: If there is a front cover image (embedded or in a file) and
+it is not as square as the `squareness` setting but more square than the
+`fixable_squareness` setting, fix it by cropping first (see options), and if
+necessary squashing it the rest of the way. The new square cover image will be
+saved as a PNG file and marked as "front cover source" for the album. If the
+source was a file, it will be deleted.
+
+If embedded front cover images are present they are not changed by this fix. The
+new cover image file is set as "front cover source" so it can be used to fix
+embedded images in a subsequent check.
+
 !!!note
 
     Requires the `front_cover_selection` check to pass first.
 
 <!-- pyml disable line-length -->
 
-| Option       | Default  | Description                                                                       |
-| ------------ | -------- | --------------------------------------------------------------------------------- |
-| `min_pixels` | **100**  | front cover art should be at least this width/height                              |
-| `max_pixels` | **2048** | front cover art should not be larger than this width/height                       |
-| `squareness` | **0.98** | cover art minimum width/height ratio - **1** for exactly square, **0** to disable |
+| Option               | Default  | Description                                                                        |
+| -------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `min_pixels`         | **100**  | front cover art should be at least this width/height                               |
+| `max_pixels`         | **2048** | front cover art should not be larger than this width/height                        |
+| `squareness`         | **0.98** | cover art minimum width/height ratio - **1** for exactly square, **0** to disable  |
+| `fixable_squareness` | **0.8**  | if image is at least this square, offer automatic fix with crop + squash           |
+| `max_crop`           | **0.03** | crop at most this much of the image (0.03 = lose max 1.5% of image from two sides) |
 
 <!-- pyml enable line-length -->
 

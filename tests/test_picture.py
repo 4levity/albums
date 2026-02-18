@@ -1,6 +1,6 @@
 import xxhash
 
-from albums.library.picture import PictureCache, get_picture_metadata
+from albums.library.metadata import PictureCache, get_picture_metadata
 from albums.types import Picture, PictureType
 
 from .fixtures.create_library import make_image_data
@@ -36,7 +36,7 @@ class TestPicture:
     def test_get_picture_metadata_cache(self, mocker):
         image_data = make_image_data(400, 400, "PNG")
         cache: PictureCache = {}
-        get_image_mock = mocker.patch("albums.library.picture.get_image", return_value="test error")
+        get_image_mock = mocker.patch("albums.library.metadata.get_image", return_value="test error")
         pic1 = get_picture_metadata(image_data, PictureType.ARTIST, cache)
         assert get_image_mock.call_count == 1
         pic2 = get_picture_metadata(image_data, PictureType.ARTIST, cache)

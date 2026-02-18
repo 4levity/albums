@@ -7,8 +7,7 @@ import humanize
 
 from ..app import SCANNER_VERSION
 from ..types import Album, Picture, PictureType, Track
-from .metadata import PROCESSED_ID3_TAGS, get_metadata
-from .picture import PictureCache, get_picture_metadata
+from .metadata import PROCESSED_ID3_TAGS, PictureCache, get_metadata, get_picture_metadata
 
 logger = logging.getLogger(__name__)
 

@@ -5,12 +5,11 @@ from typing import List
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
-from PIL.ImageFile import ImageFile
+from PIL.Image import Image
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ..library.metadata import add_id3_pictures, get_id3_pictures
-from ..library.picture import IMAGE_MODE_BPP, get_image
+from ..library.metadata import IMAGE_MODE_BPP, add_id3_pictures, get_id3_pictures, get_image
 from ..types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from .base_check import Check
 
@@ -80,7 +79,7 @@ class CheckEmbeddedPictureMetadata(Check):
 
     def _re_embed_flac(self, file: Path):
         flac = FLAC(file)
-        pics: list[tuple[PictureType, bytes, ImageFile, str]] = []
+        pics: list[tuple[PictureType, bytes, Image, str]] = []
         flac_pictures: list[FlacPicture] = flac.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         for ix, pic in enumerate(flac_pictures):
             image_info = get_image(pic.data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
