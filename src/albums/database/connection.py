@@ -20,19 +20,23 @@ def open(filename: str | Path):
     new_database = filename == MEMORY or not Path(filename).exists()
 
     db = sqlite3.connect(filename, autocommit=True)
-    db.executescript(SQL_INIT_CONNECTION)
-    db.autocommit = False
+    try:
+        db.executescript(SQL_INIT_CONNECTION)
+        db.autocommit = False
 
-    if new_database:
-        print(f"creating database {filename}")
+        if new_database:
+            print(f"creating database {filename}")
+            with db:
+                db.executescript(SQL_INIT_SCHEMA)
+
+        migrate(db)
         with db:
-            db.executescript(SQL_INIT_SCHEMA)
+            db.executescript(SQL_CLEANUP)
 
-    migrate(db)
-    with db:
-        db.executescript(SQL_CLEANUP)
-
-    return db
+        return db
+    except Exception as ex:
+        db.close()
+        raise ex
 
 
 def close(db: sqlite3.Connection):

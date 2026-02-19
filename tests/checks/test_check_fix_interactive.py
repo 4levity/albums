@@ -1,3 +1,4 @@
+import contextlib
 import os
 from typing import List, Tuple
 
@@ -39,21 +40,20 @@ class TestCheckFixInteractive:
     def test_fix_ignore_check(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
-        album_id = operations.add(ctx.db, album)
+        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+            album_id = operations.add(ctx.db, album)
 
-        fixer = MockFixer(ctx, album)
-        mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_IGNORE_CHECK)
-        mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
+            fixer = MockFixer(ctx, album)
+            mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_IGNORE_CHECK)
+            mock_ask = mocker.patch.object(rich.prompt.Confirm, "ask", return_value=True)
 
-        (changed, quit) = interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
-        assert not changed
-        assert quit
-        assert mock_choice.call_count == 1
-        assert mock_ask.call_count == 1
-        assert mock_ask.call_args.args[0] == ('Do you want to ignore the check "album_tag" for this album in the future?')
+            (changed, quit) = interact(ctx, "album_tag", CheckResult(ProblemCategory.TAGS, "hello", fixer), album)
+            assert not changed
+            assert quit
+            assert mock_choice.call_count == 1
+            assert mock_ask.call_count == 1
+            assert mock_ask.call_args.args[0] == ('Do you want to ignore the check "album_tag" for this album in the future?')
 
-        rows = ctx.db.execute("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = ?", (album_id,)).fetchall()
-        assert len(rows) == 1
-        assert rows[0][0] == 1
-        ctx.db.close()
+            rows = ctx.db.execute("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = ?", (album_id,)).fetchall()
+            assert len(rows) == 1
+            assert rows[0][0] == 1
