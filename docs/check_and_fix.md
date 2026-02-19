@@ -427,24 +427,25 @@ embedded image from one of the tracks to `cover.jpg` or `.png`.
 
 ### front_cover_dimensions
 
-Images treated as COVER_FRONT should be square and within a range of acceptable
-sizes.
+Images treated as picture type COVER_FRONT should be square and within a range
+of acceptable sizes.
 
 Rules:
 
+- If an image is marked as front cover source, only that image is evaluated.
+  Using the front cover source to fix embedded images is a separate task.
 - The width/height of cover art should not be too small or large (see options)
 - Cover art should be square (see options)
 
-**Automatic fix**: If there is a front cover image (embedded or in a file) and
-it is not as square as the `squareness` setting but more square than the
+**Automatic fix**: If the front cover image (embedded or in a file) is not as
+square as the `squareness` setting but at least as square as the
 `fixable_squareness` setting, fix it by cropping first (see options), and if
 necessary squashing it the rest of the way. The new square cover image will be
 saved as a PNG file and marked as "front cover source" for the album. If the
-source was a file, it will be deleted.
+unsquare source was an image file, it will be deleted.
 
-If embedded front cover images are present they are not changed by this fix. The
-new cover image file is set as "front cover source" so it can be used to fix
-embedded images in a subsequent check.
+If embedded front cover images are present they are **not** changed by this fix.
+The new cover image file is set as "front cover source".
 
 !!!note
 

@@ -11,14 +11,12 @@ from ..interactive.image_table import render_image_table
 from ..library.metadata import get_embedded_image_data
 from ..types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from .base_check import Check
-from .helpers import delete_files_except
+from .helpers import FRONT_COVER_FILENAME, delete_files_except
 
 logger = logging.getLogger(__name__)
 
 OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
 OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
-
-FRONT_COVER_FILENAME = "cover"
 
 
 class CheckFrontCoverSelection(Check):
@@ -143,10 +141,6 @@ class CheckFrontCoverSelection(Check):
             elif self.cover_required:
                 # TODO there are no pictures available, check cannot pass. someday [use external tool to] retrieve cover art?
                 issues.add("album does not have a COVER_FRONT picture or any other pictures to use")
-
-        # TODO move to later front-cover-embedding check
-        if front_covers and tracks_with_cover and tracks_with_cover != len(album.tracks):
-            issues.add("some tracks have COVER_FRONT and some do not")
 
         if issues:
             return CheckResult(ProblemCategory.PICTURES, ", ".join(list(issues)))

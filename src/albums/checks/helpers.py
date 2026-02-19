@@ -108,3 +108,6 @@ def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, f
             unlink(path)
             changed = True
     return changed
+
+
+FRONT_COVER_FILENAME = "cover"

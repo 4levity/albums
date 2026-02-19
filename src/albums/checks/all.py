@@ -10,6 +10,7 @@ from .check_disc_numbering import CheckDiscNumbering
 from .check_duplicate_image import CheckDuplicateImage
 from .check_embedded_picture_metadata import CheckEmbeddedPictureMetadata
 from .check_front_cover_dimensions import CheckFrontCoverDimensions
+from .check_front_cover_embedded import CheckFrontCoverEmbedded
 from .check_front_cover_selection import CheckFrontCoverSelection
 from .check_invalid_image import CheckInvalidImage
 from .check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
@@ -40,6 +41,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckAlbumArt,
     CheckFrontCoverSelection,
     CheckFrontCoverDimensions,
+    CheckFrontCoverEmbedded,
     # TODO check/fix to embed front cover in tracks that don't have it
     # pickier checks, may require correct tags
     CheckZeroPadNumbers,
