@@ -63,7 +63,8 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
                 # preserve front_cover_source setting
                 for filename, picture in stored_album.picture_files.items():
                     if picture.front_cover_source:
-                        album.picture_files[filename].front_cover_source = True
+                        if filename in album.picture_files:
+                            album.picture_files[filename].front_cover_source = True
                         break
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
             # TODO if option reread=True and there were no changes, return UNCHANGED instead

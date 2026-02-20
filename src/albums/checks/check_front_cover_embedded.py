@@ -47,17 +47,21 @@ class CheckFrontCoverEmbedded(Check):
         # depends on duplicate_image, which ensures there is only one COVER_FRONT embedded per track
         track_covers = [next(((t.filename, p) for p in t.pictures if p.picture_type == PictureType.COVER_FRONT), None) for t in album.tracks]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
+        missing = sum(0 if c else 1 for c in track_covers)
 
         if front_cover_source:
             (cover_source_filename, cover_source_picture) = front_cover_source
             (expect_w, expect_h) = self._embedded_image_spec(cover_source_picture)
             all_as_expected = all(c and (c[1].width, c[1].height, c[1].format) == (expect_w, expect_h, self.create_mime_type) for c in track_covers)
             if not all_as_expected:
+                not_expected_size = sum(0 if not c or c and (c[1].width, c[1].height) == (expect_w, expect_h) else 1 for c in track_covers)
+                not_expected_format = sum(0 if not c or c and c[1].format == self.create_mime_type else 1 for c in track_covers)
+                problem_summary = f"{not_expected_size} tracks with unexpected dimensions and {not_expected_format} tracks with unexpected MIME type"
                 if len(unique_track_covers) > 1:
                     # TODO we could offer a non-automatic fix if user wants to overwrite non-unique covers
                     return CheckResult(
                         ProblemCategory.PICTURES,
-                        f"more than one unique embedded cover image, and images are not {expect_w} x {expect_h} {self.create_mime_type} as expected",
+                        f"{problem_summary}, but more than one unique embedded cover image, and images are not {expect_w} x {expect_h} {self.create_mime_type} as expected",
                     )
 
                 track_cover = next(filter(None, track_covers), None)
@@ -81,7 +85,7 @@ class CheckFrontCoverEmbedded(Check):
                 option_automatic_index = 0
                 return CheckResult(
                     ProblemCategory.PICTURES,
-                    "tracks did not have expected embedded cover art, can re-embed from front cover source",
+                    f"{problem_summary}, can re-embed from front cover source",
                     Fixer(
                         lambda _: self._fix_embed_cover_in_all_tracks(album, cover_source_filename, cover_source_picture, False),
                         options,
@@ -103,7 +107,6 @@ class CheckFrontCoverEmbedded(Check):
 
         all_good_enough = all(c and good_enough(c[1]) for c in track_covers)
         if not all_good_enough:
-            missing = sum(0 if c else 1 for c in track_covers)
             not_good_enough = sum(0 if not c or c and good_enough(c[1]) else 1 for c in track_covers)
             problem_summary = f"{missing} tracks with no cover and {not_good_enough} tracks with out of spec covers"
             cover_files = [(filename, pic) for filename, pic in album.picture_files.items() if pic.picture_type == PictureType.COVER_FRONT]
@@ -155,13 +158,9 @@ class CheckFrontCoverEmbedded(Check):
             raise RuntimeError(f"failed to read cover image source file {str(path)}")
         (source_image, _) = source
         source_image.load()  # fail here if not loadable
-        if source_image.format:
-            source_mimetype, _ = mimetypes.guess_type(f"_.{source_image.format}")
-        else:
-            raise RuntimeError(f"failed to guess MIME type of image in {str(path)} (format={source_image.format})")
         (new_w, new_h) = self._embedded_image_spec(source_picture)
         new_format = self.create_mime_type
-        if source_image.width == new_w and source_image.height == new_h and source_mimetype == new_format:
+        if source_image.width == new_w and source_image.height == new_h and source_picture.format == new_format:
             return source
         source_image.thumbnail((self.create_max_height_width, self.create_max_height_width), Resampling.LANCZOS)
         buffer = io.BytesIO()
@@ -208,10 +207,10 @@ class CheckFrontCoverEmbedded(Check):
         suffix = mimetypes.guess_extension(cover.format)
         new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
         self.ctx.console.print(f"Extract to cover source: {new_filename}")
-        with open(new_filename, "wb") as f:
+        with open(self.ctx.config.library / album.path / new_filename, "wb") as f:
             f.write(image_data)
         # create a record of the new image so it can be marked front_cover_source (details will be filled in when album is rescanned)
-        album.picture_files[new_filename] = Picture(PictureType.COVER_FRONT, cover.format, 0, 0, 0, b"")
+        album.picture_files[new_filename] = Picture(PictureType.COVER_FRONT, cover.format, 0, 0, 0, b"", "", None, 0)
         return self._fix_mark_cover_source(album, new_filename)
 
     def _get_table_rows(
