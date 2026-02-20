@@ -23,6 +23,8 @@ from .tags.check_track_title import CheckTrackTitle
 
 # enabled checks will run on an album in this order:
 ALL_CHECKS: tuple[type[Check], ...] = (
+    # path checks 1
+    CheckBadPathname,
     # numbering checks
     CheckDiscInTrackNumber,
     CheckInvalidTrackOrDiscNumber,
@@ -44,8 +46,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckCoverSelection,
     CheckCoverDimensions,
     CheckCoverEmbedded,
-    # path checks
-    CheckBadPathname,
+    # path checks 2
     CheckCoverFilename,
     CheckAlbumUnderAlbum,
 )
