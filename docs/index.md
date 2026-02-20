@@ -44,4 +44,4 @@ More specifically, here are some of the actual risks:
   bugs in Mutagen.
 - Might make corrupt copies of albums if there are bugs in the sync code.
 - Might create a vector for malware living in media file metadata to attack your
-  computer via hypothetical vulnerabilities in Mutagen.
+  computer via hypothetical vulnerabilities in libraries or your OS.

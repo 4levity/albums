@@ -15,8 +15,8 @@ unintended results. If it goes very badly, simply restore your backup.
 !!!note
 
     Check configuration is stored in the `albums` database. Every check may be
-    enabled or disabled. Some checks have other settings, described in (All
-    Checks)[./all_checks.md]. To enable, disable or configure checks, run
+    enabled or disabled. Some checks have other settings, described in
+    [All Checks](./all_checks.md). To enable, disable or configure checks, run
     `albums config`.
 
 ## Check Command
