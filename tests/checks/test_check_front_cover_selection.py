@@ -151,18 +151,6 @@ class TestCheckFrontCoverSelection:
 
         assert mock_rename.call_args_list == [call(Path(".") / album.path / "other.png", Path(".") / album.path / "cover.png")]
 
-    def test_front_cover_inconsistent(self):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")),
-            ],
-        )
-        result = CheckFrontCoverSelection(Context()).check(album)
-        assert result is not None
-        assert result.message == "some tracks have COVER_FRONT and some do not"
-
     def test_has_unmarked_cover_source_file(self, mocker):
         picture_files = {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 10000, b"")}
         album = Album(

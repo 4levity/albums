@@ -8,6 +8,8 @@ from rich.markup import escape
 from ..app import Context
 from ..types import Album, Track
 
+FRONT_COVER_FILENAME = "cover"
+
 
 def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
     """

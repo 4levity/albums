@@ -32,8 +32,14 @@ class CheckFrontCoverDimensions(Check):
         self.min_pixels = int(check_config.get("min_pixels", CheckFrontCoverDimensions.default_config["min_pixels"]))
         self.max_pixels = int(check_config.get("max_pixels", CheckFrontCoverDimensions.default_config["max_pixels"]))
         self.squareness = float(check_config.get("squareness", CheckFrontCoverDimensions.default_config["squareness"]))
+        if self.squareness > 1:
+            raise ValueError("front_cover_dimensions.squareness must be between 0 and 1")
         self.fixable_squareness = float(check_config.get("fixable_squareness", CheckFrontCoverDimensions.default_config["fixable_squareness"]))
+        if self.fixable_squareness > 1:
+            raise ValueError("front_cover_dimensions.fixable_squareness must be between 0 and 1")
         self.max_crop = float(check_config.get("max_crop", CheckFrontCoverDimensions.default_config["max_crop"]))
+        if self.max_crop > 1:
+            raise ValueError("front_cover_dimensions.max_crop must be between 0 and 1")
 
     def check(self, album: Album) -> CheckResult | None:
         issues: set[str] = set()
@@ -161,6 +167,8 @@ class CheckFrontCoverDimensions(Check):
         if not loaded_image:
             raise RuntimeError(f"failed to read image {str(path)}{f'#{pic.embed_ix}' if embedded else ''}")
         (image, _) = loaded_image
+        if image.mode not in {"RGB", "L"}:
+            image = image.convert("RGB")
         if image.width < image.height:
             target_width = image.width
             target_height = image.width
