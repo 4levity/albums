@@ -553,6 +553,25 @@ They are:
 | --------------- | ------------- | -------------------------------------- |
 | `compatibility` | `"universal"` | Configure what is allowed in filenames |
 
+### cover_filename
+
+If the front cover image is in a file with a recognizable name, it should have a
+consistent name. For example, `albums` recognizes `.folder.png` and
+`AlbumArtSmall.jpg` and other variations as front cover images. This check flags
+if one of those files exists, but the "standard" cover image file does not.
+
+**Automatic fix**: If there is exactly one front cover file, rename or convert
+it according to the options.
+
+<!-- pyml disable line-length -->
+
+| Option         | Default     | Description                                                                  |
+| -------------- | ----------- | ---------------------------------------------------------------------------- |
+| `filename`     | `"cover.*"` | Cover file. `.*` = keep same file type, `.png` or `.jpg` = convert if needed |
+| `jpeg_quality` | **90**      | If converting to JPEG, use this quality setting                              |
+
+<!-- pyml enable line-length -->
+
 ### album_under_album
 
 This check reports when an album has another album in a subfolder. Maybe they

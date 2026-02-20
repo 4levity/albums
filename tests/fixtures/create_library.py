@@ -17,6 +17,7 @@ from albums.library.metadata import (
     TagType,
     add_id3_pictures,
     flac_picture_to_vorbis_comment_value,
+    mime_to_pillow_format,
     set_basic_tags_file,
 )
 from albums.types import Album, Picture, Track
@@ -24,7 +25,6 @@ from albums.types import Album, Picture, Track
 from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_OGG_VORBIS_FILE_BYTES, EMPTY_WMA_FILE_BYTES
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
-MIME_PILLOW_FORMAT = {"image/gif": "GIF", "image/jpeg": "JPEG", "image/png": "PNG"}
 
 
 def create_track_file(path: Path, spec: Track):
@@ -70,7 +70,7 @@ def add_generated_id3_pictures(mp3: MP3, pictures: Iterable[Picture]):
         [
             (
                 pic,
-                make_image_data(pic.width, pic.height, MIME_PILLOW_FORMAT.get(pic.format, "PNG")),
+                make_image_data(pic.width, pic.height, mime_to_pillow_format(pic.format, "PNG")),
             )
             for pic in pictures
         ],
@@ -98,7 +98,7 @@ def _add_flac_pictures_to_vorbis_comments(tags: VCommentDict, flac_pictures: Ite
 
 def _make_flac_picture(picture: Picture) -> FlacPicture:
     pic = FlacPicture()
-    pic.data = make_image_data(picture.width, picture.height, MIME_PILLOW_FORMAT.get(picture.format, "PNG"))
+    pic.data = make_image_data(picture.width, picture.height, mime_to_pillow_format(picture.format, "PNG"))
     pic.type = picture.picture_type  # other spec properites ignored
     pic.mime = "image/png"
     pic.width = 400

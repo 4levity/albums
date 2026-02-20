@@ -8,7 +8,7 @@ from rich.console import RenderableType
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
-from ...library.metadata import add_embedded_image, read_image, replace_embedded_image
+from ...library.metadata import add_embedded_image, mime_to_pillow_format, read_image, replace_embedded_image
 from ...types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
@@ -164,7 +164,7 @@ class CheckCoverEmbedded(Check):
             return source
         source_image.thumbnail((self.create_max_height_width, self.create_max_height_width), Resampling.LANCZOS)
         buffer = io.BytesIO()
-        format = {"image/jpeg": "JPEG", "image/png": "PNG"}[self.create_mime_type]
+        format = mime_to_pillow_format(self.create_mime_type)
         source_image.save(buffer, format, quality=self.create_jpeg_quality)
         return (source_image, buffer.getvalue())
 

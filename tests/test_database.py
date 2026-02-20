@@ -9,7 +9,7 @@ import pytest
 from albums.database import connection, operations, schema, selector
 from albums.types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
-embedded_cover = Picture(PictureType.COVER_FRONT, "image/jpg", 200, 200, 1024, b"1234", "", {"format": "image/png"}, None, 0)
+embedded_cover = Picture(PictureType.COVER_FRONT, "image/jpeg", 200, 200, 1024, b"1234", "", {"format": "image/png"}, None, 0)
 track = Track("1.flac", {"artist": ["Bar"]}, 0, 0, Stream(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
 folder_jpg = {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 4096, b"1234", "", None, 999, 0, True)}
 album = Album("foo" + os.sep, [track], ["test"], ["artist_tag"], folder_jpg, None, 3)

@@ -37,6 +37,7 @@ BASIC_TO_ID3 = {
     "date": "tdrc",  # maybe this should be recordingdate
 }  # TRCK and TPOS too but they are not 1:1
 PROCESSED_ID3_TAGS = set(list(BASIC_TO_ID3.values()) + ["trck", "tpos", "apic", "covr"])
+IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
 
 
 class TagType(Enum):
@@ -613,4 +614,6 @@ def read_image(path: Path, embedded: bool, embed_ix: int) -> Tuple[Image.Image, 
     return (image, image_data) if image else None
 
 
-IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
+def mime_to_pillow_format(mime_type: str, default: str = "PNG"):
+    MIME_PILLOW_FORMAT = {"image/gif": "GIF", "image/jpeg": "JPEG", "image/png": "PNG"}
+    return str(MIME_PILLOW_FORMAT.get(mime_type, default))
