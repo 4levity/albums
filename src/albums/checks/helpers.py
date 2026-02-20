@@ -8,6 +8,8 @@ from rich.markup import escape
 from ..app import Context
 from ..types import Album, Track
 
+FRONT_COVER_FILENAME = "cover"
+
 
 def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
     """
@@ -108,6 +110,3 @@ def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, f
             unlink(path)
             changed = True
     return changed
-
-
-FRONT_COVER_FILENAME = "cover"
