@@ -16,8 +16,8 @@ from .helpers import FRONT_COVER_FILENAME
 logger = logging.getLogger(__name__)
 
 
-class CheckFrontCoverEmbedded(Check):
-    name = "front_cover_embedded"
+class CheckCoverEmbedded(Check):
+    name = "cover_embedded"
     default_config = {
         "enabled": True,
         "max_height_width": 1000,
@@ -26,31 +26,31 @@ class CheckFrontCoverEmbedded(Check):
         "create_max_height_width": 600,
         "create_jpeg_quality": 80,
     }
-    must_pass_checks = {"duplicate_image"}  # front_cover_selection with unique=True is recommended but not required
+    must_pass_checks = {"duplicate_image"}  # cover_selection with unique=True is recommended but not required
 
     def init(self, check_config: dict[str, Any]):
-        defaults = CheckFrontCoverEmbedded.default_config
+        defaults = CheckCoverEmbedded.default_config
         self.max_height_width = int(check_config.get("max_height_width", defaults["max_height_width"]))
         self.require_mime_type = str(check_config.get("require_mime_type", defaults["require_mime_type"]))
         if self.require_mime_type not in {"", "image/jpeg", "image/png"}:
-            raise ValueError("front_cover_embedded.require_mime_type must be either blank, image/jpeg or image/png")
+            raise ValueError("cover_embedded.require_mime_type must be either blank, image/jpeg or image/png")
         self.create_mime_type = str(check_config.get("create_mime_type", defaults["create_mime_type"]))
         if self.create_mime_type not in {"image/jpeg", "image/png"}:
-            raise ValueError("front_cover_embedded.create_mime_type must be either image/jpeg or image/png")
+            raise ValueError("cover_embedded.create_mime_type must be either image/jpeg or image/png")
         self.create_max_height_width = int(check_config.get("create_max_height_width", defaults["create_max_height_width"]))
         self.create_jpeg_quality = int(check_config.get("create_jpeg_quality", defaults["create_jpeg_quality"]))
         if self.create_jpeg_quality < 1 or self.create_jpeg_quality > 95:
-            raise ValueError("front_cover_embedded.create_jpeg_quality must be between 1 and 95")
+            raise ValueError("cover_embedded.create_jpeg_quality must be between 1 and 95")
 
     def check(self, album: Album) -> CheckResult | None:
-        front_cover_source = next(((filename, pic) for filename, pic in album.picture_files.items() if pic.front_cover_source), None)
+        cover_source = next(((filename, pic) for filename, pic in album.picture_files.items() if pic.cover_source), None)
         # depends on duplicate_image, which ensures there is only one COVER_FRONT embedded per track
         track_covers = [next(((t.filename, p) for p in t.pictures if p.picture_type == PictureType.COVER_FRONT), None) for t in album.tracks]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
         missing = sum(0 if c else 1 for c in track_covers)
 
-        if front_cover_source:
-            (cover_source_filename, cover_source_picture) = front_cover_source
+        if cover_source:
+            (cover_source_filename, cover_source_picture) = cover_source
             (expect_w, expect_h) = self._embedded_image_spec(cover_source_picture)
             all_as_expected = all(c and (c[1].width, c[1].height, c[1].format) == (expect_w, expect_h, self.create_mime_type) for c in track_covers)
             if not all_as_expected:
@@ -97,7 +97,7 @@ class CheckFrontCoverEmbedded(Check):
             # else: all done
             return None
 
-        # else: there is no front_cover_source marked
+        # else: there is no cover_source marked
         def good_enough(cover: Picture):
             return (
                 (cover.format == self.require_mime_type or not self.require_mime_type)
@@ -115,11 +115,11 @@ class CheckFrontCoverEmbedded(Check):
             if len(unique_covers) > 1:
                 return CheckResult(
                     ProblemCategory.PICTURES,
-                    f'{problem_summary}, but there are {len(unique_covers)} unique front covers and no front_cover_source (enable front_cover_selection "unique" for fixes)',
+                    f'{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover_selection "unique" for fixes)',
                 )
             # else
             if len(unique_covers) == 1:
-                # there is one unique cover. if we just mark it as front_cover_source, embedded images can be automatically fixed on recheck
+                # there is one unique cover. if we just mark it as cover_source, embedded images can be automatically fixed on recheck
                 cover = next(iter(unique_covers))
                 if cover_files:  # mark existing file as cover source
                     (filename, _) = cover_files[0]
@@ -128,7 +128,7 @@ class CheckFrontCoverEmbedded(Check):
                     table = ([filename], lambda: render_image_table(self.ctx, album, [cover], {cover: [(filename, False, 0)]}))
                     return CheckResult(
                         ProblemCategory.PICTURES,
-                        f"{problem_summary}, but the file {filename} can be marked as front_cover_source (afterwards, a recheck can fix tracks)",
+                        f"{problem_summary}, but the file {filename} can be marked as cover_source (afterwards, a recheck can fix tracks)",
                         Fixer(lambda _: self._fix_mark_cover_source(album, filename), options, False, option_automatic_index, table),
                     )
                 # else
@@ -139,11 +139,11 @@ class CheckFrontCoverEmbedded(Check):
                 table = (["Embedded Cover"], lambda: render_image_table(self.ctx, album, [cover], {cover: [(filename, True, cover.embed_ix)]}))
                 return CheckResult(
                     ProblemCategory.PICTURES,
-                    f"{problem_summary}, but the cover can be extracted and marked as front_cover_source (afterwards, a recheck can fix tracks)",
+                    f"{problem_summary}, but the cover can be extracted and marked as cover_source (afterwards, a recheck can fix tracks)",
                     Fixer(lambda _: self._fix_extract_cover_source(album, filename, cover), options, False, option_automatic_index, table),
                 )
             # else: no covers available, cover not required by earlier checks
-        # else: no front_cover_source + all tracks have "good enough" embedded cover art
+        # else: no cover_source + all tracks have "good enough" embedded cover art
         return None
 
     def _embedded_image_spec(self, cover_source: Picture):
@@ -190,7 +190,7 @@ class CheckFrontCoverEmbedded(Check):
         if not self.ctx.db or not album.album_id:
             raise ValueError("marking cover source requires database and album_id")
         self.ctx.console.print(f"Mark as front cover source: {filename}")
-        album.picture_files[filename].front_cover_source = True
+        album.picture_files[filename].cover_source = True
         update_picture_files(self.ctx.db, album.album_id, album.picture_files)
         return True
 
@@ -209,7 +209,7 @@ class CheckFrontCoverEmbedded(Check):
         self.ctx.console.print(f"Extract to cover source: {new_filename}")
         with open(self.ctx.config.library / album.path / new_filename, "wb") as f:
             f.write(image_data)
-        # create a record of the new image so it can be marked front_cover_source (details will be filled in when album is rescanned)
+        # create a record of the new image so it can be marked cover_source (details will be filled in when album is rescanned)
         album.picture_files[new_filename] = Picture(PictureType.COVER_FRONT, cover.format, 0, 0, 0, b"", "", None, 0)
         return self._fix_mark_cover_source(album, new_filename)
 

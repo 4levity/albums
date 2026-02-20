@@ -17,11 +17,11 @@ OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 class CheckDuplicateImage(Check):
     name = "duplicate_image"
-    default_config = {"enabled": True, "front_cover_only": False}
+    default_config = {"enabled": True, "cover_only": False}
     must_pass_checks = {"invalid_image"}
 
     def init(self, check_config: dict[str, Any]):
-        self.front_cover_only = bool(check_config.get("front_cover_only", CheckDuplicateImage.default_config["front_cover_only"]))
+        self.cover_only = bool(check_config.get("cover_only", CheckDuplicateImage.default_config["cover_only"]))
 
     def check(self, album: Album) -> CheckResult | None:
         album_art = [(track.filename, True, track.pictures) for track in album.tracks]
@@ -33,7 +33,7 @@ class CheckDuplicateImage(Check):
             file_pics_by_type: defaultdict[PictureType, list[Picture]] = defaultdict(list)
             file_pics_by_content: defaultdict[Picture, list[Picture]] = defaultdict(list)
             for picture in pictures:
-                if picture.picture_type != PictureType.COVER_FRONT and self.front_cover_only:
+                if picture.picture_type != PictureType.COVER_FRONT and self.cover_only:
                     continue
                 picture_sources[picture].append((filename, embedded, picture.embed_ix))
                 pictures_by_type[picture.picture_type].add(picture)
@@ -52,10 +52,10 @@ class CheckDuplicateImage(Check):
                     message = f"there are {len(file_pics_by_type[picture_type])} different images for {picture_type.name} in one or more files"
                     return CheckResult(ProblemCategory.PICTURES, message)
 
-        # TODO dedup for all pictures, if not self.front_cover_only
+        # TODO dedup for all pictures, if not self.cover_only
         front_covers = pictures_by_type.get(PictureType.COVER_FRONT, [])
-        front_cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded, _ix) in picture_sources[pic]))
-        for pic in front_cover_image_file:
+        cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded, _ix) in picture_sources[pic]))
+        for pic in cover_image_file:
             filenames = sorted(filename for (filename, embedded, _ix) in picture_sources[pic] if not embedded)
             if len(filenames) > 1:
                 table = (filenames, lambda: render_image_table(self.ctx, album, [pic] * len(filenames), picture_sources))

@@ -5,11 +5,11 @@ from unittest.mock import call, mock_open, patch
 from PIL import Image
 
 from albums.app import Context
-from albums.checks.check_front_cover_embedded import CheckFrontCoverEmbedded
+from albums.checks.check_cover_embedded import CheckCoverEmbedded
 from albums.types import Album, Picture, PictureType, Stream, Track
 
 
-class TestCheckFrontCoverEmbedded:
+class TestCheckCoverEmbedded:
     def test_cover_embedded_ok(self):
         album = Album(
             "",
@@ -18,7 +18,7 @@ class TestCheckFrontCoverEmbedded:
                 Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
             ],
         )
-        result = CheckFrontCoverEmbedded(Context()).check(album)
+        result = CheckCoverEmbedded(Context()).check(album)
         assert result is None
 
     def test_cover_embedded_some(self, mocker):
@@ -32,15 +32,15 @@ class TestCheckFrontCoverEmbedded:
         album.album_id = 1
         ctx = Context()
         ctx.db = True
-        result = CheckFrontCoverEmbedded(ctx).check(album)
+        result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
-        assert "the cover can be extracted and marked as front_cover_source" in result.message
+        assert "the cover can be extracted and marked as cover_source" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Extract embedded cover and mark as front cover source"]
         assert result.fixer.option_automatic_index == 0
         read_image_value = (Image.new("RGB", (400, 400), color="blue"), b"file contents")
-        mock_read_image = mocker.patch("albums.checks.check_front_cover_embedded.read_image", return_value=read_image_value)
-        mock_update_picture_files = mocker.patch("albums.checks.check_front_cover_embedded.update_picture_files")
+        mock_read_image = mocker.patch("albums.checks.check_cover_embedded.read_image", return_value=read_image_value)
+        mock_update_picture_files = mocker.patch("albums.checks.check_cover_embedded.update_picture_files")
         m_open = mock_open()
         with patch("builtins.open", m_open):
             result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
@@ -67,7 +67,7 @@ class TestCheckFrontCoverEmbedded:
         album.album_id = 1
         ctx = Context()
         ctx.db = True
-        result = CheckFrontCoverEmbedded(ctx).check(album)
+        result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
         assert "can re-embed from front cover source" in result.message
         assert result.fixer
@@ -75,10 +75,10 @@ class TestCheckFrontCoverEmbedded:
         assert result.fixer.option_automatic_index == 0
 
         read_image_value = (Image.new("RGB", (400, 400), color="blue"), b"file contents")
-        mock_read_image = mocker.patch("albums.checks.check_front_cover_embedded.read_image", return_value=read_image_value)
-        mock_replace_embedded_image = mocker.patch("albums.checks.check_front_cover_embedded.replace_embedded_image")
-        mock_add_embedded_image = mocker.patch("albums.checks.check_front_cover_embedded.add_embedded_image")
-        mock_render_image_table = mocker.patch("albums.checks.check_front_cover_embedded.render_image_table", return_value=[])
+        mock_read_image = mocker.patch("albums.checks.check_cover_embedded.read_image", return_value=read_image_value)
+        mock_replace_embedded_image = mocker.patch("albums.checks.check_cover_embedded.replace_embedded_image")
+        mock_add_embedded_image = mocker.patch("albums.checks.check_cover_embedded.add_embedded_image")
+        mock_render_image_table = mocker.patch("albums.checks.check_cover_embedded.render_image_table", return_value=[])
 
         table = result.fixer.get_table()
         assert mock_read_image.call_count == 1

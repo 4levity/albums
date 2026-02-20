@@ -322,7 +322,7 @@ duplicate image data is not useful. Rules:
 
 | Option             | Default   | Description                                                            |
 | ------------------ | --------- | ---------------------------------------------------------------------- |
-| `front_cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
+| `cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
 
 <!-- pyml enable line-length -->
 
@@ -365,7 +365,7 @@ Rules:
 
 <!-- pyml enable line-length -->
 
-### front_cover_selection
+### cover_selection
 
 If any track has any pictures in its metadata, or if there are any image files
 in the folder, the album should have correct front cover art. (Or require for
@@ -425,7 +425,7 @@ embedded image from one of the tracks to `cover.jpg` or `.png`.
 
 <!-- pyml enable line-length -->
 
-### front_cover_dimensions
+### cover_dimensions
 
 Images treated as picture type COVER_FRONT should be square and within a range
 of acceptable sizes.
@@ -449,7 +449,7 @@ The new cover image file is set as "front cover source".
 
 !!!note
 
-    Requires the `front_cover_selection` check to pass first.
+    Requires the `cover_selection` check to pass first.
 
 <!-- pyml disable line-length -->
 
@@ -463,7 +463,7 @@ The new cover image file is set as "front cover source".
 
 <!-- pyml enable line-length -->
 
-### front_cover_embedded
+### cover_embedded
 
 If there is any front cover image (file or embedded), all tracks should have
 _some_ front cover image embedded. It should not be larger than the maximum size
@@ -482,7 +482,7 @@ fixes by this check, to avoid automatically overwriting per-track cover art.
 When the above requirements above **are** met, this check will pass. To cause
 `albums` to embed new cover art when there is "good enough" cover art already,
 place high resolution cover art in the folder named `cover.jpg` (or another
-recognized front cover filename) and run the `front_cover_selection` check,
+recognized front cover filename) and run the `cover_selection` check,
 which should offer to mark the new art as "front cover source". Subsequently, as
 long as the size or MIME type of the previous embedded cover is not exactly the
 same as what this check is configured to generate, the new cover can be embedded
@@ -491,7 +491,7 @@ into tracks by this check.
 !!!note
 
     Requires the `duplicate_image` check to pass first. For automation,
-    `front_cover_selection` (with `unique=True`) and `front_cover_dimensions`
+    `cover_selection` (with `unique=True`) and `cover_dimensions`
     are recommended.
 
 **Automatic fix**: When there is a front cover source file and there is not more

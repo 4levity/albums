@@ -19,14 +19,14 @@ OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
 OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
-class CheckFrontCoverSelection(Check):
-    name = "front_cover_selection"
+class CheckCoverSelection(Check):
+    name = "cover_selection"
     default_config = {"enabled": True, "cover_required": False, "unique": True}
     must_pass_checks = {"duplicate_image"}
 
     def init(self, check_config: dict[str, Any]):
-        self.cover_required = bool(check_config.get("cover_required", CheckFrontCoverSelection.default_config["cover_required"]))
-        self.unique = int(check_config.get("unique", CheckFrontCoverSelection.default_config["unique"]))
+        self.cover_required = bool(check_config.get("cover_required", CheckCoverSelection.default_config["cover_required"]))
+        self.unique = int(check_config.get("unique", CheckCoverSelection.default_config["unique"]))
 
     def check(self, album: Album) -> CheckResult | None:
         if album.codec() not in {"FLAC", "MP3", "Ogg Vorbis"} and self.cover_required:
@@ -53,33 +53,33 @@ class CheckFrontCoverSelection(Check):
                     tracks_with_cover += 1
 
         front_covers: set[Picture] = pictures_by_type.get(PictureType.COVER_FRONT, set())
-        front_cover_image_files = list(
+        cover_image_files = list(
             pic
             for pic in sorted(front_covers, key=lambda pic: pic.file_size, reverse=True)
             if any(not embedded for (_, embedded, _ix) in picture_sources[pic])
         )
-        cover_image_filenames = [[file for (file, embedded, _) in picture_sources[pic] if not embedded][0] for pic in front_cover_image_files]
-        cover_source_ix = next((ix for ix, pic in enumerate(front_cover_image_files) if pic.front_cover_source), None)
+        cover_image_filenames = [[file for (file, embedded, _) in picture_sources[pic] if not embedded][0] for pic in cover_image_files]
+        cover_source_ix = next((ix for ix, pic in enumerate(cover_image_files) if pic.cover_source), None)
         cover_source_filename = cover_image_filenames[cover_source_ix] if cover_source_ix is not None else None
 
         if self.unique and len(front_covers) > 1:
-            front_cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded, _ix) in picture_sources[pic]))
-            cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in front_cover_embedded]
+            cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded, _ix) in picture_sources[pic]))
+            cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in cover_embedded]
             table = (
                 cover_image_filenames + cover_embedded_desc,
-                lambda: render_image_table(self.ctx, album, front_cover_image_files + front_cover_embedded, picture_sources),
+                lambda: render_image_table(self.ctx, album, cover_image_files + cover_embedded, picture_sources),
             )
-            if front_cover_image_files and cover_source_filename is None:
-                # at this point every picture in front_cover_image_file should be associated with exactly one file
-                cover_source_candidate = self._source_image_file_candidate(front_cover_image_files, front_cover_embedded)
+            if cover_image_files and cover_source_filename is None:
+                # at this point every picture in cover_image_file should be associated with exactly one file
+                cover_source_candidate = self._source_image_file_candidate(cover_image_files, cover_embedded)
                 options = [f"{OPTION_SELECT_COVER_IMAGE}{filename}" for filename in cover_image_filenames]
-                if front_cover_embedded:
+                if cover_embedded:
                     options.append(f"{OPTION_DELETE_ALL_COVER_IMAGES}{', '.join(escape(filename) for filename in cover_image_filenames)}")
                 if cover_source_candidate:
                     # if there is a higher-resolution cover file, this conflict can be solved or reduced by marking that file as cover source
-                    option_automatic_index = front_cover_image_files.index(cover_source_candidate)
+                    option_automatic_index = cover_image_files.index(cover_source_candidate)
                     message = "multiple cover art images: designate a high-resolution image file as cover art source"
-                    if front_cover_embedded:
+                    if cover_embedded:
                         message += " or delete image files (keep embedded images)"
                     else:
                         message += " (tracks do not have embedded images)"
@@ -98,7 +98,7 @@ class CheckFrontCoverSelection(Check):
                         table,
                     ),
                 )
-            elif cover_source_filename is not None and len(front_cover_image_files) > 1:
+            elif cover_source_filename is not None and len(cover_image_files) > 1:
                 other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
                 option_automatic_index = 0  # YOLO
                 return CheckResult(
@@ -112,7 +112,7 @@ class CheckFrontCoverSelection(Check):
                         table,
                     ),
                 )
-            elif cover_source_filename is None or len(front_cover_image_files) > 1 or len(front_cover_embedded) > 1:
+            elif cover_source_filename is None or len(cover_image_files) > 1 or len(cover_embedded) > 1:
                 # TODO if multiple front cover embedded but every track has one, even if they are different that's probably on purpose?
                 issues.add("COVER_FRONT pictures are not all the same")
                 # no automatic fixer yet, but this shows the issue:
@@ -165,7 +165,7 @@ class CheckFrontCoverSelection(Check):
         elif option.startswith(OPTION_SELECT_COVER_IMAGE) and self.ctx.db and album.album_id:
             filename = all_filenames[options.index(option)]
             for picfile in album.picture_files:
-                album.picture_files[picfile].front_cover_source = picfile == filename
+                album.picture_files[picfile].cover_source = picfile == filename
             self.ctx.console.print(f"setting cover source file to {escape(filename)}")
             operations.update_picture_files(self.ctx.db, album.album_id, album.picture_files)
             return True

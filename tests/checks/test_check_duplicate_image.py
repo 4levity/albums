@@ -51,7 +51,7 @@ class TestCheckDuplicateImage:
         assert result is not None
         assert "duplicate embedded image data in one or more files: COVER_BACK" in result.message
 
-    def test_front_cover_duplicate_files(self, mocker):
+    def test_cover_duplicate_files(self, mocker):
         pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")
         picture_files = {"folder.png": pic, "cover.png": pic}
         album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)

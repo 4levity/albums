@@ -174,7 +174,7 @@ def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: 
                 picture.format,
                 picture.width,
                 picture.height,
-                1 if picture.front_cover_source else 0,
+                1 if picture.cover_source else 0,
             ),
         )
 

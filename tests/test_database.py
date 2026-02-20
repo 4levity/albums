@@ -76,7 +76,7 @@ class TestDatabase:
             assert pic.file_size == 4096
             assert pic.file_hash == b"1234"
             assert pic.modify_timestamp == 999
-            assert pic.front_cover_source
+            assert pic.cover_source
 
     def test_select_multiple_and_regex(self):
         album2 = copy(album)
@@ -135,10 +135,10 @@ class TestDatabase:
             album_id = operations.add(db, album)
             picture_files = list(selector.select_albums(db, [], [], False))[0].picture_files
             assert len(picture_files) == 1
-            assert picture_files["folder.jpg"].front_cover_source
+            assert picture_files["folder.jpg"].cover_source
 
             # modify existing image file + add one
-            picture_files["folder.jpg"].front_cover_source = False
+            picture_files["folder.jpg"].cover_source = False
             new_pic = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", "", None, 999)
             operations.update_picture_files(db, album_id, picture_files | {"other.jpg": new_pic})
 
@@ -147,7 +147,7 @@ class TestDatabase:
             assert pic_folder
             assert pic_folder.picture_type == PictureType.COVER_FRONT
             assert pic_folder.file_hash == b"1234"
-            assert not pic_folder.front_cover_source
+            assert not pic_folder.cover_source
             pic_other = picture_files.get("other.jpg")
             assert pic_other
             assert pic_other.picture_type == PictureType.OTHER
