@@ -218,10 +218,12 @@ class Configuration:
     @classmethod
     def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, List[str]]]]):
         config = Configuration()
+        ignored_values = False
         for k, value in values:
             tokens = k.split(".")
             if len(tokens) != 2:
                 logger.warning(f"ignoring invalid configuration key {k} (expected section.name)")
+                ignored_values = True
                 continue
             [section, name] = tokens
             if section == "settings":
@@ -235,11 +237,14 @@ class Configuration:
                     config.open_folder_command = str(value)
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
+                    ignored_values = True
             else:
                 if section not in config.checks or name not in config.checks[section]:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
+                    ignored_values = True
                 elif type(value) is not type(config.checks[section][name]):
                     logger.warning(f"ignoring configuration item {k} with wrong type {type(value)} (expected {type(config.checks[section][name])})")
+                    ignored_values = True
                 else:
                     config.checks[section][name] = value
-        return config
+        return (config, ignored_values)

@@ -37,6 +37,14 @@ class TestDatabaseConfig:
             assert check["disctotal_policy"] == "never"
             assert not check["discs_in_separate_folders"]
 
+    def test_database_config_load_ignored_values(self):
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+            db.execute("INSERT INTO setting(name, value_json) VALUES('foo.bar', 'true');")
+            assert len(db.execute("SELECT name FROM setting WHERE name='foo.bar';").fetchall()) == 1
+            load(db)
+            # ignored setting removed from db
+            assert len(db.execute("SELECT name FROM setting WHERE name='foo.bar';").fetchall()) == 0
+
     def test_database_config_save_overwrite(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             save(db, Configuration({"required-tags": {"enabled": True, "tags": ["artist", "title"]}}, Path("/path/to")))

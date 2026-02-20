@@ -9,7 +9,10 @@ logger = logging.getLogger(__name__)
 
 def load(db: sqlite3.Connection) -> Configuration:
     settings = ((k, json.loads(v)) for k, v in db.execute("SELECT name, value_json FROM setting;"))
-    return Configuration.from_values(settings)
+    (config, ignored_values) = Configuration.from_values(settings)
+    if ignored_values:
+        save(db, config)  # showed warnings, now save valid config
+    return config
 
 
 def save(db: sqlite3.Connection, configuration: Configuration):
