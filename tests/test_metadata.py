@@ -1,10 +1,13 @@
+import io
 import os
 
 import pytest
+import xxhash
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
+from PIL import Image
 
-from albums.library.metadata import get_metadata, remove_embedded_image, set_basic_tags
+from albums.library.metadata import get_metadata, remove_embedded_image, replace_embedded_image, set_basic_tags
 from albums.types import Album, Picture, PictureType, Track
 
 from .fixtures.create_library import create_library, make_image_data
@@ -263,6 +266,24 @@ class TestMetadata:
         assert pictures[0].width == pictures[0].height == pic1.width == pic1.height
         assert pictures[0].embed_ix == 0
 
+    def test_replace_one_flac_pic(self):
+        file = TestMetadata.library / albums[1].path / albums[1].tracks[1].filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pictures) = info
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=pictures[0].file_size, file_hash=pictures[0].file_hash)
+        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=pictures[1].file_size, file_hash=pictures[1].file_hash)
+
+        replacement_image = Image.new("RGB", (600, 600), color="blue")
+        buffer = io.BytesIO()
+        replacement_image.save(buffer, "JPEG")
+        data = buffer.getvalue()
+        replacement = Picture(PictureType.FISH, "image/jpeg", width=600, height=600, file_size=len(data), file_hash=xxhash.xxh32_digest(data))
+
+        assert replace_embedded_image(file, stream.codec, pic0, replacement, replacement_image, data)
+        assert set(get_metadata(file)[2]) == {pic1, replacement}
+
     def test_remove_one_id3_pic(self):
         track = albums[2].tracks[0]
         file = TestMetadata.library / albums[2].path / track.filename
@@ -272,8 +293,8 @@ class TestMetadata:
         assert stream.codec == "MP3"
         pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=0, file_hash=b"")
         assert len(pics) == 2
-        assert pics[0].picture_type == PictureType.COVER_FRONT or pics[1].picture_type == PictureType.COVER_FRONT
-        assert pics[0].picture_type == PictureType.COVER_BACK or pics[1].picture_type == PictureType.COVER_BACK
+        assert pics[0].picture_type == PictureType.COVER_FRONT
+        assert pics[1].picture_type == PictureType.COVER_BACK
         assert pics[0].width == pics[0].height == pics[1].width == pics[1].height == 400
         assert pics[0].format == pics[1].format == "image/png"
 
@@ -287,6 +308,30 @@ class TestMetadata:
         assert pics[0].width == pics[0].height == 400
         assert pics[0].format == "image/png"
 
+    def test_replace_one_id3_pic(self):
+        track = albums[2].tracks[0]
+        file = TestMetadata.library / albums[2].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pics) = info
+        assert stream.codec == "MP3"
+        assert len(pics) == 2
+        assert pics[0].picture_type == PictureType.COVER_FRONT
+        assert pics[1].picture_type == PictureType.COVER_BACK
+        assert pics[0].width == pics[0].height == pics[1].width == pics[1].height == 400
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=pics[0].file_size, file_hash=pics[0].file_hash)
+        other_pic = pics[1]
+
+        replacement_image = Image.new("RGB", (600, 600), color="blue")
+        buffer = io.BytesIO()
+        replacement_image.save(buffer, "JPEG")
+        data = buffer.getvalue()
+        replacement = Picture(PictureType.FISH, "image/jpeg", width=600, height=600, file_size=len(data), file_hash=xxhash.xxh32_digest(data))
+
+        assert replace_embedded_image(file, stream.codec, pic0, replacement, replacement_image, data)
+        pics = get_metadata(file)[2]
+        assert set(pics) == {replacement, other_pic}
+
     def test_remove_one_ogg_vorbis_pic(self):
         track = albums[3].tracks[0]
         file = TestMetadata.library / albums[3].path / track.filename
@@ -295,8 +340,8 @@ class TestMetadata:
         (_, stream, pictures) = info
         assert stream.codec == "Ogg Vorbis"
         assert len(pictures) == 2
-        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
-        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=543, file_hash=b"L\xc1#T")
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=0, file_hash=b"")
+        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=0, file_hash=b"")
         assert pictures[0].picture_type == pic0.picture_type
         assert pictures[0].format == pic0.format
         assert pictures[0].width == pictures[0].height == pic0.width == pic0.height
@@ -317,3 +362,26 @@ class TestMetadata:
         assert pictures[0].format == pic1.format
         assert pictures[0].width == pictures[0].height == pic1.width == pic1.height
         assert pictures[0].embed_ix == 0
+
+    def test_replace_one_ogg_vorbis_pic(self):
+        track = albums[3].tracks[0]
+        file = TestMetadata.library / albums[3].path / track.filename
+        info = get_metadata(file)
+        assert info
+        (_, stream, pictures) = info
+        assert stream.codec == "Ogg Vorbis"
+        assert len(pictures) == 2
+        assert pictures[0].picture_type == PictureType.COVER_FRONT
+        assert pictures[1].picture_type == PictureType.COVER_BACK
+        pic0 = Picture(PictureType.COVER_FRONT, "image/png", width=400, height=400, file_size=pictures[0].file_size, file_hash=pictures[0].file_hash)
+        pic1 = Picture(PictureType.COVER_BACK, "image/png", width=400, height=400, file_size=pictures[1].file_size, file_hash=pictures[1].file_hash)
+
+        replacement_image = Image.new("RGB", (600, 600), color="blue")
+        buffer = io.BytesIO()
+        replacement_image.save(buffer, "JPEG")
+        data = buffer.getvalue()
+        replacement = Picture(PictureType.FISH, "image/jpeg", width=600, height=600, file_size=len(data), file_hash=xxhash.xxh32_digest(data))
+
+        assert replace_embedded_image(file, stream.codec, pic0, replacement, replacement_image, data)
+
+        assert set(get_metadata(file)[2]) == {replacement, pic1}

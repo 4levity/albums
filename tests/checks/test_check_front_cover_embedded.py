@@ -78,10 +78,16 @@ class TestCheckFrontCoverEmbedded:
         mock_read_image = mocker.patch("albums.checks.check_front_cover_embedded.read_image", return_value=read_image_value)
         mock_replace_embedded_image = mocker.patch("albums.checks.check_front_cover_embedded.replace_embedded_image")
         mock_add_embedded_image = mocker.patch("albums.checks.check_front_cover_embedded.add_embedded_image")
+        mock_render_image_table = mocker.patch("albums.checks.check_front_cover_embedded.render_image_table", return_value=[])
+
+        table = result.fixer.get_table()
+        assert mock_read_image.call_count == 1
+        assert mock_render_image_table.call_count == 1
+        assert table == (["Front Cover Source cover.png", "Current Embedded Cover", "Preview New Embedded Cover"], [])
 
         result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_read_image.call_count == 1
+        assert mock_read_image.call_count == 2
         assert mock_replace_embedded_image.call_count == 1
         assert mock_replace_embedded_image.call_args_list[0][0][0] == Path("foo") / album.tracks[0].filename
         assert mock_replace_embedded_image.call_args_list[0][0][1] == "FLAC"
