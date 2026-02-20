@@ -47,27 +47,6 @@ checks to pass first.
 
 The checks run in the order they appear in this document.
 
-### bad_pathname
-
-Filenames should not include invalid characters or be operating system reserved
-words. What is allowed depends on the platform. This check flags filenames that
-might cause a problem. To allow reserved characters that only cause issues on
-Windows (and only in some cases), see the `compatibility` option.
-
-The compatibility options come from
-[pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).
-They are:
-
-- `"Linux"`
-- `"Windows"`
-- `"macOS"`
-- `"POSIX"`
-- `"universal"`
-
-| Option          | Default       | Description                            |
-| --------------- | ------------- | -------------------------------------- |
-| `compatibility` | `"universal"` | Configure what is allowed in filenames |
-
 ### disc_in_track_number
 
 If the disc number and track number are combined in the track number tag with a
@@ -92,6 +71,122 @@ a single value and that value should be a positive number (0 is not valid).
 **Automatic fix**: For each of the noted tags in each track, discard all values
 that are non-numeric or 0. If exactly one unique value remains, save it.
 Otherwise, delete the tag.
+
+### disc_numbering
+
+Reports on issues with disc number and disc total. This high level check
+requires that the individual tag values are valid. In other words,
+`disc_in_track_number` and `invalid_track_or_disc_number` must pass, or this
+check will just fail saying "couldn't arrange tracks by disc".
+
+Rules:
+
+- If any track has disc number, all tracks should have disc number
+- Disc numbers should start at 1 and be sequential (1, 2, 3...)
+- If present, the disc total should be the number of distinct disc number values
+  which should be the same as the highest disc number
+- All tracks with disc total should also have disc number
+- The selected disc total presence policy should apply
+    - **"consistent"**: either all tracks have disc total, or none do
+    - **"always"**: all tracks should have disc total
+    - **"never"**: disc total should be removed
+
+**Automatic fix** for disc total policy: If the disc total policy is
+"consistent" but some tracks are missing disc total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
+
+!!!note
+
+    Requires the `invalid_track_or_disc_number` check to pass first.
+
+<!-- pyml disable line-length -->
+
+| Option                      | Default        | Description                                                  |
+| --------------------------- | -------------- | ------------------------------------------------------------ |
+| `discs_in_separate_folders` | **true**       | albums with multiple discs may be stored in separate folders |
+| `disctotal_policy`          | `"consistent"` | Set the tag presence policy for disc total                   |
+
+<!-- pyml enable line-length -->
+
+> When `discs_in_separate_folders` is enabled (default), this check will ignore
+> when an album is only one disc of a multiple disc set. But then it cannot tell
+> whether an album is missing a disc number or if disc total is correct. If you
+> can put multiple-disc albums together in one folder, set this to **false**.
+
+### track_numbering
+
+Reports on several issues with track numbers and track totals, including
+apparently missing tracks.
+
+The rules are:
+
+- Every track should have a single decimal track number
+- For each disc, track numbers should start at 1 and be sequential
+- For each disc, if track total is present, it should be the number of tracks on
+  that disc
+- All tracks with track total should also have track number
+- The selected track total presence policy should apply:
+    - **"consistent"**: either all tracks have track total, or none do
+    - **"always"**: all tracks should have track total
+    - **"never"**: track total should be removed
+
+**Automatic fix** for missing track numbers: If track number tags are missing
+from some tracks but all track numbers can be guessed from the filename,
+recreate track number tags from filenames.
+
+**Automatic fix** for track total policy: If the track total policy is
+"consistent" but some tracks are missing track total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
+
+!!!note
+
+    Requires the `disc_numbering` check to pass first.
+
+<!-- pyml disable line-length -->
+
+| Option              | Default        | Description                                           |
+| ------------------- | -------------- | ----------------------------------------------------- |
+| `ignore_folders`    | `["misc"]`     | in all folders with these names, ignore track numbers |
+| `tracktotal_policy` | `"consistent"` | Set the tag presence policy for track total           |
+
+<!-- pyml enable line-length -->
+
+### zero_pad_numbers
+
+Apply selected policies for zero-padding in the track number/total and disc
+number/total tags.
+
+> Some media players and many file managers do not show tracks in the correct
+> order unless the track numbers are zero-padded, because for example "2" comes
+> after "10" when sorted alphabetically.
+
+!!!note
+
+    Requires the `invalid_track_or_disc_number` check to pass first.
+
+**Automatic fix**: If no major problems detected in relevant tags, apply policy.
+
+Choose a policy for each tag. The policy options are:
+
+- **"ignore"**: don't check this tag
+- **"never"**: do not use leading zeros
+- **"if_needed"**: leading zeros when required for all values to have the same
+  number of digits (same as "never" for track/disc totals)
+- **"two_digit_minimum"**: all values should be at least two digits (three if
+  more than 99 values)
+
+| Option            | Default               |
+| ----------------- | --------------------- |
+| `tracknumber_pad` | `"two_digit_minimum"` |
+| `tracktotal_pad`  | `"two_digit_minimum"` |
+| `discnumber_pad`  | `"if_needed"`         |
+| `disctotal_pad`   | `"never"`             |
+
+> The default settings will result in, for example, track **04** of **07** and
+> disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
+> for example, track **4** of **7** and track **04** of **12**.
 
 ### album_tag
 
@@ -186,87 +281,6 @@ multiple unique values, they will be kept and still flagged by this check.
 | ------ | --------------------- |
 | `tags` | `["artist", "title"]` |
 
-### disc_numbering
-
-Reports on issues with disc number and disc total. This high level check
-requires that the individual tag values are valid. In other words,
-`disc_in_track_number` and `invalid_track_or_disc_number` must pass, or this
-check will just fail saying "couldn't arrange tracks by disc".
-
-Rules:
-
-- If any track has disc number, all tracks should have disc number
-- Disc numbers should start at 1 and be sequential (1, 2, 3...)
-- If present, the disc total should be the number of distinct disc number values
-  which should be the same as the highest disc number
-- All tracks with disc total should also have disc number
-- The selected disc total presence policy should apply
-    - **"consistent"**: either all tracks have disc total, or none do
-    - **"always"**: all tracks should have disc total
-    - **"never"**: disc total should be removed
-
-**Automatic fix** for disc total policy: If the disc total policy is
-"consistent" but some tracks are missing disc total, remove it from all tracks.
-If the policy is "never", always remove the tag. (There is currently no
-automatic fix if the policy is "always".)
-
-!!!note
-
-    Requires the `invalid_track_or_disc_number` check to pass first.
-
-<!-- pyml disable line-length -->
-
-| Option                      | Default        | Description                                                  |
-| --------------------------- | -------------- | ------------------------------------------------------------ |
-| `discs_in_separate_folders` | **true**       | albums with multiple discs may be stored in separate folders |
-| `disctotal_policy`          | `"consistent"` | Set the tag presence policy for disc total                   |
-
-<!-- pyml enable line-length -->
-
-> When `discs_in_separate_folders` is enabled (default), this check will ignore
-> when an album is only one disc of a multiple disc set. But then it cannot tell
-> whether an album is missing a disc number or if disc total is correct. If you
-> can put multiple-disc albums together in one folder, set this to **false**.
-
-### track_numbering
-
-Reports on several issues with track numbers and track totals, including
-apparently missing tracks.
-
-The rules are:
-
-- Every track should have a single decimal track number
-- For each disc, track numbers should start at 1 and be sequential
-- For each disc, if track total is present, it should be the number of tracks on
-  that disc
-- All tracks with track total should also have track number
-- The selected track total presence policy should apply:
-    - **"consistent"**: either all tracks have track total, or none do
-    - **"always"**: all tracks should have track total
-    - **"never"**: track total should be removed
-
-**Automatic fix** for missing track numbers: If track number tags are missing
-from some tracks but all track numbers can be guessed from the filename,
-recreate track number tags from filenames.
-
-**Automatic fix** for track total policy: If the track total policy is
-"consistent" but some tracks are missing track total, remove it from all tracks.
-If the policy is "never", always remove the tag. (There is currently no
-automatic fix if the policy is "always".)
-
-!!!note
-
-    Requires the `disc_numbering` check to pass first.
-
-<!-- pyml disable line-length -->
-
-| Option              | Default        | Description                                           |
-| ------------------- | -------------- | ----------------------------------------------------- |
-| `ignore_folders`    | `["misc"]`     | in all folders with these names, ignore track numbers |
-| `tracktotal_policy` | `"consistent"` | Set the tag presence policy for track total           |
-
-<!-- pyml enable line-length -->
-
 ### track_title
 
 Each track should have at least one title tag. This check doesn't care if a
@@ -320,8 +334,8 @@ duplicate image data is not useful. Rules:
 
 <!-- pyml disable line-length -->
 
-| Option             | Default   | Description                                                            |
-| ------------------ | --------- | ---------------------------------------------------------------------- |
+| Option       | Default   | Description                                                            |
+| ------------ | --------- | ---------------------------------------------------------------------- |
 | `cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
 
 <!-- pyml enable line-length -->
@@ -482,11 +496,11 @@ fixes by this check, to avoid automatically overwriting per-track cover art.
 When the above requirements above **are** met, this check will pass. To cause
 `albums` to embed new cover art when there is "good enough" cover art already,
 place high resolution cover art in the folder named `cover.jpg` (or another
-recognized front cover filename) and run the `cover_selection` check,
-which should offer to mark the new art as "front cover source". Subsequently, as
-long as the size or MIME type of the previous embedded cover is not exactly the
-same as what this check is configured to generate, the new cover can be embedded
-into tracks by this check.
+recognized front cover filename) and run the `cover_selection` check, which
+should offer to mark the new art as "front cover source". Subsequently, as long
+as the size or MIME type of the previous embedded cover is not exactly the same
+as what this check is configured to generate, the new cover can be embedded into
+tracks by this check.
 
 !!!note
 
@@ -518,40 +532,26 @@ automatic fix above.
 _Note: The `max_height_width` and `require_mime_type` settings only apply to
 albums where no "front cover source" image is defined._
 
-### zero_pad_numbers
+### bad_pathname
 
-Apply selected policies for zero-padding in the track number/total and disc
-number/total tags.
+Filenames should not include invalid characters or be operating system reserved
+words. What is allowed depends on the platform. This check flags filenames that
+might cause a problem. To allow reserved characters that only cause issues on
+Windows (and only in some cases), see the `compatibility` option.
 
-> Some media players and many file managers do not show tracks in the correct
-> order unless the track numbers are zero-padded, because for example "2" comes
-> after "10" when sorted alphabetically.
+The compatibility options come from
+[pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).
+They are:
 
-!!!note
+- `"Linux"`
+- `"Windows"`
+- `"macOS"`
+- `"POSIX"`
+- `"universal"`
 
-    Requires the `invalid_track_or_disc_number` check to pass first.
-
-**Automatic fix**: If no major problems detected in relevant tags, apply policy.
-
-Choose a policy for each tag. The policy options are:
-
-- **"ignore"**: don't check this tag
-- **"never"**: do not use leading zeros
-- **"if_needed"**: leading zeros when required for all values to have the same
-  number of digits (same as "never" for track/disc totals)
-- **"two_digit_minimum"**: all values should be at least two digits (three if
-  more than 99 values)
-
-| Option            | Default               |
-| ----------------- | --------------------- |
-| `tracknumber_pad` | `"two_digit_minimum"` |
-| `tracktotal_pad`  | `"two_digit_minimum"` |
-| `discnumber_pad`  | `"if_needed"`         |
-| `disctotal_pad`   | `"never"`             |
-
-> The default settings will result in, for example, track **04** of **07** and
-> disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
-> for example, track **4** of **7** and track **04** of **12**.
+| Option          | Default       | Description                            |
+| --------------- | ------------- | -------------------------------------- |
+| `compatibility` | `"universal"` | Configure what is allowed in filenames |
 
 ### album_under_album
 
