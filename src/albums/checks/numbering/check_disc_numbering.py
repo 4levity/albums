@@ -17,9 +17,9 @@ OPTION_SET_DISC_TOTAL = ">> Set disc total"
 
 
 class CheckDiscNumbering(Check):
-    name = "disc_numbering"
+    name = "disc-numbering"
     default_config = {"enabled": True, "discs_in_separate_folders": True, "disctotal_policy": "consistent"}
-    must_pass_checks = {"invalid_track_or_disc_number"}
+    must_pass_checks = {"invalid-track-or-disc-number"}
 
     def init(self, check_config: dict[str, Any]):
         self.discs_in_separate_folders = check_config.get("discs_in_separate_folders", self.default_config["discs_in_separate_folders"])
@@ -31,7 +31,7 @@ class CheckDiscNumbering(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
-            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid-track-or-disc-number check must pass first")
         # now, all tracknumber/tracktotal/discnumber/disctotal tags should be single-valued and numeric
 
         # apply disc total policy - will offer automatic fix (remove all disc totals) if policy is not "always"

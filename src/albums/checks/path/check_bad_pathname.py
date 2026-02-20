@@ -13,13 +13,13 @@ COMPATIBLITY_OPTIONS = {"Linux", "Windows", "macOS", "POSIX", "universal"}  # op
 
 
 class CheckBadPathname(Check):
-    name = "bad_pathname"
+    name = "bad-pathname"
     default_config = {"enabled": True, "compatibility": "universal"}
 
     def init(self, check_config: dict[str, Any]):
         self.compatibility = str(check_config.get("compatibility", CheckBadPathname.default_config["compatibility"]))
         if self.compatibility not in COMPATIBLITY_OPTIONS:
-            logger.error(f"invalid configuration: checks.bad_pathname.compatibility must be one of {', '.join(COMPATIBLITY_OPTIONS)}")
+            logger.error(f"invalid configuration: checks.bad-pathname.compatibility must be one of {', '.join(COMPATIBLITY_OPTIONS)}")
 
     def check(self, album: Album):
         issues: set[str] = set()

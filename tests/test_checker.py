@@ -30,7 +30,7 @@ class TestChecker:
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(
             "foo" + os.sep,
-            [  # disc_in_track_number fails -> invalid_track_or_disc_number does not run -> other checks do not run
+            [  # disc-in-track-number fails -> invalid-track-or-disc-number does not run -> other checks do not run
                 Track("1.flac", {"album": ["Foo"], "tracknumber": ["1-01"], "title": ["one"]}),
                 Track("2.flac", {"album": ["Foo"], "tracknumber": ["1-02"], "title": ["two"]}),
                 Track("3.flac", {"album": ["Foo"], "tracknumber": ["1-03"], "title": ["three"]}),
@@ -44,15 +44,15 @@ class TestChecker:
             run_enabled(ctx, False, False, False, False)
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
-            assert f'dependency not met for check invalid_track_or_disc_number on "foo{os.sep}": disc_in_track_number must pass first' in output
-            assert f'dependency not met for check disc_numbering on "foo{os.sep}": invalid_track_or_disc_number must pass first' in output
+            assert f'dependency not met for check invalid-track-or-disc-number on "foo{os.sep}": disc-in-track-number must pass first' in output
+            assert f'dependency not met for check disc-numbering on "foo{os.sep}": invalid-track-or-disc-number must pass first' in output
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()
-        ctx.config.checks["invalid_track_or_disc_number"] = {"enabled": False}
+        ctx.config.checks["invalid-track-or-disc-number"] = {"enabled": False}
         print_spy = mocker.spy(ctx.console, "print")
         with pytest.raises(SystemExit):
             run_enabled(ctx, False, False, False, False)
         output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
         assert "Configuration error" in output
-        assert "invalid_track_or_disc_number required by" in output
+        assert "invalid-track-or-disc-number required by" in output

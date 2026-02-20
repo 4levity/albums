@@ -15,7 +15,7 @@ OPTION_REMOVE_DUPLICATES_ONLY = ">> Remove duplicate values (preserve unique mul
 
 
 class CheckSingleValueTags(Check):
-    name = "single_value_tags"
+    name = "single-value-tags"
     default_config = {"enabled": True, "tags": ["artist", "title"]}
     # TODO: config option to provide a single way to concatenate tag values and enable automatic fix
 
@@ -24,7 +24,7 @@ class CheckSingleValueTags(Check):
         if not isinstance(tags, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(tag, str) or tag == "" for tag in tags
         ):
-            raise ValueError("single_value_tags.tags configuration must be a list of tags")
+            raise ValueError("single-value-tags.tags configuration must be a list of tags")
         self.single_value_tags = list(str(tag) for tag in tags)
 
     def check(self, album: Album):

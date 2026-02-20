@@ -8,7 +8,7 @@ from albums.types import Album, Track
 
 
 class TestCheckDiscNumbering:
-    def test_disc_numbering_ok(self):
+    def test_discnumbering_ok(self):
         album = Album(
             "",
             [

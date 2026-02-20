@@ -16,9 +16,9 @@ OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
 class CheckDuplicateImage(Check):
-    name = "duplicate_image"
+    name = "duplicate-image"
     default_config = {"enabled": True, "cover_only": False}
-    must_pass_checks = {"invalid_image"}
+    must_pass_checks = {"invalid-image"}
 
     def init(self, check_config: dict[str, Any]):
         self.cover_only = bool(check_config.get("cover_only", CheckDuplicateImage.default_config["cover_only"]))

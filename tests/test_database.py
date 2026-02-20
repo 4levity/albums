@@ -12,7 +12,7 @@ from albums.types import Album, Picture, PictureType, ScanHistoryEntry, Stream, 
 embedded_cover = Picture(PictureType.COVER_FRONT, "image/jpeg", 200, 200, 1024, b"1234", "", {"format": "image/png"}, None, 0)
 track = Track("1.flac", {"artist": ["Bar"]}, 0, 0, Stream(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
 folder_jpg = {"folder.jpg": Picture(PictureType.COVER_FRONT, "test", 100, 100, 4096, b"1234", "", None, 999, 0, True)}
-album = Album("foo" + os.sep, [track], ["test"], ["artist_tag"], folder_jpg, None, 3)
+album = Album("foo" + os.sep, [track], ["test"], ["artist-tag"], folder_jpg, None, 3)
 
 
 class TestDatabase:
@@ -120,9 +120,9 @@ class TestDatabase:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
             result = list(selector.select_albums(db, [], [], False))
-            assert result[0].ignore_checks == ["artist_tag"]  # initial
+            assert result[0].ignore_checks == ["artist-tag"]  # initial
 
-            set_ignore_checks = ["album_artist", "required_tags"]
+            set_ignore_checks = ["album-artist", "required-tags"]
             operations.update_ignore_checks(db, album_id, set_ignore_checks)
             result = list(selector.select_albums(db, [], [], False))
             assert sorted(result[0].ignore_checks) == set_ignore_checks

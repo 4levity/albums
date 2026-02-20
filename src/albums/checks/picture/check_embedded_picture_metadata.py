@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class CheckEmbeddedPictureMetadata(Check):
-    name = "embedded_picture_metadata"
+    name = "embedded-picture-metadata"
     default_config = {"enabled": True}
-    must_pass_checks = {"invalid_image"}
+    must_pass_checks = {"invalid-image"}
 
     def check(self, album: Album) -> CheckResult | None:
         mismatches: list[int] = []
@@ -53,7 +53,7 @@ class CheckEmbeddedPictureMetadata(Check):
                 table = (["filename", "image metadata issues"], tracks)
                 fixer = Fixer(lambda _: self._fix(album, mismatches), options, False, option_automatic_index, table)
             else:
-                # TODO implement for Ogg Vorbis too, see also invalid_image
+                # TODO implement for Ogg Vorbis too, see also invalid-image
                 fixer = None
 
             return CheckResult(

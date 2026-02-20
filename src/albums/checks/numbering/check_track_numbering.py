@@ -82,16 +82,16 @@ class TrackTotalFixer(Fixer):
 
 
 class CheckTrackNumbering(Check):
-    name = "track_numbering"
+    name = "track-numbering"
     default_config = {"enabled": True, "ignore_folders": ["misc"], "tracktotal_policy": "consistent"}
-    must_pass_checks = {"disc_numbering"}
+    must_pass_checks = {"disc-numbering"}
 
     def init(self, check_config: dict[str, Any]):
         ignore_folders: list[Any] = check_config.get("ignore_folders", CheckTrackNumbering.default_config["ignore_folders"])
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
-            logger.warning(f'track_numbering.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            logger.warning(f'track-numbering.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
         self.tracktotal_policy = total_tags.Policy.from_str(str(check_config.get("tracktotal_policy", self.default_config["tracktotal_policy"])))
@@ -106,7 +106,7 @@ class CheckTrackNumbering(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
-            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc_numbering check must pass first")
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - disc-numbering check must pass first")
         # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric if present
 
         # apply track total policy - will offer automatic fix (remove all track totals) if policy is not "always"

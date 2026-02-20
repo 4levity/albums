@@ -9,18 +9,18 @@ from ..base_check import Check
 
 
 class CheckCoverFilename(Check):
-    name = "cover_filename"
+    name = "cover-filename"
     default_config = {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}
 
     def init(self, check_config: dict[str, Any]):
         filename = str(check_config.get("filename", CheckCoverFilename.default_config["filename"]))
         parts = filename.split(".")
         if len(parts) != 2:
-            raise ValueError('cover_filename.filename must be in the form "filename.suffix"')
+            raise ValueError('cover-filename.filename must be in the form "filename.suffix"')
         self.stem = parts[0]
         suffix = parts[1]
         if str.lower(suffix) not in {"*", "png", "jpg"}:
-            raise ValueError('cover_filename.filename suffix must be "*" or "jpg" or "png"')
+            raise ValueError('cover-filename.filename suffix must be "*" or "jpg" or "png"')
         match suffix:
             case "jpg":
                 self.suffix = f".{suffix}"
@@ -30,7 +30,7 @@ class CheckCoverFilename(Check):
                 self.suffix = None
         self.jpeg_quality = int(check_config.get("jpeg_quality", CheckCoverFilename.default_config["jpeg_quality"]))
         if self.jpeg_quality < 1 or self.jpeg_quality > 95:
-            raise ValueError("cover_filename.jpeg_quality must be between 1 and 95")
+            raise ValueError("cover-filename.jpeg_quality must be between 1 and 95")
 
     def check(self, album: Album):
         if album.picture_files and not any(self._matches(filename, True) for filename in album.picture_files.keys()):

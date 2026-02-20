@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class CheckAlbumArt(Check):
-    name = "album_art"
+    name = "album-art"
     default_config = {
         "enabled": True,
         "embedded_size_max": 8 * 1024 * 1024,  # up to 16 MB is OK in ID3v2
     }
-    must_pass_checks = {"invalid_image"}
+    must_pass_checks = {"invalid-image"}
 
     def init(self, check_config: dict[str, Any]):
         self.embedded_size_max = int(check_config.get("embedded_size_max", CheckAlbumArt.default_config["embedded_size_max"]))

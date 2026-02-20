@@ -3,7 +3,7 @@ from ..base_check import Check
 
 
 class CheckAlbumUnderAlbum(Check):
-    name = "album_under_album"
+    name = "album-under-album"
     default_config = {"enabled": True}
 
     def check(self, album: Album):

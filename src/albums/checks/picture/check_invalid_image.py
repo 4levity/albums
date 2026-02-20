@@ -16,7 +16,7 @@ OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
 class CheckInvalidImage(Check):
-    name = "invalid_image"
+    name = "invalid-image"
     default_config = {"enabled": True}
 
     def check(self, album: Album) -> CheckResult | None:

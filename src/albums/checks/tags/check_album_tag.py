@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class CheckAlbumTag(Check):
-    name = "album_tag"
+    name = "album-tag"
     default_config = {"enabled": True, "ignore_folders": ["misc"]}
 
     def init(self, check_config: dict[str, Any]):
@@ -23,7 +23,7 @@ class CheckAlbumTag(Check):
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
-            logger.warning(f'album_tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            logger.warning(f'album-tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
 

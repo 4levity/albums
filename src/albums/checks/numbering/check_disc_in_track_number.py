@@ -17,7 +17,7 @@ OPTION_USE_PROPOSED = ">> Split track number into disc number and track number"
 
 
 class CheckDiscInTrackNumber(Check):
-    name = "disc_in_track_number"
+    name = "disc-in-track-number"
     default_config = {"enabled": True}
 
     def check(self, album: Album):

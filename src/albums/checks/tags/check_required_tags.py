@@ -7,7 +7,7 @@ from ..base_check import Check
 
 # TODO deprecate, replace with checks for individual important tags
 class CheckRequiredTags(Check):
-    name = "required_tags"
+    name = "required-tags"
     default_config = {"enabled": False, "tags": ["artist", "title"]}
 
     def init(self, check_config: dict[str, Any]):
@@ -15,7 +15,7 @@ class CheckRequiredTags(Check):
         if not isinstance(required_tags, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(tag, str) or tag == "" for tag in required_tags
         ):
-            raise ValueError("required_tags.tags configuration must be a list of tags")
+            raise ValueError("required-tags.tags configuration must be a list of tags")
         self.required_tags = list(str(tag) for tag in required_tags)
 
     def check(self, album: Album):

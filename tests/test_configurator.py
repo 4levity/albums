@@ -17,7 +17,7 @@ class TestConfigurator:
             mock_choice = mocker.patch("albums.interactive.configurator.choice")
             mock_choice.side_effect = ["enable", "exit"]
 
-            request_enabled_checks = ["required_tags", "invalid_image"]
+            request_enabled_checks = ["required-tags", "invalid-image"]
 
             class DialogRun:
                 def run(self):

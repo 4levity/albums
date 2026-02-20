@@ -15,7 +15,7 @@ OPTION_USE_PROPOSED = ">> Use proposed track titles"
 
 
 class CheckTrackTitle(Check):
-    name = "track_title"
+    name = "track-title"
     default_config = {"enabled": True}
 
     def check(self, album: Album):

@@ -18,14 +18,14 @@ OPTION_COPY_ALBUM_ARTIST_TO_ARTIST = ">> Copy album artist -> artist"
 
 
 class CheckAlbumArtist(Check):
-    name = "album_artist"
+    name = "album-artist"
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
 
     def init(self, check_config: dict[str, Any]):
         self.remove_redundant = bool(check_config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"]))
         self.require_redundant = bool(check_config.get("require_redundant", CheckAlbumArtist.default_config["require_redundant"]))
         if self.remove_redundant and self.require_redundant:
-            logger.warning("check_album_artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
+            logger.warning("check_album-artist: remove_redundant and require_redundant cannot both be true, ignoring both options")
             self.remove_redundant = False
             self.require_redundant = False
 

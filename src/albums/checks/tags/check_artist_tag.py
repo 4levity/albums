@@ -15,19 +15,19 @@ logger = logging.getLogger(__name__)
 
 
 class CheckArtistTag(Check):
-    name = "artist_tag"
+    name = "artist-tag"
     default_config = {
         "enabled": True,
         "ignore_parent_folders": ["compilation", "compilations", "soundtrack", "soundtracks", "various artists"],
     }
-    must_pass_checks = {"album_artist"}
+    must_pass_checks = {"album-artist"}
 
     def init(self, check_config: dict[str, Any]):
         ignore_parent_folders: list[Any] = check_config.get("ignore_parent_folders", CheckArtistTag.default_config["ignore_parent_folders"])
         if not isinstance(ignore_parent_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_parent_folders
         ):
-            logger.warning(f'artist_tag.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
+            logger.warning(f'artist-tag.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
             ignore_parent_folders = []
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 

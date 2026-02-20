@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class CheckCoverEmbedded(Check):
-    name = "cover_embedded"
+    name = "cover-embedded"
     default_config = {
         "enabled": True,
         "max_height_width": 1000,
@@ -26,25 +26,25 @@ class CheckCoverEmbedded(Check):
         "create_max_height_width": 600,
         "create_jpeg_quality": 80,
     }
-    must_pass_checks = {"duplicate_image"}  # cover_selection with unique=True is recommended but not required
+    must_pass_checks = {"duplicate-image"}  # cover-selection with unique=True is recommended but not required
 
     def init(self, check_config: dict[str, Any]):
         defaults = CheckCoverEmbedded.default_config
         self.max_height_width = int(check_config.get("max_height_width", defaults["max_height_width"]))
         self.require_mime_type = str(check_config.get("require_mime_type", defaults["require_mime_type"]))
         if self.require_mime_type not in {"", "image/jpeg", "image/png"}:
-            raise ValueError("cover_embedded.require_mime_type must be either blank, image/jpeg or image/png")
+            raise ValueError("cover-embedded.require_mime_type must be either blank, image/jpeg or image/png")
         self.create_mime_type = str(check_config.get("create_mime_type", defaults["create_mime_type"]))
         if self.create_mime_type not in {"image/jpeg", "image/png"}:
-            raise ValueError("cover_embedded.create_mime_type must be either image/jpeg or image/png")
+            raise ValueError("cover-embedded.create_mime_type must be either image/jpeg or image/png")
         self.create_max_height_width = int(check_config.get("create_max_height_width", defaults["create_max_height_width"]))
         self.create_jpeg_quality = int(check_config.get("create_jpeg_quality", defaults["create_jpeg_quality"]))
         if self.create_jpeg_quality < 1 or self.create_jpeg_quality > 95:
-            raise ValueError("cover_embedded.create_jpeg_quality must be between 1 and 95")
+            raise ValueError("cover-embedded.create_jpeg_quality must be between 1 and 95")
 
     def check(self, album: Album) -> CheckResult | None:
         cover_source = next(((filename, pic) for filename, pic in album.picture_files.items() if pic.cover_source), None)
-        # depends on duplicate_image, which ensures there is only one COVER_FRONT embedded per track
+        # depends on duplicate-image, which ensures there is only one COVER_FRONT embedded per track
         track_covers = [next(((t.filename, p) for p in t.pictures if p.picture_type == PictureType.COVER_FRONT), None) for t in album.tracks]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
         missing = sum(0 if c else 1 for c in track_covers)
@@ -115,7 +115,7 @@ class CheckCoverEmbedded(Check):
             if len(unique_covers) > 1:
                 return CheckResult(
                     ProblemCategory.PICTURES,
-                    f'{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover_selection "unique" for fixes)',
+                    f'{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover-selection "unique" for fixes)',
                 )
             # else
             if len(unique_covers) == 1:

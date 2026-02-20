@@ -123,7 +123,7 @@ class TestCheckCoverFilename:
             {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1, 1, 1, b"")},
         )
         ctx = Context()
-        ctx.config.checks["cover_filename"]["filename"] = "cover.jpg"
+        ctx.config.checks["cover-filename"]["filename"] = "cover.jpg"
         result = CheckCoverFilename(ctx).check(album)
         assert result
         assert result.message == "cover image has the wrong filename and type (expected .jpg): cover.png"

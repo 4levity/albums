@@ -24,7 +24,7 @@ class TestZeroPadNumbers:
         )
         ctx = Context()
         ctx.config.checks = {
-            "zero_pad_numbers": {
+            "zero-pad-numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
             }
@@ -53,7 +53,7 @@ class TestZeroPadNumbers:
         )
         ctx = Context()
         ctx.config.checks = {
-            "zero_pad_numbers": {
+            "zero-pad-numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
                 "tracktotal_pad": "never",
@@ -88,7 +88,7 @@ class TestZeroPadNumbers:
         assert len(album.tracks) == 100
         ctx = Context()
         ctx.config.checks = {
-            "zero_pad_numbers": {
+            "zero-pad-numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
                 "discnumber_pad": "if_needed",
@@ -118,7 +118,7 @@ class TestZeroPadNumbers:
         )
         ctx = Context()
         ctx.config.checks = {
-            "zero_pad_numbers": {
+            "zero-pad-numbers": {
                 "enabled": True,
                 "tracknumber_pad": "TWO_DIGIT_MINIMUM",
                 "tracktotal_pad": "TWO_DIGIT_MINIMUM",
@@ -149,7 +149,7 @@ class TestZeroPadNumbers:
         album = Album("", [Track("1.mp3", {"tracknumber": ["01"], "tracktotal": ["2"]})])
         ctx = Context()
         ctx.config.checks = {
-            "zero_pad_numbers": {
+            "zero-pad-numbers": {
                 "enabled": True,
                 "tracknumber_pad": "if_needed",
                 "tracktotal_pad": "never",

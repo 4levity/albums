@@ -70,7 +70,7 @@ class TestCheckAlbumArtist:
         album_auto = Album("a/", [Track("1.mp3", {"artist": ["A"]}), Track("2.mp3", {"artist": ["A"]})])
 
         ctx = Context()
-        ctx.config.checks = {"album_artist": {"require_redundant": True}}
+        ctx.config.checks = {"album-artist": {"require_redundant": True}}
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
@@ -103,7 +103,7 @@ class TestCheckAlbumArtist:
         album_complies = Album("a/", [Track("1.mp3", {"artist": ["A"]}), Track("2.mp3", {"artist": ["A"]})])
 
         ctx = Context()
-        ctx.config.checks = {"album_artist": {"remove_redundant": True}}
+        ctx.config.checks = {"album-artist": {"remove_redundant": True}}
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
@@ -191,7 +191,7 @@ class TestCheckAlbumArtist:
             ],
         )
         ctx = Context()
-        ctx.config.checks = {"album_artist": {"remove_redundant": True}}
+        ctx.config.checks = {"album-artist": {"remove_redundant": True}}
         result = CheckAlbumArtist(ctx).check(album)
         assert "album artist is not needed: Foo" in result.message
 

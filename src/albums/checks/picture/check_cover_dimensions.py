@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class CheckCoverDimensions(Check):
-    name = "cover_dimensions"
+    name = "cover-dimensions"
     default_config = {
         "enabled": True,
         "min_pixels": 100,
@@ -26,20 +26,20 @@ class CheckCoverDimensions(Check):
         "fixable_squareness": 0.8,
         "max_crop": 0.03,
     }
-    must_pass_checks = {"cover_selection"}  # either all the COVER_FRONT images are the same or there is a cover_source selected
+    must_pass_checks = {"cover-selection"}  # either all the COVER_FRONT images are the same or there is a cover_source selected
 
     def init(self, check_config: dict[str, Any]):
         self.min_pixels = int(check_config.get("min_pixels", CheckCoverDimensions.default_config["min_pixels"]))
         self.max_pixels = int(check_config.get("max_pixels", CheckCoverDimensions.default_config["max_pixels"]))
         self.squareness = float(check_config.get("squareness", CheckCoverDimensions.default_config["squareness"]))
         if self.squareness > 1:
-            raise ValueError("cover_dimensions.squareness must be between 0 and 1")
+            raise ValueError("cover-dimensions.squareness must be between 0 and 1")
         self.fixable_squareness = float(check_config.get("fixable_squareness", CheckCoverDimensions.default_config["fixable_squareness"]))
         if self.fixable_squareness > 1:
-            raise ValueError("cover_dimensions.fixable_squareness must be between 0 and 1")
+            raise ValueError("cover-dimensions.fixable_squareness must be between 0 and 1")
         self.max_crop = float(check_config.get("max_crop", CheckCoverDimensions.default_config["max_crop"]))
         if self.max_crop > 1:
-            raise ValueError("cover_dimensions.max_crop must be between 0 and 1")
+            raise ValueError("cover-dimensions.max_crop must be between 0 and 1")
 
     def check(self, album: Album) -> CheckResult | None:
         issues: set[str] = set()
@@ -50,16 +50,16 @@ class CheckCoverDimensions(Check):
                 embedded_covers[covers[0]] = track.filename
         cover_files = [(pic, filename) for filename, pic in album.picture_files.items() if pic.picture_type == PictureType.COVER_FRONT]
 
-        # because cover_selection must pass, either there is no cover, all cover images are the same, or one file is cover_source
+        # because cover-selection must pass, either there is no cover, all cover images are the same, or one file is cover_source
         # but double check anyways
         if len(cover_files) > 1:
-            return CheckResult(ProblemCategory.PICTURES, "there is more than one front cover image file (problem with cover_selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "there is more than one front cover image file (problem with cover-selection?)")
         file_cover = cover_files[0][0] if cover_files else None
         if len(embedded_covers) > 1:
-            return CheckResult(ProblemCategory.PICTURES, "more than one unique embedded cover image file (problem with cover_selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "more than one unique embedded cover image file (problem with cover-selection?)")
         embedded_cover = list(embedded_covers.items())[0][0] if embedded_covers else None
         if file_cover and embedded_cover and not file_cover.cover_source and file_cover != embedded_cover:
-            return CheckResult(ProblemCategory.PICTURES, "cover image file not unique or cover_source (problem with cover_selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "cover image file not unique or cover_source (problem with cover-selection?)")
 
         if file_cover:  # either cover_source or identical to embedded images
             (cover, from_file) = cover_files[0]
@@ -68,7 +68,7 @@ class CheckCoverDimensions(Check):
             (cover, from_file) = list(embedded_covers.items())[0]
             embedded = True
         else:
-            return None  # no cover means cover_selection is not configured to require one
+            return None  # no cover means cover-selection is not configured to require one
 
         if min(cover.height, cover.width) < self.min_pixels:
             # we think we have selected the best cover image, no automated fix here

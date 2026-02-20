@@ -46,54 +46,54 @@ class TestCli:
         assert re.search("bar.+00:00.+\\d+ Bytes.+total: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_check(self):
-        result = self.run(["check", "--default", "album_tag"], init=True)
+        result = self.run(["check", "--default", "album-tag"], init=True)
         assert result.exit_code == 0
         assert f'1 tracks missing album tag : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
     def test_check_automatically_enabled_dependencies(self):
-        result = self.run(["check", "disc_numbering"], init=True)
+        result = self.run(["check", "disc-numbering"], init=True)
         assert result.exit_code == 0
-        assert "automatically enabling check invalid_track_or_disc_number" in result.output
+        assert "automatically enabling check invalid-track-or-disc-number" in result.output
 
     def test_ignore_check(self):
         self.run(["scan"], init=True)
-        result = self.run(["-p", "foo" + os.sep, "ignore", "album_tag"])
+        result = self.run(["-p", "foo" + os.sep, "ignore", "album-tag"])
         assert result.exit_code == 0
-        assert f"album foo{os.sep} - ignore album_tag" in result.output
+        assert f"album foo{os.sep} - ignore album-tag" in result.output
 
-        result = self.run(["check", "--default", "album_tag"])
+        result = self.run(["check", "--default", "album-tag"])
         assert result.exit_code == 0
         assert "foo" + os.sep not in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
     def test_notice_check_not_ignored(self):
         self.run(["scan"], init=True)
-        result = self.run(["-rp", "(foo|bar)", "notice", "--force", "album_tag"])  # filtered so that album names will not be suppressed
+        result = self.run(["-rp", "(foo|bar)", "notice", "--force", "album-tag"])  # filtered so that album names will not be suppressed
         assert result.exit_code == 0
-        assert f"album foo{os.sep} was already not ignoring album_tag" in result.output
-        assert f"album bar{os.sep} was already not ignoring album_tag" in result.output
+        assert f"album foo{os.sep} was already not ignoring album-tag" in result.output
+        assert f"album bar{os.sep} was already not ignoring album-tag" in result.output
 
     def test_notice_check(self):
         self.run(["scan"], init=True)
         result = self.run(["check", "--default"])
         assert f'1 tracks missing album tag : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
-        self.run(["-p", "foo" + os.sep, "ignore", "album_tag"])
+        self.run(["-p", "foo" + os.sep, "ignore", "album-tag"])
         result = self.run(["check", "--default"])
         assert f'1 tracks missing album tag : "foo{os.sep}"' not in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
-        result = self.run(["notice", "--force", "album_tag"])
+        result = self.run(["notice", "--force", "album-tag"])
         assert result.exit_code == 0
-        assert f"album foo{os.sep} will stop ignoring album_tag" in result.output
+        assert f"album foo{os.sep} will stop ignoring album-tag" in result.output
 
         result = self.run(["check", "--default"])
         assert f'1 tracks missing album tag : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
 
     def test_check_automatic_fix(self):
-        result = self.run(["check", "--automatic", "album_tag"], init=True)
+        result = self.run(["check", "--automatic", "album-tag"], init=True)
         assert result.exit_code == 0
         assert f'"foo{os.sep}" - 1 tracks missing album tag' in result.output
         assert f'"bar{os.sep}" - 2 tracks missing album tag' in result.output
@@ -103,7 +103,7 @@ class TestCli:
         assert result.exit_code == 0
         assert "unchanged: 2" in result.output
 
-        result = self.run(["check", "--automatic", "album_tag"])
+        result = self.run(["check", "--automatic", "album-tag"])
         assert result.exit_code == 0
         assert "foo" + os.sep not in result.output
         assert "bar" + os.sep not in result.output

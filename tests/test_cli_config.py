@@ -23,9 +23,9 @@ class TestCliConfig:
         assert_setting(result.output, "settings.rescan", "auto")
         # assert_setting(result.output, "settings.tagger", "easytag")  # only if it is installed
         assert_setting(result.output, "settings.open_folder_command", " ")
-        assert_setting(result.output, "cover_dimensions.min_pixels", "100")
-        assert_setting(result.output, "cover_dimensions.squareness", "0.98")
-        assert_setting(result.output, "required_tags.enabled", "False")
+        assert_setting(result.output, "cover-dimensions.min_pixels", "100")
+        assert_setting(result.output, "cover-dimensions.squareness", "0.98")
+        assert_setting(result.output, "required-tags.enabled", "False")
 
         result = self.run(["config", "settings.library", "."])
         assert result.exit_code == 0
@@ -37,21 +37,21 @@ class TestCliConfig:
         result = self.run(["config", "settings.open_folder_command", "xdg-open"])
         assert "settings.open_folder_command = xdg-open" in result.output
 
-        result = self.run(["config", "cover_dimensions.min_pixels", "42"])
-        assert "cover_dimensions.min_pixels = 42" in result.output
-        result = self.run(["config", "cover_dimensions.squareness", "0.42"])
-        assert "cover_dimensions.squareness = 0.42" in result.output
-        result = self.run(["config", "required_tags.enabled", "True"])
-        assert "required_tags.enabled = True" in result.output
+        result = self.run(["config", "cover-dimensions.min_pixels", "42"])
+        assert "cover-dimensions.min_pixels = 42" in result.output
+        result = self.run(["config", "cover-dimensions.squareness", "0.42"])
+        assert "cover-dimensions.squareness = 0.42" in result.output
+        result = self.run(["config", "required-tags.enabled", "True"])
+        assert "required-tags.enabled = True" in result.output
 
         result = self.run(["config", "--show"])
         assert_setting(result.output, "settings.library", ".")
         assert_setting(result.output, "settings.rescan", "never")
         assert_setting(result.output, "settings.tagger", "mp3tag")
         assert_setting(result.output, "settings.open_folder_command", "xdg-open")
-        assert_setting(result.output, "cover_dimensions.min_pixels", "42")
-        assert_setting(result.output, "cover_dimensions.squareness", "0.42")
-        assert_setting(result.output, "required_tags.enabled", "True")
+        assert_setting(result.output, "cover-dimensions.min_pixels", "42")
+        assert_setting(result.output, "cover-dimensions.squareness", "0.42")
+        assert_setting(result.output, "required-tags.enabled", "True")
         self.run(["config", "settings.library", str(TestCliConfig.library)])
 
     def test_config_invalid(self):
@@ -71,18 +71,18 @@ class TestCliConfig:
         assert result.exit_code == 1
         assert "foo is not a valid check name" in result.output
 
-        result = self.run(["config", "invalid_image.foo", "1"])
+        result = self.run(["config", "invalid-image.foo", "1"])
         assert result.exit_code == 1
-        assert "foo is not a valid option for check invalid_image" in result.output
+        assert "foo is not a valid option for check invalid-image" in result.output
 
-        result = self.run(["config", "invalid_image.enabled", "foo"])
+        result = self.run(["config", "invalid-image.enabled", "foo"])
         assert result.exit_code == 1
-        assert "invalid_image.enabled must be true or false" in result.output
+        assert "invalid-image.enabled must be true or false" in result.output
 
-        result = self.run(["config", "cover_dimensions.squareness", "foo"])
+        result = self.run(["config", "cover-dimensions.squareness", "foo"])
         assert result.exit_code == 1
-        assert "cover_dimensions.squareness must be a non-negative floating point number" in result.output
+        assert "cover-dimensions.squareness must be a non-negative floating point number" in result.output
 
-        result = self.run(["config", "cover_dimensions.min_pixels", "99.9"])
+        result = self.run(["config", "cover-dimensions.min_pixels", "99.9"])
         assert result.exit_code == 1
-        assert "cover_dimensions.min_pixels must be a non-negative integer" in result.output
+        assert "cover-dimensions.min_pixels must be a non-negative integer" in result.output

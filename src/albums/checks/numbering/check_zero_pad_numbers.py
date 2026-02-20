@@ -33,7 +33,7 @@ class ZeroPadPolicy(Enum):
 
 
 class CheckZeroPadNumbers(Check):
-    name = "zero_pad_numbers"
+    name = "zero-pad-numbers"
     default_config = {
         "enabled": True,
         "tracknumber_pad": "TWO_DIGIT_MINIMUM",
@@ -41,7 +41,7 @@ class CheckZeroPadNumbers(Check):
         "discnumber_pad": "if_needed",
         "disctotal_pad": "never",
     }
-    must_pass_checks = {"invalid_track_or_disc_number"}
+    must_pass_checks = {"invalid-track-or-disc-number"}
 
     def init(self, check_config: dict[str, Any]):
         self.tracknumber_pad = ZeroPadPolicy.from_str(str(check_config.get("tracknumber_pad", CheckZeroPadNumbers.default_config["tracknumber_pad"])))
@@ -62,7 +62,7 @@ class CheckZeroPadNumbers(Check):
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if tracks_by_disc is None:
-            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid_track_or_disc_number check must pass first")
+            return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid-track-or-disc-number check must pass first")
 
         total_discs = len(tracks_by_disc.keys())
         table_rows: List[List[RenderableType]] = []
