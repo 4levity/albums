@@ -1,5 +1,5 @@
 ---
-icon: lucide/rocket
+icon: lucide/target
 ---
 
 # Overview
@@ -24,24 +24,4 @@ Install with `pipx install albums` in an environment with Python 3.12 or newer.
 Run `albums scan` to get started. It will ask you to confirm whether your music
 library is in the default user home directory location (e.g. `~/Music`). If it
 isn't, run `albums --library "/path/to/library" scan` instead. It may take
-several minutes to index a large collection. See [Usage](./usage.md)
-
-## Risks
-
-This software has no warranty and I am not claiming it is safe or fit for any
-purpose. But if something goes very wrong, you can simply restore your backups.
-If you don't have backups, maybe this tool isn't for you.
-
-More specifically, here are some of the actual risks:
-
-- Could overwrite correct tags with incorrect info, or rename files incorrectly,
-  etc, depending on configuration, use or bugs.
-- If you set a bad `sync` destination **and** use `--delete` **and** confirm or
-  use `--force`, it will delete everything at the specified path.
-    - Even if you set the correct `sync` location, the `--delete` option could
-      delete files from your digital audio player that you wanted to keep.
-- Might corrupt your music files while editing their tags due to hypothetical
-  bugs in Mutagen.
-- Might make corrupt copies of albums if there are bugs in the sync code.
-- Might create a vector for malware living in media file metadata to attack your
-  computer via hypothetical vulnerabilities in libraries or your OS.
+several minutes to index a large collection. See [Usage](./usage.md).

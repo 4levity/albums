@@ -9,7 +9,7 @@ filenames or directory structure. Some checks provide options to fix the problem
 that must be selected by a user. And some checks provide a high-confidence fully
 automatic fix. See below for how to use these.
 
-Using a tool to automatically repair your music files in bulk might have
+Using a tool that can modify your music files automatically might have
 unintended results. If it goes very badly, simply restore your backup.
 
 !!!note
@@ -27,15 +27,16 @@ in which case it will run those only. No changes will be applied unless one of
 the fix options is specified. You can filter what albums are examined. See
 `albums --help` and `albums check --help`.
 
+Checks run quickly becasue they are looking at data in the database, not the
+actual albums on the file system. Results are based on the most recent scan of
+the library.
+
 !!!tip
 
     By default, `albums` automatically runs a scan first when running `check`.
     You can disable this with the `rescan` setting (see [Usage](./usage.md)),
     but if you do, make sure to run `albums scan` manually whenever any changes
     are made to the library outside of `albums`.
-
-> Before running checks, ensure the database is up to date by running
-> `albums scan`.
 
 ### How to Check and Fix
 

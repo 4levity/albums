@@ -36,7 +36,7 @@ words. What is allowed depends on the platform. This check flags filenames that
 might cause a problem. To allow reserved characters that only cause issues on
 Windows (and only in some cases), see the `compatibility` option.
 
-Additionally, to prevent issues with case-insensitive file systems and (software
+Additionally, to prevent issues with case-insensitive file systems (and software
 designed for them), filenames should not be "case-insensitive duplicates". For
 example, an album should not have two files named `folder.jpg` and `Folder.JPG`.
 
