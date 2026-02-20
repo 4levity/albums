@@ -15,7 +15,7 @@ copyright = """
 Copyright &copy; 2026 Ivan Cooper
 """
 
-nav = ["index.md", "usage.md", "check_and_fix.md", "sync.md", "developing.md", "ideas.md", "changelog.md"]
+nav = ["index.md", "usage.md", "check_and_fix.md", "all_checks.md", "sync.md", "developing.md", "ideas.md", "changelog.md"]
 
 [project.theme]
 #favicon = "images/favicon.png"

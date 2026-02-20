@@ -1,0 +1,574 @@
+---
+icon: lucide/list-checks
+---
+
+# All Checks
+
+All checks and their configuration options.
+
+## Order
+
+Enabled checks will run in order:
+
+1. `bad-pathname` check
+1. All "Numbering" checks
+1. All "Other Tags" checks
+1. All "Pictures" checks
+1. Remaining "Path and Filename" checks
+
+Within each category, the checks run in the order listed below.
+
+## Dependencies
+
+Individual checks are mostly independent, but some checks will not run on an
+album unless a previous check ran and passed. For example, the specific fix from
+the `disc-in-tracknumber` check should be applied before
+`invalid-track-or-disc-number` flags the track number as invalid. And, when the
+`invalid-image` check doesn't pass, none of the other "Pictures" checks can run.
+Other dependencies are listed below.
+
+## Checks: Path and Filename
+
+### bad-pathname
+
+Filenames should not include invalid characters or be operating system reserved
+words. What is allowed depends on the platform. This check flags filenames that
+might cause a problem. To allow reserved characters that only cause issues on
+Windows (and only in some cases), see the `compatibility` option.
+
+Additionally, to prevent issues with case-insensitive file systems and (software
+designed for them), filenames should not be "case-insensitive duplicates". For
+example, an album should not have two files named `folder.jpg` and `Folder.JPG`.
+
+The compatibility options come from
+[pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).
+They are:
+
+- `"Linux"`
+- `"Windows"`
+- `"macOS"`
+- `"POSIX"`
+- `"universal"`
+
+| Option          | Default       | Description                            |
+| --------------- | ------------- | -------------------------------------- |
+| `compatibility` | `"universal"` | Configure what is allowed in filenames |
+
+### cover-filename
+
+If the front cover image is in a file with a recognizable name, it should have a
+consistent name. For example, `albums` recognizes `.folder.png` and
+`AlbumArtSmall.jpg` and other variations as front cover images. This check flags
+if one of those files exists, but the "standard" cover image file does not.
+
+**Automatic fix**: If there is exactly one front cover file, rename or convert
+it according to the options.
+
+<!-- pyml disable line-length -->
+
+| Option         | Default     | Description                                                                  |
+| -------------- | ----------- | ---------------------------------------------------------------------------- |
+| `filename`     | `"cover.*"` | Cover file. `.*` = keep same file type, `.png` or `.jpg` = convert if needed |
+| `jpeg_quality` | **90**      | If converting to JPEG, use this quality setting                              |
+
+<!-- pyml enable line-length -->
+
+### album-under-album
+
+This check reports when an album has another album in a subfolder. Maybe they
+should be in separate folders or this check should be disabled. No fix offered.
+
+## Checks: Numbering
+
+Track number and disc number tag issues.
+
+### disc-in-track-number
+
+If the disc number and track number are combined in the track number tag with a
+dash (i.e. track number="2-03") instead of being in separate tags, this is
+treated as an error. Subsequent checks require track numbers to be numeric.
+
+**Automatic fix**: Split the values into track number and disc number tags.
+
+### invalid-track-or-disc-number
+
+This check reports when an album has invalid or ambiguous values for track
+number, track total, disc number or disc total. If these fields cannot be
+resolved to a single valid number, they are not useful and should be removed.
+
+Rule: for each track, if present, track/disc number/total tags should each have
+a single value and that value should be a positive number (0 is not valid).
+
+!!!success "Dependency"
+
+    Requires the `disc-in-track-number` check to pass first.
+
+**Automatic fix**: For each of the noted tags in each track, discard all values
+that are non-numeric or 0. If exactly one unique value remains, save it.
+Otherwise, delete the tag.
+
+### disc-numbering
+
+Reports on issues with disc number and disc total (`TPOS` in ID3).
+
+Rules:
+
+- If any track has disc number, all tracks should have disc number
+- Disc numbers should start at 1 and be sequential (1, 2, 3...)
+- If present, the disc total should be the number of distinct disc number values
+  which should be the same as the highest disc number
+- All tracks with disc total should also have disc number
+- The selected disc total presence policy should apply
+    - **"consistent"**: either all tracks have disc total, or none do
+    - **"always"**: all tracks should have disc total
+    - **"never"**: disc total should be removed
+
+!!!success "Dependency"
+
+    Requires the `invalid-track-or-disc-number` check to pass first.
+
+**Automatic fix** for disc total policy: If the disc total policy is
+"consistent" but some tracks are missing disc total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
+
+<!-- pyml disable line-length -->
+
+| Option                      | Default        | Description                                                  |
+| --------------------------- | -------------- | ------------------------------------------------------------ |
+| `discs_in_separate_folders` | **true**       | albums with multiple discs may be stored in separate folders |
+| `disctotal_policy`          | `"consistent"` | Set the tag presence policy for disc total                   |
+
+<!-- pyml enable line-length -->
+
+> When `discs_in_separate_folders` is enabled (default), this check will
+> **ignore** when an album has only one disc of a multiple disc set. But that
+> also means it cannot tell whether an album is missing a disc number or whether
+> disc total is correct. If you can put multiple-disc albums together in one
+> folder, do that and set discs_in_separate_folders` to **false**.
+
+### track-numbering
+
+Reports on several issues with track numbers and track totals, including
+apparently missing tracks.
+
+The rules are:
+
+- Every track should have a single decimal track number
+- For each disc, track numbers should start at 1 and be sequential
+- For each disc, if track total is present, it should be the number of tracks on
+  that disc
+- All tracks with track total should also have track number
+- The selected track total presence policy should apply:
+    - **"consistent"**: either all tracks have track total, or none do
+    - **"always"**: all tracks should have track total
+    - **"never"**: track total should be removed
+
+!!!success "Dependency"
+
+    Requires the `disc-numbering` check to pass first.
+
+**Automatic fix** for missing track numbers: If track number tags are missing
+from some tracks but all track numbers can be guessed from the filename,
+recreate track number tags from filenames.
+
+**Automatic fix** for track total policy: If the track total policy is
+"consistent" but some tracks are missing track total, remove it from all tracks.
+If the policy is "never", always remove the tag. (There is currently no
+automatic fix if the policy is "always".)
+
+<!-- pyml disable line-length -->
+
+| Option              | Default        | Description                                             |
+| ------------------- | -------------- | ------------------------------------------------------- |
+| `ignore_folders`    | `["misc"]`     | in all folders with these names, ignore track numbering |
+| `tracktotal_policy` | `"consistent"` | Set the tag presence policy for track total             |
+
+<!-- pyml enable line-length -->
+
+### zero-pad-numbers
+
+Apply selected policies for zero-padding in the track number/total and disc
+number/total tags. Some media players and many file managers do not show tracks
+in the correct order unless the track numbers are zero-padded, because for
+example "2" comes after "10" when sorted alphabetically.
+
+!!!success "Dependency"
+
+    Requires the `invalid-track-or-disc-number` check to pass first.
+
+**Automatic fix**: If no major problems detected in relevant tags, apply policy.
+
+Choose a policy for each tag. The policy options are:
+
+- **"ignore"**: don't check this tag
+- **"never"**: do not use leading zeros
+- **"if_needed"**: leading zeros when required for all values to have the same
+  number of digits (same as "never" for track/disc totals)
+- **"two_digit_minimum"**: all values should be at least two digits (three if
+  more than 99 values)
+
+| Option            | Default               |
+| ----------------- | --------------------- |
+| `tracknumber_pad` | `"two_digit_minimum"` |
+| `tracktotal_pad`  | `"two_digit_minimum"` |
+| `discnumber_pad`  | `"if_needed"`         |
+| `disctotal_pad`   | `"never"`             |
+
+> The default settings will result in, for example, track **04** of **07** and
+> disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
+> for example, track **4** of **7** and track **04** of **12**.
+
+## Other Tags
+
+Tag checks that are not related to numbering or pictures.
+
+### album-tag
+
+Tracks should have `album` tags. The fix attempts to guess album name from tags
+on other tracks in the folder, and the name of the folder. Choose from options.
+
+**Automatic fix**: If there is exactly one option for the album name, use it.
+
+<!-- pyml disable line-length -->
+
+| Option           | Default    | Description                                                          |
+| ---------------- | ---------- | -------------------------------------------------------------------- |
+| `ignore_folders` | `["misc"]` | a list of folder names (not paths) where this rule should be ignored |
+
+<!-- pyml enable line-length -->
+
+### album-artist
+
+The "album artist" tag (e.g. `albumartist`, `TPE2`) allows many media players to
+group tracks in the same album when the "artist" tag is not the same on all the
+tracks.
+
+Rules:
+
+- If any tracks have different artist tags, all tracks should have the same
+  album artist tag.
+- If any track has an album artist tag, all tracks should have the same album
+  artist tag.
+
+The fix offers candidates found in the tags plus "Various Artists". It can also
+apply a policy from the options below.
+
+**Automatic fix**: If a policy is enabled to set or remove redundant album
+artist, and no other problems are detected, apply the policy.
+
+<!-- pyml disable line-length -->
+
+| Option              | Default   | Description                                                                          |
+| ------------------- | --------- | ------------------------------------------------------------------------------------ |
+| `remove_redundant`  | **false** | The album artist tag should be removed if all the artist tags are the same.          |
+| `require_redundant` | **false** | There should always be an album artist tag even if all the artist tags are the same. |
+
+<!-- pyml enable line-length -->
+
+### artist-tag
+
+The "artist" tag should be present on all tracks. If it is missing from any
+track, candidates include values for artist and album artist for all tracks.
+
+If the parent folder containing the album folder is not a prohibited name, it is
+also a candidate. Prohibited names can be configured with an option.
+
+!!!success "Dependency"
+
+    Requires the `album-artist` check to pass first.
+
+**Automatic fix**: If there is exactly one candidate for artist name, apply it
+to all tracks that do not have an artist tag.
+
+<!-- pyml disable line-length -->
+
+| Option                  | Default                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `ignore_parent_folders` | `["compilation", "compilations", "soundtrack", "soundtracks", "various artists"]` |
+
+<!-- pyml enable line-length -->
+
+### required-tags
+
+All tracks should have one or more values for each of these tags.
+
+> Disabled by default, set `enable = true` to use.
+
+| Option | Default               |
+| ------ | --------------------- |
+| `tags` | `["artist", "title"]` |
+
+### single-value-tags
+
+If present, the specified tags should not have multiple values _in the same
+track_. Many multiple-value tags are valid, but they might be unintended, and
+might cause unpredictable results with various media players.
+
+Other checks also enforce a single value for specific tags such as track number.
+
+The fix provides options to concatenate multiple values into a single value,
+after removing duplicates.
+
+**Automatic fix**: When a track has **duplicate** values for the tag, an
+automatic fix is available that only removes the duplicates. If there are
+multiple unique values, they will be kept and still flagged by this check.
+
+| Option | Default               |
+| ------ | --------------------- |
+| `tags` | `["artist", "title"]` |
+
+### track-title
+
+Each track should have at least one title tag. This check doesn't care if a
+track has more than one title. If the track doesn't have a title, it can be
+guessed from the filename, as long as the filename looks similar to one of these
+examples:
+
+- `01 the title.flac`
+- `01. the title.mp3`
+- `01 - the title.mp3`
+- `1-03 - the title.flac`
+- `the title.flac` _(if nothing else matches)_
+
+If the filename looks like a track number only, no title guess will be made.
+However, if the title doesn't match any recognized pattern, the guess will be
+the whole filename except for the extension.
+
+**Automatic fix**: If every tag that has a missing title also has a filename
+from which a title can be guessed, fill in all empty titles.
+
+## Pictures
+
+### invalid-image
+
+During the scan, `albums` tries to load every embedded image and supported image
+file. If it fails, the image is probably corrupt and a `load_issue error` will
+be stored. This check reports on all images that could not be loaded.
+
+!!!tip "Image Loading"
+
+    `albums` does not rely on the file extension or the reported MIME type to
+    load images. If the image data is valid, `albums` should be able to load it.
+    When the MIME type is wrong, it will be reported (and can be fixed) by the
+    `embedded-picture-metadata` check.
+
+The fix will list and offer to delete all image files that cannot be loaded, and
+remove all embedded images that cannot be loaded.
+
+### duplicate-image
+
+Each of the tracks in an album may have the same images embedded. But other
+duplicate image data is not useful. Rules:
+
+- Each track should only have one embedded picture per picture-type (don't have
+  two COVER_FRONT images in the same track)
+- Each of the pictures embedded in a track should be a different image (don't
+  have the same image embedded twice)
+- Image files should not be exact duplicates of other image files
+
+!!!success "Dependency"
+
+    Requires the `invalid-image` check to pass first.
+
+**Automatic fix**: If several image files (not embedded) contain the exact same
+image contents, keep the one with the shortest filename and delete the rest.
+
+<!-- pyml disable line-length -->
+
+| Option       | Default   | Description                                                            |
+| ------------ | --------- | ---------------------------------------------------------------------- |
+| `cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
+
+<!-- pyml enable line-length -->
+
+### embedded-picture-metadata
+
+FLAC files
+[store metadata about embedded pictures](https://www.rfc-editor.org/rfc/rfc9639.html#name-picture)
+(MIME type, dimensions). Ogg Vorbis uses a comment with the same structure. ID3
+tags include the MIME type of the image in the APIC frame. This check loads the
+image data and compares the reported MIME type and dimensions (if present) to
+the real image data.
+
+**Automatic fix**: For each FLAC or MP3 file with incorrect metadata, re-embed
+all the images with the same image data and correct metadata. Fix not yet
+available for other formats.
+
+!!!success "Dependency"
+
+    Requires the `invalid-image` check to pass first.
+
+### album-art
+
+Image files embedded in tracks should be a reasonable size and in a
+widely-supported format.
+
+Rules:
+
+- **Embedded** images should not be very large files (see options)
+- **Embedded** images should be in PNG or JPEG format (not GIF or other)
+
+!!!success "Dependency"
+
+    Requires the `invalid-image` check to pass first.
+
+<!-- pyml disable line-length -->
+
+| Option              | Default     | Description                                                         |
+| ------------------- | ----------- | ------------------------------------------------------------------- |
+| `embedded_size_max` | **8388608** | embedded image data maximum size (not including container encoding) |
+
+<!-- pyml enable line-length -->
+
+### cover-selection
+
+If any track has any pictures in its metadata, or if there are any image files
+in the folder, the album should have front cover art. Or it can be required for
+all albums (see settings).
+
+In media formats including FLAC files, embedded images are classified with the
+"picture type" codes originally defined for ID3v2 `APIC` frames. This check is
+concerned with images classified as `COVER_FRONT` (0x03). Some image files are
+also considered front covers if they are **png**, **jpeg**/**jpg** or **gif**
+and have "folder", "cover", "thumbnail" or "album" in the filename.
+
+Rules:
+
+- If there are any embedded images or image files, one or more of them should be
+  tagged or named to be recognized as the front cover image
+- When "cover_required" setting is true:
+    - A front cover image **must** be present
+- When "unique" setting is true:
+    - All front cover art associated with the album should be the same image,
+      including embedded `COVER_FRONT` as well as image files matching the
+      filenames above, **except:**
+    - There can be two unique cover images, if one of them (like a high-res
+      version of the cover) is a file and it is marked in `albums` as "front
+      cover source"
+
+Tracks may have any number of embedded images that are not marked as
+`COVER_FRONT`. Other image files in the album folder, where the filename does
+not match the expected cover art filenames above, will be treated as picture
+type `OTHER`.
+
+!!!success "Dependency"
+
+    Requires the `duplicate-image` check to pass first.
+
+**Automatic fix**: If there are multiple cover images but one of them is a file
+that is larger than the other files and/or embedded images, mark that file as
+"front cover source" so that file will no longer count as a duplicate. This
+might not completely fix the check if there are more front cover images. The
+next automatic fix would delete the other image files identified as cover art:
+
+**Automatic fix**: If there are multiple image files (not embedded) recognized
+as front cover source by their filenames, and one of them has already been
+marked as "front cover source", delete the other front cover art image files.
+
+**Automatic fix**: If the album has no front cover art, but there is exactly one
+unique image (embedded and/or image file), make that image the cover art by
+renaming the image file to `cover.jpg`/`.png`/`.gif` **or** by extracting the
+embedded image from one of the tracks to `cover.jpg` or `.png`.
+
+<!-- pyml disable line-length -->
+
+| Option           | Default   | Description                                                    |
+| ---------------- | --------- | -------------------------------------------------------------- |
+| `cover_required` | **false** | if **true** every album should have correct front cover art    |
+| `unique`         | **true**  | if **true** all front cover art should be the exact same image |
+
+<!-- pyml enable line-length -->
+
+### cover-dimensions
+
+Images treated as picture type COVER_FRONT should be square and within a range
+of acceptable sizes.
+
+Rules:
+
+- If an image is marked as front cover source, only that image is evaluated.
+  Using the front cover source to fix embedded images is a separate task.
+- The width/height of cover art should not be too small or large (see options)
+- Cover art should be square (see options)
+
+!!!success "Dependency"
+
+    Requires the `cover-selection` check to pass first.
+
+**Automatic fix**: If the front cover image (embedded or in a file) is not as
+square as the `squareness` setting but at least as square as the
+`fixable_squareness` setting, fix it by cropping first (see options), and if
+necessary squashing it the rest of the way. The new square cover image will be
+saved as a PNG file and marked as "front cover source" for the album. If the
+unsquare source was an image file, it will be deleted.
+
+If embedded front cover images are present they are **not** changed by this fix.
+The new cover image file is set as "front cover source".
+
+<!-- pyml disable line-length -->
+
+| Option               | Default  | Description                                                                        |
+| -------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `min_pixels`         | **100**  | front cover art should be at least this width/height                               |
+| `max_pixels`         | **2048** | front cover art should not be larger than this width/height                        |
+| `squareness`         | **0.98** | cover art minimum width/height ratio - **1** for exactly square, **0** to disable  |
+| `fixable_squareness` | **0.8**  | if image is at least this square, offer automatic fix with crop + squash           |
+| `max_crop`           | **0.03** | crop at most this much of the image (0.03 = lose max 1.5% of image from two sides) |
+
+<!-- pyml enable line-length -->
+
+### cover-embedded
+
+If there is any front cover image (file or embedded), all tracks should have
+_some_ front cover image embedded. It should not be larger than the maximum size
+and should be the required MIME type if set (see `max_height_width` and
+`require_mime_type` options).
+
+Furthermore, if there is a front cover image that has been marked as "front
+cover source" in `albums`, all tracks should have a front cover image that
+exactly matches the specs (dimensions and MIME type) configured in this check
+(see `create_*` options).
+
+When there are existing embedded covers that do not meet the above requirements,
+the presence of more than one unique front cover image will prevent automatic
+fixes by this check, to avoid automatically overwriting per-track cover art.
+
+When the above requirements above **are** met, this check will pass. To cause
+`albums` to embed new cover art when there is "good enough" cover art already,
+place high resolution cover art in the folder named `cover.jpg` (or another
+recognized front cover filename) and run the `cover-selection` check, which
+should offer to mark the new art as "front cover source". Subsequently, as long
+as the size or MIME type of the previous embedded cover is not exactly the same
+as what this check is configured to generate, the new cover can be embedded into
+tracks by this check.
+
+!!!success "Dependency"
+
+    Requires the `duplicate-image` check to pass first. For automation,
+    `cover-selection` (with `unique=True`) and `cover-dimensions`
+    are recommended.
+
+**Automatic fix**: When there is a front cover source file and there is not more
+than one unique front cover image embedded in the tracks, generate a new cover
+from the cover source and embed it in every track, replacing any existing cover.
+
+**Automatic fix**: When there is no front cover source, but there is only one
+unique cover image, that image can be extracted to a file (if it is not already
+a file) and marked as front cover source. Rechecking will then offer the
+automatic fix above.
+
+<!-- pyml disable line-length -->
+
+| Option                    | Default        | Description                                                               |
+| ------------------------- | -------------- | ------------------------------------------------------------------------- |
+| `max_height_width`        | **1000**       | Max height/width of the embedded cover _(see note below)_                 |
+| `require_mime_type`       | _[blank]_      | If not blank, required MIME type for embedded cover _(see note below)_    |
+| `create_mime_type`        | `"image/jpeg"` | MIME type for embedding cover images (image/jpeg or image/png)            |
+| `create_max_height_width` | **600**        | Target embedded cover height/width (source can be scaled down but not up) |
+| `create_jpeg_quality`     | **80**         | If `create_mime_type` is image/jpeg, use this quality (1 - 95)            |
+
+<!-- pyml enable line-length -->
+
+Note: The `max_height_width` and `require_mime_type` settings only apply to
+albums where no "front cover source" image is defined.

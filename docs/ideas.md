@@ -14,8 +14,6 @@ icon: lucide/flask-conical
     - Comprehend standard tags (artist, album, title. track)
     - Better support for MP4 (M4A, M4B, M4P) and other files
     - Add other extensions to default scan
-- Create initial config file from sample/template
-- Migrate config file (move config to database?)
 
 ### More checks and fixes
 
@@ -24,5 +22,5 @@ icon: lucide/flask-conical
 - track filename doesn't match title, doesn't include track/disc number
 - album folder doesn't match album name
 - parent folder doesn't match artist if using artist/album
-- implement visual similarity check for front cover art, so it can be stored in
+- automatic visual similarity check for front cover art, so it can be stored in
   multiple formats and resolutions without disabling uniqueness check

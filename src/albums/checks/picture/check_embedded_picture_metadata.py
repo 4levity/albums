@@ -22,6 +22,7 @@ class CheckEmbeddedPictureMetadata(Check):
     must_pass_checks = {"invalid-image"}
 
     def check(self, album: Album) -> CheckResult | None:
+        # TODO: this check or a separate one should also report if image files have the wrong extension
         mismatches: list[int] = []
         example: str | None = None
         for track_index, track in enumerate(album.tracks):

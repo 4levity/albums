@@ -1,5 +1,5 @@
 ---
-icon: lucide/logs
+icon: lucide/scroll-text
 ---
 
 # Changelog
