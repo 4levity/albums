@@ -463,6 +463,61 @@ The new cover image file is set as "front cover source".
 
 <!-- pyml enable line-length -->
 
+### front_cover_embedded
+
+If there is any front cover image (file or embedded), all tracks should have
+_some_ front cover image embedded. It should not be larger than the maximum size
+and should be the required MIME type if set (see `max_height_width` and
+`require_mime_type` options).
+
+Furthermore, if there is a front cover image that has been marked as "front
+cover source" in `albums`, all tracks should have a front cover image that
+exactly matches the specs (dimensions and MIME type) configured in this check
+(see `create_*` options).
+
+When there are existing embedded covers that do not meet the above requirements,
+the presence of more than one unique front cover image will prevent automatic
+fixes by this check, to avoid automatically overwriting per-track cover art.
+
+When the above requirements above **are** met, this check will pass. To cause
+`albums` to embed new cover art when there is "good enough" cover art already,
+place high resolution cover art in the folder named `cover.jpg` (or another
+recognized front cover filename) and run the `front_cover_selection` check,
+which should offer to mark the new art as "front cover source". Subsequently, as
+long as the size or MIME type of the previous embedded cover is not exactly the
+same as what this check is configured to generate, the new cover can be embedded
+into tracks by this check.
+
+!!!note
+
+    Requires the `duplicate_image` check to pass first. For automation,
+    `front_cover_selection` (with `unique=True`) and `front_cover_dimensions`
+    are recommended.
+
+**Automatic fix**: When there is a front cover source file and there is not more
+than one unique front cover image embedded in the tracks, generate a new cover
+from the cover source and embed it in every track, replacing any existing cover.
+
+**Automatic fix**: When there is no front cover source, but there is only one
+unique cover image, that image can be extracted to a file (if it is not already
+a file) and marked as front cover source. Rechecking will then offer the
+automatic fix above.
+
+<!-- pyml disable line-length -->
+
+| Option                    | Default        | Description                                                               |
+| ------------------------- | -------------- | ------------------------------------------------------------------------- |
+| `max_height_width`        | **1000**       | Max height/width of the embedded cover _(see note below)_                 |
+| `require_mime_type`       | _[blank]_      | If not blank, required MIME type for embedded cover _(see note below)_    |
+| `create_mime_type`        | `"image/jpeg"` | MIME type for embedding cover images (image/jpeg or image/png)            |
+| `create_max_height_width` | **600**        | Target embedded cover height/width (source can be scaled down but not up) |
+| `create_jpeg_quality`     | **80**         | If `create_mime_type` is image/jpeg, use this quality (1 - 95)            |
+
+<!-- pyml enable line-length -->
+
+_Note: The `max_height_width` and `require_mime_type` settings only apply to
+albums where no "front cover source" image is defined._
+
 ### zero_pad_numbers
 
 Apply selected policies for zero-padding in the track number/total and disc
