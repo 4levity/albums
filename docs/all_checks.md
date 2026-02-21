@@ -8,15 +8,16 @@ All checks and their configuration options.
 
 ## Order
 
-Enabled checks will run in order:
+Enabled checks will run in order on each album:
 
-1. `bad-pathname` check
+1. `duplicate-pathname` check
+1. `illegal-pathname` check
 1. All "Numbering" checks
 1. All "Other Tags" checks
 1. All "Pictures" checks
 1. Remaining "Path and Filename" checks
 
-Within each category, the checks run in the order listed below.
+Within each category, the checks run in the order they are listed below.
 
 ## Dependencies
 
@@ -29,16 +30,18 @@ Other dependencies are listed below.
 
 ## Checks: Path and Filename
 
-### bad-pathname
+### duplicate-pathname
+
+To prevent issues with case-insensitive file systems (and software designed for
+them), filenames should not be "case-insensitive duplicates". For example, an
+album should not have two files named `folder.jpg` and `Folder.JPG`.
+
+### illegal-pathname
 
 Filenames should not include invalid characters or be operating system reserved
 words. What is allowed depends on the platform. This check flags filenames that
 might cause a problem. To allow reserved characters that only cause issues on
 Windows (and only in some cases), see the `compatibility` option.
-
-Additionally, to prevent issues with case-insensitive file systems (and software
-designed for them), filenames should not be "case-insensitive duplicates". For
-example, an album should not have two files named `folder.jpg` and `Folder.JPG`.
 
 The compatibility options come from
 [pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).

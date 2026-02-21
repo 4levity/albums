@@ -5,8 +5,9 @@ from .numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDis
 from .numbering.check_track_numbering import CheckTrackNumbering
 from .numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from .path.check_album_under_album import CheckAlbumUnderAlbum
-from .path.check_bad_pathname import CheckBadPathname
 from .path.check_cover_filename import CheckCoverFilename
+from .path.check_duplicate_pathname import CheckDuplicatePathname
+from .path.check_illegal_pathname import CheckIllegalPathname
 from .picture.check_album_art import CheckAlbumArt
 from .picture.check_cover_dimensions import CheckCoverDimensions
 from .picture.check_cover_embedded import CheckCoverEmbedded
@@ -24,7 +25,8 @@ from .tags.check_track_title import CheckTrackTitle
 # enabled checks will run on an album in this order:
 ALL_CHECKS: tuple[type[Check], ...] = (
     # path checks 1
-    CheckBadPathname,
+    CheckDuplicatePathname,
+    CheckIllegalPathname,
     # numbering checks
     CheckDiscInTrackNumber,
     CheckInvalidTrackOrDiscNumber,
