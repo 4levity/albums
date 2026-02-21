@@ -45,7 +45,8 @@ def render_image_table(
         if image:
             h = (7 / 8) * image.height  # TODO try to determine appropriate height scaling for terminal font or make configurable
             scale = min(target_width, target_height) / max(image.width, h)
-            pixels = Pixels.from_image(image, (int(image.width * scale), int(h * scale)))
+            pix_image = image.resize((int(image.width * scale), int(h * scale)), resample=Resampling.LANCZOS)
+            pixels = Pixels.from_image(pix_image)
             pixelses.append(pixels)
             caption = f"[{cover.width} x {cover.height}] {humanize.naturalsize(len(image_data), binary=True)}"
             if len(pictures) > 1:

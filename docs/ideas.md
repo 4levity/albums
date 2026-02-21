@@ -14,6 +14,7 @@ icon: lucide/flask-conical
     - Comprehend standard tags (artist, album, title. track)
     - Better support for MP4 (M4A, M4B, M4P) and other files
     - Add other extensions to default scan
+- Configure what to do when encountering various ID3 versions
 
 ### More checks and fixes
 

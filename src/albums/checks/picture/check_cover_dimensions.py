@@ -4,7 +4,7 @@ from os import unlink
 from pathlib import Path
 from typing import Any, Callable, Tuple
 
-from PIL.Image import Image
+from PIL.Image import Image, Resampling
 
 from albums.database.operations import update_picture_files
 from albums.interactive.image_table import render_image_table
@@ -186,9 +186,9 @@ class CheckCoverDimensions(Check):
 
         # if cropped image is still not square, squash it the rest of the way
         if image.width < image.height:
-            image = image.resize((image.width, image.width))
+            image = image.resize((image.width, image.width), resample=Resampling.LANCZOS)
         elif image.width > image.height:
-            image = image.resize((image.height, image.height))
+            image = image.resize((image.height, image.height), resample=Resampling.LANCZOS)
         buffer = io.BytesIO()
         image.save(buffer, "PNG")  # TODO option to preserve original type or use JPG
         return (image, buffer.getvalue())
