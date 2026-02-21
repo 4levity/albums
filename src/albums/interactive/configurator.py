@@ -9,7 +9,7 @@ from rich.prompt import FloatPrompt, IntPrompt
 
 from ..app import Context
 from ..database import configuration
-from ..types import RescanOption
+from ..types import PathCompatibilityOption, RescanOption
 
 
 def interactive_config(ctx: Context, db: sqlite3.Connection):
@@ -52,6 +52,7 @@ def _configure_settings(ctx: Context, db: sqlite3.Connection):
             message="edit a setting",
             options=[
                 ("library", f"library ({str(ctx.config.library)})"),
+                ("path_compatibility", f"path_compatibility ({ctx.config.path_compatibility})"),
                 ("rescan", f"rescan ({ctx.config.rescan})"),
                 ("tagger", f"tagger ({ctx.config.tagger if ctx.config.tagger else 'not set'})"),
                 (
@@ -65,12 +66,19 @@ def _configure_settings(ctx: Context, db: sqlite3.Connection):
             _configure_setting(ctx, db, option)
 
 
-def _configure_setting(ctx: Context, db: sqlite3.Connection, setting: Literal["library", "rescan", "tagger", "open_folder_command"]):
+def _configure_setting(
+    ctx: Context, db: sqlite3.Connection, setting: Literal["library", "path_compatibility", "rescan", "tagger", "open_folder_command"]
+):
     match setting:
         case "library":
             path_completer = PathCompleter()
             new_library = prompt("Location/path of the music library: ", completer=path_completer, default=str(ctx.config.library))
             set_library(ctx, db, new_library)
+        case "path_compatibility":
+            options = [(opt, opt.value) for opt in PathCompatibilityOption]
+            option = choice(message="select file system compatibility level", options=options, default=ctx.config.path_compatibility.value)
+            ctx.config.path_compatibility = PathCompatibilityOption(option)
+            configuration.save(db, ctx.config)
         case "rescan":
             options = [(opt, opt.value) for opt in RescanOption]
             option = choice(message="select when to rescan the library", options=options, default=ctx.config.rescan.value)

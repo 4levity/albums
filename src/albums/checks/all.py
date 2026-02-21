@@ -8,6 +8,7 @@ from .path.check_album_under_album import CheckAlbumUnderAlbum
 from .path.check_cover_filename import CheckCoverFilename
 from .path.check_duplicate_pathname import CheckDuplicatePathname
 from .path.check_illegal_pathname import CheckIllegalPathname
+from .path.check_track_filename import CheckTrackFilename
 from .picture.check_album_art import CheckAlbumArt
 from .picture.check_cover_available import CheckCoverAvailable
 from .picture.check_cover_dimensions import CheckCoverDimensions
@@ -51,6 +52,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckCoverDimensions,
     CheckCoverEmbedded,
     # path checks 2
+    CheckTrackFilename,
     CheckCoverFilename,
     CheckAlbumUnderAlbum,
 )

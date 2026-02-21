@@ -2,7 +2,7 @@ import os
 
 from albums.app import Context
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
-from albums.types import Album, Picture, PictureType, Track
+from albums.types import Album, PathCompatibilityOption, Picture, PictureType, Track
 
 
 class TestCheckIllegalPathname:
@@ -37,12 +37,12 @@ class TestCheckIllegalPathname:
 
     def test_pathname_ok_Linux(self):
         ctx = Context()
-        ctx.config.checks = {CheckIllegalPathname.name: {"compatibility": "Linux"}}
+        ctx.config.path_compatibility = PathCompatibilityOption.LINUX
         assert not CheckIllegalPathname(ctx).check(Album("Foo" + os.sep, [Track(":.flac")]))
 
     def test_pathname_reserved_character_Linux(self):
         ctx = Context()
-        ctx.config.checks = {CheckIllegalPathname.name: {"compatibility": "Linux"}}
+        ctx.config.path_compatibility = PathCompatibilityOption.LINUX
         result = CheckIllegalPathname(ctx).check(Album("Foo" + os.sep, [Track("a/b.flac")]))
         assert result is not None
         assert "invalid characters found: invalids=('/')" in result.message

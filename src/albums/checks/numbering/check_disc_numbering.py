@@ -80,6 +80,7 @@ class CheckDiscNumbering(Check):
                 # TODO offer fixer if disc numbers in filenames look right
                 return CheckResult(ProblemCategory.TAGS, "some tracks have disc number and some do not")
         else:  # all tracks have a disc number
+            # TODO if discs_in_separate_folders=False and disc is 1 or 1/1 then offer to remove discnumber/disctotal (not automatic)
             # discs should be numbered 1..disc total, but if there is no disc total, use 1..(# of discs) or 1..(highest disc number), whichever is more
             expect_disc_total = max(all_disc_totals)
             if expect_disc_total == 0:
