@@ -158,6 +158,7 @@ class Fixer:
     options: list[str]  # at least one option should be provided if "free text" is not an option
     option_free_text: bool = False
     option_automatic_index: int | None = None
+    # TODO these Lists should be Sequences?
     table: Tuple[List[str], List[List[RenderableType]] | Callable[[], List[List[RenderableType]]]] | None = None  # tuple (headers, rows/rows())
     prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
 
@@ -182,6 +183,14 @@ class RescanOption(StrEnum):
     AUTO = auto()
 
 
+class PathCompatiblityOption(StrEnum):
+    LINUX = "Linux"
+    WINDOWS = "Windows"
+    MACOS = "macOS"
+    POSIX = "POSIX"
+    UNIVERSAL = "universal"
+
+
 def default_checks_config() -> dict[str, CheckConfiguration]:
     from .checks.all import ALL_CHECKS  # local import because .checks.all imports all checks which will import this module
 
@@ -195,6 +204,7 @@ class Configuration:
     rescan: RescanOption = RescanOption.AUTO
     tagger: str = ""
     open_folder_command: str = ""
+    path_compatibility: PathCompatiblityOption = PathCompatiblityOption.UNIVERSAL
 
     def to_values(self) -> Dict[str, Union[str, int, float, bool, List[str]]]:
         values: Dict[str, Union[str, int, float, bool, List[str]]] = {
@@ -202,6 +212,7 @@ class Configuration:
             "settings.rescan": str(self.rescan),
             "settings.tagger": self.tagger,
             "settings.open_folder_command": self.open_folder_command,
+            "settings.path_compatibility": self.path_compatibility,
         }
         defaults = default_checks_config()
         for check_name, check_config in self.checks.items():
@@ -235,6 +246,8 @@ class Configuration:
                     config.tagger = str(value)
                 elif name == "open_folder_command":
                     config.open_folder_command = str(value)
+                elif name == "path_compatibility":
+                    config.path_compatibility = PathCompatiblityOption(value)
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
                     ignored_values = True

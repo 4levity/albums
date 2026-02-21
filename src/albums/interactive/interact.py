@@ -36,7 +36,8 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
     user_quit = False  # user explicitly quit this checkRenderableType
 
     tagger_config = ctx.config.tagger
-    tagger = tagger_config if check_result.category in {ProblemCategory.TAGS, ProblemCategory.PICTURES} and tagger_config else None
+    # TODO should we just always show tagger?
+    tagger = tagger_config if check_result.category in {ProblemCategory.TAGS, ProblemCategory.FILENAMES, ProblemCategory.PICTURES} and tagger_config else None
 
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
 
