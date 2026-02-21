@@ -71,7 +71,7 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
 
         if option_index is None or options[option_index] in [OPTION_IGNORE_CHECK, OPTION_DO_NOTHING, OPTION_RUN_TAGGER, OPTION_OPEN_FOLDER]:
             # these options do not use the fixer (if one was provided)
-            choice = options[option_index] if option_index else None
+            choice = options[option_index] if option_index is not None else None
             if choice == OPTION_RUN_TAGGER:
                 ctx.console.print(f"Launching {tagger} {str(album_path)}", markup=False)
                 subprocess.Popen([str(tagger), str(album_path)])
