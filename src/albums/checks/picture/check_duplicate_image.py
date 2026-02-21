@@ -11,9 +11,6 @@ from ..helpers import delete_files_except
 
 logger = logging.getLogger(__name__)
 
-OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
-OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
-
 
 class CheckDuplicateImage(Check):
     name = "duplicate-image"

@@ -26,7 +26,7 @@ class CheckCoverEmbedded(Check):
         "create_max_height_width": 600,
         "create_jpeg_quality": 80,
     }
-    must_pass_checks = {"duplicate-image"}  # cover-selection with unique=True is recommended but not required
+    must_pass_checks = {"duplicate-image"}  # cover-unique is recommended but not required
 
     def init(self, check_config: dict[str, Any]):
         defaults = CheckCoverEmbedded.default_config
@@ -115,7 +115,7 @@ class CheckCoverEmbedded(Check):
             if len(unique_covers) > 1:
                 return CheckResult(
                     ProblemCategory.PICTURES,
-                    f'{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover-selection "unique" for fixes)',
+                    f"{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover-unique for fixes)",
                 )
             # else
             if len(unique_covers) == 1:

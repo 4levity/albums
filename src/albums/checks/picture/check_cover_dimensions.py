@@ -26,7 +26,7 @@ class CheckCoverDimensions(Check):
         "fixable_squareness": 0.8,
         "max_crop": 0.03,
     }
-    must_pass_checks = {"cover-selection"}  # either all the COVER_FRONT images are the same or there is a cover_source selected
+    must_pass_checks = {"cover-available"}  # either all the COVER_FRONT images are the same or there is a cover_source selected
 
     def init(self, check_config: dict[str, Any]):
         self.min_pixels = int(check_config.get("min_pixels", CheckCoverDimensions.default_config["min_pixels"]))
@@ -50,16 +50,14 @@ class CheckCoverDimensions(Check):
                 embedded_covers[covers[0]] = track.filename
         cover_files = [(pic, filename) for filename, pic in album.picture_files.items() if pic.picture_type == PictureType.COVER_FRONT]
 
-        # because cover-selection must pass, either there is no cover, all cover images are the same, or one file is cover_source
-        # but double check anyways
         if len(cover_files) > 1:
-            return CheckResult(ProblemCategory.PICTURES, "there is more than one front cover image file (problem with cover-selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "there is more than one front cover image file (check cover-unique suggested)")
         file_cover = cover_files[0][0] if cover_files else None
         if len(embedded_covers) > 1:
-            return CheckResult(ProblemCategory.PICTURES, "more than one unique embedded cover image file (problem with cover-selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "more than one unique embedded cover image file (check cover-unique suggested)")
         embedded_cover = list(embedded_covers.items())[0][0] if embedded_covers else None
         if file_cover and embedded_cover and not file_cover.cover_source and file_cover != embedded_cover:
-            return CheckResult(ProblemCategory.PICTURES, "cover image file not unique or cover_source (problem with cover-selection?)")
+            return CheckResult(ProblemCategory.PICTURES, "cover image file not unique, not cover_source (check cover-unique suggested)")
 
         if file_cover:  # either cover_source or identical to embedded images
             (cover, from_file) = cover_files[0]
@@ -68,7 +66,7 @@ class CheckCoverDimensions(Check):
             (cover, from_file) = list(embedded_covers.items())[0]
             embedded = True
         else:
-            return None  # no cover means cover-selection is not configured to require one
+            return None  # no cover means cover-available is not configured to require one
 
         if min(cover.height, cover.width) < self.min_pixels:
             # we think we have selected the best cover image, no automated fix here

@@ -1,17 +1,14 @@
 import logging
-import mimetypes
 from collections import defaultdict
-from os import rename
-from typing import Any, Collection, List, Mapping, Sequence, Tuple
+from typing import Collection, Sequence
 
 from rich.markup import escape
 
 from ...database import operations
 from ...interactive.image_table import render_image_table
-from ...library.metadata import get_embedded_image_data
 from ...types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
 from ..base_check import Check
-from ..helpers import FRONT_COVER_FILENAME, delete_files_except
+from ..helpers import delete_files_except
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +16,13 @@ OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
 OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
 
 
-class CheckCoverSelection(Check):
-    name = "cover-selection"
-    default_config = {"enabled": True, "cover_required": False, "unique": True}
+class CheckCoverUnique(Check):
+    name = "cover-unique"
+    default_config = {"enabled": True}
     must_pass_checks = {"duplicate-image"}
 
-    def init(self, check_config: dict[str, Any]):
-        self.cover_required = bool(check_config.get("cover_required", CheckCoverSelection.default_config["cover_required"]))
-        self.unique = int(check_config.get("unique", CheckCoverSelection.default_config["unique"]))
-
     def check(self, album: Album) -> CheckResult | None:
-        if album.codec() not in {"FLAC", "MP3", "Ogg Vorbis"} and self.cover_required:
-            # if cover is required, only run check on albums where embedded pictures are supported
-            return None
-
         tracks_with_cover = 0
-        issues: set[str] = set()
         album_art = [(track.filename, True, track.pictures) for track in album.tracks]
         album_art.extend([(filename, False, [picture]) for filename, picture in album.picture_files.items()])
 
@@ -62,7 +50,7 @@ class CheckCoverSelection(Check):
         cover_source_ix = next((ix for ix, pic in enumerate(cover_image_files) if pic.cover_source), None)
         cover_source_filename = cover_image_filenames[cover_source_ix] if cover_source_ix is not None else None
 
-        if self.unique and len(front_covers) > 1:
+        if len(front_covers) > 1:
             cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded, _ix) in picture_sources[pic]))
             cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in cover_embedded]
             table = (
@@ -87,6 +75,7 @@ class CheckCoverSelection(Check):
                     # if none of the cover image files are larger than embedded covers, we can delete them or mark one as cover front source
                     option_automatic_index = None
                     message = "there are cover image files with the album, but none bigger than embedded cover images"
+
                 return CheckResult(
                     ProblemCategory.PICTURES,
                     message,
@@ -98,9 +87,11 @@ class CheckCoverSelection(Check):
                         table,
                     ),
                 )
-            elif cover_source_filename is not None and len(cover_image_files) > 1:
+            # else
+            if cover_source_filename is not None and len(cover_image_files) > 1:
                 other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
                 option_automatic_index = 0  # YOLO
+
                 return CheckResult(
                     ProblemCategory.PICTURES,
                     "multiple front cover image files, and one of them is marked cover source (delete others)",
@@ -112,38 +103,17 @@ class CheckCoverSelection(Check):
                         table,
                     ),
                 )
-            elif cover_source_filename is None or len(cover_image_files) > 1 or len(cover_embedded) > 1:
+            # else
+            if cover_source_filename is None or len(cover_image_files) > 1 or len(cover_embedded) > 1:
                 # TODO if multiple front cover embedded but every track has one, even if they are different that's probably on purpose?
-                issues.add("COVER_FRONT pictures are not all the same")
+                return CheckResult(ProblemCategory.PICTURES, "COVER_FRONT pictures are not all the same")
+
                 # no automatic fixer yet, but this shows the issue:
                 # return CheckResult(ProblemCategory.PICTURES, "COVER_FRONT not all the same", Fixer(lambda _: False, [], False, None, table))
 
-        if not front_covers:
-            if pictures_by_type:
-                pics = [k for k, _ in picture_sources.items()]
-                headers = [self._describe_album_art(pic, picture_sources) for pic in pics]
-                table = (headers, lambda: render_image_table(self.ctx, album, pics, picture_sources))
-                has_embedded = any(track.pictures for track in album.tracks)
-                option_automatic_index = 0 if len(headers) == 1 else None
-                message = f"album has pictures but none is COVER_FRONT picture{' (embedded)' if has_embedded else ''}"
-                return CheckResult(
-                    ProblemCategory.PICTURES,
-                    message,
-                    Fixer(
-                        lambda option: self._fix_set_cover(album, option, headers, pics, picture_sources),
-                        headers,
-                        False,
-                        option_automatic_index,
-                        table,
-                        "Select an image to be renamed or extracted to cover.jpg/cover.png/cover.gif",
-                    ),
-                )
-            elif self.cover_required:
-                # TODO there are no pictures available, check cannot pass. someday [use external tool to] retrieve cover art?
-                issues.add("album does not have a COVER_FRONT picture or any other pictures to use")
-
-        if issues:
-            return CheckResult(ProblemCategory.PICTURES, ", ".join(list(issues)))
+            # else the reason there's more than one cover is just that there's a single front cover source different from the single embedded cover
+        # else only one cover
+        return None
 
     def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool, int]]]):
         sources = picture_sources[picture]
@@ -170,31 +140,3 @@ class CheckCoverSelection(Check):
             operations.update_picture_files(self.ctx.db, album.album_id, album.picture_files)
             return True
         raise ValueError(f"invalid option {option}")
-
-    def _fix_set_cover(
-        self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, List[Tuple[str, bool, int]]]
-    ):
-        ix = options.index(option)
-        pic = pics[ix]
-        file_sources = [filename for filename, embedded, _ in sources[pic] if not embedded]
-        if file_sources:
-            path = self.ctx.config.library / album.path / file_sources[0]
-            new_filename = f"{FRONT_COVER_FILENAME}{path.suffix}"
-            self.ctx.console.print(f"Renaming {file_sources[0]} to {new_filename}")
-            rename(path, self.ctx.config.library / album.path / new_filename)
-        else:
-            (filename, _, embed_ix) = sources[pic][0]
-            path = self.ctx.config.library / album.path / filename
-            images = get_embedded_image_data(path)
-            image_data = images[embed_ix]
-            suffix = mimetypes.guess_extension(pic.format)
-            new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
-            self.ctx.console.print(f"Creating {len(image_data)} byte {pic.format} file {new_filename}")
-            new_path = self.ctx.config.library / album.path / new_filename
-            if new_path.exists():
-                self.ctx.console.print(f"Error: the file {escape(str(new_path))} already exists (scan again)")
-                raise SystemExit(1)
-            with open(new_path, "wb") as f:
-                f.write(image_data)
-
-        return True
