@@ -183,7 +183,7 @@ class RescanOption(StrEnum):
     AUTO = auto()
 
 
-class PathCompatiblityOption(StrEnum):
+class PathCompatibilityOption(StrEnum):
     LINUX = "Linux"
     WINDOWS = "Windows"
     MACOS = "macOS"
@@ -204,7 +204,7 @@ class Configuration:
     rescan: RescanOption = RescanOption.AUTO
     tagger: str = ""
     open_folder_command: str = ""
-    path_compatibility: PathCompatiblityOption = PathCompatiblityOption.UNIVERSAL
+    path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
 
     def to_values(self) -> Dict[str, Union[str, int, float, bool, List[str]]]:
         values: Dict[str, Union[str, int, float, bool, List[str]]] = {
@@ -247,7 +247,7 @@ class Configuration:
                 elif name == "open_folder_command":
                     config.open_folder_command = str(value)
                 elif name == "path_compatibility":
-                    config.path_compatibility = PathCompatiblityOption(value)
+                    config.path_compatibility = PathCompatibilityOption(value)
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
                     ignored_values = True

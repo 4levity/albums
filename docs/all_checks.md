@@ -39,23 +39,45 @@ album should not have two files named `folder.jpg` and `Folder.JPG`.
 ### illegal-pathname
 
 Filenames should not include invalid characters or be operating system reserved
-words. What is allowed depends on the platform. This check flags filenames that
-might cause a problem. To allow reserved characters that only cause issues on
-Windows (and only in some cases), see the `compatibility` option.
+words. This check flags filenames that might cause a problem. What is allowed
+depends on the `path_compatibility` global configuration setting (see
+[Usage](./usage.md)).
 
-The compatibility options come from
-[pathvalidate](https://pathvalidate.readthedocs.io/en/latest/pages/introduction/index.html#summary).
-They are:
+### track-filename
 
-- `"Linux"`
-- `"Windows"`
-- `"macOS"`
-- `"POSIX"`
-- `"universal"`
+Track filenames should match tags. They should include the track number and
+title. The filename should start with the disc number if part of a set, and
+include the artist name if the album is a compilation. Filenames should be valid
+(see `path_compatibility` setting in [Usage](./usage.md)).
 
-| Option          | Default       | Description                            |
-| --------------- | ------------- | -------------------------------------- |
-| `compatibility` | `"universal"` | Configure what is allowed in filenames |
+This check will compare filenames against filenames generated like this:
+
+| Disc   | Track  | Title | Artist | Album Artist    | Filename           |
+| ------ | ------ | ----- | ------ | --------------- | ------------------ |
+| _none_ | 01     | Foo   | Bar    | _none_          | `01 Foo.mp3`       |
+| _none_ | 01     | Foo   | Bar    | Bar             | `01 Foo.mp3`       |
+| _none_ | 01     | Foo   | Bar    | Various Artists | `01 Bar - Foo.mp3` |
+| 1      | 01     | Foo   | Bar    | _none_          | `1-01 Foo.mp3`     |
+| _none_ | _none_ | Foo   | Bar    | _none_          | `Foo.mp3`          |
+
+See options below if you prefer e.g. `01. Foo.mp3` or `01 - Foo.mp3` instead.
+
+!!!success "Dependency"
+
+    Requires the `"album-artist`, `artist-tag`, `track-numbering`,
+    `track-title`, and `zero-pad-numbers` checks to all pass first.
+
+**Automatic fix**: Rename all tracks according to configuration.
+
+<!-- pyml disable line-length -->
+
+| Option                | Default             | Description                                   |
+| --------------------- | ------------------- | --------------------------------------------- |
+| `track_number_suffix` | `" "` _(one space)_ | Put this right after the disc/track number    |
+| `replace_slash`       | `"-"` _(a dash)_    | Replace a "/" character with this             |
+| `replace_invalid`     | `""` _(nothing)_    | Replace any other illegal character with this |
+
+<!-- pyml enable line-length -->
 
 ### cover-filename
 

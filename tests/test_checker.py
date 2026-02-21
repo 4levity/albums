@@ -15,9 +15,9 @@ class TestChecker:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
-                Track("2.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
-                Track("3.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["03"], "title": ["three"]}),
+                Track("01 one.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
+                Track("02 two.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
+                Track("03 three.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["03"], "title": ["three"]}),
             ],
         )
         ctx = Context()

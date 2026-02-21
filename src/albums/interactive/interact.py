@@ -37,7 +37,11 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
 
     tagger_config = ctx.config.tagger
     # TODO should we just always show tagger?
-    tagger = tagger_config if check_result.category in {ProblemCategory.TAGS, ProblemCategory.FILENAMES, ProblemCategory.PICTURES} and tagger_config else None
+    tagger = (
+        tagger_config
+        if check_result.category in {ProblemCategory.TAGS, ProblemCategory.FILENAMES, ProblemCategory.PICTURES} and tagger_config
+        else None
+    )
 
     OPTION_RUN_TAGGER = f">> Edit tags with {tagger}"
 

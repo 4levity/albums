@@ -1,3 +1,5 @@
+from copy import copy
+from os import rename
 from pathlib import Path
 from typing import Any, List, Sequence, Tuple
 
@@ -21,7 +23,12 @@ class CheckTrackFilename(Check):
     def check(self, album: Album):
         generated_filenames = [self._generate_filename(track) for track in album.tracks]
         if len(set(str.lower(filename) for filename in generated_filenames)) != len(generated_filenames):
-            return CheckResult(ProblemCategory.FILENAMES, "unable to generate unique filenames from tags on these tracks")
+            # because of earlier checks the tracks should typically have unique track number and title by now so this is an error
+            return CheckResult(ProblemCategory.FILENAMES, "unable to generate unique filenames using tags on these tracks")
+        if any(filename.startswith(".") for filename in generated_filenames):
+            return CheckResult(
+                ProblemCategory.FILENAMES, "cannot generate filenames that start with . character (maybe a track has no track number or title)"
+            )
         if any(track.filename != generated_filenames[ix] for ix, track in enumerate(album.tracks)):
             options = [">> Use generated filenames"]
             option_automatic_index = 0
@@ -30,7 +37,7 @@ class CheckTrackFilename(Check):
             return CheckResult(
                 ProblemCategory.FILENAMES,
                 "track filenames do not match configured pattern",
-                Fixer(lambda _: self._fix_use_generated(album, generated_filenames), options, False, option_automatic_index, table),
+                Fixer(lambda _: self._fix_use_generated(album), options, False, option_automatic_index, table),
             )
 
     def _table_row(self, track: Track) -> List[RenderableType]:
@@ -59,15 +66,41 @@ class CheckTrackFilename(Check):
         else:
             filename = ""
 
-        title = ", ".join(track.tags.get("title", [f"Track{f' {tracknum}' if tracknum else ''}"]))
+        title = ", ".join(track.tags.get("title", [f"Track {tracknum}" if tracknum else ""]))
         if "artist" in track.tags and "albumartist" in track.tags and track.tags["artist"] != track.tags["albumartist"]:
             filename += f"{', '.join(track.tags['artist'])} - {title}"
         else:
             filename += title
 
         filename = filename.replace("/", self.replace_slash)
-        filename = sanitize_filename(filename + Path(track.filename).suffix, replacement_text=self.replace_invalid)
+        filename = sanitize_filename(
+            filename + Path(track.filename).suffix, replacement_text=self.replace_invalid, platform=self.ctx.config.path_compatibility
+        )
         return filename
 
-    def _fix_use_generated(self, album: Album, generated_filenames: list[str]):
-        return False
+    def _fix_use_generated(self, album: Album):
+        album_path = self.ctx.config.library / album.path
+
+        tracks_to_rename = [copy(track) for track in album.tracks if self._generate_filename(track) != track.filename]
+        new_filenames = [self._generate_filename(track) for track in tracks_to_rename]
+
+        old_filenames_lower = {str.lower(track.filename) for track in tracks_to_rename}
+        new_filenames_lower = {str.lower(filename) for filename in new_filenames}
+        if new_filenames_lower.intersection(old_filenames_lower):
+            # additional rename if tracks are swapping filenames
+            self.ctx.console.print("A new filename is the same as a different track's old filename")
+            for track in tracks_to_rename:
+                num = 0
+                while (temp := (album_path / track.filename).with_suffix(f".{num}")) and temp.exists():
+                    num += 1
+                original_filename = track.filename
+                track.filename = temp.name
+                self.ctx.console.print(f"Temporarily renaming {original_filename} to {track.filename}")
+                rename(album_path / original_filename, album_path / track.filename)
+
+        for ix, track in enumerate(tracks_to_rename):
+            new_filename = new_filenames[ix]
+            self.ctx.console.print(f"Renaming {track.filename} to {new_filename}")
+            rename(album_path / track.filename, album_path / new_filename)
+
+        return True
