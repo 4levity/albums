@@ -46,7 +46,9 @@ class TestCheckCoverUnique:
         )
         result = CheckCoverUnique(Context()).check(album)
         assert result is not None
-        assert result.message == "COVER_FRONT pictures are not all the same"
+        assert result.message == "all tracks have cover pictures, but not all cover pictures are the same"
+        assert result.fixer
+        assert result.fixer.options == []
 
     def test_has_unmarked_cover_source_file(self, mocker):
         picture_files = {"cover.png": Picture(PictureType.COVER_FRONT, "image/png", 1000, 1000, 10000, b"")}

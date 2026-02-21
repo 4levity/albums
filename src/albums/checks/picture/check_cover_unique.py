@@ -105,11 +105,16 @@ class CheckCoverUnique(Check):
                 )
             # else
             if cover_source_filename is None or len(cover_image_files) > 1 or len(cover_embedded) > 1:
-                # TODO if multiple front cover embedded but every track has one, even if they are different that's probably on purpose?
-                return CheckResult(ProblemCategory.PICTURES, "COVER_FRONT pictures are not all the same")
-
-                # no automatic fixer yet, but this shows the issue:
-                # return CheckResult(ProblemCategory.PICTURES, "COVER_FRONT not all the same", Fixer(lambda _: False, [], False, None, table))
+                tracks_have_covers = all(any(pic for pic in track.pictures if pic.picture_type == PictureType.COVER_FRONT) for track in album.tracks)
+                if tracks_have_covers:
+                    # Maybe the tracks have unique cover art on purpose?
+                    return CheckResult(
+                        ProblemCategory.PICTURES,
+                        "all tracks have cover pictures, but not all cover pictures are the same",
+                        Fixer(lambda _: False, [], False, None, table),  # Don't know how to fix, but let's show the pics and the option to ignore
+                    )
+                # else
+                return CheckResult(ProblemCategory.PICTURES, "tracks do not all have cover pictures and not all cover pictures are the same")
 
             # else the reason there's more than one cover is just that there's a single front cover source different from the single embedded cover
         # else only one cover
