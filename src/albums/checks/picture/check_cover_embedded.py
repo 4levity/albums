@@ -56,7 +56,7 @@ class CheckCoverEmbedded(Check):
             if not all_as_expected:
                 not_expected_size = sum(0 if not c or c and (c[1].width, c[1].height) == (expect_w, expect_h) else 1 for c in track_covers)
                 not_expected_format = sum(0 if not c or c and c[1].format == self.create_mime_type else 1 for c in track_covers)
-                problem_summary = f"{not_expected_size} tracks with unexpected dimensions and {not_expected_format} tracks with unexpected MIME type"
+                problem_summary = f"{missing} with no cover, {not_expected_size} with wrong dimensions, {not_expected_format} with wrong MIME type"
                 if len(unique_track_covers) > 1:
                     # TODO we could offer a non-automatic fix if user wants to overwrite non-unique covers
                     return CheckResult(
