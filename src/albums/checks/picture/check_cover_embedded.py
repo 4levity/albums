@@ -162,6 +162,8 @@ class CheckCoverEmbedded(Check):
         new_format = self.create_mime_type
         if source_image.width == new_w and source_image.height == new_h and source_picture.format == new_format:
             return source
+        if source_image.mode not in {"RGB", "L"}:
+            source_image = source_image.convert("RGB")
         source_image.thumbnail((self.create_max_height_width, self.create_max_height_width), Resampling.LANCZOS)
         buffer = io.BytesIO()
         format = mime_to_pillow_format(self.create_mime_type)
