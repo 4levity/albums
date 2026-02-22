@@ -1,8 +1,7 @@
 import logging
 from collections import defaultdict
-from typing import Any, List
+from typing import Any
 
-from rich.console import RenderableType
 from rich.markup import escape
 
 from ...library.metadata import album_is_basic_taggable, set_basic_tags
@@ -103,7 +102,7 @@ class CheckAlbumArtist(Check):
             )
 
     def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
-        table: tuple[list[str], List[List[RenderableType]]] = (
+        table = (
             ["filename", "album tag", "artist", "album artist"],
             [
                 [

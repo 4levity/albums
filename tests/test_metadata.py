@@ -68,15 +68,15 @@ class TestMetadata:
         assert tags["tracknumber"] == ["1"]
         assert tags["tracktotal"] == ["3"]
 
-        assert set_basic_tags(file, [("tracktotal", "2")])
+        assert set_basic_tags(file, [("tracktotal", "02")])
         tags = get_metadata(file)[0]
         assert tags["tracknumber"] == ["1"]
-        assert tags["tracktotal"] == ["2"]
+        assert tags["tracktotal"] == ["02"]
 
         assert set_basic_tags(file, [("tracknumber", "3")])
         tags = get_metadata(file)[0]
         assert tags["tracknumber"] == ["3"]
-        assert tags["tracktotal"] == ["2"]
+        assert tags["tracktotal"] == ["02"]
 
         # write both at once
         assert set_basic_tags(file, [("tracknumber", "2"), ("tracktotal", "3")])

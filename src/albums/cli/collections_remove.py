@@ -14,7 +14,7 @@ def collections_remove(ctx: Context, collection_names: list[str]):
 
     for album in ctx.select_albums(False):
         path = album.path
-        album_collections = album.collections if album.collections else []
+        album_collections = list(album.collections) if album.collections else []
         changed = False
         for target_collection in collection_names:
             if target_collection in album_collections:

@@ -1,13 +1,13 @@
 import re
 import sqlite3
-from typing import Generator
+from typing import Generator, Sequence
 
 from ..types import Album
 from . import operations
 
 
 def select_albums(
-    db: sqlite3.Connection, collection_names: list[str], match_paths: list[str], match_path_regex: bool, load_track_tag: bool = True
+    db: sqlite3.Connection, collection_names: Sequence[str], match_paths: Sequence[str], match_path_regex: bool, load_track_tag: bool = True
 ) -> Generator[Album, None, None]:
     collection_placeholders = ",".join(["?"] * len(collection_names))
     if len(match_paths) == 0 or match_path_regex:  # no path filter
@@ -33,7 +33,7 @@ def select_albums(
                 "(SELECT album_id FROM album_collection ac JOIN collection c ON ac.collection_id=c.collection_id "
                 f"WHERE collection_name IN {collection_placeholders}) "
                 "ORDER BY path;",
-                match_paths + collection_names,
+                (*match_paths, *collection_names),
             )
 
     def path_match_when_regex(path: str):

@@ -2,7 +2,7 @@ import logging
 import mimetypes
 from collections import defaultdict
 from os import rename
-from typing import Any, List, Mapping, Tuple
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
@@ -32,7 +32,7 @@ class CheckCoverAvailable(Check):
         album_art.extend([(filename, False, [picture]) for filename, picture in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        picture_sources: defaultdict[Picture, list[tuple[str, bool, int]]] = defaultdict(list)
+        picture_sources: Dict[Picture, List[Tuple[str, bool, int]]] = defaultdict(list)
         for filename, embedded, pictures in album_art:
             for picture in pictures:
                 picture_sources[picture].append((filename, embedded, picture.embed_ix))
@@ -67,7 +67,7 @@ class CheckCoverAvailable(Check):
         # else front cover image(s) available
         return None
 
-    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool, int]]]):
+    def _describe_album_art(self, picture: Picture, picture_sources: Dict[Picture, List[Tuple[str, bool, int]]]):
         sources = picture_sources[picture]
         (filename, embedded, embed_ix) = sources[0]
         first_source = f"{escape(filename)}{f'#{embed_ix}' if embedded else ''}"
@@ -75,7 +75,7 @@ class CheckCoverAvailable(Check):
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _fix_set_cover(
-        self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, List[Tuple[str, bool, int]]]
+        self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[Tuple[str, bool, int]]]
     ):
         ix = options.index(option)
         pic = pics[ix]

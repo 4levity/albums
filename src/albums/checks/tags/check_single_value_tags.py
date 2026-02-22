@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any
+from typing import Any, Sequence
 
 import yaml
 from rich.markup import escape
@@ -31,7 +31,7 @@ class CheckSingleValueTags(Check):
         if not album_is_basic_taggable(album):
             return None  # this check only makes sense for files with common tags
 
-        multiple_value_tags: list[dict[str, dict[str, list[str]]]] = []
+        multiple_value_tags: list[dict[str, dict[str, Sequence[str]]]] = []
         duplicates = False
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for tag_name in self.single_value_tags:

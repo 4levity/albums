@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 from collections.abc import Generator
-from typing import Any, Callable
+from typing import Any, Callable, Collection
 
 import click
 from rich.console import Console
@@ -19,8 +19,8 @@ class Context(dict[Any, Any]):  # this is a dict because it's required to be by 
     db: sqlite3.Connection | None
     select_albums: Callable[[bool], Generator[Album, None, None]]
     config: Configuration
-    filter_collections: list[str]
-    filter_paths: list[str]
+    filter_collections: Collection[str]
+    filter_paths: Collection[str]
     filter_regex: bool
     verbose: int = 0
 

@@ -3,11 +3,11 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum, StrEnum, auto
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterator, Mapping, Sequence, Tuple, Union
 
 from rich.console import RenderableType
 
-type CheckConfiguration = Dict[str, Union[str, int, float, bool, List[str]]]
+type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 
 logger = logging.getLogger(__name__)
 
@@ -102,11 +102,11 @@ class Picture:
 @dataclass
 class Track:
     filename: str
-    tags: dict[str, list[str]] = field(default_factory=dict[str, list[str]])
+    tags: Mapping[str, Sequence[str]] = field(default_factory=dict[str, list[str]])
     file_size: int = 0
     modify_timestamp: int = 0
     stream: Stream | None = None
-    pictures: list[Picture] = field(default_factory=list[Picture])
+    pictures: Sequence[Picture] = field(default_factory=list[Picture])
 
     @classmethod
     def from_path(cls, file: Path):
@@ -121,10 +121,10 @@ class Track:
 @dataclass
 class Album:
     path: str
-    tracks: list[Track] = field(default_factory=list[Track])
-    collections: list[str] = field(default_factory=list[str])
-    ignore_checks: list[str] = field(default_factory=list[str])
-    picture_files: dict[str, Picture] = field(default_factory=dict[str, Picture])
+    tracks: Sequence[Track] = field(default_factory=list[Track])
+    collections: Collection[str] = field(default_factory=list[str])
+    ignore_checks: Collection[str] = field(default_factory=list[str])
+    picture_files: Mapping[str, Picture] = field(default_factory=dict[str, Picture])
     album_id: int | None = None
     scanner: int = 0
 
@@ -155,18 +155,17 @@ class ProblemCategory(Enum):
 @dataclass
 class Fixer:
     fix: Callable[[str], bool]
-    options: list[str]  # at least one option should be provided if "free text" is not an option
+    options: Sequence[str]  # at least one option should be provided if "free text" is not an option
     option_free_text: bool = False
     option_automatic_index: int | None = None
-    # TODO these Lists should be Sequences?
-    table: Tuple[List[str], List[List[RenderableType]] | Callable[[], List[List[RenderableType]]]] | None = None  # tuple (headers, rows/rows())
+    table: Tuple[Sequence[str], Sequence[Sequence[RenderableType]] | Callable[[], Sequence[Sequence[RenderableType]]]] | None = None
     prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
 
-    def get_table(self) -> Tuple[List[str], List[List[RenderableType]]] | None:
+    def get_table(self) -> Tuple[Sequence[str], Sequence[Sequence[RenderableType]]] | None:
         if self.table is None:
             return None
         (headers, get_rows) = self.table
-        rows: List[List[RenderableType]] = get_rows if isinstance(get_rows, List) else get_rows()  # pyright: ignore[reportUnknownVariableType]
+        rows: Sequence[Sequence[RenderableType]] = get_rows if isinstance(get_rows, Sequence) else get_rows()  # pyright: ignore[reportUnknownVariableType]
         return (headers, rows)
 
 
@@ -191,7 +190,7 @@ class PathCompatibilityOption(StrEnum):
     UNIVERSAL = "universal"
 
 
-def default_checks_config() -> dict[str, CheckConfiguration]:
+def default_checks_config() -> Mapping[str, CheckConfiguration]:
     from .checks.all import ALL_CHECKS  # local import because .checks.all imports all checks which will import this module
 
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
@@ -199,20 +198,20 @@ def default_checks_config() -> dict[str, CheckConfiguration]:
 
 @dataclass
 class Configuration:
-    checks: Dict[str, CheckConfiguration] = field(default_factory=default_checks_config)
+    checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
     library: Path = Path(".")
     rescan: RescanOption = RescanOption.AUTO
     tagger: str = ""
     open_folder_command: str = ""
     path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
 
-    def to_values(self) -> Dict[str, Union[str, int, float, bool, List[str]]]:
-        values: Dict[str, Union[str, int, float, bool, List[str]]] = {
+    def to_values(self) -> Mapping[str, Union[str, int, float, bool, Sequence[str]]]:
+        values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
             "settings.library": str(self.library),
             "settings.rescan": str(self.rescan),
             "settings.tagger": self.tagger,
             "settings.open_folder_command": self.open_folder_command,
-            "settings.path_compatibility": self.path_compatibility,
+            "settings.path_compatibility": str(self.path_compatibility),
         }
         defaults = default_checks_config()
         for check_name, check_config in self.checks.items():
@@ -227,7 +226,7 @@ class Configuration:
         return values
 
     @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, List[str]]]]):
+    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, Sequence[str]]]]):
         config = Configuration()
         ignored_values = False
         for k, value in values:

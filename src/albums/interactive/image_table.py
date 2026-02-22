@@ -21,7 +21,7 @@ def render_image_table(
     album: Album,
     pictures: Sequence[Picture | Tuple[Picture, Image, bytes]],  # type: ignore
     picture_sources: Dict[Picture, List[Tuple[str, bool, int]]],
-) -> List[List[RenderableType]]:
+) -> Sequence[Sequence[RenderableType]]:
     pixelses: list[RenderableType] = []
     target_width = int((ctx.console.width - 3) / len(pictures))
     target_height = (ctx.console.height - 10) * 2

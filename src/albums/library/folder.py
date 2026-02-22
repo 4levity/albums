@@ -2,6 +2,7 @@ import logging
 from copy import copy
 from enum import Enum, auto
 from pathlib import Path
+from typing import Mapping, Sequence, Tuple
 
 import humanize
 
@@ -27,7 +28,7 @@ class AlbumScanResult(Enum):
     UNCHANGED = auto()
 
 
-def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None, reread: bool = False) -> tuple[Album | None, AlbumScanResult]:
+def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None, reread: bool = False) -> Tuple[Album | None, AlbumScanResult]:
     album_path = scan_root / album_relpath
     logger.debug(f"checking {album_path}")
 
@@ -73,7 +74,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
     return (None, AlbumScanResult.NO_TRACKS)
 
 
-def _load_picture_files(paths: list[Path], cache: PictureCache) -> dict[str, Picture]:
+def _load_picture_files(paths: Sequence[Path], cache: PictureCache) -> Mapping[str, Picture]:
     picture_files: dict[str, Picture] = {}
     for path in paths:
         picture = _picture_from_path(path, cache)
@@ -82,7 +83,7 @@ def _load_picture_files(paths: list[Path], cache: PictureCache) -> dict[str, Pic
     return picture_files
 
 
-def _picture_files_modified(picture_files: dict[str, Picture], picture_paths: list[Path]):
+def _picture_files_modified(picture_files: Mapping[str, Picture], picture_paths: Sequence[Path]):
     if set(picture_files.keys()) != set(path.name for path in picture_paths):
         return True  # different number of files or different filenames
     for path in picture_paths:
@@ -93,7 +94,7 @@ def _picture_files_modified(picture_files: dict[str, Picture], picture_paths: li
     return False
 
 
-def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track], picture_cache: PictureCache):
+def _load_track_metadata(library_root: Path, album_path: str, tracks: Sequence[Track], picture_cache: PictureCache):
     for track in tracks:
         path = library_root / album_path / track.filename
         file_info = get_metadata(path, picture_cache)
@@ -106,7 +107,7 @@ def _load_track_metadata(library_root: Path, album_path: str, tracks: list[Track
             track.pictures = pictures
 
 
-def _track_files_modified(tracks1: list[Track], tracks2: list[Track]):
+def _track_files_modified(tracks1: Sequence[Track], tracks2: Sequence[Track]):
     if len(tracks1) != len(tracks2):
         return True
     sorted_t1 = sorted(tracks1, key=lambda track: track.filename)

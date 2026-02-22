@@ -2,7 +2,7 @@ import io
 import logging
 from os import unlink
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 from PIL.Image import Image, Resampling
 
@@ -79,7 +79,7 @@ class CheckCoverDimensions(Check):
             if not issues and self._can_squarify(cover.width, cover.height):  # squarify if image is not too small/large/unsquare
                 options = [">> Make cover image square"]
                 option_automatic_index = 0
-                picture_source = {cover: [(from_file, embedded, cover.embed_ix)]}
+                picture_source: Dict[Picture, List[Tuple[str, bool, int]]] = {cover: [(from_file, embedded, cover.embed_ix)]}
                 source_file = from_file if not embedded else None
                 new_cover: list[Tuple[Picture, Image, bytes]] = []
 
@@ -127,14 +127,15 @@ class CheckCoverDimensions(Check):
         else:
             original_path = None
             new_path = self.ctx.config.library / album.path / "cover.png"
+        picture_files = dict(album.picture_files)
         if original_path and source_filename:
             self.ctx.console.print(f"Deleting {source_filename}")
             unlink(original_path)
-            del album.picture_files[source_filename]
+            del picture_files[source_filename]
 
         # mark new/replaced image as cover_source (metadata will be picked up in rescan)
-        album.picture_files[new_path.name] = Picture(PictureType.COVER_FRONT, "image/png", 0, 0, 0, b"", "", None, 0, cover_source=True)
-        update_picture_files(self.ctx.db, album.album_id, album.picture_files)
+        picture_files[new_path.name] = Picture(PictureType.COVER_FRONT, "image/png", 0, 0, 0, b"", "", None, 0, cover_source=True)
+        update_picture_files(self.ctx.db, album.album_id, picture_files)
 
         with open(new_path, "wb") as f:
             self.ctx.console.print(f"Writing {new_path.name}")
@@ -145,7 +146,7 @@ class CheckCoverDimensions(Check):
         self,
         album: Album,
         cover: Picture,
-        picture_source: dict[Picture, list[tuple[str, bool, int]]],
+        picture_source: Dict[Picture, List[Tuple[str, bool, int]]],
         get_preview: Callable[[], Tuple[Picture, Image, bytes]],
     ):
         preview = get_preview()

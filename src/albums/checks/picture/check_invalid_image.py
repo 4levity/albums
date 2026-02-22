@@ -1,6 +1,6 @@
 import logging
 from os import unlink
-from typing import List
+from typing import Sequence
 
 from rich.console import RenderableType
 from rich.markup import escape
@@ -19,7 +19,7 @@ class CheckInvalidImage(Check):
     def check(self, album: Album) -> CheckResult | None:
         album_art = [(track.filename, True, track.pictures) for track in album.tracks]
         album_art.extend([(filename, False, [picture]) for filename, picture in album.picture_files.items()])
-        table_rows: List[List[RenderableType]] = []
+        table_rows: Sequence[Sequence[RenderableType]] = []
         issues: set[str] = set()
         any_bad_image_files = False
         any_bad_embedded_images = False

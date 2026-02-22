@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from typing import Literal
+from typing import Collection, Literal
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
@@ -125,7 +125,7 @@ def _configure_check(ctx: Context, db: sqlite3.Connection, check_name: str):
         configuration.save(db, ctx.config)
 
 
-def _set_enabled_checks(ctx: Context, db: sqlite3.Connection, enabled_checks: set[str]):
+def _set_enabled_checks(ctx: Context, db: sqlite3.Connection, enabled_checks: Collection[str]):
     changed = False
     for check_name, config in ctx.config.checks.items():
         value = check_name in enabled_checks

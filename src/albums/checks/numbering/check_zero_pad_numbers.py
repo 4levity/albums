@@ -1,6 +1,6 @@
 import logging
 from enum import Enum, auto
-from typing import Any, List
+from typing import Any, Mapping, Sequence
 
 from rich.console import RenderableType
 from rich.markup import escape
@@ -65,7 +65,7 @@ class CheckZeroPadNumbers(Check):
             return CheckResult(ProblemCategory.TAGS, "couldn't arrange tracks by disc - invalid-track-or-disc-number check must pass first")
 
         total_discs = len(tracks_by_disc.keys())
-        table_rows: List[List[RenderableType]] = []
+        table_rows: Sequence[Sequence[RenderableType]] = []
         fix_tracknumbers = 0
         fix_tracktotals = 0
         fix_discnumbers = 0
@@ -142,7 +142,7 @@ class CheckZeroPadNumbers(Check):
 
         return number_str
 
-    def _fix(self, album: Album, option: str, tracks_by_disc: dict[int, list[Track]]) -> bool:
+    def _fix(self, album: Album, option: str, tracks_by_disc: Mapping[int, Sequence[Track]]) -> bool:
         if not option.startswith(OPTION_APPLY_POLICY):
             raise ValueError(f"ZeroPadNumbers._fix invalid option {option}")
 

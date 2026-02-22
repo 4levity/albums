@@ -56,7 +56,7 @@ def create_track_file(path: Path, spec: Track):
         mut = mutagen.File(filename)
 
     if mut is not None:
-        set_basic_tags_file(mut, list(spec.tags.items()), tag_type)
+        set_basic_tags_file(mut, list((k, [v for v in vv]) for k, vv in spec.tags.items()), tag_type)
 
         # minimum padding ensures small changes to tags will change file size for test
         mut.save(padding=lambda info: 0)

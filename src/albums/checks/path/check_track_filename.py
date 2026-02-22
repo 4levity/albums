@@ -1,7 +1,7 @@
 from copy import copy
 from os import rename
 from pathlib import Path
-from typing import Any, List, Sequence, Tuple
+from typing import Any, Sequence
 
 from pathvalidate import sanitize_filename
 from rich.console import RenderableType
@@ -33,14 +33,14 @@ class CheckTrackFilename(Check):
             options = [">> Use generated filenames"]
             option_automatic_index = 0
             headers = ["Current Filename", "Disc#", "Track#", "Title Tag", "Proposed Filename"]
-            table: Tuple[Sequence[str], Sequence[List[RenderableType]]] = (headers, [self._table_row(track) for track in album.tracks])
+            table = (headers, [self._table_row(track) for track in album.tracks])
             return CheckResult(
                 ProblemCategory.FILENAMES,
                 "track filenames do not match configured pattern",
                 Fixer(lambda _: self._fix_use_generated(album), options, False, option_automatic_index, table),
             )
 
-    def _table_row(self, track: Track) -> List[RenderableType]:
+    def _table_row(self, track: Track) -> Sequence[RenderableType]:
         title_tags = ", ".join(track.tags.get("title", ["[bold italic]none[/bold italic]"]))
         discnum = track.tags.get("discnumber", ["[bold italic]none[/bold italic]"])[0]
         tracknum = track.tags.get("tracknumber", ["[bold italic]none[/bold italic]"])[0]

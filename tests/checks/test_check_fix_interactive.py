@@ -1,6 +1,6 @@
 import contextlib
 import os
-from typing import List, Tuple
+from typing import Sequence, Tuple
 
 import rich
 from rich.console import RenderableType
@@ -13,7 +13,7 @@ from albums.types import Album, CheckResult, Fixer, ProblemCategory, Stream, Tra
 
 class MockFixer(Fixer):
     def __init__(self, ctx: Context, album: Album, options=["A", "B"], option_free_text=True, option_automatic_index: int | None = 0):
-        table: Tuple[List[str], List[List[RenderableType]]] = (["track", "title"], [["1", "one"]])
+        table: Tuple[Sequence[str], Sequence[Sequence[RenderableType]]] = (["track", "title"], [["1", "one"]])
         super(MockFixer, self).__init__(
             lambda option: self._fix(album, option), options, option_free_text, option_automatic_index, table, "which one"
         )

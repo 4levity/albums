@@ -1,7 +1,7 @@
 import io
 import logging
 import mimetypes
-from typing import Any, List, Tuple
+from typing import Any, Sequence, Tuple
 
 from PIL.Image import Image, Resampling
 from rich.console import RenderableType
@@ -212,7 +212,9 @@ class CheckCoverEmbedded(Check):
         with open(self.ctx.config.library / album.path / new_filename, "wb") as f:
             f.write(image_data)
         # create a record of the new image so it can be marked cover_source (details will be filled in when album is rescanned)
-        album.picture_files[new_filename] = Picture(PictureType.COVER_FRONT, cover.format, 0, 0, 0, b"", "", None, 0)
+        picture_files = dict(album.picture_files)
+        picture_files[new_filename] = Picture(PictureType.COVER_FRONT, cover.format, 0, 0, 0, b"", "", None, 0)
+        album.picture_files = picture_files
         return self._fix_mark_cover_source(album, new_filename)
 
     def _get_table_rows(
@@ -223,7 +225,7 @@ class CheckCoverEmbedded(Check):
         source_picture: Picture,
         source_filename: str,
         source_embedded: bool,
-    ) -> List[List[RenderableType]]:
+    ) -> Sequence[Sequence[RenderableType]]:
         (preview_image, preview_data) = self._make_embedded(album, source_filename, source_picture, source_embedded)
         preview_pic = Picture(PictureType.COVER_FRONT, self.create_mime_type, preview_image.width, preview_image.height, len(preview_data), b"")
         pictures = some_pictures + [(preview_pic, preview_image, preview_data)]

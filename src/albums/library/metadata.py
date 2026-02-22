@@ -6,7 +6,7 @@ import textwrap
 from copy import copy
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, Sequence, Tuple
+from typing import Any, Collection, Dict, Generator, Iterable, Sequence, Tuple
 
 import mutagen
 import xxhash
@@ -98,7 +98,7 @@ def set_basic_tags(path: Path, tag_values: list[tuple[str, str | list[str] | Non
     return set_basic_tags_file(file, tag_values, tag_type)
 
 
-def set_basic_tags_file(file: MutagenFileTypeLike, tag_values: list[tuple[str, str | list[str] | None]], tag_type: TagType) -> bool:
+def set_basic_tags_file(file: MutagenFileTypeLike, tag_values: Collection[Tuple[str, str | list[str] | None]], tag_type: TagType) -> bool:
     for name, _ in tag_values:
         # remove any tag, only set supported tags
         # if value is not None and name not in BASIC_TAGS:

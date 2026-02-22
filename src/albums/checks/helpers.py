@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from os import unlink
-from typing import Collection
+from typing import Collection, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
@@ -11,7 +11,7 @@ from ..types import Album, Track
 FRONT_COVER_FILENAME = "cover"
 
 
-def get_tracks_by_disc(tracks: list[Track]) -> dict[int, list[Track]] | None:
+def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | None:
     """
     Return a dict mapping a list of tracks to discnumber values if possible. Tracks with no discnumber are mapped to 0.
 
@@ -66,7 +66,7 @@ def describe_track_number(track: Track):
     return s
 
 
-def show_tag(tag: list[str] | None) -> str:
+def show_tag(tag: Sequence[str] | None) -> str:
     if tag is None:
         return "[bold italic]None[/bold italic]"
     if len(tag) == 1:
@@ -74,7 +74,7 @@ def show_tag(tag: list[str] | None) -> str:
     return escape(str(tag))
 
 
-def parse_filename(filename: str) -> tuple[int | None, int | None, str | None]:
+def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
     filename_parser = "(?P<track1>\\d+)?(?:-(?P<track2>\\d+)?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
     match = re.fullmatch(filename_parser, filename)
     if not match:

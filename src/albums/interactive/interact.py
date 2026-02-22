@@ -3,6 +3,7 @@ import os
 import platform
 import subprocess
 from pathlib import Path
+from typing import Tuple
 
 from prompt_toolkit.shortcuts import choice
 from rich.markup import escape
@@ -21,7 +22,7 @@ OPTION_DO_NOTHING = ">> Do nothing"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
-def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album) -> tuple[bool, bool]:
+def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album) -> Tuple[bool, bool]:
     # if there is a fixer, offer the options it provides
     # always offer these options:
     #  - do nothing
@@ -72,7 +73,7 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
 
         prompt_text = fixer.prompt if fixer else "select an option"
         default_option_index = fixer.option_automatic_index if fixer and (fixer.option_automatic_index is not None) else do_nothing_index
-        option_index = choose_from_menu(ctx, prompt_text, options, default_option_index)
+        option_index = _choose_from_menu(prompt_text, options, default_option_index)
 
         if option_index is None or options[option_index] in [OPTION_IGNORE_CHECK, OPTION_DO_NOTHING, OPTION_RUN_TAGGER, OPTION_OPEN_FOLDER]:
             # these options do not use the fixer (if one was provided)
@@ -121,7 +122,7 @@ def prompt_ignore_checks(ctx: Context, album: Album, check_name: str):
         raise ValueError("prompt_ignore_checks requires a database connection")
     if album.album_id is None:
         raise ValueError("album does not have an album_id, cannot ignore checks")
-    ignore_checks = album.ignore_checks
+    ignore_checks = list(album.ignore_checks)
     if check_name in ignore_checks:
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
     elif Confirm.ask(f'Do you want to ignore the check "{check_name}" for this album in the future?', console=ctx.console, default=False):
@@ -142,7 +143,7 @@ def os_open_folder(ctx: Context, path: Path):
         subprocess.Popen([open_folder_command if open_folder_command else "xdg-open", path])
 
 
-def choose_from_menu(ctx: Context, prompt: str, options: list[str], default_option_index: int | None) -> int | None:
+def _choose_from_menu(prompt: str, options: list[str], default_option_index: int | None) -> int | None:
     default_option = options[default_option_index] if default_option_index is not None else None
     selection = choice(message=prompt, options=[(o, o) for o in options], default=default_option)
     return options.index(selection)

@@ -1,8 +1,7 @@
 import logging
 import re
-from typing import List
+from typing import Sequence
 
-from rich.console import RenderableType
 from rich.markup import escape
 
 from ...library.metadata import album_is_basic_taggable, set_basic_tags
@@ -27,7 +26,7 @@ class CheckDiscInTrackNumber(Check):
         if all_tracks_discnumber_in_tracknumber(album.tracks):
             option_free_text = False
             option_automatic_index = 0
-            tracks: List[List[RenderableType]] = [
+            tracks = [
                 [describe_track_number(track), escape(track.filename), *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)
             ]
             table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
@@ -55,7 +54,7 @@ class CheckDiscInTrackNumber(Check):
         return (discnumber, tracknumber)
 
 
-def all_tracks_discnumber_in_tracknumber(tracks: list[Track]):
+def all_tracks_discnumber_in_tracknumber(tracks: Sequence[Track]):
     any_discnumber = any("discnumber" in track.tags for track in tracks)
     all_tracknumber_with_dashes = all(re.fullmatch("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in tracks)
     return not any_discnumber and all_tracknumber_with_dashes

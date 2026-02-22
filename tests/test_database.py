@@ -140,7 +140,7 @@ class TestDatabase:
             # modify existing image file + add one
             picture_files["folder.jpg"].cover_source = False
             new_pic = Picture(PictureType.OTHER, "test", 200, 200, 2048, b"abcd", "", None, 999)
-            operations.update_picture_files(db, album_id, picture_files | {"other.jpg": new_pic})
+            operations.update_picture_files(db, album_id, dict(picture_files) | {"other.jpg": new_pic})
 
             picture_files = list(selector.select_albums(db, [], [], False))[0].picture_files
             pic_folder = picture_files.get("folder.jpg")
@@ -177,7 +177,7 @@ class TestDatabase:
             tracks = list(selector.select_albums(db, [], [], False))[0].tracks
             assert len(tracks) == 1
 
-            tracks[0].tags["album"] = ["Foo"]
+            tracks[0].tags = {"album": ["Foo"]}
             tracks.append(copy(tracks[0]))
             tracks[1].filename = "2.flac"
             operations.update_tracks(db, album_id, tracks)

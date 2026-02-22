@@ -19,7 +19,7 @@ def collections_add(ctx: Context, collection_names: list[str]):
             if target_collection in album.collections:
                 ctx.console.print(f"album {path} is already in collection {target_collection}", markup=False)
             else:
-                album.collections.append(target_collection)
+                album.collections = list(album.collections) + [target_collection]
                 ctx.console.print(f"added album {path} to collection {target_collection}", markup=False)
                 changed = True
         if changed:

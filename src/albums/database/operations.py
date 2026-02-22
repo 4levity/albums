@@ -1,6 +1,7 @@
 import json
 import logging
 import sqlite3
+from typing import Collection, Mapping, Sequence
 
 from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
 
@@ -78,13 +79,13 @@ def update_scanner(db: sqlite3.Connection, album_id: int, scanner: int):
             logger.warning(f"didn't update scanner for album, not found: {album_id}")
 
 
-def update_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
+def update_collections(db: sqlite3.Connection, album_id: int, collections: Collection[str]):
     with db:
         db.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
         _insert_collections(db, album_id, collections)
 
 
-def _insert_collections(db: sqlite3.Connection, album_id: int, collections: list[str]):
+def _insert_collections(db: sqlite3.Connection, album_id: int, collections: Collection[str]):
     for collection_name in collections:
         collection_id = _get_collection_id(db, collection_name)
         db.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
@@ -97,24 +98,24 @@ def _get_collection_id(db: sqlite3.Connection, collection_name: str):
     return row[0]
 
 
-def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
+def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: Collection[str]):
     with db:
         db.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
         _insert_ignore_checks(db, album_id, ignore_checks)
 
 
-def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: list[str]):
+def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: Collection[str]):
     for check_name in ignore_checks:
         db.execute("INSERT INTO album_ignore_check (album_id, check_name) VALUES (?, ?);", (album_id, check_name))
 
 
-def update_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
+def update_tracks(db: sqlite3.Connection, album_id: int, tracks: Sequence[Track]):
     with db:
         db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
         _insert_tracks(db, album_id, tracks)
 
 
-def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
+def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: Sequence[Track]):
     for track in tracks:
         if not track.stream:
             raise ValueError(f"can't save track without stream info: {track.filename}")
@@ -155,13 +156,13 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: list[Track]):
             )
 
 
-def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
+def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: Mapping[str, Picture]):
     with db:
         db.execute("DELETE FROM album_picture_file WHERE album_id = ?;", (album_id,))
         _insert_picture_files(db, album_id, picture_files)
 
 
-def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: dict[str, Picture]):
+def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: Mapping[str, Picture]):
     for filename, picture in picture_files.items():
         db.execute(
             "INSERT INTO album_picture_file (album_id, filename, file_size, modify_timestamp, file_hash, format, width, height, cover_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",

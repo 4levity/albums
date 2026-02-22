@@ -208,6 +208,8 @@ class TestCheckAlbumArtist:
         assert result is None
 
         # different artists, all albumartist the same
-        album.tracks[1].tags["artist"] = ["A"]
+        tags = dict(album.tracks[1].tags)
+        tags["artist"] = ["A"]
+        album.tracks[1].tags = tags
         result = checker.check(album)
         assert result is None

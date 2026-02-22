@@ -1,12 +1,10 @@
 import logging
 from pathlib import Path
-from typing import List
 
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from mutagen.mp3 import MP3
 from PIL.Image import Image
-from rich.console import RenderableType
 from rich.markup import escape
 
 from ...library.metadata import IMAGE_MODE_BPP, add_id3_pictures, get_id3_pictures, get_image
@@ -48,9 +46,7 @@ class CheckEmbeddedPictureMetadata(Check):
             if album.codec() in {"FLAC", "MP3"}:
                 options = [f">> Re-embed images in {len(mismatches)} tracks"]
                 option_automatic_index = 0
-                tracks: List[List[RenderableType]] = [
-                    [escape(track.filename), "yes" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)
-                ]
+                tracks = [[escape(track.filename), "yes" if ix in mismatches else ""] for ix, track in enumerate(album.tracks)]
                 table = (["filename", "image metadata issues"], tracks)
                 fixer = Fixer(lambda _: self._fix(album, mismatches), options, False, option_automatic_index, table)
             else:

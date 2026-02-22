@@ -1,4 +1,5 @@
 import logging
+from typing import Collection, Mapping, Sequence
 
 from rich.markup import escape
 
@@ -72,7 +73,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         return changed
 
 
-def get_issues_invalid_disc_or_track_number(tracks: list[Track]):
+def get_issues_invalid_disc_or_track_number(tracks: Sequence[Track]):
     issues: set[str] = set()
     for track in tracks:
         if _has_multi_value(track.tags, SINGLE_POSITIVE_NUMBER_TAGS):
@@ -84,14 +85,14 @@ def get_issues_invalid_disc_or_track_number(tracks: list[Track]):
     return issues
 
 
-def _has_multi_value(tags: dict[str, list[str]], tag_names: list[str]):
+def _has_multi_value(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
     for tag_name in tag_names:
         if len(tags.get(tag_name, [])) > 1:
             return True
     return False
 
 
-def _has_non_numeric(tags: dict[str, list[str]], tag_names: list[str]):
+def _has_non_numeric(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
     for tag_name in tag_names:
         for value in tags.get(tag_name, []):
             if not value.isdecimal():
@@ -99,7 +100,7 @@ def _has_non_numeric(tags: dict[str, list[str]], tag_names: list[str]):
     return False
 
 
-def _has_zero_value(tags: dict[str, list[str]], tag_names: list[str]):
+def _has_zero_value(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
     for tag_name in tag_names:
         for value in tags.get(tag_name, []):
             if value.isdecimal() and int(value) == 0:

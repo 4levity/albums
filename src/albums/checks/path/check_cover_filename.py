@@ -109,9 +109,10 @@ class CheckCoverFilename(Check):
             if not self.ctx.db or not album.album_id:
                 raise ValueError("updating cover source requires database and album_id")
             # preserve cover_source setting on the file, other metadata will be corrected on rescan
-            album.picture_files[new_filename] = album.picture_files[old_filename]
-            del album.picture_files[old_filename]
-            update_picture_files(self.ctx.db, album.album_id, album.picture_files)
+            picture_files = dict(album.picture_files)
+            picture_files[new_filename] = album.picture_files[old_filename]
+            del picture_files[old_filename]
+            update_picture_files(self.ctx.db, album.album_id, picture_files)
 
     def _matches(self, filename: str, case_sensitive: bool) -> bool:
         path = Path(filename)

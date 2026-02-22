@@ -49,7 +49,9 @@ class TestChecker:
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()
-        ctx.config.checks["invalid-track-or-disc-number"] = {"enabled": False}
+        checks = dict(ctx.config.checks)
+        checks["invalid-track-or-disc-number"] = {"enabled": False}
+        ctx.config.checks = checks
         print_spy = mocker.spy(ctx.console, "print")
         with pytest.raises(SystemExit):
             run_enabled(ctx, False, False, False, False)

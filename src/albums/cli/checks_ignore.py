@@ -25,7 +25,7 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
             if target_check in album.ignore_checks:
                 ctx.console.print(f"album {album.path} is already configured to ignore {target_check}", markup=False)
             else:
-                album.ignore_checks.append(target_check)
+                album.ignore_checks = list(album.ignore_checks) + [target_check]
                 changed = True
                 if ctx.is_filtered():  # don't show individual albums if operating on all albums (confirm below)
                     ctx.console.print(f"album {album.path} - ignore {target_check}", markup=False)

@@ -27,12 +27,12 @@ class TestCheckRequiredTags:
         assert result.message == "tracks missing required tags {'title': 2, 'artist': 1}"
 
         # one tag missing from both
-        album.tracks[1].tags["artist"] = ["Alice"]
+        album.tracks[1].tags = {"artist": ["Alice"]}
         result = checker.check(album)
         assert result.message == "tracks missing required tags {'title': 2}"
 
         # no tags missing
-        album.tracks[0].tags["title"] = ["one"]
-        album.tracks[1].tags["title"] = ["two"]
+        album.tracks[0].tags = {"artist": ["Alice"], "title": ["one"]}
+        album.tracks[1].tags = {"artist": ["Alice"], "title": ["two"]}
         result = checker.check(album)
         assert result is None

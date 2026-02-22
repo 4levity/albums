@@ -24,7 +24,7 @@ def checks_notice(ctx: Context, force: bool, check_names: list[str]):
                 ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help[/bold]')
                 error = True
             if target_check in album.ignore_checks:
-                album.ignore_checks.remove(target_check)
+                album.ignore_checks = [check for check in album.ignore_checks if check != target_check]
                 ctx.console.print(f"album {escape(album.path)} will stop ignoring {target_check}")
                 changed = True
             elif ctx.is_filtered():  # don't show individual albums if operating on all albums (confirm below)
