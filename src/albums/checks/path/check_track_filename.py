@@ -88,7 +88,7 @@ class CheckTrackFilename(Check):
         new_filenames_lower = {str.lower(filename) for filename in new_filenames}
         if new_filenames_lower.intersection(old_filenames_lower):
             # additional rename if tracks are swapping filenames
-            self.ctx.console.print("A new filename is the same as a different track's old filename")
+            self.ctx.console.print("A new filename is the same as an old filename (ignoring case) - extra rename required")
             for track in tracks_to_rename:
                 num = 0
                 while (temp := (album_path / track.filename).with_suffix(f".{num}")) and temp.exists():
