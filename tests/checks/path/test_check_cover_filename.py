@@ -6,7 +6,8 @@ from PIL import Image
 
 from albums.app import Context
 from albums.checks.path.check_cover_filename import CheckCoverFilename
-from albums.types import Album, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Track
 
 
 class TestCheckCoverFilename:

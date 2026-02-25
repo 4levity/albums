@@ -5,7 +5,8 @@ import shutil
 
 import pytest
 
-from albums.types import Album, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Track
 
 from . import helpers
 from .fixtures.create_library import create_library, test_data_path

@@ -6,9 +6,15 @@ from typing import Mapping, Sequence, Tuple
 
 import humanize
 
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.picture import PictureScanner
+
 from ..app import SCANNER_VERSION
-from ..types import Album, Picture, PictureType, Track
-from .metadata import PROCESSED_ID3_TAGS, PictureCache, get_metadata, get_picture_metadata
+from ..tagger.types import PictureType
+from ..types import Album, Picture, Stream, Track
+from .metadata import PROCESSED_ID3_TAGS
+
+# , PictureCache, get_metadata, get_picture_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +40,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
 
     track_files: list[Path] = []
     picture_paths: list[Path] = []
-    picture_cache: PictureCache = {}
+    tagger = AlbumTagger(album_path)
     for entry in album_path.iterdir():
         if entry.is_file():
             suffix = str.lower(entry.suffix)
@@ -47,8 +53,8 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
         found_tracks = [Track.from_path(file) for file in sorted(track_files)]
 
         if stored_album is None:
-            _load_track_metadata(scan_root, album_relpath, found_tracks, picture_cache)
-            picture_files = _load_picture_files(picture_paths, picture_cache)
+            _load_track_metadata(found_tracks, tagger)
+            picture_files = _load_picture_files(picture_paths, tagger.get_picture_scanner())
             return (Album(album_relpath, found_tracks, [], [], picture_files, None, SCANNER_VERSION), AlbumScanResult.NEW)
 
         tracks_modified = _track_files_modified(stored_album.tracks, found_tracks)
@@ -57,10 +63,10 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
         if reread or tracks_modified or missing_metadata or pictures_modified:
             album = copy(stored_album)
             if reread or tracks_modified or missing_metadata:
-                _load_track_metadata(scan_root, album_relpath, found_tracks, picture_cache)
+                _load_track_metadata(found_tracks, tagger)
                 album.tracks = found_tracks
             if pictures_modified:
-                album.picture_files = _load_picture_files(picture_paths, picture_cache)
+                album.picture_files = _load_picture_files(picture_paths, tagger.get_picture_scanner())
                 # preserve cover_source setting
                 for filename, picture in stored_album.picture_files.items():
                     if picture.cover_source:
@@ -74,10 +80,10 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
     return (None, AlbumScanResult.NO_TRACKS)
 
 
-def _load_picture_files(paths: Sequence[Path], cache: PictureCache) -> Mapping[str, Picture]:
+def _load_picture_files(paths: Sequence[Path], picture_scanner: PictureScanner) -> Mapping[str, Picture]:
     picture_files: dict[str, Picture] = {}
     for path in paths:
-        picture = _picture_from_path(path, cache)
+        picture = _picture_from_path(path, picture_scanner)
         if picture:
             picture_files[path.name] = picture
     return picture_files
@@ -94,17 +100,33 @@ def _picture_files_modified(picture_files: Mapping[str, Picture], picture_paths:
     return False
 
 
-def _load_track_metadata(library_root: Path, album_path: str, tracks: Sequence[Track], picture_cache: PictureCache):
+def _load_track_metadata(tracks: Sequence[Track], tagger: AlbumTagger):
     for track in tracks:
-        path = library_root / album_path / track.filename
-        file_info = get_metadata(path, picture_cache)
-        if file_info is None:
-            logger.warning(f"couldn't load metadata for track {path}")
-        else:
-            (tags, stream_info, pictures) = file_info
-            track.tags = tags
-            track.stream = stream_info
-            track.pictures = pictures
+        with tagger.open(track.filename) as tags:
+            scan_result = tags.scan()
+            track.tags = dict((tag.value, list(values)) for tag, values in scan_result.tags)
+            track.pictures = [
+                Picture(
+                    pic.picture_type,
+                    pic.file_info.mime_type,
+                    pic.file_info.width,
+                    pic.file_info.height,
+                    pic.file_info.file_size,
+                    pic.file_info.hash,
+                    pic.description,
+                    dict(pic.load_issue) if pic.load_issue else None,
+                    None,
+                    embed_ix,
+                )
+                for embed_ix, pic in enumerate(scan_result.pictures)
+            ]
+            track.stream = Stream(
+                scan_result.stream.length,
+                scan_result.stream.bitrate,
+                scan_result.stream.channels,
+                scan_result.stream.codec,
+                scan_result.stream.sample_rate,
+            )
 
 
 def _track_files_modified(tracks1: Sequence[Track], tracks2: Sequence[Track]):
@@ -131,7 +153,7 @@ def _missing_metadata(album: Album):
     )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())
 
 
-def _picture_from_path(file: Path, cache: PictureCache) -> Picture | None:
+def _picture_from_path(file: Path, picture_scanner: PictureScanner) -> Picture | None:
     stat = file.stat()
     if stat.st_size > MAX_IMAGE_SIZE:
         logger.warning(
@@ -142,7 +164,17 @@ def _picture_from_path(file: Path, cache: PictureCache) -> Picture | None:
         return None
     with open(file, "rb") as f:
         image_data = f.read()
+    scan_result = picture_scanner.scan(image_data)
     picture_type = PictureType.from_filename(file.name)
-    picture = get_picture_metadata(image_data, picture_type, cache)  # may or may not load successfully
-    picture.modify_timestamp = int(stat.st_mtime)
+    picture = Picture(
+        picture_type,
+        scan_result.picture_info.mime_type,
+        scan_result.picture_info.width,
+        scan_result.picture_info.height,
+        scan_result.picture_info.file_size,
+        scan_result.picture_info.hash,
+        "",
+        dict(scan_result.load_issue) if scan_result.load_issue else None,
+        int(stat.st_mtime),
+    )
     return picture

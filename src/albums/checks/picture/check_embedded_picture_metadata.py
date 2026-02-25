@@ -8,7 +8,8 @@ from PIL.Image import Image
 from rich.markup import escape
 
 from ...library.metadata import IMAGE_MODE_BPP, add_id3_pictures, get_id3_pictures, get_image
-from ...types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
+from ...tagger.types import PictureType
+from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)

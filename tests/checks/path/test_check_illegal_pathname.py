@@ -2,7 +2,8 @@ import os
 
 from albums.app import Context
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
-from albums.types import Album, PathCompatibilityOption, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, PathCompatibilityOption, Picture, Track
 
 
 class TestCheckIllegalPathname:

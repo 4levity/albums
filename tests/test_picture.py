@@ -1,7 +1,8 @@
 import xxhash
 
 from albums.library.metadata import PictureCache, get_picture_metadata
-from albums.types import Picture, PictureType
+from albums.tagger.types import PictureType
+from albums.types import Picture
 
 from .fixtures.create_library import make_image_data
 

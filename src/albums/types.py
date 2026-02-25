@@ -1,11 +1,13 @@
 import base64
 import logging
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, StrEnum, auto
+from enum import Enum, StrEnum, auto
 from pathlib import Path
 from typing import Any, Callable, Collection, Dict, Iterator, Mapping, Sequence, Tuple, Union
 
 from rich.console import RenderableType
+
+from albums.tagger.types import PictureType
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Stream:
+class Stream:  # TODO replcae with immutable StreamInfo
     length: float = 0.0
     bitrate: int = 0
     channels: int = 0
@@ -22,40 +24,6 @@ class Stream:
 
     def to_dict(self):
         return self.__dict__
-
-
-class PictureType(IntEnum):
-    """
-    ID3 picture type, also used with other tag systems
-    """
-
-    OTHER = 0
-    FILE_ICON = 1
-    OTHER_FILE_ICON = 2
-    COVER_FRONT = 3
-    COVER_BACK = 4
-    LEAFLET_PAGE = 5
-    MEDIA = 6
-    LEAD_ARTIST = 7
-    ARTIST = 8
-    CONDUCTOR = 9
-    BAND = 10
-    COMPOSER = 11
-    LYRICIST = 12
-    RECORDING_LOCATION = 13
-    DURING_RECORDING = 14
-    DURING_PERFORMANCE = 15
-    SCREEN_CAPTURE = 16
-    FISH = 17
-    ILLUSTRATION = 18
-    BAND_LOGOTYPE = 19
-    PUBLISHER_LOGOTYPE = 20
-
-    @staticmethod
-    def from_filename(filename: str):
-        if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "front", "thumbnail"]):
-            return PictureType.COVER_FRONT
-        return PictureType.OTHER
 
 
 @dataclass

@@ -6,7 +6,8 @@ from rich.markup import escape
 
 from ...database import operations
 from ...interactive.image_table import render_image_table
-from ...types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
+from ...tagger.types import PictureType
+from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
 from ..helpers import delete_files_except
 

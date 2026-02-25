@@ -8,7 +8,8 @@ from mutagen.flac import Picture as FlacPicture
 from PIL import Image
 
 from albums.library.metadata import get_metadata, remove_embedded_image, replace_embedded_image, set_basic_tags
-from albums.types import Album, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Track
 
 from .fixtures.create_library import create_library, make_image_data
 

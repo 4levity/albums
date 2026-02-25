@@ -8,7 +8,8 @@ from albums.app import Context
 from albums.checks.picture.check_embedded_picture_metadata import CheckEmbeddedPictureMetadata, add_id3_pictures
 from albums.database import connection, selector
 from albums.library.scanner import scan
-from albums.types import Album, Picture, PictureType, Stream, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Stream, Track
 
 from ...fixtures.create_library import create_library, make_image_data
 
@@ -60,7 +61,7 @@ class TestCheckEmbeddedPictureMetadata:
             assert result.fixer.option_automatic_index is not None
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-            scan(ctx)
+            scan(ctx, reread=True)
             result = list(selector.select_albums(ctx.db, [], [], False))
             assert len(result[0].tracks[0].pictures) == 1
             assert not result[0].tracks[0].pictures[0].load_issue
@@ -71,7 +72,7 @@ class TestCheckEmbeddedPictureMetadata:
             assert result is None
 
     def test_album_art_metadata_mismatch_fix_mp3(self):
-        album = Album("foo", [Track("1.mp3", {}, 0, 0, Stream(1.5, 0, 0, "MP3"))])
+        album = Album("foo", [Track("1.mp3", {"title": ["1"]}, 0, 0, Stream(1.5, 0, 0, "MP3"))])
         ctx = Context()
         ctx.config.library = create_library("embedded_picture_metadata_mp3", [album])
         file = ctx.config.library / album.path / album.tracks[0].filename
@@ -92,7 +93,7 @@ class TestCheckEmbeddedPictureMetadata:
             assert result.fixer.option_automatic_index is not None
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-            scan(ctx)
+            scan(ctx, reread=True)
             result = list(selector.select_albums(ctx.db, [], [], False))
             assert len(result[0].tracks[0].pictures) == 1
             assert not result[0].tracks[0].pictures[0].load_issue

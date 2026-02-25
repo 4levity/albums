@@ -4,7 +4,8 @@ from typing import Any
 
 from ...database.operations import update_picture_files
 from ...library.metadata import read_image
-from ...types import Album, CheckResult, Fixer, PictureType, ProblemCategory
+from ...tagger.types import PictureType
+from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 
 

@@ -19,7 +19,8 @@ from mutagen.mp3 import MP3
 from mutagen.oggvorbis import OggVorbis
 from PIL import Image, UnidentifiedImageError
 
-from ..types import Album, Picture, PictureType, Stream
+from ..tagger.types import PictureType
+from ..types import Album, Picture, Stream
 
 type PictureCache = Dict[Tuple[int, bytes], Picture]
 

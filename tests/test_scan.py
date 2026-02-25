@@ -8,7 +8,8 @@ from mutagen.flac import FLAC
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection, selector
 from albums.library.scanner import scan
-from albums.types import Album, Path, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Path, Picture, Track
 
 from .fixtures.create_library import create_album_in_library, create_library
 
@@ -64,7 +65,7 @@ class TestScanner:
             assert result[1].tracks[0].tags["title"] == ["one"]
 
             # mp3 files
-            assert len(result[1].tracks) == 2
+            assert len(result[2].tracks) == 2
             assert result[2].tracks[0].file_size > 1
             assert result[2].tracks[0].modify_timestamp > 1
             assert result[2].tracks[0].stream.sample_rate == 44100

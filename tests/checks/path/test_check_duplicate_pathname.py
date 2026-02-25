@@ -2,7 +2,8 @@ import os
 
 from albums.app import Context
 from albums.checks.path.check_duplicate_pathname import CheckDuplicatePathname
-from albums.types import Album, Picture, PictureType, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Track
 
 
 class TestCheckDuplicatePathname:

@@ -3,7 +3,8 @@ import logging
 import sqlite3
 from typing import Collection, Mapping, Sequence
 
-from ..types import Album, Picture, PictureType, ScanHistoryEntry, Stream, Track
+from ..tagger.types import PictureType
+from ..types import Album, Picture, ScanHistoryEntry, Stream, Track
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,8 @@ from rich.console import RenderableType
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
 from ...library.metadata import add_embedded_image, mime_to_pillow_format, read_image, replace_embedded_image
-from ...types import Album, CheckResult, Fixer, Picture, PictureType, ProblemCategory
+from ...tagger.types import PictureType
+from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
 

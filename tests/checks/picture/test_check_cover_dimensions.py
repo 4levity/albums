@@ -7,7 +7,8 @@ from PIL import Image
 
 from albums.app import Context
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
-from albums.types import Album, Picture, PictureType, Stream, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Stream, Track
 
 
 class TestCheckCoverDimensions:

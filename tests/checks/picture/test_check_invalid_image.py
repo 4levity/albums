@@ -3,7 +3,8 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.picture.check_invalid_image import CheckInvalidImage
-from albums.types import Album, Picture, PictureType, Stream, Track
+from albums.tagger.types import PictureType
+from albums.types import Album, Picture, Stream, Track
 
 
 class TestCheckCheckInvalidImage:
