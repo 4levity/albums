@@ -62,7 +62,7 @@ class MP3Tagger(AbstractMutagenTagger):
                     self._set_trck(None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trck()
-                    self._set_tpos(track_number, None)
+                    self._set_trck(track_number, None)
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
@@ -135,10 +135,24 @@ class MP3Tagger(AbstractMutagenTagger):
 
     @override
     def _scan_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
+        basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             id3 = self._ensure_id3()
-            return tuple((tag, tuple(_must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
-        return ()
+            basic_tags.extend((tag, tuple(_must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
+
+            (track_number, track_total) = self._get_trck()
+            if track_number is not None:
+                basic_tags.append((BasicTag.TRACKNUMBER, (track_number,)))
+            if track_total is not None:
+                basic_tags.append((BasicTag.TRACKTOTAL, (track_total,)))
+
+            (disc_number, disc_total) = self._get_tpos()
+            if disc_number is not None:
+                basic_tags.append((BasicTag.DISCNUMBER, (disc_number,)))
+            if disc_total is not None:
+                basic_tags.append((BasicTag.DISCTOTAL, (disc_total,)))
+
+        return tuple(basic_tags)
 
     def _ensure_id3(self) -> ID3:
         if not self._file.tags:  # pyright: ignore[reportUnknownMemberType]
@@ -220,18 +234,3 @@ def _must_get_text(id3: ID3, frame_name: str):
         return [str(text) for text in frame.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
     # fallback if this does not look like a text frame
     return [textwrap.shorten(str(frame), width=4096)]  # pyright: ignore[reportUnknownArgumentType]
-
-
-BASIC_TO_ID3 = {
-    "artist": "tpe1",
-    "album": "talb",
-    "title": "tit2",
-    "albumartist": "tpe2",
-    "composer": "tcom",
-    "genre": "tcon",
-    "encoder": "tenc",
-    "date": "tdrc",  # maybe this should be recordingdate
-}  # TRCK and TPOS too but they are not 1:1
-
-
-PROCESSED_ID3_TAGS = set(list(BASIC_TO_ID3.values()) + ["trck", "tpos", "apic", "covr"])

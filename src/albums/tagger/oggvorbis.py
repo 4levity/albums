@@ -38,11 +38,12 @@ class OggVorbisTagger(AbstractMutagenTagger):
 
     @override
     def remove_picture(self, remove_picture: AlbumPicture) -> None:
-        self._file.tags["metadata_block_picture"] = [  # pyright: ignore[reportOptionalSubscript]
+        new_picture_blocks = [
             base64_block
             for base64_block in self._get_picture_blocks()
-            if scan_flac_picture(FlacPicture(base64.b64decode(base64_block)), self._picture_scanner) != remove_picture
+            if scan_flac_picture(FlacPicture(base64.b64decode(base64_block)), self._picture_scanner)[0] != remove_picture
         ]
+        self._file.tags["metadata_block_picture"] = new_picture_blocks  # pyright: ignore[reportOptionalSubscript]
 
     @override
     def _get_file(self):

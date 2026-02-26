@@ -102,7 +102,7 @@ def run_enabled(ctx: Context, automatic: bool, preview: bool, fix: bool, interac
     return showed_issues
 
 
-def required_disabled_checks(config: Mapping[str, CheckConfiguration]):  #
+def required_disabled_checks(config: Mapping[str, CheckConfiguration]):
     check_classes = [check for check in ALL_CHECKS if config[check.name]["enabled"]]
     enabled = set(check.name for check in check_classes)
     required_disabled: dict[str, list[str]] = {}

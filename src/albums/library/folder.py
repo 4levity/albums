@@ -10,7 +10,6 @@ from albums.tagger.folder import AlbumTagger
 from albums.tagger.picture import PictureScanner
 
 from ..app import SCANNER_VERSION
-from ..tagger.mp3 import PROCESSED_ID3_TAGS
 from ..tagger.types import PictureType
 from ..types import Album, Picture, Stream, Track
 
@@ -145,7 +144,6 @@ def _missing_metadata(album: Album):
         or not track.stream
         or any(name.startswith("apic") for name in track.tags)
         or (len(track.pictures) > 1 and max(pic.embed_ix for pic in track.pictures) == 0)
-        or any(tag in track.tags for tag in PROCESSED_ID3_TAGS)  # rescan to remove redundant values
         # or any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures)
         for track in album.tracks
     )  # or any(pic.load_issue and "error" for pic in album.picture_files.values())
