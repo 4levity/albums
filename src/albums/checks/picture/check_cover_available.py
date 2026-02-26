@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Mapping, Sequence, Tuple
 from rich.markup import escape
 
 from ...interactive.image_table import render_image_table
-from ...library.metadata import get_embedded_image_data
 from ...tagger.types import PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
@@ -88,9 +87,8 @@ class CheckCoverAvailable(Check):
             rename(path, self.ctx.config.library / album.path / new_filename)
         else:
             (filename, _, embed_ix) = sources[pic][0]
-            path = self.ctx.config.library / album.path / filename
-            images = get_embedded_image_data(path)
-            image_data = images[embed_ix]
+            with self.tagger.get(album.path).open(filename) as tags:
+                image_data = tags.get_image_data(pic.picture_type, embed_ix)
             suffix = mimetypes.guess_extension(pic.format)
             new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
             self.ctx.console.print(f"Creating {len(image_data)} byte {pic.format} file {new_filename}")

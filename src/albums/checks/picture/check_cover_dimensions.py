@@ -4,11 +4,11 @@ from os import unlink
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple
 
-from PIL.Image import Image, Resampling
+from PIL import Image
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
-from ...library.metadata import read_image
+from ...library.folder import read_binary_file
 from ...tagger.types import PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
@@ -81,12 +81,12 @@ class CheckCoverDimensions(Check):
                 option_automatic_index = 0
                 picture_source: Dict[Picture, List[Tuple[str, bool, int]]] = {cover: [(from_file, embedded, cover.embed_ix)]}
                 source_file = from_file if not embedded else None
-                new_cover: list[Tuple[Picture, Image, bytes]] = []
+                new_cover: list[Tuple[Picture, Image.Image, bytes]] = []
 
                 def get_new_cover():
                     if not new_cover:
                         (filename, embedded, _) = picture_source[cover][0]
-                        (image, image_data) = self._squarify(cover, embedded, self.ctx.config.library / album.path / filename)
+                        (image, image_data) = self._squarify(cover, embedded, self.ctx.config.library / album.path, filename)
                         new_cover.append(
                             (Picture(cover.picture_type, "image/png", image.width, image.height, len(image_data), b""), image, image_data)
                         )
@@ -147,7 +147,7 @@ class CheckCoverDimensions(Check):
         album: Album,
         cover: Picture,
         picture_source: Dict[Picture, List[Tuple[str, bool, int]]],
-        get_preview: Callable[[], Tuple[Picture, Image, bytes]],
+        get_preview: Callable[[], Tuple[Picture, Image.Image, bytes]],
     ):
         preview = get_preview()
         return render_image_table(self.ctx, self.tagger.get(album.path), [cover, preview], picture_source)
@@ -161,11 +161,14 @@ class CheckCoverDimensions(Check):
     def _can_squarify(self, w: int, h: int):
         return not self._cover_square_enough(w, h) and self._aspect(w, h) >= self.fixable_squareness
 
-    def _squarify(self, pic: Picture, embedded: bool, path: Path):
-        loaded_image = read_image(path, embedded, pic.embed_ix)
-        if not loaded_image:
-            raise RuntimeError(f"failed to read image {str(path)}{f'#{pic.embed_ix}' if embedded else ''}")
-        (image, _) = loaded_image
+    def _squarify(self, pic: Picture, embedded: bool, path: Path, filename: str):
+        if embedded:
+            with self.tagger.get(path).open(filename) as tags:
+                image_data = tags.get_image_data(pic.picture_type, pic.embed_ix)
+        else:
+            image_data = read_binary_file(path / filename)
+
+        image = Image.open(io.BytesIO(image_data))
         if image.mode not in {"RGB", "L"}:
             image = image.convert("RGB")
         if image.width < image.height:
@@ -187,9 +190,9 @@ class CheckCoverDimensions(Check):
 
         # if cropped image is still not square, squash it the rest of the way
         if image.width < image.height:
-            image = image.resize((image.width, image.width), resample=Resampling.LANCZOS)
+            image = image.resize((image.width, image.width), resample=Image.Resampling.LANCZOS)
         elif image.width > image.height:
-            image = image.resize((image.height, image.height), resample=Resampling.LANCZOS)
+            image = image.resize((image.height, image.height), resample=Image.Resampling.LANCZOS)
         buffer = io.BytesIO()
         image.save(buffer, "PNG")  # TODO option to preserve original type or use JPG
         return (image, buffer.getvalue())

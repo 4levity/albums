@@ -4,7 +4,8 @@ from unittest.mock import call, mock_open, patch
 
 from albums.app import Context
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
-from albums.tagger.types import PictureType
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.types import PictureType, TaggerFile
 from albums.types import Album, Picture, Stream, Track
 
 from ...fixtures.create_library import make_image_data
@@ -38,14 +39,17 @@ class TestCheckCoverAvailable:
         assert result.fixer.options == ["1.flac#0 (and 1 more) image/png COVER_BACK"]
         assert result.fixer.option_automatic_index == 0
 
+        tagger = TaggerFile()
         image_data = make_image_data()
-        mock_get_embedded_image_data = mocker.patch("albums.checks.picture.check_cover_available.get_embedded_image_data", return_value=[image_data])
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
 
         m_open = mock_open()
         with patch("builtins.open", m_open):
             result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_get_embedded_image_data.call_count == 1
+        assert mock_get_image_data.call_count == 1
         m_open.assert_has_calls(
             [
                 call(Path(".") / album.path / "cover.png", "wb"),
