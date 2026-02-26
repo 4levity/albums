@@ -8,8 +8,8 @@ from PIL import Image
 from albums.app import Context
 from albums.checks.picture.check_cover_embedded import CheckCoverEmbedded
 from albums.tagger.provider import AlbumTagger
-from albums.tagger.types import AlbumPicture, PictureInfo, PictureType, TaggerFile
-from albums.types import Album, Picture, Stream, Track
+from albums.tagger.types import AlbumPicture, PictureInfo, PictureType, StreamInfo, TaggerFile
+from albums.types import Album, Picture, Track
 
 from ...fixtures.create_library import make_image_data
 
@@ -19,8 +19,8 @@ class TestCheckCoverEmbedded:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
+                Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
             ],
         )
         result = CheckCoverEmbedded(Context()).check(album)
@@ -30,8 +30,8 @@ class TestCheckCoverEmbedded:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")),
+                Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
             ],
         )
         album.album_id = 1
@@ -65,8 +65,8 @@ class TestCheckCoverEmbedded:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")),
+                Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
             ],
             [],
             [],

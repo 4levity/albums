@@ -8,21 +8,23 @@ from PIL import Image
 from albums.app import Context
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import PictureType, TaggerFile
-from albums.types import Album, Picture, Stream, Track
+from albums.tagger.types import PictureType, StreamInfo, TaggerFile
+from albums.types import Album, Picture, Track
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckCoverDimensions:
     def test_cover_square_enough(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 401, 400, 0, b"")])])
+        album = Album(
+            "", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 401, 400, 0, b"")])]
+        )
         result = CheckCoverDimensions(Context()).check(album)
         assert result is None
 
     def test_cover_not_square_enough_embedded(self, mocker):
         cover = Picture(PictureType.COVER_FRONT, "image/jpeg", 800, 1000, 0, b"")
-        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [cover])], [], [], {}, 1)
+        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])], [], [], {}, 1)
         ctx = Context()
         ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
@@ -55,7 +57,7 @@ class TestCheckCoverDimensions:
 
     def test_cover_not_square_enough_jpg_file(self, mocker):
         cover = Picture(PictureType.COVER_FRONT, "image/jpeg", 1000, 800, 0, b"", "", None, 999, 0, True)
-        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))], [], [], {"folder.jpg": cover}, 1)
+        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))], [], [], {"folder.jpg": cover}, 1)
         ctx = Context()
         ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
@@ -85,7 +87,7 @@ class TestCheckCoverDimensions:
 
     def test_cover_not_square_enough_png_file(self, mocker):
         cover = Picture(PictureType.COVER_FRONT, "image/png", 1000, 800, 0, b"", "", None, 999, 0, True)
-        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))], [], [], {"folder.png": cover}, 1)
+        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))], [], [], {"folder.png": cover}, 1)
         ctx = Context()
         ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
@@ -113,20 +115,22 @@ class TestCheckCoverDimensions:
 
     def test_cover_not_square_enough_extreme(self, mocker):
         cover = Picture(PictureType.COVER_FRONT, "image/jpeg", 1000, 500, 0, b"")
-        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [cover])])
+        album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])])
         result = CheckCoverDimensions(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT is not square (1000x500)"
         assert result.fixer is None  # too unsquare to fix
 
     def test_cover_dimensions_too_small(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0, b"")])])
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 10, 10, 0, b"")])])
         result = CheckCoverDimensions(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too small (10x10)"
 
     def test_cover_dimensions_too_large(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 9001, 9001, 0, b"")])])
+        album = Album(
+            "", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_FRONT, "image/png", 9001, 9001, 0, b"")])]
+        )
         result = CheckCoverDimensions(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too large (9001x9001)"

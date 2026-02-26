@@ -4,13 +4,14 @@ import os
 from albums.app import Context
 from albums.checks.path.check_album_under_album import CheckAlbumUnderAlbum
 from albums.database import connection, operations
-from albums.types import Album, Stream, Track
+from albums.tagger.types import StreamInfo
+from albums.types import Album, Track
 
 
 class TestCheckAlbumUnderAlbum:
     def test_album_under_album(self):
         def track(filename):
-            return Track(filename, {}, 1, 0, Stream(1.5))
+            return Track(filename, {}, 1, 0, StreamInfo(1.5))
 
         albums = [
             Album(f"foo{os.sep}bar{os.sep}", [track("1.flac")]),

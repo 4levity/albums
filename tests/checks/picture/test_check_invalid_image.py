@@ -4,19 +4,19 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.picture.check_invalid_image import CheckInvalidImage
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import AlbumPicture, PictureInfo, PictureType, TaggerFile
-from albums.types import Album, Picture, Stream, Track
+from albums.tagger.types import AlbumPicture, PictureInfo, PictureType, StreamInfo, TaggerFile
+from albums.types import Album, Picture, Track
 
 
 class TestCheckCheckInvalidImage:
     def test_invalid_image_ok(self):
         pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"")
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])], [], [], {"cover.jpg": pic})
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], {"cover.jpg": pic})
         assert not CheckInvalidImage(Context()).check(album)
 
     def test_error_image_in_track(self, mocker):
         pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", "", {"error": "test load failed"})
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [pic])])
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])])
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None
         assert "image load errors: test load failed" in result.message
@@ -44,7 +44,7 @@ class TestCheckCheckInvalidImage:
 
     def test_error_image_in_file(self, mocker):
         pic = Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", "", {"error": "test load failed"})
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))], [], [], {"cover.jpg": pic})
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))], [], [], {"cover.jpg": pic})
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None
         assert "image load errors: test load failed" in result.message

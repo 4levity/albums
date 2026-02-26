@@ -5,19 +5,19 @@ from unittest.mock import call, mock_open, patch
 from albums.app import Context
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import PictureType, TaggerFile
-from albums.types import Album, Picture, Stream, Track
+from albums.tagger.types import PictureType, StreamInfo, TaggerFile
+from albums.types import Album, Picture, Track
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckCoverAvailable:
     def test_cover_missing_ok(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))])
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))])
         assert not CheckCoverAvailable(Context()).check(album)
 
     def test_cover_missing_required(self):
-        album = Album("", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))])
+        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))])
         ctx = Context()
         ctx.config.checks = {CheckCoverAvailable.name: {"cover_required": True}}
         result = CheckCoverAvailable(ctx).check(album)
@@ -28,8 +28,8 @@ class TestCheckCoverAvailable:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
+                Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
             ],
         )
         result = CheckCoverAvailable(Context()).check(album)
@@ -62,7 +62,7 @@ class TestCheckCoverAvailable:
     def test_album_picture_files_no_front_cover(self, mocker):
         album = Album(
             "",
-            [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))],
+            [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")), Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))],
             [],
             [],
             {"other.png": Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")},
@@ -84,8 +84,8 @@ class TestCheckCoverAvailable:
         album = Album(
             "",
             [
-                Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
-                Track("2.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
+                Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
+                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [Picture(PictureType.COVER_BACK, "image/png", 400, 400, 0, b"")]),
             ],
             [],
             [],

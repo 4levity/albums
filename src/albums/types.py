@@ -7,23 +7,11 @@ from typing import Any, Callable, Collection, Dict, Iterator, Mapping, Sequence,
 
 from rich.console import RenderableType
 
-from .tagger.types import PictureType
+from .tagger.types import PictureType, StreamInfo
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Stream:  # TODO replcae with immutable StreamInfo
-    length: float = 0.0
-    bitrate: int = 0
-    channels: int = 0
-    codec: str = "unknown"
-    sample_rate: int = 0
-
-    def to_dict(self):
-        return self.__dict__
 
 
 @dataclass
@@ -73,7 +61,7 @@ class Track:
     tags: Mapping[str, Sequence[str]] = field(default_factory=dict[str, list[str]])
     file_size: int = 0
     modify_timestamp: int = 0
-    stream: Stream | None = None
+    stream: StreamInfo | None = None
     pictures: Sequence[Picture] = field(default_factory=list[Picture])
 
     @classmethod

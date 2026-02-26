@@ -8,7 +8,8 @@ from rich.console import RenderableType
 from albums.app import Context
 from albums.database import connection, operations
 from albums.interactive.interact import OPTION_IGNORE_CHECK, interact
-from albums.types import Album, CheckResult, Fixer, ProblemCategory, Stream, Track
+from albums.tagger.types import StreamInfo
+from albums.types import Album, CheckResult, Fixer, ProblemCategory, Track
 
 
 class MockFixer(Fixer):
@@ -35,7 +36,7 @@ class TestCheckFixInteractive:
         assert mock_choice.call_count == 1
 
     def test_fix_ignore_check(self, mocker):
-        album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
+        album = Album(os.sep, [Track("1.flac", stream=StreamInfo())], album_id=1)
         ctx = Context()
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             album_id = operations.add(ctx.db, album)
@@ -56,7 +57,7 @@ class TestCheckFixInteractive:
             assert rows[0][0] == 1
 
     def test_fix_ignore_check_no_options(self, mocker):
-        album = Album(os.sep, [Track("1.flac", stream=Stream())], album_id=1)
+        album = Album(os.sep, [Track("1.flac", stream=StreamInfo())], album_id=1)
         ctx = Context()
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             album_id = operations.add(ctx.db, album)

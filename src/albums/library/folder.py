@@ -9,8 +9,8 @@ import humanize
 from ..app import SCANNER_VERSION
 from ..tagger.folder import AlbumTagger
 from ..tagger.picture import PictureScanner
-from ..tagger.types import PictureType
-from ..types import Album, Picture, Stream, Track
+from ..tagger.types import PictureType, StreamInfo
+from ..types import Album, Picture, Track
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def _load_track_metadata(tracks: Sequence[Track], tagger: AlbumTagger):
                 )
                 for embed_ix, pic in enumerate(scan_result.pictures)
             ]
-            track.stream = Stream(
+            track.stream = StreamInfo(
                 scan_result.stream.length,
                 scan_result.stream.bitrate,
                 scan_result.stream.channels,

@@ -3,8 +3,8 @@ import logging
 import sqlite3
 from typing import Collection, Mapping, Sequence
 
-from ..tagger.types import PictureType
-from ..types import Album, Picture, ScanHistoryEntry, Stream, Track
+from ..tagger.types import PictureType, StreamInfo
+from ..types import Album, Picture, ScanHistoryEntry, Track
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
         else:
             tags = {}
             pictures = []
-        stream = Stream(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
+        stream = StreamInfo(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
         track = Track(filename, tags, file_size, modify_timestamp, stream, pictures)
         yield track
 

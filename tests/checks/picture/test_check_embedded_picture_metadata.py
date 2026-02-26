@@ -8,8 +8,8 @@ from albums.checks.picture.check_embedded_picture_metadata import CheckEmbeddedP
 from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import AlbumPicture, PictureInfo, PictureType
-from albums.types import Album, Picture, Stream, Track
+from albums.tagger.types import AlbumPicture, PictureInfo, PictureType, StreamInfo
+from albums.types import Album, Picture, Track
 
 from ...fixtures.create_library import create_library, make_image_data
 
@@ -24,7 +24,7 @@ class TestCheckEmbeddedPictureMetadata:
                     {},
                     0,
                     0,
-                    Stream(1.5, 0, 0, "FLAC"),
+                    StreamInfo(1.5, 0, 0, "FLAC"),
                     [Picture(PictureType.COVER_FRONT, "image/png", 400, 400, 0, b"", "", {"format": "image/jpeg", "width": 0, "height": 0})],
                 )
             ],
@@ -35,7 +35,7 @@ class TestCheckEmbeddedPictureMetadata:
         assert result.fixer
 
     def test_album_art_metadata_mismatch_fix_flac(self):
-        album = Album("foo", [Track("1.flac", {}, 0, 0, Stream(1.5, 0, 0, "FLAC"))])
+        album = Album("foo", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))])
         ctx = Context()
         ctx.config.library = create_library("embedded_picture_metadata_flac", [album])
         file = ctx.config.library / album.path / album.tracks[0].filename
@@ -72,7 +72,7 @@ class TestCheckEmbeddedPictureMetadata:
             assert result is None
 
     def test_album_art_metadata_mismatch_fix_mp3(self):
-        album = Album("foo", [Track("1.mp3", {"title": ["1"]}, 0, 0, Stream(1.5, 0, 0, "MP3"))])
+        album = Album("foo", [Track("1.mp3", {"title": ["1"]}, 0, 0, StreamInfo(1.5, 0, 0, "MP3"))])
         ctx = Context()
         ctx.config.library = create_library("embedded_picture_metadata_mp3", [album])
 
