@@ -162,8 +162,7 @@ def _picture_from_path(file: Path, picture_scanner: PictureScanner) -> Picture |
         # TODO: record the existence of the large image even if we do not load its metadata, just like we would with a load error
         # Note: recording images that are valid but lack metadata would cause issues with detecting duplicates and assigning cover art
         return None
-    with open(file, "rb") as f:
-        image_data = f.read()
+    image_data = read_binary_file(file)
     scan_result = picture_scanner.scan(image_data)
     picture_type = PictureType.from_filename(file.name)
     picture = Picture(
@@ -178,3 +177,8 @@ def _picture_from_path(file: Path, picture_scanner: PictureScanner) -> Picture |
         int(stat.st_mtime),
     )
     return picture
+
+
+def read_binary_file(path: Path) -> bytes:
+    with open(path, "rb") as f:
+        return f.read()

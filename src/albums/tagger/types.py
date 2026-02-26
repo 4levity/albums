@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
-from typing import List, Tuple
+from typing import Generator, List, Tuple
 
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
@@ -150,6 +150,7 @@ class TaggerFile:
     # subclass must implement
     def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None: ...
     def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes: ...
+    def get_pictures(self) -> Generator[Tuple[AlbumPicture, bytes], None, None]: ...
     def save(self) -> None: ...
 
     def add_picture(self, new_picture: AlbumPicture, image_data: bytes) -> None:

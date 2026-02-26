@@ -3,13 +3,15 @@ import logging
 import mimetypes
 from typing import Any, Sequence, Tuple
 
-from PIL.Image import Image, Resampling
+from PIL import Image
 from rich.console import RenderableType
+
+from albums.library.folder import read_binary_file
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
-from ...library.metadata import add_embedded_image, mime_to_pillow_format, read_image, replace_embedded_image
-from ...tagger.types import PictureType
+from ...library.metadata import mime_to_pillow_format
+from ...tagger.types import AlbumPicture, PictureInfo, PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
@@ -155,20 +157,23 @@ class CheckCoverEmbedded(Check):
         scale = 1 if dim <= self.create_max_height_width else (self.create_max_height_width / dim)
         return (round(cover_source.width * scale), round(cover_source.height * scale))
 
-    def _make_embedded(self, album: Album, source_filename: str, source_picture: Picture, source_embedded: bool) -> Tuple[Image, bytes]:
+    def _make_embedded(self, album: Album, source_filename: str, source_picture: Picture, source_embedded: bool) -> Tuple[Image.Image, bytes]:
         path = self.ctx.config.library / album.path / source_filename
-        source = read_image(path, source_embedded, source_picture.embed_ix)
-        if not source:
-            raise RuntimeError(f"failed to read cover image source file {str(path)}")
-        (source_image, _) = source
+        if source_embedded:
+            with self.tagger.get(album.path).open(source_filename) as tags:
+                image_data = tags.get_image_data(source_picture.picture_type, source_picture.embed_ix)
+        else:
+            image_data = read_binary_file(path)
+
+        source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
         (new_w, new_h) = self._embedded_image_spec(source_picture)
         new_format = self.create_mime_type
         if source_image.width == new_w and source_image.height == new_h and source_picture.format == new_format:
-            return source
+            return (source_image, image_data)
         if source_image.mode not in {"RGB", "L"}:
             source_image = source_image.convert("RGB")
-        source_image.thumbnail((self.create_max_height_width, self.create_max_height_width), Resampling.LANCZOS)
+        source_image.thumbnail((self.create_max_height_width, self.create_max_height_width), Image.Resampling.LANCZOS)
         buffer = io.BytesIO()
         format = mime_to_pillow_format(self.create_mime_type)
         source_image.save(buffer, format, quality=self.create_jpeg_quality)
@@ -176,20 +181,17 @@ class CheckCoverEmbedded(Check):
 
     def _fix_embed_cover_in_all_tracks(self, album: Album, source_filename: str, source_picture: Picture, source_embedded: bool):
         (image, image_data) = self._make_embedded(album, source_filename, source_picture, source_embedded)
-        new_cover = Picture(
-            PictureType.COVER_FRONT, self.create_mime_type, image.width, image.height, len(image_data), b""
-        )  # hash/etc fixed on rescan
+        new_info = PictureInfo(self.create_mime_type, image.width, image.height, 24, len(image_data), b"")  # hash fixed on rescan
+        new_cover = AlbumPicture(new_info, PictureType.COVER_FRONT, "", ())
         for track in album.tracks:
-            current_cover = next(filter(lambda pic: pic.picture_type == PictureType.COVER_FRONT, track.pictures), None)
-            path = self.ctx.config.library / album.path / track.filename
-            if not track.stream:
-                raise ValueError(f"missing stream metadata for track {track.filename}")
-            if current_cover:
-                self.ctx.console.print(f"Replacing front cover image in {track.filename}")
-                replace_embedded_image(path, track.stream.codec, current_cover, new_cover, image, image_data)
-            else:
-                self.ctx.console.print(f"Adding front cover image to {track.filename}")
-                add_embedded_image(path, track.stream.codec, new_cover, image, image_data)
+            with self.tagger.get(album.path).open(track.filename) as tags:
+                current_cover = next((pic for pic, _data in tags.get_pictures() if pic.picture_type == PictureType.COVER_FRONT), None)
+                if current_cover:
+                    self.ctx.console.print(f"Replacing front cover image in {track.filename}")
+                    tags.remove_picture(current_cover)
+                else:
+                    self.ctx.console.print(f"Adding front cover image to {track.filename}")
+                tags.add_picture(new_cover, image_data)
         return True
 
     def _fix_mark_cover_source(self, album: Album, filename: str):
@@ -203,11 +205,10 @@ class CheckCoverEmbedded(Check):
     def _fix_extract_cover_source(self, album: Album, filename: str, cover: Picture):
         if not self.ctx.db or not album.album_id:
             raise ValueError("extracting cover source requires database and album_id")
-        source_path = self.ctx.config.library / album.path / filename
-        source = read_image(source_path, True, cover.embed_ix)
-        if not source:
-            raise RuntimeError(f"failed to extract cover image source from {str(source_path)}")
-        (source_image, image_data) = source
+
+        with self.tagger.get(album.path).open(filename) as tags:
+            image_data = tags.get_image_data(cover.picture_type, cover.embed_ix)
+        source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
 
         suffix = mimetypes.guess_extension(cover.format)

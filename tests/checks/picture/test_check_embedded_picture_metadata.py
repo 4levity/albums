@@ -2,13 +2,13 @@ import contextlib
 
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
-from mutagen.mp3 import MP3
 
 from albums.app import Context
-from albums.checks.picture.check_embedded_picture_metadata import CheckEmbeddedPictureMetadata, add_id3_pictures
+from albums.checks.picture.check_embedded_picture_metadata import CheckEmbeddedPictureMetadata
 from albums.database import connection, selector
 from albums.library.scanner import scan
-from albums.tagger.types import PictureType
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.types import AlbumPicture, PictureInfo, PictureType
 from albums.types import Album, Picture, Stream, Track
 
 from ...fixtures.create_library import create_library, make_image_data
@@ -75,12 +75,14 @@ class TestCheckEmbeddedPictureMetadata:
         album = Album("foo", [Track("1.mp3", {"title": ["1"]}, 0, 0, Stream(1.5, 0, 0, "MP3"))])
         ctx = Context()
         ctx.config.library = create_library("embedded_picture_metadata_mp3", [album])
-        file = ctx.config.library / album.path / album.tracks[0].filename
-        mp3 = MP3(file)
+
+        tagger = AlbumTagger(ctx.config.library / album.path)
         image_data = make_image_data(width=400, height=400, format="PNG")
-        pic = Picture(PictureType.COVER_FRONT, "image/jpeg", 0, 0, 0, b"")  # wrong MIME type
-        add_id3_pictures(mp3.tags, [(pic, image_data)])  # pyright: ignore[reportArgumentType]
-        mp3.save()
+        pic_scan = tagger.get_picture_scanner().scan(image_data)
+        # wrong mime type:
+        pic_info = PictureInfo("image/jpeg", 400, 400, 24, pic_scan.picture_info.file_size, pic_scan.picture_info.hash)
+        with tagger.open(album.tracks[0].filename) as tags:
+            tags.add_picture(AlbumPicture(pic_info, PictureType.COVER_FRONT, "", pic_scan.load_issue), image_data)
 
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scan(ctx)

@@ -89,18 +89,21 @@ class MP3Tagger(AbstractMutagenTagger):
                     (track_number, _) = self._get_trck()
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
 
-    @override
-    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
-        pic_info = next(((pic, data) for ix, (pic, data) in enumerate(self._get_id3_pictures()) if ix == embed_ix), None)
-        if pic_info is None:
-            raise ValueError(f"cannot read image#{embed_ix} from {self._file.filename}")
-        (picture, image_data) = pic_info
-        if picture.picture_type != picture_type:
-            raise ValueError(f"unexpected image #{embed_ix} in {self._file.filename} expected type {picture_type} but was {picture.picture_type}")
-        return image_data
+    def get_pictures(self) -> Generator[Tuple[AlbumPicture, bytes], None, None]:
+        tags: ID3 = self._file.tags  # type: ignore
+        picture_frames: list[APIC] = tags.getall("APIC") if tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        for frame in picture_frames:
+            image_data: bytes = bytes(frame.data)  # type: ignore
+            picture_type = PictureType(frame.type)  # type: ignore
+            expect_mime_type = str(frame.mime) if frame.mime and isinstance(frame.mime, str) else "Unknown"  # type: ignore
+            description = str(frame.desc)  # type: ignore
+
+            result = self._picture_scanner.scan(image_data, expect_mime_type)
+            picture = AlbumPicture(result.picture_info, picture_type, description, result.load_issue)
+            yield (picture, image_data)
 
     @override
-    def add_picture(self, new_picture: AlbumPicture, image_data: bytes, image_mode: str | None = None) -> None:
+    def add_picture(self, new_picture: AlbumPicture, image_data: bytes) -> None:
         id3 = self._ensure_id3()
         description = new_picture.description
         apic = APIC(mime=new_picture.file_info.mime_type, type=new_picture.picture_type, data=image_data, desc=description)
@@ -119,7 +122,7 @@ class MP3Tagger(AbstractMutagenTagger):
             logger.warning(f"could not remove {remove_picture.picture_type.name} picture from {self._file.filename}: no ID3 tag")
             return
         id3: ID3 = self._file.tags  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        pictures = list((pic, data) for pic, data in self._get_id3_pictures() if pic != remove_picture)
+        pictures = list((pic, data) for pic, data in self.get_pictures() if pic != remove_picture)
         id3.delall("APIC")  # pyright: ignore[reportUnknownMemberType]
         for pic, data in pictures:
             self.add_picture(pic, data)
@@ -138,10 +141,6 @@ class MP3Tagger(AbstractMutagenTagger):
             id3 = self._ensure_id3()
             return tuple((tag, tuple(_must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
         return ()
-
-    @override
-    def _scan_pictures(self) -> Tuple[AlbumPicture, ...]:
-        return tuple(pic for pic, _bytes in self._get_id3_pictures())
 
     def _ensure_id3(self) -> ID3:
         if not self._file.tags:  # pyright: ignore[reportUnknownMemberType]
@@ -207,19 +206,6 @@ class MP3Tagger(AbstractMutagenTagger):
             id3.add(TRCK(encoding=Encoding.UTF8, text=[value]))  # pyright: ignore[reportUnknownMemberType]
         elif value is not None and id3["TRCK"].text != [value]:  # pyright: ignore[reportUnknownMemberType]
             id3["TRCK"] = TRCK(encoding=Encoding.UTF8, text=[value])
-
-    def _get_id3_pictures(self) -> Generator[Tuple[AlbumPicture, bytes], None, None]:
-        tags: ID3 = self._file.tags  # type: ignore
-        picture_frames: list[APIC] = tags.getall("APIC") if tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        for frame in picture_frames:
-            image_data: bytes = bytes(frame.data)  # type: ignore
-            picture_type = PictureType(frame.type)  # type: ignore
-            expect_mime_type = str(frame.mime) if frame.mime and isinstance(frame.mime, str) else "Unknown"  # type: ignore
-            description = str(frame.desc)  # type: ignore
-
-            result = self._picture_scanner.scan(image_data, expect_mime_type)
-            picture = AlbumPicture(result.picture_info, picture_type, description, result.load_issue)
-            yield (picture, image_data)
 
 
 def _get_text(id3: ID3 | None, frame_name: str):

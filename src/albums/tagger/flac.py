@@ -1,6 +1,6 @@
 from copy import copy
 from pathlib import Path
-from typing import Callable, List, Tuple, override
+from typing import Callable, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.flac import FLAC
@@ -9,7 +9,7 @@ from mutagen.flac import Picture as FlacPicture
 from .base_mutagen import AbstractMutagenTagger
 from .helpers import album_picture_to_flac, scan_flac_picture, vorbis_comment_set_tag, vorbis_comment_tags
 from .picture import PictureScanner
-from .types import AlbumPicture, BasicTag, PictureType
+from .types import AlbumPicture, BasicTag
 
 
 class FlacTagger(AbstractMutagenTagger):
@@ -27,28 +27,22 @@ class FlacTagger(AbstractMutagenTagger):
         vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
 
     @override
-    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
-        flac_pictures: list[FlacPicture] = self._file.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        if len(flac_pictures) <= embed_ix:
-            raise ValueError(f"cannot read image#{embed_ix} from {self._file.filename} ({len(flac_pictures)} pics)")
-        pic = flac_pictures[embed_ix]
-        if pic.type != picture_type.value:
-            raise ValueError(
-                f"unexpected image #{embed_ix} in {self._file.filename} expected type {picture_type.name} {picture_type.value} but was {pic.type}"
-            )
-        return pic.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    def get_pictures(self) -> Generator[Tuple[AlbumPicture, bytes], None, None]:
+        flac_pics: list[FlacPicture] = self._file.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        for pic in flac_pics:
+            yield scan_flac_picture(pic, self._picture_scanner)
 
     @override
-    def add_picture(self, new_picture: AlbumPicture, image_data: bytes, image_mode: str | None = None) -> None:
-        flac_picture = album_picture_to_flac(new_picture, image_data, image_mode)
+    def add_picture(self, new_picture: AlbumPicture, image_data: bytes) -> None:
+        flac_picture = album_picture_to_flac(new_picture, image_data)
         self._file.add_picture(flac_picture)  # pyright: ignore[reportUnknownMemberType]
 
     @override
     def remove_picture(self, remove_picture: AlbumPicture) -> None:
-        pictures: list[FlacPicture] = [copy(pic) for pic in self._file.pictures if pic != remove_picture]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
+        pictures: list[tuple[AlbumPicture, bytes]] = [(copy(pic), image_data) for pic, image_data in self.get_pictures() if pic != remove_picture]
         self._file.clear_pictures()
-        for pic in pictures:
-            self._file.add_picture(pic)  # pyright: ignore[reportUnknownMemberType]
+        for pic, data in pictures:
+            self.add_picture(pic, data)
 
     @override
     def _get_file(self):
@@ -61,8 +55,3 @@ class FlacTagger(AbstractMutagenTagger):
     @override
     def _scan_tags(self):
         return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
-
-    @override
-    def _scan_pictures(self) -> Tuple[AlbumPicture, ...]:
-        flac_pics: list[FlacPicture] = self._file.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        return tuple(scan_flac_picture(pic, self._picture_scanner) for pic in flac_pics)

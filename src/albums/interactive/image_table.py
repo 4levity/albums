@@ -11,6 +11,7 @@ from rich_pixels import Pixels
 from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
 
 from ..app import Context
+from ..library.folder import read_binary_file
 from ..tagger.folder import AlbumTagger
 from ..types import Picture
 
@@ -37,8 +38,7 @@ def render_image_table(
                 with tags.open(filename) as f:
                     image_data = f.get_image_data(cover_ref.picture_type, embed_ix)
             else:
-                with open(tags.path() / filename, "rb") as f:
-                    image_data = f.read()
+                image_data = read_binary_file(tags.path() / filename)
             image = Image.open(io.BytesIO(image_data))
         else:
             (cover, image, image_data) = cover_ref
