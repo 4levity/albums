@@ -44,7 +44,7 @@ class CheckCoverAvailable(Check):
             if pictures_by_type:
                 pics = [k for k, _ in picture_sources.items()]
                 headers = [self._describe_album_art(pic, picture_sources) for pic in pics]
-                table = (headers, lambda: render_image_table(self.ctx, album, pics, picture_sources))
+                table = (headers, lambda: render_image_table(self.ctx, self.tagger.get(album.path), pics, picture_sources))
                 has_embedded = any(track.pictures for track in album.tracks)
                 option_automatic_index = 0 if len(headers) == 1 else None
                 message = f"album has pictures but none is COVER_FRONT picture{' (embedded)' if has_embedded else ''}"

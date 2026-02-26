@@ -9,7 +9,7 @@ from mutagen.flac import Picture as FlacPicture
 from .base_mutagen import AbstractMutagenTagger
 from .helpers import album_picture_to_flac, scan_flac_picture, vorbis_comment_set_tag, vorbis_comment_tags
 from .picture import PictureScanner
-from .types import AlbumPicture, BasicTag
+from .types import AlbumPicture, BasicTag, PictureType
 
 
 class FlacTagger(AbstractMutagenTagger):
@@ -25,6 +25,18 @@ class FlacTagger(AbstractMutagenTagger):
     @override
     def set_tag(self, tag: BasicTag, value: str | List[str] | None):
         vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
+
+    @override
+    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
+        flac_pictures: list[FlacPicture] = self._file.pictures  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        if len(flac_pictures) <= embed_ix:
+            raise ValueError(f"cannot read image#{embed_ix} from {self._file.filename} ({len(flac_pictures)} pics)")
+        pic = flac_pictures[embed_ix]
+        if pic.type != picture_type.value:
+            raise ValueError(
+                f"unexpected image #{embed_ix} in {self._file.filename} expected type {picture_type.name} {picture_type.value} but was {pic.type}"
+            )
+        return pic.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
 
     @override
     def add_picture(self, new_picture: AlbumPicture, image_data: bytes, image_mode: str | None = None) -> None:

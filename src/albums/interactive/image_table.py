@@ -1,25 +1,26 @@
+import io
 import logging
 from math import sqrt
 from typing import Any, Dict, List, Sequence, Tuple
 
 import humanize
 import numpy
-from PIL.Image import Image, Resampling
+from PIL import Image
 from rich.console import RenderableType
 from rich_pixels import Pixels
 from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
 
 from ..app import Context
-from ..library.metadata import read_image
-from ..types import Album, Picture
+from ..tagger.folder import AlbumTagger
+from ..types import Picture
 
 logger = logging.getLogger(__name__)
 
 
 def render_image_table(
     ctx: Context,
-    album: Album,
-    pictures: Sequence[Picture | Tuple[Picture, Image, bytes]],  # type: ignore
+    tags: AlbumTagger,
+    pictures: Sequence[Picture | Tuple[Picture, Image.Image, bytes]],  # type: ignore
     picture_sources: Dict[Picture, List[Tuple[str, bool, int]]],
 ) -> Sequence[Sequence[RenderableType]]:
     pixelses: list[RenderableType] = []
@@ -32,26 +33,26 @@ def render_image_table(
         if isinstance(cover_ref, Picture):
             cover = cover_ref
             (filename, embedded, embed_ix) = picture_sources[cover][0]
-            path = ctx.config.library / album.path / filename
-            loaded_image = read_image(path, embedded, embed_ix)
-            if loaded_image:
-                (image, image_data) = loaded_image
+            if embedded:
+                with tags.open(filename) as f:
+                    image_data = f.get_image_data(cover_ref.picture_type, embed_ix)
             else:
-                image = None
-                image_data = b""
+                with open(tags.path() / filename, "rb") as f:
+                    image_data = f.read()
+            image = Image.open(io.BytesIO(image_data))
         else:
             (cover, image, image_data) = cover_ref
 
         if image:
             h = (7 / 8) * image.height  # TODO try to determine appropriate height scaling for terminal font or make configurable
             scale = min(target_width, target_height) / max(image.width, h)
-            pix_image = image.resize((int(image.width * scale), int(h * scale)), resample=Resampling.LANCZOS)
+            pix_image = image.resize((int(image.width * scale), int(h * scale)), resample=Image.Resampling.LANCZOS)
             pixels = Pixels.from_image(pix_image)
             pixelses.append(pixels)
             caption = f"[{cover.width} x {cover.height}] {humanize.naturalsize(len(image_data), binary=True)}"
             if len(pictures) > 1:
                 COMPARISON_BOX_SIZE = 75
-                image.thumbnail((COMPARISON_BOX_SIZE, COMPARISON_BOX_SIZE), Resampling.LANCZOS)
+                image.thumbnail((COMPARISON_BOX_SIZE, COMPARISON_BOX_SIZE), Image.Resampling.LANCZOS)
                 image = image.convert("RGB")
                 if reference_image is not None:
                     if image.width != reference_width or image.height != reference_height:

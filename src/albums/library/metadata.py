@@ -80,7 +80,6 @@ def get_embedded_image_data(path: Path) -> list[bytes]:
     return []
 
 
-
 def _mutagen_load_file(path: Path) -> tuple[MutagenFileTypeLike, str, TagType] | None:
     codec: str | None = None
     suffix = str.lower(path.suffix)

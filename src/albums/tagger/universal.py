@@ -7,7 +7,7 @@ from mutagen._tags import PaddingInfo
 
 from .base_mutagen import AbstractMutagenTagger
 from .helpers import vorbis_comment_set_tag, vorbis_comment_tags
-from .types import BasicTag, MutagenFileType
+from .types import BasicTag, MutagenFileType, PictureType
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,10 @@ class UniversalTagger(AbstractMutagenTagger):
             vorbis_comment_set_tag(self._file, tag, value)  # pyright: ignore[reportArgumentType]
         except Exception as ex:
             logger.warning(f"error setting {tag} in {self._file.filename}: {repr(ex)}")
+
+    @override
+    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
+        raise NotImplementedError(f"unsupported file: cannot read image#{embed_ix} type {picture_type} from {self._file.filename}")
 
     @override
     def _scan_tags(self):

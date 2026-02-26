@@ -9,7 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 from .base_mutagen import AbstractMutagenTagger
 from .helpers import album_picture_to_flac, scan_flac_picture, vorbis_comment_set_tag, vorbis_comment_tags
 from .picture import PictureScanner
-from .types import AlbumPicture, BasicTag
+from .types import AlbumPicture, BasicTag, PictureType
 
 
 class OggVorbisTagger(AbstractMutagenTagger):
@@ -24,6 +24,16 @@ class OggVorbisTagger(AbstractMutagenTagger):
     @override
     def set_tag(self, tag: BasicTag, value: str | List[str] | None):
         vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
+
+    @override
+    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
+        picture_blocks = self._get_picture_blocks()
+        if len(picture_blocks) <= embed_ix:
+            raise ValueError(f"cannot read image#{embed_ix} from {self._file.filename} ({len(picture_blocks)} pics)")
+        flac_picture = FlacPicture(base64.b64decode(picture_blocks[embed_ix]))
+        if flac_picture.type != picture_type.value:
+            raise ValueError(f"unexpected image #{embed_ix} in {self._file.filename} expected type {picture_type.value} but was {flac_picture.type}")
+        return flac_picture.data  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
 
     @override
     def add_picture(self, new_picture: AlbumPicture, image_data: bytes, image_mode: str | None = None) -> None:

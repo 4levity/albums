@@ -150,7 +150,7 @@ class CheckCoverDimensions(Check):
         get_preview: Callable[[], Tuple[Picture, Image, bytes]],
     ):
         preview = get_preview()
-        return render_image_table(self.ctx, album, [cover, preview], picture_source)
+        return render_image_table(self.ctx, self.tagger.get(album.path), [cover, preview], picture_source)
 
     def _cover_square_enough(self, w: int, h: int) -> bool:
         return self._aspect(w, h) >= self.squareness

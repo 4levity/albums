@@ -90,6 +90,16 @@ class MP3Tagger(AbstractMutagenTagger):
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
 
     @override
+    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
+        pic_info = next(((pic, data) for ix, (pic, data) in enumerate(self._get_id3_pictures()) if ix == embed_ix), None)
+        if pic_info is None:
+            raise ValueError(f"cannot read image#{embed_ix} from {self._file.filename}")
+        (picture, image_data) = pic_info
+        if picture.picture_type != picture_type:
+            raise ValueError(f"unexpected image #{embed_ix} in {self._file.filename} expected type {picture_type} but was {picture.picture_type}")
+        return image_data
+
+    @override
     def add_picture(self, new_picture: AlbumPicture, image_data: bytes, image_mode: str | None = None) -> None:
         id3 = self._ensure_id3()
         description = new_picture.description

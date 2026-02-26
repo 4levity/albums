@@ -126,7 +126,7 @@ class CheckCoverEmbedded(Check):
                     (filename, _) = cover_files[0]
                     options = [f">> Mark as front cover source: {filename}"]
                     option_automatic_index = 0
-                    table = ([filename], lambda: render_image_table(self.ctx, album, [cover], {cover: [(filename, False, 0)]}))
+                    table = ([filename], lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [(filename, False, 0)]}))
                     return CheckResult(
                         ProblemCategory.PICTURES,
                         f"{problem_summary}, but the file {filename} can be marked as cover_source (afterwards, a recheck can fix tracks)",
@@ -137,7 +137,10 @@ class CheckCoverEmbedded(Check):
                 (filename, cover) = next(filter(None, track_covers))
                 options = [">> Extract embedded cover and mark as front cover source"]
                 option_automatic_index = 0
-                table = (["Embedded Cover"], lambda: render_image_table(self.ctx, album, [cover], {cover: [(filename, True, cover.embed_ix)]}))
+                table = (
+                    ["Embedded Cover"],
+                    lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [(filename, True, cover.embed_ix)]}),
+                )
                 return CheckResult(
                     ProblemCategory.PICTURES,
                     f"{problem_summary}, but the cover can be extracted and marked as cover_source (afterwards, a recheck can fix tracks)",
@@ -230,4 +233,4 @@ class CheckCoverEmbedded(Check):
         (preview_image, preview_data) = self._make_embedded(album, source_filename, source_picture, source_embedded)
         preview_pic = Picture(PictureType.COVER_FRONT, self.create_mime_type, preview_image.width, preview_image.height, len(preview_data), b"")
         pictures = some_pictures + [(preview_pic, preview_image, preview_data)]
-        return render_image_table(self.ctx, album, pictures, pic_sources)
+        return render_image_table(self.ctx, self.tagger.get(album.path), pictures, pic_sources)

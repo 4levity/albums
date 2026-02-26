@@ -56,7 +56,7 @@ class CheckDuplicateImage(Check):
         for pic in cover_image_file:
             filenames = sorted(filename for (filename, embedded, _ix) in picture_sources[pic] if not embedded)
             if len(filenames) > 1:
-                table = (filenames, lambda: render_image_table(self.ctx, album, [pic] * len(filenames), picture_sources))
+                table = (filenames, lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic] * len(filenames), picture_sources))
                 option_automatic_index = filenames.index(min(filenames, key=lambda s: len(s)))  # pick shortest filename
                 return CheckResult(
                     ProblemCategory.PICTURES,
