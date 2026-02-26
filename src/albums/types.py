@@ -7,7 +7,7 @@ from typing import Any, Callable, Collection, Dict, Iterator, Mapping, Sequence,
 
 from rich.console import RenderableType
 
-from albums.tagger.types import PictureType
+from .tagger.types import PictureType
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 

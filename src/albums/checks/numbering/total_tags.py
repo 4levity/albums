@@ -2,9 +2,8 @@ from enum import Enum, auto
 
 from rich.markup import escape
 
-from albums.tagger.folder import AlbumTagger
-
 from ...app import Context
+from ...tagger.folder import AlbumTagger
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..helpers import describe_track_number, ordered_tracks
 

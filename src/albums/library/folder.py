@@ -6,10 +6,9 @@ from typing import Mapping, Sequence, Tuple
 
 import humanize
 
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.picture import PictureScanner
-
 from ..app import SCANNER_VERSION
+from ..tagger.folder import AlbumTagger
+from ..tagger.picture import PictureScanner
 from ..tagger.types import PictureType
 from ..types import Album, Picture, Stream, Track
 

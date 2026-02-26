@@ -6,10 +6,9 @@ from typing import Any, Sequence, Tuple
 from PIL import Image
 from rich.console import RenderableType
 
-from albums.library.folder import read_binary_file
-
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
+from ...library.folder import read_binary_file
 from ...tagger.picture import mime_to_pillow_format
 from ...tagger.types import AlbumPicture, PictureInfo, PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
