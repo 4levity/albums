@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..app import Context
+from ..tagger.provider import AlbumTaggerProvider
 from ..types import Album, CheckConfiguration, CheckResult
 
 
@@ -10,6 +11,7 @@ class Check:
     # subclass must override to define static check_name and default_config
     name: str
     default_config: dict[str, Any]
+    tagger: AlbumTaggerProvider
 
     # subclass may override to define static dependencies on other checks passing first
     must_pass_checks: set[str] = set()
@@ -25,6 +27,7 @@ class Check:
     def init(self, check_config: CheckConfiguration):
         pass
 
-    def __init__(self, ctx: Context):
+    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None):
         self.ctx = ctx
+        self.tagger = tagger if tagger else AlbumTaggerProvider(ctx.config.library)
         self.init(ctx.config.checks[self.name])

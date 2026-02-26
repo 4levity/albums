@@ -10,8 +10,6 @@ from PIL import Image, UnidentifiedImageError
 
 from .types import PictureInfo
 
-IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "L": 8, "1": 1}
-
 
 @dataclass(frozen=True)
 class PictureScanResult:
@@ -57,3 +55,6 @@ class PictureScanner:
             issues = issues + ((("width", expect_width),) if (expect_width is not None and picture_info.width != expect_width) else ())
             issues = issues + ((("height", expect_height),) if (expect_height is not None and picture_info.height != expect_height) else ())
         return PictureScanResult(picture_info, issues)
+
+
+IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}

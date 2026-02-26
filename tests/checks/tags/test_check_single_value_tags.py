@@ -2,6 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_single_value_tags import CheckSingleValueTags
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -40,7 +41,7 @@ class TestCheckSingleValueTags:
         assert result.fixer.table
         assert result.fixer.options[0] == ">> Concatenate unique values into one with '/' between"
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_single_value_tags.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -59,7 +60,7 @@ class TestCheckSingleValueTags:
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.options[0] == ">> Remove duplicate values (preserve unique multiple values)"
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_single_value_tags.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1

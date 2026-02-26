@@ -4,6 +4,7 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_track_title import CheckTrackTitle
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -28,7 +29,7 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_track_title.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 4
@@ -55,7 +56,7 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_track_title.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1  # track 3 could not be fixed
@@ -76,7 +77,7 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_track_title.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1

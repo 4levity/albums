@@ -11,6 +11,8 @@ from .picture import PictureScanner
 from .types import BasicTag, TaggerFile
 from .universal import UniversalTagger
 
+SUPPORTED_SUFFIXES = (".flac", ".mp3", ".ogg")
+
 
 class AlbumTagger:
     _folder: Path
@@ -31,24 +33,29 @@ class AlbumTagger:
         file = Path(filename)
         if str(file.parent) != ".":
             raise ValueError(f"parameter must be a filename only, this AlbumTagger only works in {str(self._folder)}")
-        tagger_file = self._get_file(Path(self._folder / file))
+
+        path = Path(self._folder / file)
+        suffix = str.lower(path.suffix)
+        tagger_file: TaggerFile | None = None
         try:
+            if suffix == ".flac":
+                tagger_file = FlacTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
+            elif suffix == ".mp3":
+                tagger_file = MP3Tagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
+            elif suffix == ".ogg":
+                tagger_file = OggVorbisTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
+            else:
+                tagger_file = UniversalTagger(path, padding=self._padding)
             yield tagger_file
         finally:
-            tagger_file.save()
+            if tagger_file is not None:
+                tagger_file.save()
 
     def get_picture_scanner(self) -> PictureScanner:
         return self._picture_scanner
 
-    def _get_file(self, path: Path) -> TaggerFile:
-        suffix = str.lower(path.suffix)
-        if suffix == ".flac":
-            return FlacTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
-        if suffix == ".mp3":
-            return MP3Tagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
-        if suffix == ".ogg":
-            return OggVorbisTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
-        return UniversalTagger(path, padding=self._padding)
+    def path(self) -> Path:
+        return self._folder
 
     def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[str, str | List[str] | None]]):
         if path.parent != self._folder:
@@ -56,3 +63,6 @@ class AlbumTagger:
         with self.open(path.name) as f:
             for name, value in tag_values:
                 f.set_tag(BasicTag(name), value)
+
+    def supports(self, *filenames: str) -> bool:
+        return all(Path(filename).suffix in SUPPORTED_SUFFIXES for filename in filenames)

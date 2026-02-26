@@ -3,6 +3,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -46,7 +47,7 @@ class TestCheckDiscInTrackNumber:
         assert fixer
         assert fixer.options == [">> Split track number into disc number and track number"]
         assert fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_disc_in_track_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert fixer.fix(fixer.options[fixer.option_automatic_index])
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (

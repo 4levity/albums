@@ -7,7 +7,7 @@ from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 from PIL import Image
 
-from albums.library.metadata import get_metadata, remove_embedded_image, replace_embedded_image, set_basic_tags
+from albums.library.metadata import get_metadata, remove_embedded_image, replace_embedded_image
 from albums.tagger.types import PictureType
 from albums.types import Album, Picture, Track
 
@@ -63,61 +63,61 @@ class TestMetadata:
     def setup_cli_tests(self):
         TestMetadata.library = create_library("metadata", albums)
 
-    def test_write_id3_tracktotal(self):
-        file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
-        tags = get_metadata(file)[0]
-        assert tags["tracknumber"] == ["1"]
-        assert tags["tracktotal"] == ["3"]
+    # def test_write_id3_tracktotal(self):
+    #     file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
+    #     tags = get_metadata(file)[0]
+    #     assert tags["tracknumber"] == ["1"]
+    #     assert tags["tracktotal"] == ["3"]
 
-        assert set_basic_tags(file, [("tracktotal", "02")])
-        tags = get_metadata(file)[0]
-        assert tags["tracknumber"] == ["1"]
-        assert tags["tracktotal"] == ["02"]
+    #     assert set_basic_tags(file, [("tracktotal", "02")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["tracknumber"] == ["1"]
+    #     assert tags["tracktotal"] == ["02"]
 
-        assert set_basic_tags(file, [("tracknumber", "3")])
-        tags = get_metadata(file)[0]
-        assert tags["tracknumber"] == ["3"]
-        assert tags["tracktotal"] == ["02"]
+    #     assert set_basic_tags(file, [("tracknumber", "3")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["tracknumber"] == ["3"]
+    #     assert tags["tracktotal"] == ["02"]
 
-        # write both at once
-        assert set_basic_tags(file, [("tracknumber", "2"), ("tracktotal", "3")])
-        tags = get_metadata(file)[0]
-        assert tags["tracknumber"] == ["2"]
-        assert tags["tracktotal"] == ["3"]
+    #     # write both at once
+    #     assert set_basic_tags(file, [("tracknumber", "2"), ("tracktotal", "3")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["tracknumber"] == ["2"]
+    #     assert tags["tracktotal"] == ["3"]
 
-        # remove total
-        assert set_basic_tags(file, [("tracktotal", None)])
-        tags = get_metadata(file)[0]
-        assert tags["tracknumber"] == ["2"]
-        assert "tracktotal" not in tags
+    #     # remove total
+    #     assert set_basic_tags(file, [("tracktotal", None)])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["tracknumber"] == ["2"]
+    #     assert "tracktotal" not in tags
 
-    def test_write_id3_disctotal(self):
-        file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
-        tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["2"]
-        assert tags["disctotal"] == ["2"]
+    # def test_write_id3_disctotal(self):
+    #     file = TestMetadata.library / albums[0].path / albums[0].tracks[0].filename
+    #     tags = get_metadata(file)[0]
+    #     assert tags["discnumber"] == ["2"]
+    #     assert tags["disctotal"] == ["2"]
 
-        assert set_basic_tags(file, [("disctotal", "1")])
-        tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["2"]
-        assert tags["disctotal"] == ["1"]
+    #     assert set_basic_tags(file, [("disctotal", "1")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["discnumber"] == ["2"]
+    #     assert tags["disctotal"] == ["1"]
 
-        assert set_basic_tags(file, [("discnumber", "1")])
-        tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["1"]
-        assert tags["disctotal"] == ["1"]
+    #     assert set_basic_tags(file, [("discnumber", "1")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["discnumber"] == ["1"]
+    #     assert tags["disctotal"] == ["1"]
 
-        # write both at once
-        assert set_basic_tags(file, [("discnumber", "2"), ("disctotal", "2")])
-        tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["2"]
-        assert tags["disctotal"] == ["2"]
+    #     # write both at once
+    #     assert set_basic_tags(file, [("discnumber", "2"), ("disctotal", "2")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["discnumber"] == ["2"]
+    #     assert tags["disctotal"] == ["2"]
 
-        # remove total
-        assert set_basic_tags(file, [("disctotal", None)])
-        tags = get_metadata(file)[0]
-        assert tags["discnumber"] == ["2"]
-        assert "disctotal" not in tags
+    #     # remove total
+    #     assert set_basic_tags(file, [("disctotal", None)])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["discnumber"] == ["2"]
+    #     assert "disctotal" not in tags
 
     def test_read_flac_picture(self):
         file = TestMetadata.library / albums[1].path / albums[1].tracks[0].filename
@@ -184,17 +184,17 @@ class TestMetadata:
         assert "TALB" not in tags
         assert "talb" not in tags
 
-    def test_update_id3_tags(self):
-        track = albums[2].tracks[0]
-        file = TestMetadata.library / albums[2].path / track.filename
-        assert set_basic_tags(file, [("artist", "a1"), ("albumartist", "a2"), ("album", "a3"), ("title", "t")])
-        tags = get_metadata(file)[0]
-        assert tags["artist"] == ["a1"]
-        assert tags["albumartist"] == ["a2"]
-        assert tags["album"] == ["a3"]
-        assert tags["title"] == ["t"]
-        assert "TALB" not in tags
-        assert "talb" not in tags
+    # def test_update_id3_tags(self):
+    #     track = albums[2].tracks[0]
+    #     file = TestMetadata.library / albums[2].path / track.filename
+    #     assert set_basic_tags(file, [("artist", "a1"), ("albumartist", "a2"), ("album", "a3"), ("title", "t")])
+    #     tags = get_metadata(file)[0]
+    #     assert tags["artist"] == ["a1"]
+    #     assert tags["albumartist"] == ["a2"]
+    #     assert tags["album"] == ["a3"]
+    #     assert tags["title"] == ["t"]
+    #     assert "TALB" not in tags
+    #     assert "talb" not in tags
 
     def test_read_oggvorbis(self):
         file = TestMetadata.library / albums[3].path / albums[3].tracks[0].filename

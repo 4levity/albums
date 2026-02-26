@@ -2,12 +2,13 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering import total_tags
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
 class TestTotalTags:
     def check(self, album: Album, policy: total_tags.Policy):
-        return total_tags.check_policy(Context(), album, policy, "tracktotal", "tracknumber")
+        return total_tags.check_policy(Context(), AlbumTagger(Path(album.path)), album, policy, "tracktotal", "tracknumber")
 
     def test_check_total_policy_ok(self):
         album_with_all = Album(
@@ -44,7 +45,7 @@ class TestTotalTags:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.total_tags.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -63,7 +64,7 @@ class TestTotalTags:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.total_tags.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
@@ -83,7 +84,7 @@ class TestTotalTags:
         assert result.fixer.options == [">> Remove tag tracktotal"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.total_tags.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1

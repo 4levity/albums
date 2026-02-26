@@ -51,7 +51,7 @@ def render_image_table(
             caption = f"[{cover.width} x {cover.height}] {humanize.naturalsize(len(image_data), binary=True)}"
             if len(pictures) > 1:
                 COMPARISON_BOX_SIZE = 75
-                image.thumbnail((COMPARISON_BOX_SIZE, COMPARISON_BOX_SIZE), Resampling.BOX)
+                image.thumbnail((COMPARISON_BOX_SIZE, COMPARISON_BOX_SIZE), Resampling.LANCZOS)
                 image = image.convert("RGB")
                 if reference_image is not None:
                     if image.width != reference_width or image.height != reference_height:

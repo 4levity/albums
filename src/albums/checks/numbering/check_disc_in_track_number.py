@@ -4,7 +4,6 @@ from typing import Sequence
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
@@ -20,7 +19,7 @@ class CheckDiscInTrackNumber(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is not valid for files where albums doesn't know about the noted tags
 
         if all_tracks_discnumber_in_tracknumber(album.tracks):
@@ -46,7 +45,7 @@ class CheckDiscInTrackNumber(Check):
             path = self.ctx.config.library / album.path / track.filename
             self.ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
             (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
-            set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])
+            self.tagger.get(album.path).set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])
         return True
 
     def _proposed_disc_and_tracknumber(self, track: Track):

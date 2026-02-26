@@ -10,9 +10,9 @@ from albums.tagger.folder import AlbumTagger
 from albums.tagger.picture import PictureScanner
 
 from ..app import SCANNER_VERSION
+from ..tagger.mp3 import PROCESSED_ID3_TAGS
 from ..tagger.types import PictureType
 from ..types import Album, Picture, Stream, Track
-from .metadata import PROCESSED_ID3_TAGS
 
 # , PictureCache, get_metadata, get_picture_metadata
 

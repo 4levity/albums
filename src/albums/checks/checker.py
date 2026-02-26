@@ -7,10 +7,12 @@ from ..checks.base_check import Check
 from ..database import operations
 from ..interactive.interact import interact
 from ..library import scanner
+from ..tagger.provider import AlbumTaggerProvider
 from ..types import Album, CheckConfiguration, CheckResult
 from .all import ALL_CHECKS
 
 
+# TODO refactor this complex function
 def run_enabled(ctx: Context, automatic: bool, preview: bool, fix: bool, interactive: bool):
     need_checks = required_disabled_checks(ctx.config.checks)
     if need_checks:
@@ -54,7 +56,8 @@ def run_enabled(ctx: Context, automatic: bool, preview: bool, fix: bool, interac
 
         return (maybe_changed, user_quit, displayed_any)
 
-    check_instances = [check(ctx) for check in ALL_CHECKS if ctx.config.checks[check.name]["enabled"]]
+    tagger = AlbumTaggerProvider(ctx.config.library)
+    check_instances = [check(ctx, tagger) for check in ALL_CHECKS if ctx.config.checks[check.name]["enabled"]]
 
     showed_issues = 0
     for album in ctx.select_albums(True):
@@ -99,7 +102,7 @@ def run_enabled(ctx: Context, automatic: bool, preview: bool, fix: bool, interac
     return showed_issues
 
 
-def required_disabled_checks(config: Mapping[str, CheckConfiguration]):
+def required_disabled_checks(config: Mapping[str, CheckConfiguration]):  #
     check_classes = [check for check in ALL_CHECKS if config[check.name]["enabled"]]
     enabled = set(check.name for check in check_classes)
     required_disabled: dict[str, list[str]] = {}

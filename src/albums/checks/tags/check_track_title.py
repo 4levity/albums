@@ -2,7 +2,6 @@ import logging
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory, Track
 from ..base_check import Check
 from ..helpers import parse_filename, show_tag
@@ -17,7 +16,7 @@ class CheckTrackTitle(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is currently not valid for files that don't have "title" tag
 
         no_title = sum(0 if track.tags.get("title") else 1 for track in album.tracks)
@@ -61,6 +60,6 @@ class CheckTrackTitle(Check):
             new_title = self._proposed_title(track)
             if new_title:
                 self.ctx.console.print(f"setting title on {track.filename}")
-                set_basic_tags(file, [("title", new_title)])
+                self.tagger.get(album.path).set_basic_tags(file, [("title", new_title)])
                 changed = True
         return changed

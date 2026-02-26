@@ -4,6 +4,7 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -76,7 +77,7 @@ class TestCheckDiscNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total tag"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_disc_numbering.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [("disctotal", "2")])]
 

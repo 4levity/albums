@@ -3,7 +3,6 @@ from typing import Any
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
@@ -26,7 +25,7 @@ class CheckDiscNumbering(Check):
         self.disctotal_policy = total_tags.Policy.from_str(str(check_config.get("disctotal_policy", self.default_config["disctotal_policy"])))
 
     def check(self, album: Album) -> CheckResult | None:
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check works for tracks with "tracknumber" tag
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
@@ -36,7 +35,9 @@ class CheckDiscNumbering(Check):
 
         # apply disc total policy - will offer automatic fix (remove all disc totals) if policy is not "always"
         option_free_text = True  # fix will allow manual entry - this is ignored if policy = "never"
-        disctotal_result = total_tags.check_policy(self.ctx, album, self.disctotal_policy, "disctotal", "discnumber", option_free_text)
+        disctotal_result = total_tags.check_policy(
+            self.ctx, self.tagger.get(album.path), album, self.disctotal_policy, "disctotal", "discnumber", option_free_text
+        )
         if disctotal_result:
             # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
             return disctotal_result
@@ -120,8 +121,10 @@ class CheckDiscNumbering(Check):
             path = self.ctx.config.library / album.path / track.filename
             if value is None and "disctotal" in track.tags:
                 self.ctx.console.print(f"removing disctotal from {track.filename}")
-                changed |= set_basic_tags(path, [("disctotal", None)])
+                self.tagger.get(album.path).set_basic_tags(path, [("disctotal", None)])
+                changed = True
             if value is not None and ("disctotal" not in track.tags or int(track.tags["disctotal"][0]) != int(value)):
                 self.ctx.console.print(f"setting disctotal on {track.filename}")
-                changed |= set_basic_tags(path, [("disctotal", value)])
+                self.tagger.get(album.path).set_basic_tags(path, [("disctotal", value)])
+                changed = True
         return changed

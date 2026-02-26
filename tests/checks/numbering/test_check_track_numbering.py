@@ -4,6 +4,7 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -82,7 +83,7 @@ class TestCheckTrackNumbering:
         assert fixer
         assert fixer.options == [">> Set tracktotal to number of tracks: 3"]
         assert fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_track_numbering.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert fixer.fix(fixer.options[fixer.option_automatic_index])
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
@@ -97,7 +98,7 @@ class TestCheckTrackNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 3 tracks based on filenames"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_track_numbering.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
@@ -120,7 +121,7 @@ class TestCheckTrackNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 2 tracks based on filenames"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_track_numbering.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [

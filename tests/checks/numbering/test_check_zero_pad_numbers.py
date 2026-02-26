@@ -2,6 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -37,7 +38,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_zero_pad_numbers.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 9
@@ -71,7 +72,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_zero_pad_numbers.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
@@ -102,7 +103,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_zero_pad_numbers.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
@@ -136,7 +137,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_zero_pad_numbers.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
@@ -165,7 +166,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_zero_pad_numbers.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", "1")])

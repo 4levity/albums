@@ -4,7 +4,6 @@ from typing import Any, Sequence
 import yaml
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 from ..helpers import describe_track_number, ordered_tracks
@@ -28,7 +27,7 @@ class CheckSingleValueTags(Check):
         self.single_value_tags = list(str(tag) for tag in tags)
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check only makes sense for files with common tags
 
         multiple_value_tags: list[dict[str, dict[str, Sequence[str]]]] = []
@@ -81,7 +80,7 @@ class CheckSingleValueTags(Check):
                     changed = True
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")
-                set_basic_tags(file, new_values)
+                self.tagger.get(album.path).set_basic_tags(file, new_values)
                 changed = True
 
         return changed

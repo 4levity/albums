@@ -2,6 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_album_artist import CheckAlbumArtist
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -56,7 +57,7 @@ class TestCheckAlbumArtist:
         assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
 
         # we select "B" and it is fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_artist.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix("B")
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
@@ -91,7 +92,7 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_artist.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
@@ -124,7 +125,7 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_artist.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
@@ -165,7 +166,7 @@ class TestCheckAlbumArtist:
         assert "album artist to use" in result.fixer.prompt
 
         # we select "copy album artist to artist" and it is fixed
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_artist.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[4])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3

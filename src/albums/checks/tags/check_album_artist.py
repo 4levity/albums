@@ -4,7 +4,6 @@ from typing import Any
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 from ..helpers import show_tag
@@ -29,7 +28,7 @@ class CheckAlbumArtist(Check):
             self.require_redundant = False
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is currently not valid for files that don't use "album" tag
 
         albumartists: defaultdict[str, int] = defaultdict(int)
@@ -130,16 +129,19 @@ class CheckAlbumArtist(Check):
             if album_artist_value == OPTION_REMOVE_ALBUM_ARTIST:
                 if "albumartist" in track.tags:
                     self.ctx.console.print(f"removing albumartist from {track.filename}", markup=False)
-                    changed |= set_basic_tags(file, [("albumartist", None)])
+                    self.tagger.get(album.path).set_basic_tags(file, [("albumartist", None)])
+                    changed = True
                 # else nothing to remove
             elif album_artist_value == OPTION_COPY_ALBUM_ARTIST_TO_ARTIST:
                 if "albumartist" in track.tags:
                     self.ctx.console.print(f"copying albumartist to artist in {track.filename}", markup=False)
                     albumartist = track.tags["albumartist"][0]
-                    changed |= set_basic_tags(file, [("artist", albumartist)])
+                    self.tagger.get(album.path).set_basic_tags(file, [("artist", albumartist)])
+                    changed = True
             elif track.tags.get("albumartist", []) != [album_artist_value]:
                 self.ctx.console.print(f"setting albumartist on {track.filename}", markup=False)
-                changed |= set_basic_tags(file, [("albumartist", album_artist_value)])
+                self.tagger.get(album.path).set_basic_tags(file, [("albumartist", album_artist_value)])
+                changed = True
             # else nothing to set
 
         self.ctx.console.print("done.")

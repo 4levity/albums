@@ -5,15 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from albums.library.metadata import (
-    #     Iterable,
-    #     MutagenFileTypeLike,
-    #     TagType,
-    #     add_id3_pictures,
-    #     flac_picture_to_vorbis_comment_value,
-    mime_to_pillow_format,
-    #     set_basic_tags_file,
-)
+from albums.library.metadata import mime_to_pillow_format
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import AlbumPicture, PictureInfo
 from albums.types import Album, Track

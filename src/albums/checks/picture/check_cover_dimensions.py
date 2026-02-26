@@ -6,10 +6,9 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from PIL.Image import Image, Resampling
 
-from albums.database.operations import update_picture_files
-from albums.interactive.image_table import render_image_table
-from albums.library.metadata import read_image
-
+from ...database.operations import update_picture_files
+from ...interactive.image_table import render_image_table
+from ...library.metadata import read_image
 from ...tagger.types import PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check

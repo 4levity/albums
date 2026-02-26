@@ -3,6 +3,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_album_tag import CheckAlbumTag
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -62,7 +63,7 @@ class TestCheckAlbumTag:
         assert result.fixer.options[0] == "Foo"
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_tag.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
@@ -89,7 +90,7 @@ class TestCheckAlbumTag:
         assert len(result.fixer.get_table()[1]) == 3  # tracks
         assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
 
-        mock_set_basic_tags = mocker.patch("albums.checks.tags.check_album_tag.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1

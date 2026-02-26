@@ -2,6 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
+from albums.tagger.folder import AlbumTagger
 from albums.types import Album, Track
 
 
@@ -29,7 +30,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_invalid_track_or_disc_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -47,7 +48,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_invalid_track_or_disc_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -64,7 +65,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_invalid_track_or_disc_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -81,7 +82,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_invalid_track_or_disc_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
@@ -102,7 +103,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch("albums.checks.numbering.check_invalid_track_or_disc_number.set_basic_tags")
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1

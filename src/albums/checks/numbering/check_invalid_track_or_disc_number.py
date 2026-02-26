@@ -3,7 +3,6 @@ from typing import Collection, Mapping, Sequence
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
@@ -20,7 +19,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
     must_pass_checks = {"disc-in-track-number"}
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is not valid for files where albums doesn't know about the noted tags
 
         issues = get_issues_invalid_disc_or_track_number(album.tracks)
@@ -67,7 +66,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
                         new_values.append((tag_name, new_value))
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")
-                set_basic_tags(file, new_values)
+                self.tagger.get(album.path).set_basic_tags(file, new_values)
                 changed = True
 
         return changed

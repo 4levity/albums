@@ -5,7 +5,6 @@ from typing import Any, Mapping, Sequence
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory, Track
 from ..base_check import Check
 from ..helpers import get_tracks_by_disc
@@ -57,7 +56,7 @@ class CheckZeroPadNumbers(Check):
             logger.warning(f"{CheckZeroPadNumbers.name} configuration problem: all policies are set to IGNORE, nothing to do")
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is currently not valid for files that don't use "tracknumber"/"discnumber" tags
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
@@ -170,6 +169,6 @@ class CheckZeroPadNumbers(Check):
                         new_values.append(("disctotal", new_disctotal))
                 if new_values:
                     self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")
-                    set_basic_tags(file, new_values)
+                    self.tagger.get(album.path).set_basic_tags(file, new_values)
                     changed = True
         return changed

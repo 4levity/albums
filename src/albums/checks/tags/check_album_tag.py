@@ -5,7 +5,6 @@ from typing import Any
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 from ..helpers import show_tag
@@ -31,7 +30,7 @@ class CheckAlbumTag(Check):
         if folder_str in self.ignore_folders:
             return None
 
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is currently not valid for files that don't use "album" tag
 
         track_album_tags: defaultdict[str, int] = defaultdict(int)
@@ -84,6 +83,6 @@ class CheckAlbumTag(Check):
             file = self.ctx.config.library / album.path / track.filename
             if track.tags.get("album", []) != [option]:
                 self.ctx.console.print(f"setting album on {track.filename}")
-                set_basic_tags(file, [("album", option)])
+                self.tagger.get(album.path).set_basic_tags(file, [("album", option)])
                 changed = True
         return changed

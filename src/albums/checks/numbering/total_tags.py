@@ -2,8 +2,9 @@ from enum import Enum, auto
 
 from rich.markup import escape
 
+from albums.tagger.folder import AlbumTagger
+
 from ...app import Context
-from ...library.metadata import set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..helpers import describe_track_number, ordered_tracks
 
@@ -25,7 +26,7 @@ OPTION_REMOVE_TAG = ">> Remove tag"
 
 
 def check_policy(
-    ctx: Context, album: Album, policy: Policy, tag_name: str, corresponding_index_tag: str, option_free_text: bool = False
+    ctx: Context, tagger: AlbumTagger, album: Album, policy: Policy, tag_name: str, corresponding_index_tag: str, option_free_text: bool = False
 ) -> CheckResult | None:
     on_all_tracks = all(tag_name in t.tags for t in album.tracks)
     on_any_tracks = any(tag_name in t.tags for t in album.tracks)
@@ -56,10 +57,12 @@ def check_policy(
                     path = ctx.config.library / album.path / track.filename
                     if value is None and tag_name in track.tags:
                         ctx.console.print(f"removing {tag_name} from {track.filename}")
-                        changed |= set_basic_tags(path, [(tag_name, None)])
+                        tagger.set_basic_tags(path, [(tag_name, None)])
+                        changed = True
                     if value is not None and (tag_name not in track.tags or track.tags[tag_name] != [value]):
                         ctx.console.print(f"setting {tag_name} on {track.filename}")
-                        changed |= set_basic_tags(path, [(tag_name, value)])
+                        tagger.set_basic_tags(path, [(tag_name, value)])
+                        changed = True
                 return changed
 
             options = [] if policy == Policy.ALWAYS else [f"{OPTION_REMOVE_TAG} {tag_name}"]

@@ -6,7 +6,7 @@ from typing import Any
 from rich.markup import escape
 
 from ...app import Context
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
+from ...tagger.folder import AlbumTagger
 from ...types import Album, CheckResult, Fixer, ProblemCategory, Track
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
@@ -19,7 +19,7 @@ class TrackTotalFixer(Fixer):
     OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
     OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
 
-    def __init__(self, ctx: Context, album: Album, discnumber: int | None):
+    def __init__(self, ctx: Context, tagger: AlbumTagger, album: Album, discnumber: int | None):
         self.tracks: list[Track] = []
         for track in ordered_tracks(album):
             if discnumber is None or (track.tags.get("discnumber", [""])[0].isdecimal() and int(track.tags["discnumber"][0]) == discnumber):
@@ -46,7 +46,7 @@ class TrackTotalFixer(Fixer):
         # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
 
         super(TrackTotalFixer, self).__init__(
-            lambda option: self._fix(ctx, album, option),
+            lambda option: self._fix(ctx, tagger, album, option),
             options,
             True,
             option_automatic_index,
@@ -54,7 +54,7 @@ class TrackTotalFixer(Fixer):
             f"select option to apply to {len(self.tracks)} tracks{discnumber_notice}",
         )
 
-    def _fix(self, ctx: Context, album: Album, option: str | None):
+    def _fix(self, ctx: Context, tagger: AlbumTagger, album: Album, option: str | None):
         if option is None:
             new_tracktotal = None
         elif option.startswith(TrackTotalFixer.OPTION_USE_TRACK_COUNT):
@@ -76,7 +76,7 @@ class TrackTotalFixer(Fixer):
                 track_changed = True
             if track_changed:
                 changed = True
-                set_basic_tags(path, [("tracktotal", new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
+                tagger.set_basic_tags(path, [("tracktotal", new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
         return changed
 
 
@@ -100,7 +100,7 @@ class CheckTrackNumbering(Check):
         if folder_str in self.ignore_folders:
             return None
 
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check works for tracks with "tracknumber" tag
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
@@ -110,7 +110,9 @@ class CheckTrackNumbering(Check):
 
         # apply track total policy - will offer automatic fix (remove all track totals) if policy is not "always"
         one_track_total = len(tracks_by_disc) == 1  # fix will allow manual entry if there is only one disc
-        tracktotal_result = total_tags.check_policy(self.ctx, album, self.tracktotal_policy, "tracktotal", "tracknumber", one_track_total)
+        tracktotal_result = total_tags.check_policy(
+            self.ctx, self.tagger.get(album.path), album, self.tracktotal_policy, "tracktotal", "tracknumber", one_track_total
+        )
         if tracktotal_result:
             # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
             return tracktotal_result
@@ -143,7 +145,7 @@ class CheckTrackNumbering(Check):
                 return CheckResult(
                     ProblemCategory.TAGS,
                     f"some tracks have different track total values{on_disc_message} - {list(track_total_counts.keys())}",
-                    TrackTotalFixer(self.ctx, album, int(disc_number) if disc_number else None),
+                    TrackTotalFixer(self.ctx, self.tagger.get(album.path), album, int(disc_number) if disc_number else None),
                 )
 
             # if there is a track total for this disc, it is in expect_track_total
@@ -197,5 +199,5 @@ class CheckTrackNumbering(Check):
                 new_tracknumber = new_tracknumbers[track.filename]
                 path = self.ctx.config.library / album.path / track.filename
                 self.ctx.console.print(f"setting track number {new_tracknumber} on {track.filename}")
-                set_basic_tags(path, [("tracknumber", new_tracknumber)])
+                self.tagger.get(album.path).set_basic_tags(path, [("tracknumber", new_tracknumber)])
         return True

@@ -5,7 +5,6 @@ from typing import Any
 
 from rich.markup import escape
 
-from ...library.metadata import album_is_basic_taggable, set_basic_tags
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 from ..helpers import show_tag
@@ -31,7 +30,7 @@ class CheckArtistTag(Check):
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 
     def check(self, album: Album):
-        if not album_is_basic_taggable(album):
+        if not self.tagger.get(album.path).supports(*(track.filename for track in album.tracks)):
             return None  # this check is currently not valid for files that don't use "artist" tag
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
@@ -86,5 +85,5 @@ class CheckArtistTag(Check):
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {filename}")
-            set_basic_tags(file, [("artist", option)])
+            self.tagger.get(album.path).set_basic_tags(file, [("artist", option)])
         return True
