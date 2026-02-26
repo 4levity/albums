@@ -1,5 +1,3 @@
-# type PictureCache = Dict[Tuple[int, bytes], EmbeddedPicture]
-
 import io
 import mimetypes
 from dataclasses import dataclass
@@ -58,3 +56,8 @@ class PictureScanner:
 
 
 IMAGE_MODE_BPP = {"RGB": 24, "RGBA": 32, "CMYK": 32, "YCbCr": 24, "I;16": 16, "I;16B": 16, "I;16L": 16, "I": 32, "F": 32, "1": 1}
+
+
+def mime_to_pillow_format(mime_type: str, default: str = "PNG"):
+    MIME_PILLOW_FORMAT = {"image/gif": "GIF", "image/jpeg": "JPEG", "image/png": "PNG"}
+    return str(MIME_PILLOW_FORMAT.get(mime_type, default))

@@ -9,8 +9,6 @@ from mutagen.id3._frames import APIC, TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
-from albums.library.metadata import BASIC_TO_ID3
-
 from .base_mutagen import AbstractMutagenTagger
 from .picture import PictureScanner
 from .types import AlbumPicture, BasicTag, PictureType
@@ -222,6 +220,18 @@ def _must_get_text(id3: ID3, frame_name: str):
         return [str(text) for text in frame.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
     # fallback if this does not look like a text frame
     return [textwrap.shorten(str(frame), width=4096)]  # pyright: ignore[reportUnknownArgumentType]
+
+
+BASIC_TO_ID3 = {
+    "artist": "tpe1",
+    "album": "talb",
+    "title": "tit2",
+    "albumartist": "tpe2",
+    "composer": "tcom",
+    "genre": "tcon",
+    "encoder": "tenc",
+    "date": "tdrc",  # maybe this should be recordingdate
+}  # TRCK and TPOS too but they are not 1:1
 
 
 PROCESSED_ID3_TAGS = set(list(BASIC_TO_ID3.values()) + ["trck", "tpos", "apic", "covr"])

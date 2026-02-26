@@ -14,8 +14,6 @@ from ..tagger.mp3 import PROCESSED_ID3_TAGS
 from ..tagger.types import PictureType
 from ..types import Album, Picture, Stream, Track
 
-# , PictureCache, get_metadata, get_picture_metadata
-
 logger = logging.getLogger(__name__)
 
 SUPPORTED_FILE_TYPES = {".flac", ".mp3", ".m4a", ".wma", ".ogg"}

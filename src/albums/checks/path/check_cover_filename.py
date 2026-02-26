@@ -1,9 +1,13 @@
+import io
 from os import rename, unlink
 from pathlib import Path
 from typing import Any
 
+from PIL import Image
+
+from albums.library.folder import read_binary_file
+
 from ...database.operations import update_picture_files
-from ...library.metadata import read_image
 from ...tagger.types import PictureType
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
@@ -76,10 +80,8 @@ class CheckCoverFilename(Check):
 
     def _fix_convert_cover(self, album: Album, cover_file: str):
         album_path = self.ctx.config.library / album.path
-        loaded_image = read_image(album_path / cover_file, False, 0)
-        if not loaded_image:
-            raise RuntimeError(f"failed to read image {str(album_path)}")
-        (image, _) = loaded_image
+        image_data = read_binary_file(album_path / cover_file)
+        image = Image.open(io.BytesIO(image_data))
         if image.mode not in {"RGB", "L"}:
             image = image.convert("RGB")
         unlink(album_path / cover_file)  # delete first, in case this is a case-insensitive file system and the names differ only by case

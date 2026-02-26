@@ -10,7 +10,7 @@ from albums.library.folder import read_binary_file
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
-from ...library.metadata import mime_to_pillow_format
+from ...tagger.picture import mime_to_pillow_format
 from ...tagger.types import AlbumPicture, PictureInfo, PictureType
 from ...types import Album, CheckResult, Fixer, Picture, ProblemCategory
 from ..base_check import Check

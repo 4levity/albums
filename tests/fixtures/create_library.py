@@ -5,8 +5,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from albums.library.metadata import mime_to_pillow_format
 from albums.tagger.folder import AlbumTagger, BasicTag
+from albums.tagger.picture import mime_to_pillow_format
 from albums.tagger.types import AlbumPicture, PictureInfo
 from albums.types import Album, Track
 

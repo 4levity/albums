@@ -9,6 +9,8 @@ from albums.checks.path.check_cover_filename import CheckCoverFilename
 from albums.tagger.types import PictureType
 from albums.types import Album, Picture, Track
 
+from ...fixtures.create_library import make_image_data
+
 
 class TestCheckCoverFilename:
     def test_cover_filename_ok(self):
@@ -132,14 +134,14 @@ class TestCheckCoverFilename:
         assert result.fixer.options == [">> Convert cover.png to cover.jpg"]
         assert result.fixer.option_automatic_index == 0
 
-        read_image_value = (Image.new("RGB", (400, 400), color="blue"), b"file contents")
+        image_data = make_image_data(400, 400, "PNG")
         mock_save = mocker.patch.object(Image.Image, "save")
-        mock_read_image = mocker.patch("albums.checks.path.check_cover_filename.read_image", return_value=read_image_value)
+        mock_read_binary_file = mocker.patch("albums.checks.path.check_cover_filename.read_binary_file", return_value=image_data)
         mock_unlink = mocker.patch("albums.checks.path.check_cover_filename.unlink")
 
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         assert fix_result
-        assert mock_read_image.call_args_list == [call(Path(album.path) / "cover.png", False, 0)]
+        assert mock_read_binary_file.call_args_list == [call(Path(album.path) / "cover.png")]
         assert mock_unlink.call_args_list == [call(Path(album.path) / "cover.png")]
         assert mock_save.call_args_list == [call(Path(album.path) / "cover.jpg", quality=CheckCoverFilename.default_config["jpeg_quality"])]

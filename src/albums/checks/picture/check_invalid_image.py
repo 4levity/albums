@@ -5,7 +5,6 @@ from typing import Sequence
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ...library.metadata import remove_embedded_image
 from ...types import Album, CheckResult, Fixer, ProblemCategory
 from ..base_check import Check
 
@@ -53,17 +52,17 @@ class CheckInvalidImage(Check):
                 path = self.ctx.config.library / album.path / filename
                 unlink(path)
                 changed = True
+
+        tagger = self.tagger.get(album.path)
         for track in album.tracks:
-            for pic in track.pictures:
-                if pic.load_issue and "error" in pic.load_issue:
-                    if track.stream and track.stream.codec:
-                        if track.stream.codec in {"FLAC", "Ogg Vorbis", "MP3"}:
-                            self.ctx.console.print(f"Removing {pic.picture_type.name} embedded image #{pic.embed_ix} from {escape(track.filename)}")
-                            path = self.ctx.config.library / album.path / track.filename
-                            changed |= remove_embedded_image(path, track.stream.codec, pic)
-                        else:
-                            logger.warning(f"cannot remove embedded image from {track.filename} because {track.stream.codec} not supported yet")
-                    else:
-                        logger.warning(f"cannot remove embedded image from {track.filename} because track.stream.codec is not set")
+            if any(pic.load_issue and "error" in pic.load_issue for pic in track.pictures):
+                if tagger.supports(track.filename):
+                    with tagger.open(track.filename) as tags:
+                        for pic in [pic for pic, _data in tags.get_pictures() if (any(k == "error" for k, _ in pic.load_issue))]:
+                            self.ctx.console.print(f"Removing {pic.picture_type.name} embedded image from {escape(track.filename)}")
+                            tags.remove_picture(pic)
+                            changed = True
+                else:
+                    logger.warning(f"cannot remove embedded image from {track.filename} because file type not supported yet")
 
         return changed
