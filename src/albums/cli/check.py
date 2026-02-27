@@ -2,7 +2,7 @@ import rich_click as click
 
 from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
-from ..checks.checker import required_disabled_checks, run_enabled
+from ..checks.checker import Checker
 from ..types import RescanOption, default_checks_config
 from . import cli_context
 from .scan import scan
@@ -33,6 +33,8 @@ def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool
     if default:
         ctx.console.print("using default check config")
         ctx.config.checks = default_checks_config()
+
+    checker = Checker(ctx, automatic, preview, fix, interactive)
     if len(checks) > 0:
         # validate check names
         for check_name in checks:
@@ -44,13 +46,13 @@ def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool
             enabled = check_name in checks
             ctx.config.checks[check_name]["enabled"] = enabled
 
-        while len(dependent_checks := required_disabled_checks(ctx.config.checks)) > 0:
+        while len(dependent_checks := checker.get_required_disabled_checks()) > 0:
             for dep, required_by in dependent_checks.items():
                 ctx.console.print(
                     f"automatically enabling check [italic]{dep}[/italic] required by {' and '.join(f'[italic]{check}[/italic]' for check in required_by)}"
                 )
                 ctx.config.checks[dep]["enabled"] = True
 
-    issues = run_enabled(ctx, automatic, preview, fix, interactive)
-    if issues == 0:
+    issues_displayed = checker.run_enabled()
+    if issues_displayed == 0:
         ctx.console.print("no issues")

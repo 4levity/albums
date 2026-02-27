@@ -5,7 +5,7 @@ import pytest
 from rich.text import Text
 
 from albums.app import Context
-from albums.checks.checker import run_enabled
+from albums.checks.checker import Checker
 from albums.database import connection
 from albums.types import Album, Track
 
@@ -24,7 +24,7 @@ class TestChecker:
         ctx.select_albums = lambda _: [album]
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             ctx.db = db
-            showed_issues = run_enabled(ctx, False, False, False, False)
+            showed_issues = Checker(ctx, False, False, False, False).run_enabled()
             assert showed_issues == 0
 
     def test_run_enabled_dependent_check_failures(self, mocker):
@@ -41,7 +41,7 @@ class TestChecker:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             ctx.db = db
             print_spy = mocker.spy(ctx.console, "print")
-            run_enabled(ctx, False, False, False, False)
+            Checker(ctx, False, False, False, False).run_enabled()
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
             assert f'dependency not met for check invalid-track-or-disc-number on "foo{os.sep}": disc-in-track-number must pass first' in output
@@ -54,7 +54,7 @@ class TestChecker:
         ctx.config.checks = checks
         print_spy = mocker.spy(ctx.console, "print")
         with pytest.raises(SystemExit):
-            run_enabled(ctx, False, False, False, False)
+            Checker(ctx, False, False, False, False).run_enabled()
         output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
         assert "Configuration error" in output
         assert "invalid-track-or-disc-number required by" in output
