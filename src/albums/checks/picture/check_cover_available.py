@@ -56,7 +56,7 @@ class CheckCoverAvailable(Check):
                         False,
                         option_automatic_index,
                         table,
-                        "Select an image to be renamed or extracted to cover.jpg/cover.png/cover.gif",
+                        "Select an image to be renamed or extracted to cover.jpg/cover.png/etc",
                     ),
                 )
             # else

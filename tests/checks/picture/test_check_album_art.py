@@ -1,6 +1,7 @@
 from albums.app import Context
 from albums.checks.picture.check_album_art import CheckAlbumArt
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, Track
 
 

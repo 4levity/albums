@@ -485,7 +485,7 @@ Rules:
 
 **Automatic fix**: If the album has no front cover art, but there is exactly one
 unique image (embedded and/or image file), make that image the cover art by
-renaming the image file to `cover.jpg`/`.png`/`.gif` **or** by extracting the
+renaming the image file to `cover.jpg`/`.png`/etc. **or** by extracting the
 embedded image from one of the tracks to `cover.jpg` or `.png`.
 
 <!-- pyml disable line-length -->

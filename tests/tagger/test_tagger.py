@@ -3,8 +3,9 @@ import os
 import pytest
 from mutagen.mp3 import MP3
 
+from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
-from albums.tagger.types import Picture, PictureInfo, PictureType
+from albums.tagger.types import Picture, PictureType
 from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library

@@ -6,7 +6,8 @@ from rich_pixels import Pixels
 
 from albums.app import Context
 from albums.checks.picture.check_cover_unique import CheckCoverUnique
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, PictureFile, Track
 
 from ...fixtures.create_library import create_library

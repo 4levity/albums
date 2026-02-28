@@ -5,11 +5,11 @@ from typing import Any, Callable, Collection, Generator, List, Tuple
 
 from mutagen._tags import PaddingInfo
 
+from ..picture.scan import PictureScanner
 from .flac import FlacTagger
 from .m4a import M4aTagger
 from .mp3 import Mp3Tagger
 from .oggvorbis import OggVorbisTagger
-from .picture import PictureScanner
 from .types import BasicTag, TaggerFile
 from .universal import UniversalTagger
 

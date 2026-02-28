@@ -1,4 +1,3 @@
-import base64
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
 from typing import Generator, List, Tuple
@@ -29,6 +28,8 @@ from mutagen.tak import TAK
 from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
 from mutagen.wavpack import WavPack
+
+from ..picture.info import PictureInfo
 
 
 class BasicTag(StrEnum):
@@ -106,19 +107,6 @@ class PictureType(IntEnum):
         if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "front", "thumbnail"]):
             return PictureType.COVER_FRONT
         return PictureType.OTHER
-
-
-@dataclass(frozen=True)
-class PictureInfo:
-    mime_type: str
-    width: int
-    height: int
-    depth_bpp: int
-    file_size: int
-    file_hash: bytes  # xxhash.xxh32_digest(image_data)
-
-    def to_dict(self):
-        return self.__dict__ | {"file_hash": base64.b64encode(self.file_hash).decode()}
 
 
 @dataclass(frozen=True)

@@ -6,9 +6,9 @@ from mutagen._tags import PaddingInfo
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 
+from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
 from .helpers import album_picture_to_flac, scan_flac_picture, vorbis_comment_set_tag, vorbis_comment_tags
-from .picture import PictureScanner
 from .types import BasicTag, Picture
 
 

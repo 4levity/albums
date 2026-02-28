@@ -9,8 +9,8 @@ from mutagen.id3._frames import APIC, TALB, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
+from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
-from .picture import PictureScanner
 from .types import BasicTag, Picture, PictureType
 
 logger = logging.getLogger(__name__)

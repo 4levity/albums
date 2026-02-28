@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from albums.database import connection, operations, schema, selector
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, PictureFile, ScanHistoryEntry, Track
 
 embedded_cover = Picture(PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234"), PictureType.COVER_FRONT, "", (("format", "image/png"),))

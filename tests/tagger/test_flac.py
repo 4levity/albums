@@ -5,8 +5,9 @@ import xxhash
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 
+from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureInfo, PictureType
+from albums.tagger.types import Picture, PictureType
 from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library, make_image_data

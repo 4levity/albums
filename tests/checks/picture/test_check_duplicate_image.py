@@ -3,7 +3,8 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.picture.check_duplicate_image import CheckDuplicateImage
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, PictureFile, Track
 
 

@@ -7,8 +7,9 @@ from albums.app import Context
 from albums.checks.picture.check_embedded_picture_metadata import CheckEmbeddedPictureMetadata
 from albums.database import connection, selector
 from albums.library.scanner import scan
+from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo
+from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, Track
 
 from ...fixtures.create_library import create_library, make_image_data

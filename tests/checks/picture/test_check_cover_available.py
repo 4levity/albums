@@ -4,8 +4,9 @@ from unittest.mock import call, mock_open, patch
 
 from albums.app import Context
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
+from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureInfo, PictureType, StreamInfo, TaggerFile
+from albums.tagger.types import Picture, PictureType, StreamInfo, TaggerFile
 from albums.types import Album, PictureFile, Track
 
 from ...fixtures.create_library import make_image_data

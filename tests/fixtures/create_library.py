@@ -5,8 +5,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from albums.picture.format import MIME_PILLOW_FORMAT
 from albums.tagger.folder import AlbumTagger, BasicTag
-from albums.tagger.picture import mime_to_pillow_format
 from albums.types import Album, Track
 
 from .empty_files import EMPTY_FLAC_FILE_BYTES, EMPTY_M4A_FILE_BYTES, EMPTY_MP3_FILE_BYTES, EMPTY_OGG_VORBIS_FILE_BYTES, EMPTY_WMA_FILE_BYTES
@@ -30,7 +30,7 @@ def create_track_file(path: Path, spec: Track):
     tagger = AlbumTagger(path, padding=lambda _: 0)
     with tagger.open(spec.filename) as tags:
         for pic in spec.pictures:
-            image_data = make_image_data(pic.file_info.width, pic.file_info.height, mime_to_pillow_format(pic.file_info.mime_type, "PNG"))
+            image_data = make_image_data(pic.file_info.width, pic.file_info.height, MIME_PILLOW_FORMAT[pic.file_info.mime_type])
             tags.add_picture(pic, image_data)
         for tag_name, values in spec.tags.items():
             tags.set_tag(BasicTag(tag_name), list(values))

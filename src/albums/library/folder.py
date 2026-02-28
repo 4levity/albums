@@ -7,18 +7,17 @@ from typing import Mapping, Sequence, Tuple
 import humanize
 
 from ..app import SCANNER_VERSION
+from ..picture.scan import PictureScanner
 from ..tagger.folder import AlbumTagger
-from ..tagger.picture import PictureScanner
 from ..tagger.types import Picture, PictureType
 from ..types import Album, PictureFile, Track
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_FILE_TYPES = {".flac", ".mp3", ".m4a", ".wma", ".ogg"}
+SUPPORTED_FILE_TYPES = frozenset({".flac", ".mp3", ".m4a", ".wma", ".ogg"})
 
-# TODO: support more image file types
-# Currently, can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
-SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif"}  # note extension is not used to guess format
+# Can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
+SUPPORTED_IMAGE_SUFFIXES = frozenset({".bmp", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".tif", ".tiff", ".webp"})
 
 MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 

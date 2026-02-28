@@ -5,7 +5,8 @@ import shutil
 
 import pytest
 
-from albums.tagger.types import Picture, PictureInfo, PictureType
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType
 from albums.types import Album, PictureFile, Track
 
 from . import helpers

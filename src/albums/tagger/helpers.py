@@ -3,7 +3,7 @@ from typing import List, Tuple
 from mutagen._vorbis import VCommentDict
 from mutagen.flac import Picture as FlacPicture
 
-from .picture import PictureScanner
+from ..picture.scan import PictureScanner
 from .types import BasicTag, Picture, PictureType
 
 

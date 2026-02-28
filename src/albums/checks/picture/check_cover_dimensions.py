@@ -9,8 +9,9 @@ from PIL import Image
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
 from ...library.folder import read_binary_file
-from ...tagger.picture import IMAGE_MODE_BPP
-from ...tagger.types import Picture, PictureInfo, PictureType
+from ...picture.format import IMAGE_MODE_BPP
+from ...picture.info import PictureInfo
+from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer, PictureFile, ProblemCategory
 from ..base_check import Check
 
