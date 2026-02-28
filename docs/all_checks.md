@@ -331,20 +331,29 @@ All tracks should have one or more values for each of these tags.
 
 If present, the specified tags should not have multiple values _in the same
 track_. Many multiple-value tags are valid, but they might be unintended, and
-might cause unpredictable results with various media players.
+might cause unpredictable results with various media players. The fix for this
+check provides options to concatenate multiple values into a single value, after
+removing duplicates.
 
-Other checks also enforce a single value for specific tags such as track number.
+Other specific checks may enforce a single value for certain tags such as track
+number.
 
-The fix provides options to concatenate multiple values into a single value,
-after removing duplicates.
+To configure how `albums` will combine multiple values, use the `concatenators`
+option. Pay attention to whether or not the separator includes extra spaces -
+the first option gives "Alice / Bob" and the second is "Alice/Bob".
 
-**Automatic fix**: When a track has **duplicate** values for the tag, an
-automatic fix is available that only removes the duplicates. If there are
-multiple unique values, they will be kept and still flagged by this check.
+By default, whichever concatenator is first will be used when automatic fix is
+requested. To disable this, change the automatic_concatenate option.
 
-| Option | Default               |
-| ------ | --------------------- |
-| `tags` | `["artist", "title"]` |
+**Automatic fix**: If a track has **duplicate** values for the tag, the
+automatic fix will remove them. And if `automatic_concatenate` is enabled
+(default), unique values will be combined into a single value.
+
+| Option                  | Default               |
+| ----------------------- | --------------------- |
+| `tags`                  | `["artist", "title"]` |
+| `concatenators`         | `[" / ", "/", " - "]` |
+| `automatic_concatenate` | **true**              |
 
 ### track-title
 

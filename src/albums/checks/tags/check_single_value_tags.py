@@ -9,23 +9,25 @@ from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, ordered_tracks
 
-OPTION_CONCATENATE_SLASH = ">> Concatenate unique values into one with '/' between"
-OPTION_CONCATENATE_DASH = ">> Concatenate unique values into one with '-' between"
+OPTION_CONCATENATE_WITH = ">> Concatenate unique values into one with "
 OPTION_REMOVE_DUPLICATES_ONLY = ">> Remove duplicate values (preserve unique multiple values)"
 
 
 class CheckSingleValueTags(Check):
     name = "single-value-tags"
-    default_config = {"enabled": True, "tags": ["artist", "title"]}
-    # TODO: config option to provide a single way to concatenate tag values and enable automatic fix
+    default_config = {"enabled": True, "tags": ["artist", "title"], "concatenators": [" / ", "/", " - "], "automatic_concatenate": True}
 
     def init(self, check_config: dict[str, Any]):
-        tags: list[Any] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])
-        if not isinstance(tags, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(tag, str) or tag == "" for tag in tags
-        ):
+        tags: list[str] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])
+        if not isinstance(tags, list) or any(not isinstance(tag, str) or tag == "" for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ValueError("single-value-tags.tags configuration must be a list of tags")
         self.single_value_tags = list(str(tag) for tag in tags)
+
+        concatenators: list[str] = check_config.get("concatenators", CheckSingleValueTags.default_config["concatenators"])
+        if not isinstance(concatenators, list) or any(not isinstance(concatenator, str) for concatenator in concatenators):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError("single-value-tags.concatenators configuration must be a list of strings")
+        self.concatenators = concatenators
+        self.automatic_concatenate = bool(check_config.get("automatic_concatenate", CheckSingleValueTags.default_config["automatic_concatenate"]))
 
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
@@ -44,8 +46,9 @@ class CheckSingleValueTags(Check):
         if len(multiple_value_tags) > 0:
             option_free_text = False
             options = [OPTION_REMOVE_DUPLICATES_ONLY] if duplicates else []
-            options.extend([OPTION_CONCATENATE_SLASH, OPTION_CONCATENATE_DASH])
-            option_automatic_index = 0 if duplicates else None
+            for concatenator in self.concatenators:
+                options.append(f'{OPTION_CONCATENATE_WITH}"{concatenator}"')
+            option_automatic_index = 0 if duplicates or self.automatic_concatenate else None
             return CheckResult(
                 f"multiple values for single value tags\n{yaml.dump(multiple_value_tags)}",
                 Fixer(
@@ -58,10 +61,8 @@ class CheckSingleValueTags(Check):
             )
 
     def _fix(self, album: Album, option: str) -> bool:
-        if option == OPTION_CONCATENATE_DASH:
-            concat = " - "
-        elif option == OPTION_CONCATENATE_SLASH:
-            concat = " / "
+        if option.startswith(OPTION_CONCATENATE_WITH):
+            concat = option[len(OPTION_CONCATENATE_WITH) + 1 : -1]
         elif option == OPTION_REMOVE_DUPLICATES_ONLY:
             concat = None
         else:
