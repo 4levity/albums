@@ -15,6 +15,7 @@ from .base_check import Check
 
 @dataclass(frozen=True)
 class CheckDisposition:
+    album: Album
     passed: bool
     maybe_changed: bool
     user_quit: bool
@@ -68,6 +69,7 @@ class Checker:
                         issues_displayed += 1
                     else:
                         disposition = self._run_check(check, album)
+                        album = disposition.album
                         if disposition.passed:
                             checks_passed.add(check.name)
                         if disposition.suppressed_failure_message:
@@ -108,8 +110,8 @@ class Checker:
 
                 if disposition.maybe_changed:
                     reread = True  # probably could be False -> faster
-                    (_, tracks_changed) = scanner.scan(self.ctx, lambda: [(album.path, album.album_id)], reread)
-                    maybe_fixable = tracks_changed
+                    (_, any_changes) = scanner.scan(self.ctx, lambda: [(album.path, album.album_id)], reread)
+                    maybe_fixable = any_changes
                     if maybe_fixable and self.ctx.db and album.album_id:
                         # reload album so we can check it again
                         album = operations.load_album(self.ctx.db, album.album_id, True)
@@ -117,7 +119,7 @@ class Checker:
                     maybe_fixable = False
             else:
                 passed = True
-        return CheckDisposition(passed, maybe_changed, quit, displayed, suppressed_failure_message)
+        return CheckDisposition(album, passed, maybe_changed, quit, displayed, suppressed_failure_message)
 
     def _handle_check_result(self, check: Check, check_result: CheckResult, album: Album) -> CheckDisposition:
         fixer = check_result.fixer
@@ -150,4 +152,4 @@ class Checker:
                 self.ctx.console.print(message, highlight=False)
                 displayed_any = True
 
-        return CheckDisposition(False, maybe_changed, user_quit, displayed_any, suppressed_failure_message)
+        return CheckDisposition(album, False, maybe_changed, user_quit, displayed_any, suppressed_failure_message)

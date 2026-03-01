@@ -6,8 +6,11 @@ from rich.text import Text
 
 from albums.app import Context
 from albums.checks.checker import Checker
-from albums.database import connection
+from albums.database import connection, selector
+from albums.library import scanner
 from albums.types import Album, Track
+
+from .fixtures.create_library import create_library
 
 
 class TestChecker:
@@ -26,6 +29,23 @@ class TestChecker:
             ctx.db = db
             showed_issues = Checker(ctx, False, False, False, False).run_enabled()
             assert showed_issues == 0
+
+    def test_run_enabled_automatic_dependent_check_ok(self):
+        album = Album("foo" + os.sep, [Track("1-01 one.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["1-01"], "title": ["one"]})])
+        ctx = Context()
+        ctx.config.library = create_library("checker_automatic", [album])
+        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+            ctx.db = db
+            ctx.select_albums = lambda load_track_tag: selector.select_albums(db, [], [], False)
+            scanner.scan(ctx)
+            showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False).run_enabled()
+
+            # there is only 1 issue "disc-in-tracknumber" and if "invalid-track-or-disc-number" check sees the FIXED album it will report no problem
+            assert showed_issues == 1
+
+            album = next(ctx.select_albums(True))
+            assert album.tracks[0].tags["discnumber"] == ["1"]
+            assert album.tracks[0].tags["tracknumber"] == ["01"]
 
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(
