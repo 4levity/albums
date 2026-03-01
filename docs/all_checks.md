@@ -317,16 +317,6 @@ to all tracks that do not have an artist tag.
 
 <!-- pyml enable line-length -->
 
-### required-tags
-
-All tracks should have one or more values for each of these tags.
-
-> Disabled by default, set `enable = true` to use.
-
-| Option = default               |
-| ------------------------------ |
-| `tags` = `["artist", "title"]` |
-
 ### single-value-tags
 
 If present, the specified tags should not have multiple values _in the same

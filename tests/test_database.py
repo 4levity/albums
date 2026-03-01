@@ -123,7 +123,7 @@ class TestDatabase:
             result = list(selector.select_albums(db, [], [], False))
             assert result[0].ignore_checks == ["artist-tag"]  # initial
 
-            set_ignore_checks = ["album-artist", "required-tags"]
+            set_ignore_checks = ["album-artist", "cover-filename"]
             operations.update_ignore_checks(db, album_id, set_ignore_checks)
             result = list(selector.select_albums(db, [], [], False))
             assert sorted(result[0].ignore_checks) == set_ignore_checks

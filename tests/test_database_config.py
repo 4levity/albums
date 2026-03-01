@@ -47,24 +47,26 @@ class TestDatabaseConfig:
 
     def test_database_config_save_overwrite(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            save(db, Configuration({"required-tags": {"enabled": True, "tags": ["artist", "title"]}}, Path("/path/to")))
+            save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}, Path("/path/to")))
             loaded = load(db)
             assert str(loaded.library) == "/path/to"
-            assert loaded.checks["required-tags"]["enabled"]
-            assert loaded.checks["required-tags"]["tags"] == ["artist", "title"]
+            assert loaded.checks["cover-filename"]["enabled"]
+            assert loaded.checks["cover-filename"]["filename"] == "cover.*"
+            assert loaded.checks["cover-filename"]["jpeg_quality"] == 90
 
-            save(db, Configuration({"required-tags": {"enabled": False, "tags": ["genre"]}}, Path("/new")))
+            save(db, Configuration({"cover-filename": {"enabled": False, "filename": "cover.jpg", "jpeg_quality": 95}}, Path("/new")))
             loaded = load(db)
             assert str(loaded.library) == "/new"
-            assert not loaded.checks["required-tags"]["enabled"]
-            assert loaded.checks["required-tags"]["tags"] == ["genre"]
+            assert not loaded.checks["cover-filename"]["enabled"]
+            assert loaded.checks["cover-filename"]["filename"] == "cover.jpg"
+            assert loaded.checks["cover-filename"]["jpeg_quality"] == 95
 
     def test_database_config_save_invalid(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            save(db, Configuration({"required-tags": {"enabled": True, "tags": ["title"]}}))  # ok
+            save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))  # ok
             with pytest.raises(ValueError):
-                save(db, Configuration({"required-tags": {"enabled": True, "tags": (1, 2)}}))  # type: ignore
+                save(db, Configuration({"cover-filename": {"enabled": True, "filename": True, "jpeg_quality": 90}}))  # type: ignore
             with pytest.raises(ValueError):
-                save(db, Configuration({"INVALID": {"enabled": True, "tags": ["title"]}}))
+                save(db, Configuration({"INVALID": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))
             with pytest.raises(ValueError):
-                save(db, Configuration({"required-tags": {"enabled": True, "INVALID": ["title"]}}))
+                save(db, Configuration({"cover-filename": {"enabled": True, "INVALID": "cover.*", "jpeg_quality": 90}}))

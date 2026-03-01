@@ -25,7 +25,7 @@ class TestCliConfig:
         assert_setting(result.output, "settings.open_folder_command", " ")
         assert_setting(result.output, "cover-dimensions.min_pixels", "100")
         assert_setting(result.output, "cover-dimensions.squareness", "0.98")
-        assert_setting(result.output, "required-tags.enabled", "False")
+        assert_setting(result.output, "cover-filename.enabled", "True")
 
         result = self.run(["config", "settings.library", "."])
         assert result.exit_code == 0
@@ -41,8 +41,8 @@ class TestCliConfig:
         assert "cover-dimensions.min_pixels = 42" in result.output
         result = self.run(["config", "cover-dimensions.squareness", "0.42"])
         assert "cover-dimensions.squareness = 0.42" in result.output
-        result = self.run(["config", "required-tags.enabled", "True"])
-        assert "required-tags.enabled = True" in result.output
+        result = self.run(["config", "cover-filename.enabled", "False"])
+        assert "cover-filename.enabled = False" in result.output
 
         result = self.run(["config", "--show"])
         assert_setting(result.output, "settings.library", ".")
@@ -51,7 +51,7 @@ class TestCliConfig:
         assert_setting(result.output, "settings.open_folder_command", "xdg-open")
         assert_setting(result.output, "cover-dimensions.min_pixels", "42")
         assert_setting(result.output, "cover-dimensions.squareness", "0.42")
-        assert_setting(result.output, "required-tags.enabled", "True")
+        assert_setting(result.output, "cover-filename.enabled", "False")
         self.run(["config", "settings.library", str(TestCliConfig.library)])
 
     def test_config_invalid(self):
