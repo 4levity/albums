@@ -71,11 +71,11 @@ See options below if you prefer e.g. `01. Foo.mp3` or `01 - Foo.mp3` instead.
 
 <!-- pyml disable line-length -->
 
-| Option                | Default             | Description                                   |
-| --------------------- | ------------------- | --------------------------------------------- |
-| `track_number_suffix` | `" "` _(one space)_ | Put this right after the disc/track number    |
-| `replace_slash`       | `"-"` _(a dash)_    | Replace a "/" character with this             |
-| `replace_invalid`     | `""` _(nothing)_    | Replace any other illegal character with this |
+| Option = default                            | Description                                   |
+| ------------------------------------------- | --------------------------------------------- |
+| `track_number_suffix` = `" "` _(one space)_ | Put this right after the disc/track number    |
+| `replace_slash` = `"-"` _(a dash)_          | Replace a "/" character with this             |
+| `replace_invalid` = `""` _(nothing)_        | Replace any other illegal character with this |
 
 <!-- pyml enable line-length -->
 
@@ -91,10 +91,10 @@ it according to the options.
 
 <!-- pyml disable line-length -->
 
-| Option         | Default     | Description                                                                  |
-| -------------- | ----------- | ---------------------------------------------------------------------------- |
-| `filename`     | `"cover.*"` | Cover file. `.*` = keep same file type, `.png` or `.jpg` = convert if needed |
-| `jpeg_quality` | **90**      | If converting to JPEG, use this quality setting                              |
+| Option = default         | Description                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `filename` = `"cover.*"` | Cover file. `.*` = keep same file type, `.png` or `.jpg` = convert if needed |
+| `jpeg_quality` = **90**  | If converting to JPEG, use this quality setting                              |
 
 <!-- pyml enable line-length -->
 
@@ -159,10 +159,10 @@ automatic fix if the policy is "always".)
 
 <!-- pyml disable line-length -->
 
-| Option                      | Default        | Description                                                  |
-| --------------------------- | -------------- | ------------------------------------------------------------ |
-| `discs_in_separate_folders` | **true**       | albums with multiple discs may be stored in separate folders |
-| `disctotal_policy`          | `"consistent"` | Set the tag presence policy for disc total                   |
+| Option = default                       | Description                                                  |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `discs_in_separate_folders` = **true** | albums with multiple discs may be stored in separate folders |
+| `disctotal_policy` = `"consistent"`    | Set the tag presence policy for disc total                   |
 
 <!-- pyml enable line-length -->
 
@@ -204,10 +204,10 @@ automatic fix if the policy is "always".)
 
 <!-- pyml disable line-length -->
 
-| Option              | Default        | Description                                             |
-| ------------------- | -------------- | ------------------------------------------------------- |
-| `ignore_folders`    | `["misc"]`     | in all folders with these names, ignore track numbering |
-| `tracktotal_policy` | `"consistent"` | Set the tag presence policy for track total             |
+| Option = default                     | Description                                             |
+| ------------------------------------ | ------------------------------------------------------- |
+| `ignore_folders` = `["misc"]`        | in all folders with these names, ignore track numbering |
+| `tracktotal_policy` = `"consistent"` | Set the tag presence policy for track total             |
 
 <!-- pyml enable line-length -->
 
@@ -236,12 +236,12 @@ Choose a policy for each tag. The policy options are:
 - **"two_digit_minimum"**: all values should be at least two digits (three if
   more than 99 values)
 
-| Option            | Default               |
-| ----------------- | --------------------- |
-| `tracknumber_pad` | `"two_digit_minimum"` |
-| `tracktotal_pad`  | `"two_digit_minimum"` |
-| `discnumber_pad`  | `"if_needed"`         |
-| `disctotal_pad`   | `"never"`             |
+| Option = default                          |
+| ----------------------------------------- |
+| `tracknumber_pad` = `"two_digit_minimum"` |
+| `tracktotal_pad` = `"two_digit_minimum"`  |
+| `discnumber_pad` = `"if_needed"`          |
+| `disctotal_pad` = `"never"`               |
 
 > The default settings will result in, for example, track **04** of **07** and
 > disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
@@ -260,44 +260,44 @@ on other tracks in the folder, and the name of the folder. Choose from options.
 
 <!-- pyml disable line-length -->
 
-| Option           | Default    | Description                                                          |
-| ---------------- | ---------- | -------------------------------------------------------------------- |
-| `ignore_folders` | `["misc"]` | a list of folder names (not paths) where this rule should be ignored |
+| Option = default              | Description                                                          |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `ignore_folders` = `["misc"]` | a list of folder names (not paths) where this rule should be ignored |
 
 <!-- pyml enable line-length -->
 
 ### album-artist
 
 The "album artist" tag (e.g. `albumartist`, `TPE2`) allows many media players to
-group tracks in the same album when the "artist" tag is not the same on all the
+group tracks in the same album when the "artist" is not the same on all the
 tracks.
 
 Rules:
 
-- If any tracks have different artist tags, all tracks should have the same
-  album artist tag.
-- If any track has an album artist tag, all tracks should have the same album
-  artist tag.
+- If any tracks have different artists, all tracks should have the same album
+  artist.
+- If any track has album artist, all tracks should have the same album artist.
 
-The fix offers candidates found in the tags plus "Various Artists". It can also
-apply a policy from the options below.
+The fix offers candidates found in the tags plus the option "Various Artists".
+It can also apply a policy from the options below.
 
-**Automatic fix**: If a policy is enabled to set or remove redundant album
-artist, and no other problems are detected, apply the policy.
+**Automatic fix**: If the album artist is or would be redundant, and one of the
+optional policies below is enabled, apply the policy.
 
 <!-- pyml disable line-length -->
 
-| Option              | Default   | Description                                                                          |
-| ------------------- | --------- | ------------------------------------------------------------------------------------ |
-| `remove_redundant`  | **false** | The album artist tag should be removed if all the artist tags are the same.          |
-| `require_redundant` | **false** | There should always be an album artist tag even if all the artist tags are the same. |
+| Option = default                | Description                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `remove_redundant` = **false**  | If **true** album artist should be _removed_ when all artist values are the same |
+| `require_redundant` = **false** | If **true** album artist is _required_ even if all artist values are the same    |
 
 <!-- pyml enable line-length -->
 
 ### artist-tag
 
-The "artist" tag should be present on all tracks. If it is missing from any
-track, candidates include values for artist and album artist for all tracks.
+An "artist" should be present on all tracks. If it is _missing_ from any tracks,
+candidates to fix include the values for artist and album artist taken from all
+tracks in the album.
 
 If the parent folder containing the album folder is not a prohibited name, it is
 also a candidate. Prohibited names can be configured with an option.
@@ -311,9 +311,9 @@ to all tracks that do not have an artist tag.
 
 <!-- pyml disable line-length -->
 
-| Option                  | Default                                                                           |
-| ----------------------- | --------------------------------------------------------------------------------- |
-| `ignore_parent_folders` | `["compilation", "compilations", "soundtrack", "soundtracks", "various artists"]` |
+| Option = default                                                                                            |
+| ----------------------------------------------------------------------------------------------------------- |
+| `ignore_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various artists"]` |
 
 <!-- pyml enable line-length -->
 
@@ -323,9 +323,9 @@ All tracks should have one or more values for each of these tags.
 
 > Disabled by default, set `enable = true` to use.
 
-| Option | Default               |
-| ------ | --------------------- |
-| `tags` | `["artist", "title"]` |
+| Option = default               |
+| ------------------------------ |
+| `tags` = `["artist", "title"]` |
 
 ### single-value-tags
 
@@ -349,11 +349,11 @@ requested. To disable this, change the automatic_concatenate option.
 automatic fix will remove them. And if `automatic_concatenate` is enabled
 (default), unique values will be combined into a single value.
 
-| Option                  | Default               |
-| ----------------------- | --------------------- |
-| `tags`                  | `["artist", "title"]` |
-| `concatenators`         | `[" / ", "/", " - "]` |
-| `automatic_concatenate` | **true**              |
+| Option = default                        |
+| --------------------------------------- |
+| `tags` = `["artist", "title"]`          |
+| `concatenators` = `[" / ", "/", " - "]` |
+| `automatic_concatenate` = **true**      |
 
 ### track-title
 
@@ -426,9 +426,9 @@ image contents, keep the one with the shortest filename and delete the rest.
 
 <!-- pyml disable line-length -->
 
-| Option       | Default   | Description                                                            |
-| ------------ | --------- | ---------------------------------------------------------------------- |
-| `cover_only` | **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
+| Option = default         | Description                                                            |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `cover_only` = **false** | if enabled, ignore duplicates for picture types other than COVER_FRONT |
 
 <!-- pyml enable line-length -->
 
@@ -470,9 +470,9 @@ checks to re-embed proper cover art.
 
 <!-- pyml disable line-length -->
 
-| Option              | Default     | Description                                                         |
-| ------------------- | ----------- | ------------------------------------------------------------------- |
-| `embedded_size_max` | **4194304** | embedded image data maximum size (not including container encoding) |
+| Option = default                  | Description                                                         |
+| --------------------------------- | ------------------------------------------------------------------- |
+| `embedded_size_max` = **4194304** | embedded image data maximum size (not including container encoding) |
 
 <!-- pyml enable line-length -->
 
@@ -504,9 +504,9 @@ embedded image from one of the tracks to `cover.jpg` or `.png`.
 
 <!-- pyml disable line-length -->
 
-| Option           | Default   | Description                                                 |
-| ---------------- | --------- | ----------------------------------------------------------- |
-| `cover_required` | **false** | if **true** every album should have correct front cover art |
+| Option = default             | Description                                                 |
+| ---------------------------- | ----------------------------------------------------------- |
+| `cover_required` = **false** | if **true** every album should have correct front cover art |
 
 <!-- pyml enable line-length -->
 
@@ -562,21 +562,23 @@ Rules:
 square as the `squareness` setting but at least as square as the
 `fixable_squareness` setting, fix it by cropping first (see options), and if
 necessary squashing it the rest of the way. The new square cover image will be
-saved as a PNG file and marked as "front cover source" for the album. If the
-unsquare source was an image file, it will be deleted.
+saved as a file with the configured type and marked as "front cover source" for
+the album. If the unsquare source was an image file, it will be deleted.
 
-If embedded front cover images are present they are **not** changed by this fix.
-The new cover image file is set as "front cover source".
+If **embedded** front cover images are present they are **not** changed by this
+fix. The new cover image file is set as "front cover source".
 
 <!-- pyml disable line-length -->
 
-| Option               | Default  | Description                                                                        |
-| -------------------- | -------- | ---------------------------------------------------------------------------------- |
-| `min_pixels`         | **100**  | front cover art should be at least this width/height                               |
-| `max_pixels`         | **2048** | front cover art should not be larger than this width/height                        |
-| `squareness`         | **0.98** | cover art minimum width/height ratio - **1** for exactly square, **0** to disable  |
-| `fixable_squareness` | **0.8**  | if image is at least this square, offer automatic fix with crop + squash           |
-| `max_crop`           | **0.03** | crop at most this much of the image (0.03 = lose max 1.5% of image from two sides) |
+| Option = default                   | Description                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| `squareness` = **0.98**            | cover art minimum width/height ratio - **1** for square, **0** to disable |
+| `max_pixels` = **2048**            | front cover art should not be larger than this width/height               |
+| `min_pixels` = **100**             | front cover art should be at least this width/height                      |
+| `fixable_squareness` = **0.8**     | if image is at least this square, offer automatic fix with crop + squash  |
+| `max_crop` = **0.03**              | crop at most this much (0.03 = lose max 1.5% of image from two sides)     |
+| `create_mime_type` = `"image/png"` | MIME type when creating cover image files, blank to use source type       |
+| `create_jpeg_quality` = **80**     | If creating image with MIME type image/jpeg, use this quality (1 - 95)    |
 
 <!-- pyml enable line-length -->
 
@@ -621,13 +623,13 @@ automatic fix above.
 
 <!-- pyml disable line-length -->
 
-| Option                    | Default        | Description                                                               |
-| ------------------------- | -------------- | ------------------------------------------------------------------------- |
-| `max_height_width`        | **1000**       | Max height/width of the embedded cover _(see note below)_                 |
-| `require_mime_type`       | _[blank]_      | If not blank, required MIME type for embedded cover _(see note below)_    |
-| `create_mime_type`        | `"image/jpeg"` | MIME type for embedding cover images (image/jpeg or image/png)            |
-| `create_max_height_width` | **600**        | Target embedded cover height/width (source can be scaled down but not up) |
-| `create_jpeg_quality`     | **80**         | If `create_mime_type` is image/jpeg, use this quality (1 - 95)            |
+| Option = default                    | Description                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| `max_height_width` = **1000**       | Max height/width of the embedded cover _(see note below)_              |
+| `require_mime_type` = _[blank]_     | If not blank, required MIME type for embedded cover _(see note below)_ |
+| `create_mime_type` = `"image/jpeg"` | MIME type for embedding cover images (image/jpeg or image/png)         |
+| `create_max_height_width` = **600** | Target embedded cover height/width (source can scale down, not up)     |
+| `create_jpeg_quality` = **80**      | If `create_mime_type` is image/jpeg, use this quality (1 - 95)         |
 
 <!-- pyml enable line-length -->
 

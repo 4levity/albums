@@ -1,5 +1,6 @@
 import io
 import logging
+import mimetypes
 from os import unlink
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple
@@ -9,7 +10,7 @@ from PIL import Image
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
 from ...library.folder import read_binary_file
-from ...picture.format import IMAGE_MODE_BPP
+from ...picture.format import IMAGE_MODE_BPP, MIME_PILLOW_FORMAT
 from ...picture.info import PictureInfo
 from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer, PictureFile
@@ -27,6 +28,8 @@ class CheckCoverDimensions(Check):
         "squareness": 0.98,
         "fixable_squareness": 0.8,
         "max_crop": 0.03,
+        "create_mime_type": "image/png",
+        "create_jpeg_quality": 80,
     }
     must_pass_checks = {"cover-available"}  # either all the COVER_FRONT images are the same or there is a cover_source selected
 
@@ -42,6 +45,12 @@ class CheckCoverDimensions(Check):
         self.max_crop = float(check_config.get("max_crop", CheckCoverDimensions.default_config["max_crop"]))
         if self.max_crop > 1:
             raise ValueError("cover-dimensions.max_crop must be between 0 and 1")
+        self.create_mime_type = str(check_config.get("create_mime_type", CheckCoverDimensions.default_config["create_mime_type"]))
+        if self.create_mime_type != "" and self.create_mime_type not in MIME_PILLOW_FORMAT:
+            raise ValueError(f"cover-dimensions.create_mime_type must be blank or one of {', '.join(MIME_PILLOW_FORMAT.keys())}")
+        self.create_jpeg_quality = int(check_config.get("create_jpeg_quality", CheckCoverDimensions.default_config["create_jpeg_quality"]))
+        if self.create_jpeg_quality < 1 or self.create_jpeg_quality > 95:
+            raise ValueError("cover-dimensions.create_jpeg_quality must be between 1 and 95")
 
     def check(self, album: Album) -> CheckResult | None:
         issues: set[str] = set()
@@ -99,22 +108,22 @@ class CheckCoverDimensions(Check):
                 source_file = from_file if not embedded else None
                 new_cover: list[Tuple[Picture, Image.Image, bytes]] = []
 
-                def get_new_cover():
+                def make_new_cover():
                     if not new_cover:
                         (filename, embedded, embed_ix) = picture_source[cover][0]
-                        (image, image_data) = self._squarify(cover, embedded, embed_ix, self.ctx.config.library / album.path, filename)
-                        pic_info = PictureInfo("image/png", image.width, image.height, IMAGE_MODE_BPP.get(image.mode, 0), len(image_data), b"")
+                        (image, image_data, mime_type) = self._squarify(cover, embedded, embed_ix, self.ctx.config.library / album.path, filename)
+                        pic_info = PictureInfo(mime_type, image.width, image.height, IMAGE_MODE_BPP.get(image.mode, 0), len(image_data), b"")
                         new_cover.append((Picture(pic_info, cover.type, "", ()), image, image_data))
                     return new_cover[0]
 
                 table = (
                     [f"Front cover {from_file}{f'#{embed_ix}' if embedded else ''}", "Preview"],
-                    lambda: self._render_table(album, cover, picture_source, get_new_cover),
+                    lambda: self._render_table(album, cover, picture_source, make_new_cover),
                 )
                 return CheckResult(
                     message,
                     Fixer(
-                        lambda _: self._fix_save_new_cover(album, source_file, get_new_cover()[2]),
+                        lambda _: self._fix_save_new_cover(album, source_file, make_new_cover),
                         options,
                         False,
                         option_automatic_index,
@@ -127,29 +136,31 @@ class CheckCoverDimensions(Check):
         if issues:
             return CheckResult(", ".join(list(issues)))
 
-    def _fix_save_new_cover(self, album: Album, source_filename: str | None, image_data: bytes):
+    def _fix_save_new_cover(self, album: Album, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
         if not self.ctx.db or album.album_id is None:
             raise RuntimeError("saving new cover requires db + album_id")
-
+        (picture, _, image_data) = get_image_data()
+        suffix = mimetypes.guess_extension(picture.file_info.mime_type)
+        if not suffix:
+            raise ValueError(f"couldn't generate image type {picture.file_info.mime_type} - can't guess file extension")
         if source_filename:
             original_path = self.ctx.config.library / album.path / source_filename
-            if original_path.suffix == ".png":
+            if original_path.suffix == suffix:
                 new_path = original_path
                 original_path = None  # overwrite
             else:
-                new_path = original_path.with_suffix(".png")
+                new_path = original_path.with_suffix(suffix)
         else:
             original_path = None
-            new_path = self.ctx.config.library / album.path / "cover.png"
+            new_path = self.ctx.config.library / album.path / f"cover{suffix}"
         picture_files = dict(album.picture_files)
         if original_path and source_filename:
             self.ctx.console.print(f"Deleting {source_filename}")
             unlink(original_path)
             del picture_files[source_filename]
 
-        # mark new/replaced image as cover_source (metadata will be picked up in rescan)
-        file_info = PictureInfo("image/png", 0, 0, 0, 0, b"")
-        picture_files[new_path.name] = PictureFile(Picture(file_info, PictureType.COVER_FRONT, "", ()), 0, cover_source=True)
+        # mark new/replaced image as cover_source
+        picture_files[new_path.name] = PictureFile(Picture(picture.file_info, PictureType.COVER_FRONT, "", ()), 0, cover_source=True)
         update_picture_files(self.ctx.db, album.album_id, picture_files)
 
         with open(new_path, "wb") as f:
@@ -195,6 +206,13 @@ class CheckCoverDimensions(Check):
         else:
             raise ValueError("image was already square")
 
+        if self.create_mime_type == "" and image.format:
+            mime_type, _ = mimetypes.guess_type(f"_.{image.format}")
+        else:
+            mime_type = self.create_mime_type
+        if not mime_type:
+            mime_type = "image/png"
+
         width_reduction = min(image.width - target_width, image.width * self.max_crop)
         height_reduction = min(image.height - target_height, image.height * self.max_crop)
         left = int(width_reduction / 2)
@@ -209,5 +227,6 @@ class CheckCoverDimensions(Check):
         elif image.width > image.height:
             image = image.resize((image.height, image.height), resample=Image.Resampling.LANCZOS)
         buffer = io.BytesIO()
-        image.save(buffer, "PNG")  # TODO option to preserve original type or use JPG
-        return (image, buffer.getvalue())
+        format = MIME_PILLOW_FORMAT[mime_type]
+        image.save(buffer, format, quality=self.create_jpeg_quality)
+        return (image, buffer.getvalue(), mime_type)
