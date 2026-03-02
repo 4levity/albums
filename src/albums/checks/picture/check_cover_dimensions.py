@@ -1,6 +1,7 @@
 import io
 import logging
 import mimetypes
+from itertools import chain
 from os import unlink
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple
@@ -62,12 +63,18 @@ class CheckCoverDimensions(Check):
         cover_files = [
             (file, filename) for filename, file in album.picture_files.items() if PictureType.from_filename(filename) == PictureType.COVER_FRONT
         ]
+        if all(self._cover_good_enough(cover) for cover in chain(embedded_covers.keys(), (file.picture for (file, _) in cover_files))):
+            return None
 
         if len(cover_files) > 1:
-            return CheckResult("there is more than one front cover image file (check cover-unique suggested)")
+            return CheckResult(
+                "some cover dimensions are out of range, and there is more than one front cover image file (check cover-unique suggested)"
+            )
         file_cover = cover_files[0][0] if cover_files else None
         if len(embedded_covers) > 1:
-            return CheckResult("more than one unique embedded cover image file (check cover-unique suggested)")
+            return CheckResult(
+                "some cover dimensions are out of range, and there is more than one unique embedded cover image file (check cover-unique suggested)"
+            )
 
         if embedded_covers:
             (embedded_cover, (embed_ix, _)) = list(embedded_covers.items())[0]
@@ -81,7 +88,9 @@ class CheckCoverDimensions(Check):
             and not file_cover.cover_source
             and file_cover.picture.file_info.file_hash != embedded_cover.file_info.file_hash
         ):
-            return CheckResult("cover image file not unique, not cover_source (check cover-unique suggested)")
+            return CheckResult(
+                "some cover dimensions are out of range, cover image file is not unique and not cover_source (check cover-unique suggested)"
+            )
 
         if file_cover:  # either cover_source or identical to embedded images
             (cover_file, from_file) = cover_files[0]
@@ -177,6 +186,13 @@ class CheckCoverDimensions(Check):
     ):
         preview = get_preview()
         return render_image_table(self.ctx, self.tagger.get(album.path), [cover, preview], picture_source)
+
+    def _cover_good_enough(self, cover: Picture):
+        return (
+            min(cover.file_info.height, cover.file_info.width) >= self.min_pixels
+            and max(cover.file_info.height, cover.file_info.width) <= self.max_pixels
+            and self._cover_square_enough(cover.file_info.width, cover.file_info.height)
+        )
 
     def _cover_square_enough(self, w: int, h: int) -> bool:
         return self._aspect(w, h) >= self.squareness

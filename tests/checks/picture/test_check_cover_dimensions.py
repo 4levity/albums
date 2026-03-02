@@ -33,6 +33,16 @@ class TestCheckCoverDimensions:
         result = CheckCoverDimensions(Context()).check(album)
         assert result is None
 
+    def test_cover_square_enough_not_unique(self):
+        pic1 = Picture(PictureInfo("image/png", 401, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, "", ())
+        pic2 = Picture(PictureInfo("image/png", 402, 400, 24, 1, b"2222"), PictureType.COVER_FRONT, "", ())
+        album = Album(
+            "",
+            [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic1]), Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic2])],
+        )
+        result = CheckCoverDimensions(Context()).check(album)
+        assert result is None
+
     def test_cover_not_square_enough_embedded(self, mocker):
         cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "", ())
         album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])], [], [], {}, 1)
