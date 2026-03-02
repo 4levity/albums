@@ -11,8 +11,8 @@ from prompt_toolkit.shortcuts import confirm
 from rich.logging import RichHandler
 
 from ..app import Context
-from ..database import configuration, connection, selector
-from ..types import RescanOption
+from ..configuration import RescanOption
+from ..database import connection, db_config, selector
 
 logger = logging.getLogger(__name__)
 
@@ -88,13 +88,13 @@ def setup(
         logger.error("error: cannot specify collections when targeting outside of library")
 
     if dir:
-        _enter_folder_context(app_context, dir, paths, regex)
+        enter_folder_context(app_context, dir, paths, regex)
     # else there is definitely a db
 
     return dir or new_library_path is not None or app_context.config.rescan == RescanOption.ALWAYS
 
 
-def _enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: bool):
+def enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: bool):
     if ctx.parent:
         raise RuntimeError("enter_folder_context called on subcontext")
     parent = copy(ctx)
@@ -131,7 +131,7 @@ def _open_db_and_set_context_config(ctx: click.Context, app_context: Context, al
     logger.info(f"using database {str(album_db_path)}")
     db = connection.open(album_db_path)
     ctx.call_on_close(lambda: connection.close(db))
-    app_context.config = configuration.load(db)
+    app_context.config = db_config.load(db)
     return db
 
 
@@ -143,7 +143,7 @@ def _create_db_and_set_context_config(ctx: click.Context, app_context: Context, 
     db = _open_db_and_set_context_config(ctx, app_context, album_db_path)
     if new_library_path:
         app_context.config.library = new_library_path
-        configuration.save(db, app_context.config)
+        db_config.save(db, app_context.config)
     return db
 
 

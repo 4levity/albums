@@ -1,7 +1,7 @@
 import contextlib
 
 from albums.app import Context
-from albums.database import configuration, connection
+from albums.database import connection, db_config
 from albums.interactive.configurator import interactive_config
 
 
@@ -29,7 +29,7 @@ class TestConfigurator:
 
             assert mock_choice.call_count == 2
             assert mock_checklist.call_count == 1
-            config = configuration.load(db)
+            config = db_config.load(db)
             config_enabled_checks = set(check_name for check_name, check_config in config.checks.items() if check_config["enabled"])
             assert config_enabled_checks == set(request_enabled_checks)
 

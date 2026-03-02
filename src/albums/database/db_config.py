@@ -2,7 +2,7 @@ import json
 import logging
 import sqlite3
 
-from ..types import Configuration
+from ..configuration import Configuration
 
 logger = logging.getLogger(__name__)
 

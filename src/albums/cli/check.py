@@ -3,7 +3,7 @@ import rich_click as click
 from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import Checker
-from ..types import RescanOption, default_checks_config
+from ..configuration import RescanOption, default_checks_config
 from .cli_context import pass_context
 from .scan import scan
 
@@ -20,13 +20,6 @@ from .scan import scan
 @click.argument("checks", nargs=-1)
 @pass_context
 def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
-    if interactive and automatic:
-        ctx.console.print("cannot use --interactive with --automatic")
-        raise SystemExit(1)
-    if preview and (automatic or fix or interactive):
-        ctx.console.print("--preview cannot be used with other fix options")
-        raise SystemExit(1)
-
     if ctx.config.rescan == RescanOption.AUTO and ctx.click_ctx:
         ctx.click_ctx.invoke(scan)
 

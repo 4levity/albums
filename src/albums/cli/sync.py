@@ -4,8 +4,8 @@ from pathlib import Path
 import rich_click as click
 
 from ..app import Context
+from ..configuration import RescanOption
 from ..library import synchronizer
-from ..types import RescanOption
 from .cli_context import pass_context, require_persistent_context
 from .scan import scan
 

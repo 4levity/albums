@@ -8,8 +8,8 @@ from prompt_toolkit.shortcuts import checkboxlist_dialog, choice
 from rich.prompt import FloatPrompt, IntPrompt
 
 from ..app import Context
-from ..database import configuration
-from ..types import PathCompatibilityOption, RescanOption
+from ..configuration import PathCompatibilityOption, RescanOption
+from ..database import db_config
 
 
 def interactive_config(ctx: Context, db: sqlite3.Connection):
@@ -78,24 +78,24 @@ def _configure_setting(
             options = [(opt, opt.value) for opt in PathCompatibilityOption]
             option = choice(message="select file system compatibility level", options=options, default=ctx.config.path_compatibility.value)
             ctx.config.path_compatibility = PathCompatibilityOption(option)
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         case "rescan":
             options = [(opt, opt.value) for opt in RescanOption]
             option = choice(message="select when to rescan the library", options=options, default=ctx.config.rescan.value)
             ctx.config.rescan = RescanOption(option)
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         case "tagger":
             ctx.config.tagger = prompt("Command to run external tagger: ", default=ctx.config.tagger)
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         case "open_folder_command":
             ctx.config.open_folder_command = prompt("Command to open a folder: ", default=ctx.config.open_folder_command)
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
 
 
 def set_library(ctx: Context, db: sqlite3.Connection, new_library: str):
     if new_library and Path(new_library).is_dir():
         ctx.config.library = Path(new_library)
-        configuration.save(db, ctx.config)
+        db_config.save(db, ctx.config)
     else:
         ctx.console.print("Error: library must be a directory that exists and is accessible")
 
@@ -122,7 +122,7 @@ def _configure_check(ctx: Context, db: sqlite3.Connection, check_name: str):
             default_items = str(",".join(config[option]))  # type: ignore
             items = prompt(f"Enter new values separated by comma for {option}: ", default=default_items)
             config[option] = items.split(",")
-        configuration.save(db, ctx.config)
+        db_config.save(db, ctx.config)
 
 
 def _set_enabled_checks(ctx: Context, db: sqlite3.Connection, enabled_checks: Collection[str]):
@@ -133,4 +133,4 @@ def _set_enabled_checks(ctx: Context, db: sqlite3.Connection, enabled_checks: Co
             config["enabled"] = value
             changed = True
     if changed:
-        configuration.save(db, ctx.config)
+        db_config.save(db, ctx.config)

@@ -14,12 +14,13 @@ not required. It's a command-line application that runs in a terminal, but it is
 designed to be user friendly, with interactive menus, rich text formatting,
 tables and even blocky graphics.
 
-It scans the media library and creates a database to make subsequent operations
-fast. It supports adding albums to "collections," for example to make a list of
-albums to sync to a digital audio player. It can also perform the sync. It has
+It scans a folder or a media library and can create a database to make
+subsequent operations fast. It has
 [many automated checks and fixes](https://4levity.github.io/albums/all_checks/)
 for metadata related issues such as track numbering (sequence, totals, disc
-numbers), album-artist tags, embedding cover art, etc.
+numbers), album-artist tags, embedding cover art, etc. It supports adding albums
+to "collections," for example to make a list of albums to sync to a digital
+audio player. It can also perform the sync.
 
 ## Why use `albums` instead of other music library tools?
 

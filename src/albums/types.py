@@ -1,16 +1,12 @@
-import logging
 from dataclasses import dataclass, field
-from enum import StrEnum, auto
 from pathlib import Path
-from typing import Callable, Collection, Dict, Iterator, Mapping, Sequence, Tuple, Union
+from typing import Callable, Collection, Dict, Mapping, Sequence, Tuple, Union
 
 from rich.console import RenderableType
 
 from .tagger.types import BasicTag, Picture, StreamInfo
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -89,89 +85,3 @@ class Fixer:
 class CheckResult:
     message: str
     fixer: Fixer | None = None
-
-
-class RescanOption(StrEnum):
-    ALWAYS = auto()
-    NEVER = auto()
-    AUTO = auto()
-
-
-class PathCompatibilityOption(StrEnum):
-    LINUX = "Linux"
-    WINDOWS = "Windows"
-    MACOS = "macOS"
-    POSIX = "POSIX"
-    UNIVERSAL = "universal"
-
-
-def default_checks_config() -> Mapping[str, CheckConfiguration]:
-    from .checks.all import ALL_CHECKS  # local import because .checks.all imports all checks which will import this module
-
-    return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
-
-
-@dataclass
-class Configuration:
-    checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
-    library: Path = Path(".")
-    rescan: RescanOption = RescanOption.AUTO
-    tagger: str = ""
-    open_folder_command: str = ""
-    path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
-
-    def to_values(self) -> Mapping[str, Union[str, int, float, bool, Sequence[str]]]:
-        values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
-            "settings.library": str(self.library),
-            "settings.rescan": str(self.rescan),
-            "settings.tagger": self.tagger,
-            "settings.open_folder_command": self.open_folder_command,
-            "settings.path_compatibility": str(self.path_compatibility),
-        }
-        defaults = default_checks_config()
-        for check_name, check_config in self.checks.items():
-            for name, value in check_config.items():
-                if check_name not in defaults or name not in defaults[check_name]:
-                    raise ValueError(f"can't save unknown check configuration {check_name}.{name}")
-                if type(value) is not type(defaults[check_name][name]):
-                    raise ValueError(
-                        f"can't save {check_name}.{name} because wrong data type {type(value)} (expected {type(defaults[check_name][name])})"
-                    )
-                values[f"{check_name}.{name}"] = value
-        return values
-
-    @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, Sequence[str]]]]):
-        config = Configuration()
-        ignored_values = False
-        for k, value in values:
-            tokens = k.split(".")
-            if len(tokens) != 2:
-                logger.warning(f"ignoring invalid configuration key {k} (expected section.name)")
-                ignored_values = True
-                continue
-            [section, name] = tokens
-            if section == "settings":
-                if name == "library":
-                    config.library = Path(str(value))
-                elif name == "rescan":
-                    config.rescan = RescanOption(value)
-                elif name == "tagger":
-                    config.tagger = str(value)
-                elif name == "open_folder_command":
-                    config.open_folder_command = str(value)
-                elif name == "path_compatibility":
-                    config.path_compatibility = PathCompatibilityOption(value)
-                else:
-                    logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
-                    ignored_values = True
-            else:
-                if section not in config.checks or name not in config.checks[section]:
-                    logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
-                    ignored_values = True
-                elif type(value) is not type(config.checks[section][name]):
-                    logger.warning(f"ignoring configuration item {k} with wrong type {type(value)} (expected {type(config.checks[section][name])})")
-                    ignored_values = True
-                else:
-                    config.checks[section][name] = value
-        return (config, ignored_values)

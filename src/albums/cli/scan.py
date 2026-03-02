@@ -4,8 +4,8 @@ from typing import Generator
 import rich_click as click
 
 from ..app import Context
+from ..configuration import RescanOption
 from ..library import scanner
-from ..types import RescanOption
 from .cli_context import pass_context
 
 logger = logging.getLogger(__name__)

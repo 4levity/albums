@@ -122,18 +122,18 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
                 any_changes = True
                 scan_results["REMOVED"] += 1
 
+        albums_total = (
+            scan_results[AlbumScanResult.NEW.name] + scan_results[AlbumScanResult.UPDATED.name] + scan_results[AlbumScanResult.UNCHANGED.name]
+        )
         if full_scan:
-            albums_total = (
-                scan_results[AlbumScanResult.NEW.name] + scan_results[AlbumScanResult.UPDATED.name] + scan_results[AlbumScanResult.UNCHANGED.name]
-            )
             operations.record_full_scan(ctx.db, ScanHistoryEntry(int(time.perf_counter()), scanned, albums_total))
 
     except KeyboardInterrupt:
-        logger.error("scan interrupted, exiting")
+        logger.error("scan interrupted, exiting")  # TODO test that we roll back the current transaction and close db as expected
         raise SystemExit(1)
 
     if ctx.verbose:
         ctx.console.print(f"scanned {scanned} folders in {escape(str(ctx.config.library))} in {int(time.perf_counter() - start_time)}s.")
         ctx.console.print(", ".join(f"{str.lower(k).replace('_', ' ')}: {v}" for (k, v) in scan_results.items()))
 
-    return (scanned, any_changes)
+    return (albums_total, any_changes)

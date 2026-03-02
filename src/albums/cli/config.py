@@ -5,11 +5,10 @@ import rich_click as click
 from rich.markup import escape
 from rich.table import Table
 
-from albums.interactive.configurator import interactive_config, set_library
-
 from ..app import Context
-from ..database import configuration
-from ..types import RescanOption
+from ..configuration import RescanOption
+from ..database import db_config
+from ..interactive.configurator import interactive_config, set_library
 from .cli_context import pass_context, require_persistent_context
 
 
@@ -49,20 +48,20 @@ def _set(ctx: Context, db: sqlite3.Connection, setting_name: str, value: str):
             set_library(ctx, db, value)
         elif name == "rescan":
             ctx.config.rescan = RescanOption(value)
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         elif name == "tagger":
             ctx.config.tagger = value
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         elif name == "open_folder_command":
             ctx.config.open_folder_command = value
-            configuration.save(db, ctx.config)
+            db_config.save(db, ctx.config)
         else:
             ctx.console.print(f"{setting_name} is not a valid setting")
             raise SystemExit(1)
 
     else:
         _set_check(ctx, section, name, value)
-        configuration.save(db, ctx.config)
+        db_config.save(db, ctx.config)
 
 
 def _set_check(ctx: Context, check_name: str, name: str, value: str):
