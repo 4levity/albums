@@ -1,6 +1,6 @@
 import rich_click as click
+from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
-from rich.prompt import Confirm
 
 from ..app import Context
 from ..checks.checker import Checker
@@ -33,8 +33,10 @@ def import_album(ctx: Context, extra: bool, recursive: bool, automatic: bool, pr
     issues = 0
     quit = False
     checker = Checker(ctx, automatic, preview, fix, interactive, show_ignore_option=True)
-    while not quit and (issues := checker.run_enabled()):
-        quit = Confirm.ask("there are still problems, quit?", console=ctx.console)
+    non_interactive_checker = Checker(ctx, False, False, False, False, False)
+    while not quit and checker.run_enabled():
+        issues = non_interactive_checker.run_enabled()
+        quit = issues == 0 or confirm("there are still problems, quit?")
 
     if issues:
         ctx.console.print("not copying")
