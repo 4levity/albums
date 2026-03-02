@@ -25,7 +25,7 @@ DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 
 def require_persistent_context(ctx: Context) -> sqlite3.Connection:
-    if not ctx.persistent or not ctx.db:
+    if not ctx.is_persistent or not ctx.db:
         ctx.console.print("This operation acts on a persistent library and cannot be used with --dir / -d option.")
         raise SystemExit(1)
     return ctx.db
@@ -112,7 +112,7 @@ def enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: boo
     ctx.db = db
     ctx.select_albums = lambda _: selector.select_albums(db, [], paths, regex)
     ctx.is_filtered = bool(paths)
-    ctx.persistent = False
+    ctx.is_persistent = False
 
 
 def _get_albums_db_path(db_file: str | None):

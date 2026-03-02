@@ -27,7 +27,7 @@ class TestChecker:
         ctx.select_albums = lambda _: [album]
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             ctx.db = db
-            showed_issues = Checker(ctx, False, False, False, False).run_enabled()
+            showed_issues = Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             assert showed_issues == 0
 
     def test_run_enabled_automatic_dependent_check_ok(self):
@@ -41,7 +41,7 @@ class TestChecker:
             ctx.db = db
             ctx.select_albums = lambda load_track_tag: selector.select_albums(db, [], [], False)
             scanner.scan(ctx)
-            showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False).run_enabled()
+            showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
 
             # there is only 1 issue "disc-in-tracknumber" and if "invalid-track-or-disc-number" check sees the FIXED album it will report no problem
             assert showed_issues == 1
@@ -64,7 +64,7 @@ class TestChecker:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             ctx.db = db
             print_spy = mocker.spy(ctx.console, "print")
-            Checker(ctx, False, False, False, False).run_enabled()
+            Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
             assert f'dependency not met for check invalid-track-or-disc-number on "foo{os.sep}": disc-in-track-number must pass first' in output
@@ -77,7 +77,7 @@ class TestChecker:
         ctx.config.checks = checks
         print_spy = mocker.spy(ctx.console, "print")
         with pytest.raises(SystemExit):
-            Checker(ctx, False, False, False, False).run_enabled()
+            Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
         output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
         assert "Configuration error" in output
         assert "invalid-track-or-disc-number required by" in output

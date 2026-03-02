@@ -21,7 +21,7 @@ OPTION_DO_NOTHING = ">> Do nothing"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
-def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album) -> Tuple[bool, bool]:
+def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool) -> Tuple[bool, bool]:
     # if there is a fixer, offer the options it specifies
     #
     # always offer these options:
@@ -44,7 +44,7 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
         options.extend([opt for opt in fixer.options if opt not in [OPTION_FREE_TEXT, OPTION_RUN_TAGGER, OPTION_DO_NOTHING]])
     if fixer and fixer.option_free_text:
         options.append(OPTION_FREE_TEXT)
-    if ctx.persistent:
+    if show_ignore_option:
         options.append(OPTION_IGNORE_CHECK)
     do_nothing_index = len(options)
     options.append(OPTION_DO_NOTHING)

@@ -29,7 +29,7 @@ class TestCheckFixInteractive:
         fixer = MockFixer(ctx, album)
         mock_choice = mocker.patch("albums.interactive.interact.shortcuts.choice", return_value=fixer.options[0])
 
-        (changed, quit) = interact(ctx, "", CheckResult("hello", fixer), album)
+        (changed, quit) = interact(ctx, "", CheckResult("hello", fixer), album, True)
         assert changed
         assert not quit
         assert mock_choice.call_count == 1
@@ -44,7 +44,7 @@ class TestCheckFixInteractive:
             mock_choice = mocker.patch("albums.interactive.interact.shortcuts.choice", return_value=OPTION_IGNORE_CHECK)
             mock_confirm = mocker.patch("albums.interactive.interact.shortcuts.confirm", return_value=True)
 
-            (changed, quit) = interact(ctx, "album-tag", CheckResult("hello", fixer), album)
+            (changed, quit) = interact(ctx, "album-tag", CheckResult("hello", fixer), album, True)
             assert changed
             assert quit
             assert mock_choice.call_count == 1
@@ -65,7 +65,7 @@ class TestCheckFixInteractive:
             mocker.patch("albums.interactive.interact.shortcuts.choice", return_value=OPTION_IGNORE_CHECK)
             mock_confirm = mocker.patch("albums.interactive.interact.shortcuts.confirm", return_value=True)
 
-            (changed, quit) = interact(ctx, "album-tag", CheckResult("hello", fixer), album)
+            (changed, quit) = interact(ctx, "album-tag", CheckResult("hello", fixer), album, True)
             assert mock_confirm.call_count == 1
             assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
 

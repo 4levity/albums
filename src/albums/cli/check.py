@@ -27,7 +27,7 @@ def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool
         ctx.console.print("using default check config")
         ctx.config.checks = default_checks_config()
 
-    checker = Checker(ctx, automatic, preview, fix, interactive)
+    checker = Checker(ctx, automatic, preview, fix, interactive, show_ignore_option=ctx.is_persistent)
     if len(checks) > 0:
         # validate check names
         for check_name in checks:

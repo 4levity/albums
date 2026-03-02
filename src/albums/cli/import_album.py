@@ -32,7 +32,7 @@ def import_album(ctx: Context, extra: bool, recursive: bool, automatic: bool, pr
     ctx.console.print(f"found {albums_total} album")
     issues = 0
     quit = False
-    checker = Checker(ctx, automatic, preview, fix, interactive)
+    checker = Checker(ctx, automatic, preview, fix, interactive, show_ignore_option=True)
     while not quit and (issues := checker.run_enabled()):
         quit = Confirm.ask("there are still problems, quit?", console=ctx.console)
 
