@@ -3,7 +3,8 @@ import logging
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from pathlib import Path
-from typing import Collection, Dict, Iterator, Mapping, Union
+from string import Template
+from typing import Dict, Iterator, Mapping, Union
 
 from .types import CheckConfiguration, Sequence, Tuple
 
@@ -24,8 +25,9 @@ class RescanOption(StrEnum):
     AUTO = auto()
 
 
-DEFAULT_IMPORT_PATH = "$A1/$artist/$album"
-DEFAULT_IMPORT_PATH_LIST = ("Compilations", "Soundtracks")
+DEFAULT_IMPORT_PATH = Template("$artist/$album")
+DEFAULT_IMPORT_PATH_VARIOUS = Template("Compilations")
+DEFAULT_MORE_IMPORT_PATHS = (Template("$A1/$artist/$album"), Template("Soundtracks"))
 
 
 def default_checks_config() -> Mapping[str, CheckConfiguration]:
@@ -37,8 +39,9 @@ def default_checks_config() -> Mapping[str, CheckConfiguration]:
 @dataclass
 class Configuration:
     checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
-    import_path_default_T: str = DEFAULT_IMPORT_PATH
-    import_paths_T: Collection[str] = DEFAULT_IMPORT_PATH_LIST
+    default_import_path: Template = DEFAULT_IMPORT_PATH
+    default_import_path_various: Template = DEFAULT_IMPORT_PATH_VARIOUS
+    more_import_paths: Sequence[Template] = DEFAULT_MORE_IMPORT_PATHS
     library: Path = Path(".")
     open_folder_command: str = ""
     path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
@@ -47,8 +50,9 @@ class Configuration:
 
     def to_values(self) -> Mapping[str, Union[str, int, float, bool, Sequence[str]]]:
         values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
-            "settings.import_path_default": str(self.import_path_default_T),
-            "settings.import_paths": [path_T for path_T in self.import_paths_T],
+            "settings.default_import_path": self.default_import_path.template,
+            "settings.default_import_path_various": self.default_import_path_various.template,
+            "settings.more_import_paths": [path_T.template for path_T in self.more_import_paths],
             "settings.library": str(self.library),
             "settings.open_folder_command": self.open_folder_command,
             "settings.path_compatibility": str(self.path_compatibility),
@@ -79,14 +83,16 @@ class Configuration:
                 continue
             [section, name] = tokens
             if section == "settings":
-                if name == "import_path_default":
-                    config.import_path_default_T = str(value)
-                    # TODO validate templates
-                if name == "import_paths":
+                # TODO validate templates
+                if name == "default_import_path":
+                    config.default_import_path = Template(str(value))
+                if name == "default_import_path_various":
+                    config.default_import_path_various = Template(str(value))
+                if name == "more_import_paths":
                     if isinstance(value, list):
-                        config.import_paths_T = tuple(value)
+                        config.more_import_paths = tuple(Template(v) for v in value)
                     else:
-                        logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.import_paths_T)}")
+                        logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.more_import_paths)}")
                         ignored_values = True
                 if name == "library":
                     config.library = Path(str(value))
