@@ -43,6 +43,8 @@ class BasicTag(StrEnum):
     TRACKTOTAL = auto()
 
 
+BASIC_TAGS = frozenset(tag.value for tag in BasicTag)
+
 type MutagenFileType = (
     AAC
     | AC3

@@ -100,7 +100,7 @@ def _load_track_metadata(tracks: Sequence[Track], tagger: AlbumTagger):
     for track in tracks:
         with tagger.open(track.filename) as tags:
             scan_result = tags.scan()
-            track.tags = dict((tag.value, list(values)) for tag, values in scan_result.tags)
+            track.tags = dict((tag, list(values)) for tag, values in scan_result.tags)
             track.pictures = scan_result.pictures
             track.stream = scan_result.stream
 

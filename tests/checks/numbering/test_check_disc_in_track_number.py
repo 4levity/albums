@@ -4,7 +4,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckDiscInTrackNumber:
@@ -12,9 +12,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"tracknumber": ["1"], "discnumber": ["1"]}),
-                Track("1-2.flac", {"tracknumber": ["2"], "discnumber": ["1"]}),
-                Track("2-1.flac", {"tracknumber": ["1"], "discnumber": ["2"]}),
+                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["1"]}),
+                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.DISCNUMBER: ["1"]}),
+                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["2"]}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -24,9 +24,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"tracknumber": ["1-1"], "discnumber": ["1"]}),
-                Track("1-2.flac", {"tracknumber": ["1-2"], "discnumber": ["1"]}),
-                Track("2-1.flac", {"tracknumber": ["2-1"], "discnumber": ["2"]}),
+                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1-1"], BasicTag.DISCNUMBER: ["1"]}),
+                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["1-2"], BasicTag.DISCNUMBER: ["1"]}),
+                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["2-1"], BasicTag.DISCNUMBER: ["2"]}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -36,9 +36,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"tracknumber": ["1-1"]}),
-                Track("1-2.flac", {"tracknumber": ["1-2"]}),
-                Track("2-1.flac", {"tracknumber": ["2-1"]}),
+                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1-1"]}),
+                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["1-2"]}),
+                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["2-1"]}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -52,5 +52,5 @@ class TestCheckDiscInTrackNumber:
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[2].filename,
-            [("discnumber", "2"), ("tracknumber", "1")],
+            [(BasicTag.DISCNUMBER, "2"), (BasicTag.TRACKNUMBER, "1")],
         )

@@ -4,6 +4,7 @@ from typing import Any
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
@@ -37,7 +38,7 @@ class CheckDiscNumbering(Check):
         # apply disc total policy - will offer automatic fix (remove all disc totals) if policy is not "always"
         option_free_text = True  # fix will allow manual entry - this is ignored if policy = "never"
         disctotal_result = total_tags.check_policy(
-            self.ctx, self.tagger.get(album.path), album, self.disctotal_policy, "disctotal", "discnumber", option_free_text
+            self.ctx, self.tagger.get(album.path), album, self.disctotal_policy, BasicTag.DISCTOTAL, BasicTag.DISCNUMBER, option_free_text
         )
         if disctotal_result:
             # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
@@ -45,8 +46,8 @@ class CheckDiscNumbering(Check):
 
         # we look at total before looking at the disc number values in order to extract the most value out of the totals -- a correct total helps
         # confirm disc numbering is correct, so totals that "look wrong" should ideally be fixed (or automatically removed) first.
-        all_disc_numbers = set(int(track.tags.get("discnumber", [0])[0]) for track in album.tracks)
-        all_disc_totals = list(set(int(track.tags.get("disctotal", [0])[0]) for track in album.tracks))
+        all_disc_numbers = set(int(track.tags.get(BasicTag.DISCNUMBER, [0])[0]) for track in album.tracks)
+        all_disc_totals = list(set(int(track.tags.get(BasicTag.DISCTOTAL, [0])[0]) for track in album.tracks))
         if len(all_disc_totals) > 1:
             message = "inconsistent disc total"
         else:
@@ -116,12 +117,12 @@ class CheckDiscNumbering(Check):
         changed = False
         for track in album.tracks:
             path = self.ctx.config.library / album.path / track.filename
-            if value is None and "disctotal" in track.tags:
+            if value is None and BasicTag.DISCTOTAL in track.tags:
                 self.ctx.console.print(f"removing disctotal from {track.filename}")
-                self.tagger.get(album.path).set_basic_tags(path, [("disctotal", None)])
+                self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCTOTAL, None)])
                 changed = True
-            if value is not None and ("disctotal" not in track.tags or int(track.tags["disctotal"][0]) != int(value)):
+            if value is not None and (BasicTag.DISCTOTAL not in track.tags or int(track.tags[BasicTag.DISCTOTAL][0]) != int(value)):
                 self.ctx.console.print(f"setting disctotal on {track.filename}")
-                self.tagger.get(album.path).set_basic_tags(path, [("disctotal", value)])
+                self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCTOTAL, value)])
                 changed = True
         return changed

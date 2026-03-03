@@ -12,7 +12,7 @@ from ..fixtures.create_library import create_library, make_image_data
 
 track = Track(
     "1.ogg",
-    {"tracknumber": ["1"], "tracktotal": ["1"], "artist": ["C"], "title": ["one"], "album": ["foobar"]},
+    {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"], BasicTag.ARTIST: ["C"], BasicTag.TITLE: ["one"], BasicTag.ALBUM: ["foobar"]},
     0,
     0,
     None,

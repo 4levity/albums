@@ -3,7 +3,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckInvalidTrackOrDiscNumber:
@@ -12,7 +12,7 @@ class TestCheckInvalidTrackOrDiscNumber:
             "",
             [
                 Track("1.flac", {}),  # missing is ok
-                Track("2.flac", {"tracknumber": ["01"], "tracktotal": ["12"], "discnumber": ["01"], "disctotal": ["2"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["01"], BasicTag.TRACKTOTAL: ["12"], BasicTag.DISCNUMBER: ["01"], BasicTag.DISCTOTAL: ["2"]}),
             ],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -21,7 +21,7 @@ class TestCheckInvalidTrackOrDiscNumber:
     def test_duplicate_value(self, mocker):
         album = Album(
             "",
-            [Track("1.flac", {"tracknumber": ["1", "1"]})],  #  1 will be preserved
+            [Track("1.flac", {BasicTag.TRACKNUMBER: ["1", "1"]})],  #  1 will be preserved
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -34,12 +34,12 @@ class TestCheckInvalidTrackOrDiscNumber:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", "1")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, "1")])
 
     def test_multiple_value(self, mocker):
         album = Album(
             "",
-            [Track("1.flac", {"tracknumber": ["1", "2"]})],  # ambiguous will be deleted
+            [Track("1.flac", {BasicTag.TRACKNUMBER: ["1", "2"]})],  # ambiguous will be deleted
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -52,12 +52,12 @@ class TestCheckInvalidTrackOrDiscNumber:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_non_numeric_value(self, mocker):
         album = Album(
             "",
-            [Track("1.flac", {"tracknumber": ["one"]})],
+            [Track("1.flac", {BasicTag.TRACKNUMBER: ["one"]})],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -69,12 +69,12 @@ class TestCheckInvalidTrackOrDiscNumber:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_zero_value(self, mocker):
         album = Album(
             "",
-            [Track("1.flac", {"tracknumber": ["0"]})],
+            [Track("1.flac", {BasicTag.TRACKNUMBER: ["0"]})],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -86,13 +86,16 @@ class TestCheckInvalidTrackOrDiscNumber:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_multiple_issues(self, mocker):
         album = Album(
             "",
             [
-                Track("1.flac", {"tracknumber": ["1", "1"], "tracktotal": ["1", "2"], "discnumber": ["foo"], "disctotal": ["0"]}),
+                Track(
+                    "1.flac",
+                    {BasicTag.TRACKNUMBER: ["1", "1"], BasicTag.TRACKTOTAL: ["1", "2"], BasicTag.DISCNUMBER: ["foo"], BasicTag.DISCTOTAL: ["0"]},
+                ),
             ],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -109,5 +112,5 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
-            [("tracknumber", "1"), ("tracktotal", None), ("discnumber", None), ("disctotal", None)],
+            [(BasicTag.TRACKNUMBER, "1"), (BasicTag.TRACKTOTAL, None), (BasicTag.DISCNUMBER, None), (BasicTag.DISCTOTAL, None)],
         )

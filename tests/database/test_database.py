@@ -9,10 +9,10 @@ import pytest
 from albums.database import connection, operations, schema, selector
 from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
-from albums.types import Album, PictureFile, ScanHistoryEntry, Track
+from albums.types import Album, BasicTag, PictureFile, ScanHistoryEntry, Track
 
 embedded_cover = Picture(PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234"), PictureType.COVER_FRONT, "", (("format", "image/png"),))
-track = Track("1.flac", {"artist": ["Bar"]}, 0, 0, StreamInfo(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
+track = Track("1.flac", {BasicTag.ARTIST: ["Bar"]}, 0, 0, StreamInfo(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
 folder_jpg = {"folder.jpg": PictureFile(Picture(PictureInfo("test", 100, 100, 24, 4096, b"1234"), PictureType.COVER_FRONT, "", ()), 999, True)}
 album = Album("foo" + os.sep, [track], ["test"], ["artist-tag"], folder_jpg, None, 3)
 
@@ -61,7 +61,7 @@ class TestDatabase:
             assert len(result) == 1
             assert result[0].path == "foo" + os.sep
             assert result[0].scanner == 3
-            assert sorted(result[0].tracks[0].tags.get("artist", [])) == ["Bar"]
+            assert sorted(result[0].tracks[0].tags.get(BasicTag.ARTIST, [])) == ["Bar"]
             assert result[0].tracks[0].stream.length == 1.0
             assert result[0].tracks[0].stream.codec == "FLAC"
             assert len(result[0].tracks[0].pictures) == 1
@@ -178,14 +178,14 @@ class TestDatabase:
             tracks = list(selector.select_albums(db, [], [], False))[0].tracks
             assert len(tracks) == 1
 
-            tracks[0].tags = {"album": ["Foo"]}
+            tracks[0].tags = {BasicTag.ALBUM: ("Foo",)}
             tracks.append(copy(tracks[0]))
             tracks[1].filename = "2.flac"
             operations.update_tracks(db, album_id, tracks)
 
             tracks = list(selector.select_albums(db, [], [], False))[0].tracks
             assert len(tracks) == 2
-            assert all(track.tags["album"] == ["Foo"] for track in tracks)
+            assert all(track.tags[BasicTag.ALBUM] == ("Foo",) for track in tracks)
 
     def test_scan_history(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:

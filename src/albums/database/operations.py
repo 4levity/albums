@@ -4,7 +4,7 @@ import sqlite3
 from typing import Any, Collection, Mapping, Sequence, Tuple
 
 from ..picture.info import PictureInfo
-from ..tagger.types import Picture, PictureType, StreamInfo
+from ..tagger.types import BASIC_TAGS, BasicTag, Picture, PictureType, StreamInfo
 from ..types import Album, PictureFile, ScanHistoryEntry, Track
 
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: Sequence[Track
         ).fetchone()
         for name, values in track.tags.items():
             for value in values:
-                db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name, value))
+                db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name.value, value))
         for embed_ix, picture in enumerate(track.pictures):
             db.execute(
                 "INSERT INTO track_picture (track_id, picture_type, format, width, height, depth_bpp, file_size, file_hash, description, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
@@ -202,18 +202,21 @@ def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
             tags = _load_tags(db, track_id)
             pictures = _load_pictures(db, track_id)
         else:
-            tags = {}
-            pictures = []
+            tags: Mapping[BasicTag, Sequence[str]] = {}
+            pictures: list[Picture] = []
         stream = StreamInfo(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
         track = Track(filename, tags, file_size, modify_timestamp, stream, pictures)
         yield track
 
 
-def _load_tags(db: sqlite3.Connection, track_id: int):
-    tags: dict[str, list[str]] = {}
+def _load_tags(db: sqlite3.Connection, track_id: int) -> Mapping[BasicTag, Sequence[str]]:
+    tags: dict[BasicTag, list[str]] = {}
     for name, value in db.execute("SELECT name, value FROM track_tag WHERE track_id = ?;", (track_id,)):
-        tags.setdefault(name, []).append(value)
-    return tags
+        if name in BASIC_TAGS:
+            tags.setdefault(BasicTag(name), []).append(value)
+        else:
+            logger.debug(f"ignoring tag {name}")
+    return dict((tag, tuple(values)) for tag, values in tags.items())
 
 
 def _load_pictures(db: sqlite3.Connection, track_id: int):

@@ -5,6 +5,7 @@ import yaml
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BASIC_TAGS, BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, ordered_tracks
@@ -19,9 +20,9 @@ class CheckSingleValueTags(Check):
 
     def init(self, check_config: dict[str, Any]):
         tags: list[str] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])
-        if not isinstance(tags, list) or any(not isinstance(tag, str) or tag == "" for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError("single-value-tags.tags configuration must be a list of tags")
-        self.single_value_tags = list(str(tag) for tag in tags)
+        if not isinstance(tags, list) or any(not isinstance(tag, str) or tag not in BASIC_TAGS for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError(f"single-value-tags.tags configuration must be a list of supported tags: {', '.join(BASIC_TAGS)}")
+        self.single_value_tags = list(BasicTag(tag) for tag in tags)
 
         concatenators: list[str] = check_config.get("concatenators", CheckSingleValueTags.default_config["concatenators"])
         if not isinstance(concatenators, list) or any(not isinstance(concatenator, str) for concatenator in concatenators):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -71,13 +72,13 @@ class CheckSingleValueTags(Check):
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename
-            new_values: list[tuple[str, str | list[str] | None]] = []
-            for tag_name in self.single_value_tags:
-                if tag_name in track.tags and len(track.tags[tag_name]) > 1:
-                    unique_values = list(OrderedDict.fromkeys(track.tags[tag_name]))
+            new_values: list[tuple[BasicTag, str | list[str] | None]] = []
+            for tag in self.single_value_tags:
+                if tag in track.tags and len(track.tags[tag]) > 1:
+                    unique_values = list(OrderedDict.fromkeys(track.tags[tag]))
                     if concat:
                         unique_values = [concat.join(unique_values)]
-                    new_values.append((tag_name, unique_values))
+                    new_values.append((tag, unique_values))
                     changed = True
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")

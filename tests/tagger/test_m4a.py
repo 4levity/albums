@@ -13,14 +13,14 @@ from ..fixtures.create_library import create_library, make_image_data
 track = Track(
     "1.m4a",
     {
-        "artist": ["A"],
-        "title": ["T"],
-        "album": ["baz"],
-        "albumartist": ["baz+foo"],
-        "tracknumber": ["1"],
-        "tracktotal": ["3"],
-        "discnumber": ["2"],
-        "disctotal": ["2"],
+        BasicTag.ARTIST: ["A"],
+        BasicTag.TITLE: ["T"],
+        BasicTag.ALBUM: ["baz"],
+        BasicTag.ALBUMARTIST: ["baz+foo"],
+        BasicTag.TRACKNUMBER: ["1"],
+        BasicTag.TRACKTOTAL: ["3"],
+        BasicTag.DISCNUMBER: ["2"],
+        BasicTag.DISCTOTAL: ["2"],
     },
     0,
     0,
@@ -50,14 +50,15 @@ class TestM4a:
         assert scan.pictures[1].file_info.mime_type == "image/jpeg"
         assert scan.pictures[1].file_info.width == scan.pictures[1].file_info.height == 401
         tags = dict(scan.tags)
-        assert tags[BasicTag.ARTIST] == tuple(track.tags["artist"])
-        assert tags[BasicTag.ALBUMARTIST] == tuple(track.tags["albumartist"])
-        assert tags[BasicTag.ALBUM] == tuple(track.tags["album"])
-        assert tags[BasicTag.TITLE] == tuple(track.tags["title"])
+        assert tags[BasicTag.ARTIST] == tuple(track.tags[BasicTag.ARTIST])
+        assert tags[BasicTag.ALBUMARTIST] == tuple(track.tags[BasicTag.ALBUMARTIST])
+        assert tags[BasicTag.ALBUM] == tuple(track.tags[BasicTag.ALBUM])
+        assert tags[BasicTag.TITLE] == tuple(track.tags[BasicTag.TITLE])
 
     def test_update_m4a_tags(self):
         TestM4a.tagger.set_basic_tags(
-            TestM4a.library / album.path / track.filename, [("artist", "a1"), ("albumartist", "a2"), ("album", "a3"), ("title", "t")]
+            TestM4a.library / album.path / track.filename,
+            [(BasicTag.ARTIST, "a1"), (BasicTag.ALBUMARTIST, "a2"), (BasicTag.ALBUM, "a3"), (BasicTag.TITLE, "t")],
         )
         with TestM4a.tagger.open(track.filename) as file:
             scan = file.scan()

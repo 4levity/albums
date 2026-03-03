@@ -8,7 +8,7 @@ from albums.app import Context
 from albums.checks.checker import Checker
 from albums.database import connection, selector
 from albums.library import scanner
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 from .fixtures.create_library import create_library
 
@@ -18,9 +18,9 @@ class TestChecker:
         album = Album(
             "foo" + os.sep,
             [
-                Track("01 one.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["01"], "title": ["one"]}),
-                Track("02 two.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["02"], "title": ["two"]}),
-                Track("03 three.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["03"], "title": ["three"]}),
+                Track("01 one.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["01"], BasicTag.TITLE: ["one"]}),
+                Track("02 two.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["02"], BasicTag.TITLE: ["two"]}),
+                Track("03 three.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["03"], BasicTag.TITLE: ["three"]}),
             ],
         )
         ctx = Context()
@@ -31,7 +31,10 @@ class TestChecker:
             assert showed_issues == 0
 
     def test_run_enabled_automatic_dependent_check_ok(self):
-        album = Album("foo" + os.sep, [Track("1-01 one.flac", {"artist": ["A"], "album": ["Foo"], "tracknumber": ["1-01"], "title": ["one"]})])
+        album = Album(
+            "foo" + os.sep,
+            [Track("1-01 one.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["1-01"], BasicTag.TITLE: ["one"]})],
+        )
         ctx = Context()
         ctx.config.library = create_library("checker_automatic", [album])
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
@@ -44,16 +47,16 @@ class TestChecker:
             assert showed_issues == 1
 
             album = next(ctx.select_albums(True))
-            assert album.tracks[0].tags["discnumber"] == ["1"]
-            assert album.tracks[0].tags["tracknumber"] == ["01"]
+            assert album.tracks[0].tags[BasicTag.DISCNUMBER] == ("1",)
+            assert album.tracks[0].tags[BasicTag.TRACKNUMBER] == ("01",)
 
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(
             "foo" + os.sep,
             [  # disc-in-track-number fails -> invalid-track-or-disc-number does not run -> other checks do not run
-                Track("1.flac", {"album": ["Foo"], "tracknumber": ["1-01"], "title": ["one"]}),
-                Track("2.flac", {"album": ["Foo"], "tracknumber": ["1-02"], "title": ["two"]}),
-                Track("3.flac", {"album": ["Foo"], "tracknumber": ["1-03"], "title": ["three"]}),
+                Track("1.flac", {BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["1-01"], BasicTag.TITLE: ["one"]}),
+                Track("2.flac", {BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["1-02"], BasicTag.TITLE: ["two"]}),
+                Track("3.flac", {BasicTag.ALBUM: ["Foo"], BasicTag.TRACKNUMBER: ["1-03"], BasicTag.TITLE: ["three"]}),
             ],
         )
         ctx = Context()

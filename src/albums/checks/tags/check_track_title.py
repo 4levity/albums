@@ -3,6 +3,7 @@ import logging
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from ..helpers import parse_filename, show_tag
@@ -20,17 +21,17 @@ class CheckTrackTitle(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
-        no_title = sum(0 if track.tags.get("title") else 1 for track in album.tracks)
+        no_title = sum(0 if track.tags.get(BasicTag.TITLE) else 1 for track in album.tracks)
         if no_title:
             proposed_titles = list(self._proposed_title(track) for track in album.tracks)
-            any_fixable = any(not track.tags.get("title") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
+            any_fixable = any(not track.tags.get(BasicTag.TITLE) and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
             if any_fixable:
                 table = (
                     ["filename", "title", "proposed new title"],
                     [
                         [
                             escape(track.filename),
-                            show_tag(track.tags.get("title")),
+                            show_tag(track.tags.get(BasicTag.TITLE)),
                             escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
                         ]
                         for (ix, track) in enumerate(album.tracks)
@@ -47,7 +48,7 @@ class CheckTrackTitle(Check):
         return None
 
     def _proposed_title(self, track: Track):
-        if track.tags.get("title"):
+        if track.tags.get(BasicTag.TITLE):
             return None
 
         (_, _, title) = parse_filename(track.filename)
@@ -61,6 +62,6 @@ class CheckTrackTitle(Check):
             new_title = self._proposed_title(track)
             if new_title:
                 self.ctx.console.print(f"setting title on {track.filename}")
-                self.tagger.get(album.path).set_basic_tags(file, [("title", new_title)])
+                self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.TITLE, new_title)])
                 changed = True
         return changed

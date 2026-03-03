@@ -6,6 +6,7 @@ from typing import Any, Sequence
 from pathvalidate import sanitize_filename
 from rich.console import RenderableType
 
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 
@@ -38,9 +39,9 @@ class CheckTrackFilename(Check):
             )
 
     def _table_row(self, track: Track) -> Sequence[RenderableType]:
-        title_tags = ", ".join(track.tags.get("title", ["[bold italic]none[/bold italic]"]))
-        discnum = track.tags.get("discnumber", ["[bold italic]none[/bold italic]"])[0]
-        tracknum = track.tags.get("tracknumber", ["[bold italic]none[/bold italic]"])[0]
+        title_tags = ", ".join(track.tags.get(BasicTag.TITLE, ["[bold italic]none[/bold italic]"]))
+        discnum = track.tags.get(BasicTag.DISCNUMBER, ["[bold italic]none[/bold italic]"])[0]
+        tracknum = track.tags.get(BasicTag.TRACKNUMBER, ["[bold italic]none[/bold italic]"])[0]
         new_filename = self._generate_filename(track)
         return [
             track.filename,
@@ -51,10 +52,10 @@ class CheckTrackFilename(Check):
         ]
 
     def _generate_filename(self, track: Track):
-        tracktag = track.tags.get("tracknumber")
+        tracktag = track.tags.get(BasicTag.TRACKNUMBER)
         tracknum = tracktag[0] if tracktag else None
         if tracknum:
-            disctag = track.tags.get("discnumber")
+            disctag = track.tags.get(BasicTag.DISCNUMBER)
             discnum = disctag[0] if disctag else None
             if discnum:
                 filename = f"{discnum}-{tracknum}{self.track_number_suffix}"
@@ -63,9 +64,9 @@ class CheckTrackFilename(Check):
         else:
             filename = ""
 
-        title = ", ".join(track.tags.get("title", [f"Track {tracknum}" if tracknum else ""]))
-        if "artist" in track.tags and "albumartist" in track.tags and track.tags["artist"] != track.tags["albumartist"]:
-            filename += f"{', '.join(track.tags['artist'])} - {title}"
+        title = ", ".join(track.tags.get(BasicTag.TITLE, [f"Track {tracknum}" if tracknum else ""]))
+        if BasicTag.ARTIST in track.tags and BasicTag.ALBUMARTIST in track.tags and track.tags[BasicTag.ARTIST] != track.tags[BasicTag.ALBUMARTIST]:
+            filename += f"{', '.join(track.tags[BasicTag.ARTIST])} - {title}"
         else:
             filename += title
 

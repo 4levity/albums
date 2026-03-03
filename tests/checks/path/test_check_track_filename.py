@@ -4,21 +4,21 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.path.check_track_filename import CheckTrackFilename
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckTrackFilename:
     def test_track_filename_ok(self):
         tracks = [
-            Track("1 foo.flac", {"tracknumber": ["1"], "title": ["foo"]}),
-            Track("2 bar.flac", {"tracknumber": ["2"], "title": ["bar"]}),
+            Track("1 foo.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
+            Track("2 bar.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
     def test_track_filename_ok_custom_suffix(self):
         tracks = [
-            Track("1 - foo.flac", {"tracknumber": ["1"], "title": ["foo"]}),
-            Track("2 - bar.flac", {"tracknumber": ["2"], "title": ["bar"]}),
+            Track("1 - foo.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
+            Track("2 - bar.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),
         ]
         ctx = Context()
         ctx.config.checks["track-filename"]["track_number_suffix"] = " - "
@@ -26,36 +26,44 @@ class TestCheckTrackFilename:
 
     def test_track_filename_ok_no_title(self):
         tracks = [
-            Track("1 Track 1.flac", {"tracknumber": ["1"]}),
-            Track("2 Track 2.flac", {"tracknumber": ["2"]}),
+            Track("1 Track 1.flac", {BasicTag.TRACKNUMBER: ["1"]}),
+            Track("2 Track 2.flac", {BasicTag.TRACKNUMBER: ["2"]}),
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
     def test_track_filename_disc_ok(self):
         tracks = [
-            Track("2-01 foo.flac", {"discnumber": ["2"], "tracknumber": ["01"], "title": ["foo"]}),
-            Track("2-02 bar.flac", {"discnumber": ["2"], "tracknumber": ["02"], "title": ["bar"]}),
+            Track("2-01 foo.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.TRACKNUMBER: ["01"], BasicTag.TITLE: ["foo"]}),
+            Track("2-02 bar.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.TRACKNUMBER: ["02"], BasicTag.TITLE: ["bar"]}),
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
     def test_track_filename_albumartist_ok(self):
         tracks = [
-            Track("1 baz - foo.flac", {"tracknumber": ["1"], "title": ["foo"], "artist": ["baz"], "albumartist": ["Various Artists"]}),
-            Track("2 mob - bar.flac", {"tracknumber": ["2"], "title": ["bar"], "artist": ["mob"], "albumartist": ["Various Artists"]}),
+            Track(
+                "1 baz - foo.flac",
+                {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"], BasicTag.ARTIST: ["baz"], BasicTag.ALBUMARTIST: ["Various Artists"]},
+            ),
+            Track(
+                "2 mob - bar.flac",
+                {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"], BasicTag.ARTIST: ["mob"], BasicTag.ALBUMARTIST: ["Various Artists"]},
+            ),
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
     def test_track_filename_guest_artist_ok(self):
         tracks = [
-            Track("1 foo.flac", {"tracknumber": ["1"], "title": ["foo"], "artist": ["baz"], "albumartist": ["baz"]}),
-            Track("2 mob - bar.flac", {"tracknumber": ["2"], "title": ["bar"], "artist": ["mob"], "albumartist": ["baz"]}),
+            Track("1 foo.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"], BasicTag.ARTIST: ["baz"], BasicTag.ALBUMARTIST: ["baz"]}),
+            Track(
+                "2 mob - bar.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"], BasicTag.ARTIST: ["mob"], BasicTag.ALBUMARTIST: ["baz"]}
+            ),
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
     def test_track_filename_not_unique(self):
         tracks = [
-            Track("1.flac", {"tracknumber": ["1"], "title": ["foo"]}),
-            Track("2.flac", {"tracknumber": ["1"], "title": ["foo"]}),
+            Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
+            Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
         ]
         result = CheckTrackFilename(Context()).check(Album("", tracks))
         assert result
@@ -63,7 +71,7 @@ class TestCheckTrackFilename:
 
     def test_track_filename_blank(self):
         tracks = [
-            Track("1.flac", {"tracknumber": ["1"], "title": ["foo"]}),
+            Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
             Track("2.flac"),
         ]
         result = CheckTrackFilename(Context()).check(Album("", tracks))
@@ -72,9 +80,9 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set(self, mocker):
         tracks = [
-            Track("1.flac", {"tracknumber": ["1"], "title": ["foo"]}),
-            Track("2.flac", {"tracknumber": ["2"], "title": ["bar"]}),
-            Track("3 is correct.flac", {"tracknumber": ["3"], "title": ["is correct"]}),
+            Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
+            Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),
+            Track("3 is correct.flac", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TITLE: ["is correct"]}),
         ]
         album = Album("foobar" + os.sep, tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -93,8 +101,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_swap(self, mocker):
         tracks = [
-            Track("1 foo.flac", {"tracknumber": ["2"], "title": ["bar"]}),
-            Track("2 bar.flac", {"tracknumber": ["1"], "title": ["foo"]}),
+            Track("1 foo.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),
+            Track("2 bar.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
         ]
         album = Album("foobar" + os.sep, tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -115,8 +123,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal(self, mocker):
         tracks = [
-            Track("1.flac", {"tracknumber": ["1"], "title": ["foo?bar"]}),
-            Track("2.flac", {"tracknumber": ["2"], "title": ["baz/baz"]}),
+            Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo?bar"]}),
+            Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["baz/baz"]}),
         ]
         album = Album("foobar" + os.sep, tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -135,8 +143,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal_custom(self, mocker):
         tracks = [
-            Track("1.flac", {"tracknumber": ["1"], "title": ["foo?bar"]}),
-            Track("2.flac", {"tracknumber": ["2"], "title": ["baz/baz"]}),
+            Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo?bar"]}),
+            Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["baz/baz"]}),
         ]
         album = Album("foobar" + os.sep, tracks)
         ctx = Context()

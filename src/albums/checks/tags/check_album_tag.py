@@ -6,6 +6,7 @@ from typing import Any
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
@@ -36,8 +37,8 @@ class CheckAlbumTag(Check):
 
         track_album_tags: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
-            if "album" in track.tags:
-                for album_tag in track.tags["album"]:
+            if BasicTag.ALBUM in track.tags:
+                for album_tag in track.tags[BasicTag.ALBUM]:
                     track_album_tags[album_tag] += 1
             else:
                 track_album_tags[""] += 1
@@ -62,9 +63,9 @@ class CheckAlbumTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.tags.get("album")),
-                    show_tag(track.tags.get("artist")),
-                    show_tag(track.tags.get("albumartist")),
+                    show_tag(track.tags.get(BasicTag.ALBUM)),
+                    show_tag(track.tags.get(BasicTag.ARTIST)),
+                    show_tag(track.tags.get(BasicTag.ALBUMARTIST)),
                 ]
                 for track in album.tracks
             ],
@@ -82,8 +83,8 @@ class CheckAlbumTag(Check):
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename
-            if track.tags.get("album", []) != [option]:
+            if track.tags.get(BasicTag.ALBUM, []) != [option]:
                 self.ctx.console.print(f"setting album on {track.filename}")
-                self.tagger.get(album.path).set_basic_tags(file, [("album", option)])
+                self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUM, option)])
                 changed = True
         return changed

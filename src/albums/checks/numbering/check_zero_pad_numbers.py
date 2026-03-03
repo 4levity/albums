@@ -6,6 +6,7 @@ from rich.console import RenderableType
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from ..helpers import get_tracks_by_disc
@@ -74,26 +75,30 @@ class CheckZeroPadNumbers(Check):
             for track in tracks:
                 table_rows.append([describe_track_number(track), escape(track.filename)])
                 if (
-                    "tracknumber" in track.tags
-                    and self._apply_pad_policy(track.tags["tracknumber"][0], self.tracknumber_pad, len(tracks)) != track.tags["tracknumber"][0]
+                    BasicTag.TRACKNUMBER in track.tags
+                    and self._apply_pad_policy(track.tags[BasicTag.TRACKNUMBER][0], self.tracknumber_pad, len(tracks))
+                    != track.tags[BasicTag.TRACKNUMBER][0]
                 ):
                     fix_tracknumbers += 1
 
                 if (
-                    "tracktotal" in track.tags
-                    and self._apply_pad_policy(track.tags["tracktotal"][0], self.tracktotal_pad, len(tracks)) != track.tags["tracktotal"][0]
+                    BasicTag.TRACKTOTAL in track.tags
+                    and self._apply_pad_policy(track.tags[BasicTag.TRACKTOTAL][0], self.tracktotal_pad, len(tracks))
+                    != track.tags[BasicTag.TRACKTOTAL][0]
                 ):
                     fix_tracktotals += 1
 
                 if (
-                    "discnumber" in track.tags
-                    and self._apply_pad_policy(track.tags["discnumber"][0], self.discnumber_pad, total_discs) != track.tags["discnumber"][0]
+                    BasicTag.DISCNUMBER in track.tags
+                    and self._apply_pad_policy(track.tags[BasicTag.DISCNUMBER][0], self.discnumber_pad, total_discs)
+                    != track.tags[BasicTag.DISCNUMBER][0]
                 ):
                     fix_discnumbers += 1
 
                 if (
-                    "disctotal" in track.tags
-                    and self._apply_pad_policy(track.tags["disctotal"][0], self.disctotal_pad, total_discs) != track.tags["disctotal"][0]
+                    BasicTag.DISCTOTAL in track.tags
+                    and self._apply_pad_policy(track.tags[BasicTag.DISCTOTAL][0], self.disctotal_pad, total_discs)
+                    != track.tags[BasicTag.DISCTOTAL][0]
                 ):
                     fix_disctotals += 1
 
@@ -150,23 +155,28 @@ class CheckZeroPadNumbers(Check):
         for disc in tracks_by_disc.values():
             for track in disc:
                 file = self.ctx.config.library / album.path / track.filename
-                new_values: list[tuple[str, str | list[str] | None]] = []
-                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and "tracknumber" in track.tags:
-                    new_tracknumber = self._apply_pad_policy(track.tags["tracknumber"][0], self.tracknumber_pad, len(disc))
-                    if new_tracknumber != track.tags["tracknumber"][0]:
-                        new_values.append(("tracknumber", new_tracknumber))
-                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and "tracktotal" in track.tags:
-                    new_tracktotal = self._apply_pad_policy(track.tags["tracktotal"][0], self.tracktotal_pad, len(disc))
-                    if new_tracktotal != track.tags["tracktotal"][0]:
-                        new_values.append(("tracktotal", new_tracktotal))
-                if self.discnumber_pad != ZeroPadPolicy.IGNORE and "discnumber" in track.tags:
-                    new_discnumber = self._apply_pad_policy(track.tags["discnumber"][0], self.discnumber_pad, total_discs)
-                    if new_discnumber != track.tags["discnumber"][0]:
-                        new_values.append(("discnumber", new_discnumber))
-                if self.disctotal_pad != ZeroPadPolicy.IGNORE and "disctotal" in track.tags:
-                    new_disctotal = self._apply_pad_policy(track.tags["disctotal"][0], self.disctotal_pad, total_discs)
-                    if new_disctotal != track.tags["disctotal"][0]:
-                        new_values.append(("disctotal", new_disctotal))
+                new_values: list[tuple[BasicTag, str | list[str] | None]] = []
+
+                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and BasicTag.TRACKNUMBER in track.tags:
+                    new_tracknumber = self._apply_pad_policy(track.tags[BasicTag.TRACKNUMBER][0], self.tracknumber_pad, len(disc))
+                    if new_tracknumber != track.tags[BasicTag.TRACKNUMBER][0]:
+                        new_values.append((BasicTag.TRACKNUMBER, new_tracknumber))
+
+                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and BasicTag.TRACKTOTAL in track.tags:
+                    new_tracktotal = self._apply_pad_policy(track.tags[BasicTag.TRACKTOTAL][0], self.tracktotal_pad, len(disc))
+                    if new_tracktotal != track.tags[BasicTag.TRACKTOTAL][0]:
+                        new_values.append((BasicTag.TRACKTOTAL, new_tracktotal))
+
+                if self.discnumber_pad != ZeroPadPolicy.IGNORE and BasicTag.DISCNUMBER in track.tags:
+                    new_discnumber = self._apply_pad_policy(track.tags[BasicTag.DISCNUMBER][0], self.discnumber_pad, total_discs)
+                    if new_discnumber != track.tags[BasicTag.DISCNUMBER][0]:
+                        new_values.append((BasicTag.DISCNUMBER, new_discnumber))
+
+                if self.disctotal_pad != ZeroPadPolicy.IGNORE and BasicTag.DISCTOTAL in track.tags:
+                    new_disctotal = self._apply_pad_policy(track.tags[BasicTag.DISCTOTAL][0], self.disctotal_pad, total_discs)
+                    if new_disctotal != track.tags[BasicTag.DISCTOTAL][0]:
+                        new_values.append((BasicTag.DISCTOTAL, new_disctotal))
+
                 if new_values:
                     self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")
                     self.tagger.get(album.path).set_basic_tags(file, new_values)

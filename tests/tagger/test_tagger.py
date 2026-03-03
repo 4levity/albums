@@ -12,7 +12,7 @@ from ..fixtures.create_library import create_library
 
 mp3track = Track(
     "1.mp3",
-    {"title": ["T"], "tracknumber": ["1"], "tracktotal": ["3"]},
+    {BasicTag.TITLE: ["T"], BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["3"]},
     0,
     0,
     None,

@@ -5,6 +5,7 @@ from typing import Sequence
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
@@ -45,15 +46,15 @@ class CheckDiscInTrackNumber(Check):
             path = self.ctx.config.library / album.path / track.filename
             self.ctx.console.print(f"setting discnumber and tracknumber on {track.filename}")
             (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
-            self.tagger.get(album.path).set_basic_tags(path, [("discnumber", discnumber), ("tracknumber", tracknumber)])
+            self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCNUMBER, discnumber), (BasicTag.TRACKNUMBER, tracknumber)])
         return True
 
     def _proposed_disc_and_tracknumber(self, track: Track):
-        [discnumber, tracknumber] = track.tags["tracknumber"][0].split("-")
+        [discnumber, tracknumber] = track.tags[BasicTag.TRACKNUMBER][0].split("-")
         return (discnumber, tracknumber)
 
 
 def all_tracks_discnumber_in_tracknumber(tracks: Sequence[Track]):
-    any_discnumber = any("discnumber" in track.tags for track in tracks)
-    all_tracknumber_with_dashes = all(re.fullmatch("\\d+-\\d+", "|".join(track.tags.get("tracknumber", []))) for track in tracks)
+    any_discnumber = any(BasicTag.DISCNUMBER in track.tags for track in tracks)
+    all_tracknumber_with_dashes = all(re.fullmatch("\\d+-\\d+", "|".join(track.tags.get(BasicTag.TRACKNUMBER, []))) for track in tracks)
     return not any_discnumber and all_tracknumber_with_dashes

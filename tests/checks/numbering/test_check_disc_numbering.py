@@ -5,7 +5,7 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckDiscNumbering:
@@ -13,9 +13,9 @@ class TestCheckDiscNumbering:
         album = Album(
             "",
             [
-                Track("1-01.flac", {"discnumber": ["1"]}),
-                Track("1-02.flac", {"discnumber": ["1"]}),
-                Track("2-01.flac", {"discnumber": ["2"]}),
+                Track("1-01.flac", {BasicTag.DISCNUMBER: ["1"]}),
+                Track("1-02.flac", {BasicTag.DISCNUMBER: ["1"]}),
+                Track("2-01.flac", {BasicTag.DISCNUMBER: ["2"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -25,9 +25,9 @@ class TestCheckDiscNumbering:
         album = Album(
             "",
             [
-                Track("1-01.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("1-02.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("2-01.flac", {"discnumber": ["2"], "disctotal": ["2"]}),
+                Track("1-01.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("1-02.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("2-01.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.DISCTOTAL: ["2"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -36,7 +36,11 @@ class TestCheckDiscNumbering:
     def test_check_disctotal_policy(self):
         # just make sure config works, policy helper has its own tests for fixer
         album_with_all = Album(
-            "", [Track("1.flac", {"discnumber": ["1"], "disctotal": ["1"]}), Track("2.flac", {"discnumber": ["1"], "disctotal": ["1"]})]
+            "",
+            [
+                Track("1.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["1"]}),
+                Track("2.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["1"]}),
+            ],
         )
         album_with_none = Album("", [Track("1.flac"), Track("2.flac")])
         ctx = Context()
@@ -65,10 +69,10 @@ class TestCheckDiscNumbering:
         album = Album(
             "",
             [
-                Track("1-01.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("1-02.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("2-01.flac", {"discnumber": ["2"], "disctotal": ["3"]}),
-                Track("2-02.flac", {"discnumber": ["2"], "disctotal": ["2"]}),
+                Track("1-01.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("1-02.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("2-01.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.DISCTOTAL: ["3"]}),
+                Track("2-02.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.DISCTOTAL: ["2"]}),
             ],
         )
 
@@ -79,16 +83,16 @@ class TestCheckDiscNumbering:
         assert result.fixer.option_automatic_index == 0
         mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [("disctotal", "2")])]
+        assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [(BasicTag.DISCTOTAL, "2")])]
 
     def test_check_disctotal_inconsistent(self):
         album = Album(
             "",
             [
-                Track("1-01.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("1-02.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("2-01.flac", {"discnumber": ["3"], "disctotal": ["3"]}),
-                Track("2-02.flac", {"discnumber": ["3"], "disctotal": ["3"]}),
+                Track("1-01.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("1-02.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("2-01.flac", {BasicTag.DISCNUMBER: ["3"], BasicTag.DISCTOTAL: ["3"]}),
+                Track("2-02.flac", {BasicTag.DISCNUMBER: ["3"], BasicTag.DISCTOTAL: ["3"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -101,10 +105,10 @@ class TestCheckDiscNumbering:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"discnumber": ["1"]}),
+                Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"]}),
                 Track("1-2.flac"),
-                Track("2-1.flac", {"discnumber": ["2"]}),
-                Track("2-2.flac", {"discnumber": ["2"]}),
+                Track("2-1.flac", {BasicTag.DISCNUMBER: ["2"]}),
+                Track("2-2.flac", {BasicTag.DISCNUMBER: ["2"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -115,10 +119,10 @@ class TestCheckDiscNumbering:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"discnumber": ["1"]}),
-                Track("1-2.flac", {"discnumber": ["1"]}),
-                Track("3-1.flac", {"discnumber": ["3"]}),
-                Track("3-2.flac", {"discnumber": ["3"]}),
+                Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"]}),
+                Track("1-2.flac", {BasicTag.DISCNUMBER: ["1"]}),
+                Track("3-1.flac", {BasicTag.DISCNUMBER: ["3"]}),
+                Track("3-2.flac", {BasicTag.DISCNUMBER: ["3"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -129,9 +133,9 @@ class TestCheckDiscNumbering:
         album = Album(
             "foo" + os.sep,
             [
-                Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]}),
-                Track("2-1.flac", {"discnumber": ["2"], "disctotal": ["2"]}),
-                Track("3-1.flac", {"discnumber": ["3"], "disctotal": ["2"]}),
+                Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("2-1.flac", {BasicTag.DISCNUMBER: ["2"], BasicTag.DISCTOTAL: ["2"]}),
+                Track("3-1.flac", {BasicTag.DISCNUMBER: ["3"], BasicTag.DISCTOTAL: ["2"]}),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -141,7 +145,7 @@ class TestCheckDiscNumbering:
     def test_check_missing_disc_with_discs_in_separate_folders_default_true(self):
         album = Album(
             "foo" + os.sep,
-            [Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]})],
+            [Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]})],
         )
         result = CheckDiscNumbering(Context()).check(album)
         assert result is None
@@ -149,7 +153,7 @@ class TestCheckDiscNumbering:
     def test_check_missing_disc_with_discs_in_separate_folders_false(self):
         album = Album(
             "foo" + os.sep,
-            [Track("1-1.flac", {"discnumber": ["1"], "disctotal": ["2"]})],
+            [Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["2"]})],
         )
         ctx = Context()
         ctx.config.checks = {CheckDiscNumbering.name: {"discs_in_separate_folders": False}}

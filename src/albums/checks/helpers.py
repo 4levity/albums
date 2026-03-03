@@ -5,6 +5,8 @@ from typing import Collection, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
+from albums.tagger.types import BasicTag
+
 from ..app import Context
 from ..types import Album, Track
 
@@ -25,11 +27,11 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
     """
     if any(
         not (
-            len(track.tags.get("tracknumber", ["0"])) == 1
-            and track.tags.get("tracknumber", ["0"])[0].isdecimal()
-            and len(track.tags.get("discnumber", ["1"])) == 1
-            and track.tags.get("discnumber", ["1"])[0].isdecimal()
-            and int(track.tags.get("discnumber", ["1"])[0]) > 0
+            len(track.tags.get(BasicTag.TRACKNUMBER, ["0"])) == 1
+            and track.tags.get(BasicTag.TRACKNUMBER, ["0"])[0].isdecimal()
+            and len(track.tags.get(BasicTag.DISCNUMBER, ["1"])) == 1
+            and track.tags.get(BasicTag.DISCNUMBER, ["1"])[0].isdecimal()
+            and int(track.tags.get(BasicTag.DISCNUMBER, ["1"])[0]) > 0
         )
         for track in tracks
     ):
@@ -37,23 +39,23 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
 
     tracks_by_disc: defaultdict[int, list[Track]] = defaultdict(list)
     for track in tracks:
-        discnumber = int(track.tags.get("discnumber", ["0"])[0])
+        discnumber = int(track.tags.get(BasicTag.DISCNUMBER, ["0"])[0])
         tracks_by_disc[discnumber].append(track)
 
     for discnumber in tracks_by_disc.keys():
-        tracks_by_disc[discnumber].sort(key=lambda track: int(track.tags.get("tracknumber", ["0"])[0]))
+        tracks_by_disc[discnumber].sort(key=lambda track: int(track.tags.get(BasicTag.TRACKNUMBER, ["0"])[0]))
 
     return tracks_by_disc
 
 
 def ordered_tracks(album: Album):
     # sort by discnumber/tracknumber tag if all tracks have one
-    has_discnumber = all(len(track.tags.get("discnumber", [])) == 1 for track in album.tracks)
-    if all(len(track.tags.get("tracknumber", [])) == 1 for track in album.tracks):
+    has_discnumber = all(len(track.tags.get(BasicTag.DISCNUMBER, [])) == 1 for track in album.tracks)
+    if all(len(track.tags.get(BasicTag.TRACKNUMBER, [])) == 1 for track in album.tracks):
         if has_discnumber:
-            return sorted(album.tracks, key=lambda t: (t.tags["discnumber"][0], t.tags["tracknumber"][0]))
+            return sorted(album.tracks, key=lambda t: (t.tags[BasicTag.DISCNUMBER][0], t.tags[BasicTag.TRACKNUMBER][0]))
         else:
-            return sorted(album.tracks, key=lambda t: t.tags["tracknumber"][0])
+            return sorted(album.tracks, key=lambda t: t.tags[BasicTag.TRACKNUMBER][0])
     else:  # default album sort is by filename
         return album.tracks
 
@@ -61,12 +63,12 @@ def ordered_tracks(album: Album):
 def describe_track_number(track: Track):
     tags = track.tags
 
-    if "discnumber" in tags or "disctotal" in tags:
-        s = f"(disc {tags.get('discnumber', ['<no disc>'])[0]}{('/' + tags['disctotal'][0]) if 'disctotal' in tags else ''}) "
+    if BasicTag.DISCNUMBER in tags or BasicTag.DISCTOTAL in tags:
+        s = f"(disc {tags.get(BasicTag.DISCNUMBER, ['<no disc>'])[0]}{('/' + tags[BasicTag.DISCTOTAL][0]) if BasicTag.DISCTOTAL in tags else ''}) "
     else:
         s = ""
 
-    s += f"{tags.get('tracknumber', ['<no track>'])[0]}{('/' + tags['tracktotal'][0]) if 'tracktotal' in tags else ''}"
+    s += f"{tags.get(BasicTag.TRACKNUMBER, ['<no track>'])[0]}{('/' + tags[BasicTag.TRACKTOTAL][0]) if BasicTag.TRACKTOTAL in tags else ''}"
     return s
 
 

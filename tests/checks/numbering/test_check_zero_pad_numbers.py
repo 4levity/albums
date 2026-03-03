@@ -3,7 +3,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestZeroPadNumbers:
@@ -11,16 +11,16 @@ class TestZeroPadNumbers:
         album = Album(
             "",
             [
-                Track("1.flac", {"tracknumber": ["1"]}),
-                Track("2.flac", {"tracknumber": ["2"]}),
-                Track("3.flac", {"tracknumber": ["3"]}),
-                Track("4.flac", {"tracknumber": ["4"]}),
-                Track("5.flac", {"tracknumber": ["5"]}),
-                Track("6.flac", {"tracknumber": ["6"]}),
-                Track("7.flac", {"tracknumber": ["7"]}),
-                Track("8.flac", {"tracknumber": ["8"]}),
-                Track("9.flac", {"tracknumber": ["9"]}),
-                Track("10.flac", {"tracknumber": ["10"]}),
+                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"]}),
+                Track("3.flac", {BasicTag.TRACKNUMBER: ["3"]}),
+                Track("4.flac", {BasicTag.TRACKNUMBER: ["4"]}),
+                Track("5.flac", {BasicTag.TRACKNUMBER: ["5"]}),
+                Track("6.flac", {BasicTag.TRACKNUMBER: ["6"]}),
+                Track("7.flac", {BasicTag.TRACKNUMBER: ["7"]}),
+                Track("8.flac", {BasicTag.TRACKNUMBER: ["8"]}),
+                Track("9.flac", {BasicTag.TRACKNUMBER: ["9"]}),
+                Track("10.flac", {BasicTag.TRACKNUMBER: ["10"]}),
             ],
         )
         ctx = Context()
@@ -42,14 +42,14 @@ class TestZeroPadNumbers:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 9
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[8].filename, [("tracknumber", "09")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicTag.TRACKNUMBER, "09")])
 
     def test_check_pad_remove_all_unnecessary(self, mocker):
         album = Album(
             "",
             [
-                Track("1.flac", {"tracknumber": ["01"], "tracktotal": ["02"], "discnumber": ["01"], "disctotal": ["01"]}),
-                Track("2.flac", {"tracknumber": ["02"], "tracktotal": ["02"], "discnumber": ["01"], "disctotal": ["01"]}),
+                Track("1.flac", {BasicTag.TRACKNUMBER: ["01"], BasicTag.TRACKTOTAL: ["02"], BasicTag.DISCNUMBER: ["01"], BasicTag.DISCTOTAL: ["01"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["02"], BasicTag.TRACKTOTAL: ["02"], BasicTag.DISCNUMBER: ["01"], BasicTag.DISCTOTAL: ["01"]}),
             ],
         )
         ctx = Context()
@@ -78,14 +78,16 @@ class TestZeroPadNumbers:
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
-            [("tracknumber", "2"), ("tracktotal", "2"), ("discnumber", "1"), ("disctotal", "1")],
+            [(BasicTag.TRACKNUMBER, "2"), (BasicTag.TRACKTOTAL, "2"), (BasicTag.DISCNUMBER, "1"), (BasicTag.DISCTOTAL, "1")],
         )
 
     def test_check_pad_tracknumber_and_discnumber_if_needed(self, mocker):
         album = Album("a")
         for discnumber in range(1, 11):
             for tracknumber in range(1, 11):
-                album.tracks.append(Track(f"{discnumber}-{tracknumber}.flac", {"discnumber": [str(discnumber)], "tracknumber": [str(tracknumber)]}))
+                album.tracks.append(
+                    Track(f"{discnumber}-{tracknumber}.flac", {BasicTag.DISCNUMBER: [str(discnumber)], BasicTag.TRACKNUMBER: [str(tracknumber)]})
+                )
         assert len(album.tracks) == 100
         ctx = Context()
         ctx.config.checks = {
@@ -107,14 +109,14 @@ class TestZeroPadNumbers:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[98].filename, [("tracknumber", "09")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicTag.TRACKNUMBER, "09")])
 
     def test_check_pad_two_digit_minimum(self, mocker):
         album = Album(
             "",
             [
-                Track("1.flac", {"tracknumber": ["01"], "tracktotal": ["2"], "discnumber": ["01"], "disctotal": ["1"]}),
-                Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["2"], "discnumber": ["1"], "disctotal": ["1"]}),
+                Track("1.flac", {BasicTag.TRACKNUMBER: ["01"], BasicTag.TRACKTOTAL: ["2"], BasicTag.DISCNUMBER: ["01"], BasicTag.DISCTOTAL: ["1"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"], BasicTag.DISCNUMBER: ["1"], BasicTag.DISCTOTAL: ["1"]}),
             ],
         )
         ctx = Context()
@@ -143,11 +145,11 @@ class TestZeroPadNumbers:
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
-            [("tracknumber", "02"), ("tracktotal", "02"), ("discnumber", "01"), ("disctotal", "01")],
+            [(BasicTag.TRACKNUMBER, "02"), (BasicTag.TRACKTOTAL, "02"), (BasicTag.DISCNUMBER, "01"), (BasicTag.DISCTOTAL, "01")],
         )
 
     def test_check_pad_with_id3(self, mocker):
-        album = Album("", [Track("1.mp3", {"tracknumber": ["01"], "tracktotal": ["2"]})])
+        album = Album("", [Track("1.mp3", {BasicTag.TRACKNUMBER: ["01"], BasicTag.TRACKTOTAL: ["2"]})])
         ctx = Context()
         ctx.config.checks = {
             "zero-pad-numbers": {
@@ -169,4 +171,4 @@ class TestZeroPadNumbers:
         mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [("tracknumber", "1")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, "1")])

@@ -6,6 +6,7 @@ from typing import Any
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
@@ -36,12 +37,12 @@ class CheckArtistTag(Check):
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
-            if "artist" in track.tags:
-                for artist_tag in track.tags["artist"]:
+            if BasicTag.ARTIST in track.tags:
+                for artist_tag in track.tags[BasicTag.ARTIST]:
                     artist_values[artist_tag].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
-            for album_artist_tag in track.tags.get("albumartist", []):
+            for album_artist_tag in track.tags.get(BasicTag.ALBUMARTIST, []):
                 artist_values[album_artist_tag].append(track.filename)
 
         if not artist_values[""]:  # no tracks missing artist tag
@@ -60,9 +61,9 @@ class CheckArtistTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.tags.get("albumartist")),
-                    show_tag(track.tags.get("artist")),
-                    show_tag([candidates[0]] if candidates and "artist" not in track.tags else None),
+                    show_tag(track.tags.get(BasicTag.ALBUMARTIST)),
+                    show_tag(track.tags.get(BasicTag.ARTIST)),
+                    show_tag([candidates[0]] if candidates and BasicTag.ARTIST not in track.tags else None),
                 ]
                 for track in album.tracks
             ],
@@ -85,5 +86,5 @@ class CheckArtistTag(Check):
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {filename}")
-            self.tagger.get(album.path).set_basic_tags(file, [("artist", option)])
+            self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ARTIST, option)])
         return True

@@ -5,14 +5,14 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckArtistTag:
     def test_artist_tag_ok(self):
         album = Album(
             "A" + os.sep,
-            [Track("1.flac", {"artist": ["A"]}), Track("2.flac", {"artist": ["B"]})],
+            [Track("1.flac", {BasicTag.ARTIST: ["A"]}), Track("2.flac", {BasicTag.ARTIST: ["B"]})],
         )
         result = CheckArtistTag(Context()).check(album)
         assert result is None
@@ -31,12 +31,14 @@ class TestCheckArtistTag:
         assert fix_result
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
-            call(path / album.tracks[0].filename, [("artist", "Foo")]),
-            call(path / album.tracks[1].filename, [("artist", "Foo")]),
+            call(path / album.tracks[0].filename, [(BasicTag.ARTIST, "Foo")]),
+            call(path / album.tracks[1].filename, [(BasicTag.ARTIST, "Foo")]),
         ]
 
     def test_artist_tag_conflict(self, mocker):
-        album = Album(f"Foo{os.sep}Bar{os.sep}", [Track("1.flac", {"artist": ["Baz"]}), Track("2.flac", {"artist": ["Baz"]}), Track("3.flac")])
+        album = Album(
+            f"Foo{os.sep}Bar{os.sep}", [Track("1.flac", {BasicTag.ARTIST: ["Baz"]}), Track("2.flac", {BasicTag.ARTIST: ["Baz"]}), Track("3.flac")]
+        )
         result = CheckArtistTag(Context()).check(album)
         assert result
         assert "1 tracks missing artist tag" in result.message

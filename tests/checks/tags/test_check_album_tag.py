@@ -4,7 +4,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.tags.check_album_tag import CheckAlbumTag
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestCheckAlbumTag:
@@ -24,8 +24,8 @@ class TestCheckAlbumTag:
         album = Album(
             "",
             [
-                Track("1.flac", {"album": ["A"]}),
-                Track("2.flac", {"album": ["A"]}),
+                Track("1.flac", {BasicTag.ALBUM: ["A"]}),
+                Track("2.flac", {BasicTag.ALBUM: ["A"]}),
                 Track("3.flac"),
             ],
         )
@@ -36,9 +36,9 @@ class TestCheckAlbumTag:
         album = Album(
             "A/",
             [
-                Track("1.flac", {"album": ["A"]}),
-                Track("2.flac", {"album": ["A"]}),
-                Track("3.flac", {"album": ["B"]}),
+                Track("1.flac", {BasicTag.ALBUM: ["A"]}),
+                Track("2.flac", {BasicTag.ALBUM: ["A"]}),
+                Track("3.flac", {BasicTag.ALBUM: ["B"]}),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
@@ -67,15 +67,15 @@ class TestCheckAlbumTag:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("album", "Foo")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ALBUM, "Foo")])
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
         album = Album(
             "Foo" + os.sep,
             [
-                Track("1.flac", {"album": ["Bar"]}),
-                Track("2.flac", {"album": ["Bar"]}),
+                Track("1.flac", {BasicTag.ALBUM: ["Bar"]}),
+                Track("2.flac", {BasicTag.ALBUM: ["Bar"]}),
                 Track("3.flac"),
             ],
         )
@@ -94,4 +94,4 @@ class TestCheckAlbumTag:
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [("album", "Bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ALBUM, "Bar")])

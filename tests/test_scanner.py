@@ -10,7 +10,7 @@ from albums.database import connection, selector
 from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.types import PictureType
-from albums.types import Album, Path, Picture, PictureFile, Track
+from albums.types import Album, BasicTag, Path, Picture, PictureFile, Track
 
 from .fixtures.create_library import create_album_in_library, create_library
 
@@ -27,16 +27,16 @@ class TestScanner:
         Album(
             "bar" + os.sep,
             [
-                Track("1.flac", {"title": ["1"]}),
-                Track("2.flac", {"title": ["2"]}),
-                Track("3.flac", {"title": ["3"]}),
+                Track("1.flac", {BasicTag.TITLE: ["1"]}),
+                Track("2.flac", {BasicTag.TITLE: ["2"]}),
+                Track("3.flac", {BasicTag.TITLE: ["3"]}),
             ],
             [],
             [],
             {"cover.jpg": PictureFile(Picture(PictureInfo("image/png", 410, 410, 24, 0, b""), PictureType.COVER_FRONT, "", ()), 0, False)},
         ),
-        Album("foo" + os.sep, [Track("1.mp3", {"title": ["1"]}), Track("2.mp3", {"title": ["2"]})]),
-        Album("baz" + os.sep, [Track("1.wma", {"title": ["one"]}), Track("2.wma", {"title": ["two"]})]),
+        Album("foo" + os.sep, [Track("1.mp3", {BasicTag.TITLE: ["1"]}), Track("2.mp3", {BasicTag.TITLE: ["2"]})]),
+        Album("baz" + os.sep, [Track("1.wma", {BasicTag.TITLE: ["one"]}), Track("2.wma", {BasicTag.TITLE: ["two"]})]),
     ]
 
     def test_initial_scan(self):
@@ -55,7 +55,7 @@ class TestScanner:
             assert result[0].tracks[0].modify_timestamp > 1
             assert result[0].tracks[0].stream.sample_rate == 44100
             assert result[0].tracks[0].stream.codec == "FLAC"
-            assert result[0].tracks[0].tags["title"] == ["1"]
+            assert result[0].tracks[0].tags[BasicTag.TITLE] == ("1",)
 
             # wma files
             assert len(result[1].tracks) == 2
@@ -63,7 +63,7 @@ class TestScanner:
             assert result[1].tracks[0].modify_timestamp > 1
             assert result[1].tracks[0].stream.sample_rate == 44100
             assert result[1].tracks[0].stream.codec == "Windows Media Audio V8"
-            assert result[1].tracks[0].tags["title"] == ["one"]
+            assert result[1].tracks[0].tags[BasicTag.TITLE] == ("one",)
 
             # mp3 files
             assert len(result[2].tracks) == 2
@@ -71,7 +71,7 @@ class TestScanner:
             assert result[2].tracks[0].modify_timestamp > 1
             assert result[2].tracks[0].stream.sample_rate == 44100
             assert result[2].tracks[0].stream.codec == "MP3"
-            assert result[2].tracks[0].tags["title"] == ["1"]
+            assert result[2].tracks[0].tags[BasicTag.TITLE] == ("1",)
 
             # image files in folder
             assert len(result[0].picture_files) == 1
@@ -111,15 +111,15 @@ class TestScanner:
             result = list(selector.select_albums(db, [], [], False))
 
             assert result[0].tracks[0].filename == "1.flac"
-            assert result[0].tracks[0].tags["title"] == ["1"]
+            assert result[0].tracks[0].tags[BasicTag.TITLE] == ("1",)
 
             file = FLAC(library / result[0].path / "1.flac")
-            file["title"] = "new title"
+            file[BasicTag.TITLE] = "new title"
             file.save()
 
             scan(ctx)
             result = list(selector.select_albums(db, [], [], False))
-            assert result[0].tracks[0].tags["title"] == ["new title"]
+            assert result[0].tracks[0].tags[BasicTag.TITLE] == ("new title",)
 
     def test_scan_add(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:

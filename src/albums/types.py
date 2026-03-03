@@ -6,7 +6,7 @@ from typing import Callable, Collection, Dict, Iterator, Mapping, Sequence, Tupl
 
 from rich.console import RenderableType
 
-from .tagger.types import Picture, StreamInfo
+from .tagger.types import BasicTag, Picture, StreamInfo
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Track:
     filename: str
-    tags: Mapping[str, Sequence[str]] = field(default_factory=dict[str, list[str]])
+    tags: Mapping[BasicTag, Sequence[str]] = field(default_factory=dict[BasicTag, Sequence[str]])
     file_size: int = 0
     modify_timestamp: int = 0
     stream: StreamInfo | None = None

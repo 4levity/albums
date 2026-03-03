@@ -11,7 +11,7 @@ from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture, PictureType, StreamInfo
-from albums.types import Album, PictureFile, Track
+from albums.types import Album, BasicTag, PictureFile, Track
 
 from ...fixtures.create_library import create_library, make_image_data
 
@@ -70,7 +70,7 @@ class TestCheckPictureMetadata:
             assert result is None
 
     def test_picture_metadata_mismatch_fix_mp3(self):
-        album = Album("foo", [Track("1.mp3", {"title": ["1"]}, 0, 0, StreamInfo(1.5, 0, 0, "MP3"))])
+        album = Album("foo", [Track("1.mp3", {BasicTag.TITLE: ["1"]}, 0, 0, StreamInfo(1.5, 0, 0, "MP3"))])
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_mp3", [album])
 

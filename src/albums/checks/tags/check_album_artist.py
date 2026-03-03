@@ -5,6 +5,7 @@ from typing import Any
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
@@ -36,12 +37,12 @@ class CheckAlbumArtist(Check):
         artists: defaultdict[str, int] = defaultdict(int)
 
         for track in sorted(album.tracks, key=lambda track: track.filename):
-            if "artist" in track.tags:
-                for artist in track.tags["artist"]:
+            if BasicTag.ARTIST in track.tags:
+                for artist in track.tags[BasicTag.ARTIST]:
                     artists[artist] += 1
 
-            if "albumartist" in track.tags:
-                for albumartist in track.tags["albumartist"]:
+            if BasicTag.ALBUMARTIST in track.tags:
+                for albumartist in track.tags[BasicTag.ALBUMARTIST]:
                     albumartists[albumartist] += 1
             else:
                 albumartists[""] += 1
@@ -101,9 +102,9 @@ class CheckAlbumArtist(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.tags.get("album")),
-                    show_tag(track.tags.get("artist")),
-                    show_tag(track.tags.get("albumartist")),
+                    show_tag(track.tags.get(BasicTag.ALBUM)),
+                    show_tag(track.tags.get(BasicTag.ARTIST)),
+                    show_tag(track.tags.get(BasicTag.ALBUMARTIST)),
                 ]
                 for track in album.tracks
             ],
@@ -122,20 +123,20 @@ class CheckAlbumArtist(Check):
         for track in sorted(album.tracks, key=lambda track: track.filename):
             file = self.ctx.config.library / album.path / track.filename
             if album_artist_value == OPTION_REMOVE_ALBUM_ARTIST:
-                if "albumartist" in track.tags:
+                if BasicTag.ALBUMARTIST in track.tags:
                     self.ctx.console.print(f"removing albumartist from {track.filename}", markup=False)
-                    self.tagger.get(album.path).set_basic_tags(file, [("albumartist", None)])
+                    self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUMARTIST, None)])
                     changed = True
                 # else nothing to remove
             elif album_artist_value == OPTION_COPY_ALBUM_ARTIST_TO_ARTIST:
-                if "albumartist" in track.tags:
+                if BasicTag.ALBUMARTIST in track.tags:
                     self.ctx.console.print(f"copying albumartist to artist in {track.filename}", markup=False)
-                    albumartist = track.tags["albumartist"][0]
-                    self.tagger.get(album.path).set_basic_tags(file, [("artist", albumartist)])
+                    albumartist = track.tags[BasicTag.ALBUMARTIST][0]
+                    self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ARTIST, albumartist)])
                     changed = True
-            elif track.tags.get("albumartist", []) != [album_artist_value]:
+            elif track.tags.get(BasicTag.ALBUMARTIST, []) != [album_artist_value]:
                 self.ctx.console.print(f"setting albumartist on {track.filename}", markup=False)
-                self.tagger.get(album.path).set_basic_tags(file, [("albumartist", album_artist_value)])
+                self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUMARTIST, album_artist_value)])
                 changed = True
             # else nothing to set
 

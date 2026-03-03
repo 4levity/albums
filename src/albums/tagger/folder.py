@@ -81,9 +81,9 @@ class AlbumTagger:
     def path(self) -> Path:
         return self._folder
 
-    def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[str, str | List[str] | None]]):
+    def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[BasicTag, str | List[str] | None]]):
         if path.parent != self._folder:
             raise ValueError(f"invalid path {str(path)} this AlbumTagger only works in {str(self._folder)}")
         with self.open(path.name) as f:
-            for name, value in tag_values:
-                f.set_tag(BasicTag(name), value)
+            for tag, value in tag_values:
+                f.set_tag(tag, value)

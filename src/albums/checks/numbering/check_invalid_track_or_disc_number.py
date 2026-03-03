@@ -4,6 +4,7 @@ from typing import Collection, Mapping, Sequence
 from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
@@ -11,7 +12,7 @@ from .check_track_numbering import describe_track_number, ordered_tracks
 logger = logging.getLogger(__name__)
 
 OPTION_AUTOMATIC_REPAIR = ">> Automatically remove zero, non-numeric and multiple values"
-SINGLE_POSITIVE_NUMBER_TAGS = ["tracknumber", "tracktotal", "discnumber", "disctotal"]
+SINGLE_POSITIVE_NUMBER_TAGS = [BasicTag.TRACKNUMBER, BasicTag.TRACKTOTAL, BasicTag.DISCNUMBER, BasicTag.DISCTOTAL]
 
 
 class CheckInvalidTrackOrDiscNumber(Check):
@@ -48,12 +49,12 @@ class CheckInvalidTrackOrDiscNumber(Check):
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename
-            new_values: list[tuple[str, str | list[str] | None]] = []
-            for tag_name in SINGLE_POSITIVE_NUMBER_TAGS:
-                if tag_name in track.tags:
+            new_values: list[tuple[BasicTag, str | list[str] | None]] = []
+            for tag in SINGLE_POSITIVE_NUMBER_TAGS:
+                if tag in track.tags:
                     # gather all values for this tag that are numeric and > 0, if any
                     valid_values: set[str] = set()
-                    for value in track.tags.get(tag_name, []):
+                    for value in track.tags.get(tag, []):
                         if value.isdecimal() and int(value) > 0:
                             valid_values.add(value)
                     if not valid_values or len(valid_values) > 1:
@@ -62,8 +63,8 @@ class CheckInvalidTrackOrDiscNumber(Check):
                     else:
                         # there's only one value left that looks right, keep it
                         new_value = valid_values.pop()
-                    if track.tags.get(tag_name) != (None if new_value is None else [new_value]):
-                        new_values.append((tag_name, new_value))
+                    if track.tags.get(tag) != (None if new_value is None else [new_value]):
+                        new_values.append((tag, new_value))
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {track.filename}")
                 self.tagger.get(album.path).set_basic_tags(file, new_values)
@@ -84,23 +85,23 @@ def get_issues_invalid_disc_or_track_number(tracks: Sequence[Track]):
     return issues
 
 
-def _has_multi_value(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
-    for tag_name in tag_names:
+def _has_multi_value(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+    for tag_name in check_tags:
         if len(tags.get(tag_name, [])) > 1:
             return True
     return False
 
 
-def _has_non_numeric(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
-    for tag_name in tag_names:
+def _has_non_numeric(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+    for tag_name in check_tags:
         for value in tags.get(tag_name, []):
             if not value.isdecimal():
                 return True
     return False
 
 
-def _has_zero_value(tags: Mapping[str, Sequence[str]], tag_names: Collection[str]):
-    for tag_name in tag_names:
+def _has_zero_value(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+    for tag_name in check_tags:
         for value in tags.get(tag_name, []):
             if value.isdecimal() and int(value) == 0:
                 return True

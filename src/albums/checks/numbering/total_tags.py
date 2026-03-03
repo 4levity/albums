@@ -4,6 +4,7 @@ from rich.markup import escape
 
 from ...app import Context
 from ...tagger.folder import AlbumTagger
+from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer
 from ..helpers import describe_track_number, ordered_tracks
 
@@ -25,21 +26,21 @@ OPTION_REMOVE_TAG = ">> Remove tag"
 
 
 def check_policy(
-    ctx: Context, tagger: AlbumTagger, album: Album, policy: Policy, tag_name: str, corresponding_index_tag: str, option_free_text: bool = False
+    ctx: Context, tagger: AlbumTagger, album: Album, policy: Policy, tag: BasicTag, corresponding_index_tag: BasicTag, option_free_text: bool = False
 ) -> CheckResult | None:
-    on_all_tracks = all(tag_name in t.tags for t in album.tracks)
-    on_any_tracks = any(tag_name in t.tags for t in album.tracks)
-    any_total_without_index = any(tag_name in t.tags and corresponding_index_tag not in t.tags for t in album.tracks)
+    on_all_tracks = all(tag in t.tags for t in album.tracks)
+    on_any_tracks = any(tag in t.tags for t in album.tracks)
+    any_total_without_index = any(tag in t.tags and corresponding_index_tag not in t.tags for t in album.tracks)
 
     if any_total_without_index:
-        message = f"{tag_name} appears on tracks without {corresponding_index_tag}"
+        message = f"{tag} appears on tracks without {corresponding_index_tag}"
         # if policy != always, automated fix to remove all totals will solve this
     elif policy == Policy.ALWAYS and not on_all_tracks:
-        message = f"{tag_name} policy={policy.name} but it is not on all tracks"
+        message = f"{tag} policy={policy.name} but it is not on all tracks"
     elif policy == Policy.NEVER and on_any_tracks:
-        message = f"{tag_name} policy={policy.name} but it appears on tracks"
+        message = f"{tag} policy={policy.name} but it appears on tracks"
     elif policy == Policy.CONSISTENT and on_all_tracks != on_any_tracks:
-        message = f"{tag_name} policy={policy.name} but it is on some tracks and not others"
+        message = f"{tag} policy={policy.name} but it is on some tracks and not others"
     else:
         message = None
 
@@ -54,17 +55,17 @@ def check_policy(
                 changed = False
                 for track in album.tracks:
                     path = ctx.config.library / album.path / track.filename
-                    if value is None and tag_name in track.tags:
-                        ctx.console.print(f"removing {tag_name} from {track.filename}")
-                        tagger.set_basic_tags(path, [(tag_name, None)])
+                    if value is None and tag in track.tags:
+                        ctx.console.print(f"removing {tag} from {track.filename}")
+                        tagger.set_basic_tags(path, [(tag, None)])
                         changed = True
-                    if value is not None and (tag_name not in track.tags or track.tags[tag_name] != [value]):
-                        ctx.console.print(f"setting {tag_name} on {track.filename}")
-                        tagger.set_basic_tags(path, [(tag_name, value)])
+                    if value is not None and (tag not in track.tags or track.tags[tag] != [value]):
+                        ctx.console.print(f"setting {tag} on {track.filename}")
+                        tagger.set_basic_tags(path, [(tag, value)])
                         changed = True
                 return changed
 
-            options = [] if policy == Policy.ALWAYS else [f"{OPTION_REMOVE_TAG} {tag_name}"]
+            options = [] if policy == Policy.ALWAYS else [f"{OPTION_REMOVE_TAG} {tag}"]
             option_automatic_index = 0 if len(options) == 1 else None
             if policy == Policy.NEVER:
                 option_free_text = False

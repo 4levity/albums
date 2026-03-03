@@ -3,16 +3,20 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering import total_tags
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, Track
+from albums.types import Album, BasicTag, Track
 
 
 class TestTotalTags:
     def check(self, album: Album, policy: total_tags.Policy):
-        return total_tags.check_policy(Context(), AlbumTagger(Path(album.path)), album, policy, "tracktotal", "tracknumber")
+        return total_tags.check_policy(Context(), AlbumTagger(Path(album.path)), album, policy, BasicTag.TRACKTOTAL, BasicTag.TRACKNUMBER)
 
     def test_check_total_policy_ok(self):
         album_with_all = Album(
-            "", [Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["1"]}), Track("2.flac", {"tracknumber": ["1"], "tracktotal": ["1"]})]
+            "",
+            [
+                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]}),
+            ],
         )
         album_with_none = Album("", [Track("1.flac"), Track("2.flac")])
 
@@ -28,14 +32,14 @@ class TestTotalTags:
         assert result is None
 
     def test_check_total_policy_always(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {"tracknumber": ["1"], "tracktotal": ["1"]})])
+        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]})])
 
         result = self.check(album, total_tags.Policy.ALWAYS)
         assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
         assert not result.fixer
 
     def test_check_total_policy_consistent(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {"tracknumber": ["1"], "tracktotal": ["1"]})])
+        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]})])
 
         result = self.check(album, total_tags.Policy.CONSISTENT)
         assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
@@ -49,11 +53,15 @@ class TestTotalTags:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("tracktotal", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
 
     def test_check_total_policy_never(self, mocker):
         album = Album(
-            "", [Track("1.flac", {"tracknumber": ["1"], "tracktotal": ["2"]}), Track("2.flac", {"tracknumber": ["2"], "tracktotal": ["2"]})]
+            "",
+            [
+                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["2"]}),
+                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"]}),
+            ],
         )
 
         result = self.check(album, total_tags.Policy.NEVER)
@@ -68,10 +76,10 @@ class TestTotalTags:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("tracktotal", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
 
     def test_check_total_policy_total_without_index(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {"tracktotal": ["1"]})])
+        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKTOTAL: ["1"]})])
 
         result = self.check(album, total_tags.Policy.ALWAYS)
         assert "tracktotal appears on tracks without tracknumber" in result.message
@@ -88,4 +96,4 @@ class TestTotalTags:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [("tracktotal", None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
