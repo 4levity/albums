@@ -101,6 +101,9 @@ def make_library_paths(ctx: Context, album: Album):
             logger.warning(f"generating library path: no album artist or artist tags, using {artist_v}")
 
     a1_v = str.lower(safe_folder(artist_v[4] if artist_v.lower().startswith("the ") and len(artist_v) > 4 else artist_v[0]))
+    if a1_v.isnumeric():
+        a1_v = "#"
+
     substitutions = {"album": album_v, "artist": artist_v, "a1": a1_v, "A1": a1_v.upper()}
     logger.debug(f"substitutions for creating import paths: {substitutions}")
 

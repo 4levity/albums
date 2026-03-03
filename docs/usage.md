@@ -76,8 +76,8 @@ there are some global settings:
 
     The import paths can use substitution values determined from the tags on
     the new album. Available substitutions are: `$album`, `$artist` (which may
-    be the "album artist" value), `$A1` (first letter of artist name, not
-    including "The"), and `$a1` (lowercase version of `$A1`)
+    be the "album artist" value), `$A1` (first letter of artist name not
+    including "The", or `#` for numeric), and `$a1` (lowercase version of `$A1`)
 
 <!-- pyml enable line-length -->
 
