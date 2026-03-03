@@ -1,8 +1,8 @@
 # albums
 
 Manage a library of music: configurably validate and fix tags and metadata,
-rename files, format and embed album art, and sync parts of the library to
-digital audio players or portable storage
+rename files, reformat and embed album art, import albums, and sync parts of the
+library to digital audio players or portable storage
 
 - [Read the documentation here](https://4levity.github.io/albums/)
 
@@ -35,10 +35,10 @@ is simple and quick.
 
 `albums` has some functionality related to these tools, but a different focus.
 Its main use is to find and fix metadata issues and apply tag/filename policies
-one album at a time across a large collection that's mostly organized (or at
-least in folders by albums). It does this with many individually-configurable
-"checks" which are mostly independent, letting the user decide which issues to
-address. And its DAP/external storage sync feature may prove useful.
+one album at a time, potentially across a large collection. It does this with
+many individually-configurable "checks" which are mostly independent, letting
+the user decide which issues to address. And its DAP/external storage sync
+feature may prove useful.
 
 ## Supported Media
 

@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from string import Template
 from typing import Collection, Literal
 
 from prompt_toolkit import prompt
@@ -59,6 +60,9 @@ def _configure_settings(ctx: Context, db: sqlite3.Connection):
                     "open_folder_command",
                     f"open_folder_command ({ctx.config.open_folder_command if ctx.config.open_folder_command else 'not set'})",
                 ),
+                ("default_import_path", f"default_import_path {ctx.config.default_import_path.template}"),
+                ("default_import_path_various", f"default_import_path_various {ctx.config.default_import_path_various.template}"),
+                ("more_import_paths", f"more_import_paths {','.join(t.template for t in ctx.config.more_import_paths)}"),
                 ("back", "<< go back"),
             ],
         )
@@ -67,7 +71,18 @@ def _configure_settings(ctx: Context, db: sqlite3.Connection):
 
 
 def _configure_setting(
-    ctx: Context, db: sqlite3.Connection, setting: Literal["library", "path_compatibility", "rescan", "tagger", "open_folder_command"]
+    ctx: Context,
+    db: sqlite3.Connection,
+    setting: Literal[
+        "library",
+        "path_compatibility",
+        "rescan",
+        "tagger",
+        "open_folder_command",
+        "default_import_path",
+        "default_import_path_various",
+        "more_import_paths",
+    ],
 ):
     match setting:
         case "library":
@@ -90,6 +105,24 @@ def _configure_setting(
         case "open_folder_command":
             ctx.config.open_folder_command = prompt("Command to open a folder: ", default=ctx.config.open_folder_command)
             db_config.save(db, ctx.config)
+        case "default_import_path":
+            _show_import_path_help(ctx)
+            ctx.config.default_import_path = Template(
+                prompt("Template for default (not compilation) import path: ", default=ctx.config.default_import_path.template)
+            )
+            db_config.save(db, ctx.config)
+        case "default_import_path_various":
+            _show_import_path_help(ctx)
+            ctx.config.default_import_path_various = Template(
+                prompt("Template for compilation import path: ", default=ctx.config.default_import_path_various.template)
+            )
+            db_config.save(db, ctx.config)
+        case "more_import_paths":
+            _show_import_path_help(ctx)
+            default_str = ",".join(t.template for t in ctx.config.more_import_paths)
+            more_paths = prompt("Enter more import path templates separated by comma: ", default=default_str)
+            ctx.config.more_import_paths = [Template(path.strip()) for path in more_paths.split(",")]
+            db_config.save(db, ctx.config)
 
 
 def set_library(ctx: Context, db: sqlite3.Connection, new_library: str):
@@ -98,6 +131,10 @@ def set_library(ctx: Context, db: sqlite3.Connection, new_library: str):
         db_config.save(db, ctx.config)
     else:
         ctx.console.print("Error: library must be a directory that exists and is accessible")
+
+
+def _show_import_path_help(ctx: Context):
+    ctx.console.print("Available substitution variables: [bold]album[/bold], [bold]artist[/bold], [bold]A1[/bold], [bold]a1[/bold]")
 
 
 def _configure_check(ctx: Context, db: sqlite3.Connection, check_name: str):

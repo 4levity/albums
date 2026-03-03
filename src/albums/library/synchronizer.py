@@ -3,6 +3,7 @@ import os
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Sequence, Tuple
 
 import humanize
 from prompt_toolkit.shortcuts import confirm
@@ -71,17 +72,20 @@ def do_sync(ctx: Context, albums: Iterator[Album], dest: Path, delete: bool, for
 
     skipped = f" (skipped {skipped_tracks})" if skipped_tracks > 0 else ""
     if len(tracks) > 0:
-        ctx.console.print(f"copying {len(tracks)} tracks {humanize.naturalsize(total_size)} to {escape(str(dest))} {skipped}")
-
-        with Progress(*Progress.get_default_columns(), TransferSpeedColumn()) as progress:
-            sync_task = progress.add_task("Progress", total=total_size)
-            for source_track_path, dest_track_path, size in sorted(tracks, key=lambda t: t[1]):
-                os.makedirs(os.path.dirname(dest_track_path), exist_ok=True)
-                logger.debug(f"copying to {dest_track_path}")
-                shutil.copy2(source_track_path, dest_track_path)
-                progress.update(sync_task, advance=size)
-
-        ctx.console.print("done copying.")
-
+        ctx.console.print(f"Destination: {escape(str(dest))} {skipped}")
+        copy_files_with_progress(ctx, tracks)
     else:
         ctx.console.print(f"no tracks to copy{skipped}")
+
+
+def copy_files_with_progress(ctx: Context, to_copy: Sequence[Tuple[Path, Path, int]]):
+    total_size = sum(size for _src, _dest, size in to_copy)
+    ctx.console.print(f"Copying {len(to_copy)} files {humanize.naturalsize(total_size)}")
+    with Progress(*Progress.get_default_columns(), TransferSpeedColumn()) as progress:
+        sync_task = progress.add_task("Progress", total=total_size)
+        for source_track_path, dest_track_path, size in sorted(to_copy, key=lambda t: t[1]):
+            os.makedirs(os.path.dirname(dest_track_path), exist_ok=True)
+            logger.debug(f"copying to {dest_track_path}")
+            shutil.copy2(source_track_path, dest_track_path)
+            progress.update(sync_task, advance=size)
+    ctx.console.print("Done copying")

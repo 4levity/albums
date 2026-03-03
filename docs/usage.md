@@ -47,6 +47,10 @@ for example `albums -rp "Freezepop" add DAP`. Review the collection with
 `albums --collection DAP list`. To copy/sync it to an SD card, see
 [Synchronize](./sync.md).
 
+You can scan a new album for tag/picture/filename/etc issues, fix them all
+interactively, then add the album to your library with one command. For example:
+`albums import "temp/new album 1"`.
+
 To set up `albums` configuration options interactively, run `albums config`. See
 `albums config --help` for other ways to configure.
 
@@ -57,13 +61,23 @@ there are some global settings:
 
 <!-- pyml disable line-length -->
 
-| Name                  | Default                    | Description                                       |
-| --------------------- | -------------------------- | ------------------------------------------------- |
-| `library`             | OS default                 | Location of the music library                     |
-| `open_folder_command` | OS default                 | If not blank, program to browse files in an album |
-| `path_compatibility`  | `"universal"`              | Configure what is allowed in filenames            |
-| `rescan`              | `"auto"`                   | When to automatically rescan the library          |
-| `tagger`              | `"easytag"` (if installed) | External program to view and set tags in an album |
+| Name                          | Default                                      | Description                                       |
+| ----------------------------- | -------------------------------------------- | ------------------------------------------------- |
+| `library`                     | OS default                                   | Location of the music library                     |
+| `open_folder_command`         | OS default                                   | If not blank, program to browse files in an album |
+| `path_compatibility`          | `"universal"`                                | Configure what is allowed in filenames            |
+| `rescan`                      | `"auto"`                                     | When to automatically rescan the library          |
+| `tagger`                      | `"easytag"` (if installed)                   | External program to view and set tags in an album |
+| `default_import_path`         | `"$artist/$album"`                           | Import: default path for new albums in library    |
+| `default_import_path_various` | `"Compilations/$album"`                      | Import: default path for new compilation albums   |
+| `more_import_paths`           | `"$A1/$artist/$album", "Soundtracks/$album"` | Import: other selectable paths for new albums     |
+
+!!!note
+
+    The import paths can use substitution values determined from the tags on
+    the new album. Available substitutions are: `$album`, `$artist` (which may
+    be the "album artist" value), `$A1` (first letter of artist name, not
+    including "The"), and `$a1` (lowercase version of `$A1`)
 
 <!-- pyml enable line-length -->
 

@@ -1,10 +1,14 @@
+import glob
 import logging
 from collections import defaultdict
+from itertools import chain
 from pathlib import Path
 from string import Template
 
 from pathvalidate import sanitize_filename, sanitize_filepath
+from rich.markup import escape
 
+from albums.library.synchronizer import copy_files_with_progress
 from albums.tagger.types import BasicTag
 
 from ..app import Context
@@ -13,8 +17,35 @@ from ..types import Album
 logger = logging.getLogger(__name__)
 
 
-def import_album(ctx: Context, source_path: Path, library_path: str, album: Album, extra: bool, recursive: bool):
-    ctx.console.print(f"would import from {str(source_path)} -> {library_path}")
+def import_album(ctx: Context, source_path: Path, destination_path_in_library: str, album: Album, extra: bool, recursive: bool):
+    src = source_path.resolve()
+    if not src.is_dir():
+        logger.error(f"import_album: not a directory: {str(src)}")
+        raise SystemExit(1)
+
+    root_ctx = ctx.parent if ctx.parent is not None else ctx
+    destination_path = root_ctx.config.library / destination_path_in_library
+    dest = Path(destination_path).resolve()
+    if dest.exists():
+        logger.error(f"import_album: destination already exists: {str(dest)}")
+        raise SystemExit(1)
+    if extra or recursive:
+        filenames = glob.iglob("**", root_dir=src, recursive=recursive)
+    else:
+        filenames = chain((track.filename for track in album.tracks), album.picture_files.keys())
+
+    to_copy: list[tuple[Path, Path, int]] = []  # list of (source, destination, size)
+    for filename in filenames:
+        src_path = src / filename
+        if src_path.is_file():
+            to_copy.append((src_path, dest / filename, src_path.stat().st_size))
+    if not to_copy:
+        raise RuntimeError("unexpected: no files to copy?")
+
+    copy_files_with_progress(ctx, to_copy)
+
+    ctx.console.print(f"Imported album to {escape(destination_path_in_library)} (will be added to library on next scan)")
+    # TODO add album to database immediately + include cover source mark or ignored checks from import process
 
 
 def make_library_paths(ctx: Context, album: Album):

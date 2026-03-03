@@ -186,7 +186,7 @@ class TestCli:
 
         result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
         assert result.exit_code == 0
-        assert "copying 2 tracks" in result.output
+        assert "Copying 2 files" in result.output
         assert "will delete 2 paths" in result.output
         assert (dest / "bar").is_dir()
         assert (dest / "bar" / "1.flac").is_file()
@@ -195,6 +195,25 @@ class TestCli:
         result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
         assert result.exit_code == 0
         assert "no tracks to copy (skipped 2)" in result.output
+
+    def test_import_automatic(self):
+        self.run(["scan"], init=True)
+        result = self.run(["list"])
+        assert "baz" not in result.output
+
+        new_album = Album(
+            "baz" + os.sep,
+            [Track("1.flac", {BasicTag.TITLE: ["1"], BasicTag.TRACKNUMBER: ["01"], BasicTag.ALBUM: ["baz"], BasicTag.ARTIST: ["baz"]})],
+        )
+        src = create_library("cli_import", [new_album])
+        result = self.run(["-v", "import", "--automatic", str(src)])
+        assert result.exit_code == 0
+        assert "automatically fixing track-filename" in result.output
+        assert "Copying 1 file" in result.output
+
+        self.run(["scan"])
+        result = self.run(["list"])
+        assert "baz" in result.output
 
     def test_sql(self):
         self.run(["scan"], init=True)

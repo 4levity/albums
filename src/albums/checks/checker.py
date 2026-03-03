@@ -36,9 +36,6 @@ class Checker:
     _show_ignore_option: bool
 
     def __init__(self, ctx: Context, automatic: bool, preview: bool, fix: bool, interactive: bool, show_ignore_option: bool):
-        if interactive and automatic:
-            ctx.console.print("cannot use --interactive with --automatic")
-            raise SystemExit(1)
         if preview and (automatic or fix or interactive):
             ctx.console.print("--preview cannot be used with other fix options")
             raise SystemExit(1)

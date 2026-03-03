@@ -26,8 +26,8 @@ class RescanOption(StrEnum):
 
 
 DEFAULT_IMPORT_PATH = Template("$artist/$album")
-DEFAULT_IMPORT_PATH_VARIOUS = Template("Compilations")
-DEFAULT_MORE_IMPORT_PATHS = (Template("$A1/$artist/$album"), Template("Soundtracks"))
+DEFAULT_IMPORT_PATH_VARIOUS = Template("Compilations/$album")
+DEFAULT_MORE_IMPORT_PATHS = (Template("$A1/$artist/$album"), Template("Soundtracks/$album"))
 
 
 def default_checks_config() -> Mapping[str, CheckConfiguration]:
@@ -86,15 +86,15 @@ class Configuration:
                 # TODO validate templates
                 if name == "default_import_path":
                     config.default_import_path = Template(str(value))
-                if name == "default_import_path_various":
+                elif name == "default_import_path_various":
                     config.default_import_path_various = Template(str(value))
-                if name == "more_import_paths":
+                elif name == "more_import_paths":
                     if isinstance(value, list):
                         config.more_import_paths = tuple(Template(v) for v in value)
                     else:
                         logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.more_import_paths)}")
                         ignored_values = True
-                if name == "library":
+                elif name == "library":
                     config.library = Path(str(value))
                 elif name == "open_folder_command":
                     config.open_folder_command = str(value)

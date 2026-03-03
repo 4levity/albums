@@ -5,8 +5,8 @@ icon: lucide/target
 # Overview
 
 `albums` is an interactive tool to manage music: configurably validate and fix
-tags and metadata, rename files, format and embed album art, and sync parts of
-the library to digital audio players or portable storage
+tags and metadata, rename files, reformat and embed album art, import albums,
+and sync parts of the library to digital audio players or portable storage
 
 This documentation is for `albums` version **%%version_placeholder%%**.
 
