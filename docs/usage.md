@@ -73,6 +73,7 @@ there are some global settings:
 | `default_import_path`         | `"$artist/$album"`                           | Import: default path for new albums in library    |
 | `default_import_path_various` | `"Compilations/$album"`                      | Import: default path for new compilation albums   |
 | `more_import_paths`           | `"$A1/$artist/$album", "Soundtracks/$album"` | Import: other selectable paths for new albums     |
+| `id3v1`                       | `"UPDATE"`                                   | Policy for ID3 version 1 tags                     |
 
 !!!note
 
@@ -109,6 +110,11 @@ operation is filtered then only selected albums will be rescanned. Options:
 **`tagger`**: If this option is set or if EasyTAG is installed, the fix menu
 will have a menu option to execute an external tagging program. The path of the
 album will be the first parameter.
+
+**`id3v1`**: ID3 version 2 tags are always used. This setting describes what to
+do with ID3 version 1 tags. Options are **REMOVE** (ID3v1 tags will be removed),
+**UPDATE** (ID3v1 tags will be updated but not added), or **CREATE** (ID3v1 tags
+will be created and/or updated).
 
 ## Tag Conversion
 

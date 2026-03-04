@@ -10,7 +10,7 @@ from ..picture.scan import PictureScanner
 from .flac import FlacTagger
 from .image_file_reader import ImageFileReader
 from .m4a import M4aTagger
-from .mp3 import Mp3Tagger
+from .mp3 import ID3v1Policy, Mp3Tagger
 from .oggvorbis import OggVorbisTagger
 from .types import BasicTag, TaggerFile
 from .universal import UniversalTagger
@@ -43,15 +43,18 @@ class AlbumTagger:
     _folder: Path
     _padding: Callable[[PaddingInfo], int]
     _picture_scanner: PictureScanner
+    _id3v1: ID3v1Policy
 
     def __init__(
         self,
         folder: Path,
         padding: Callable[[PaddingInfo], int] = lambda info: info.get_default_padding(),
+        id3v1: ID3v1Policy = ID3v1Policy.UPDATE,
     ):
         self._folder = folder
         self._padding = padding
         self._picture_scanner = PictureScanner()
+        self._id3v1 = id3v1
 
     @contextmanager
     def open(self, filename: str) -> Generator[TaggerFile, Any, None]:
@@ -68,7 +71,7 @@ class AlbumTagger:
             elif suffix == ".m4a":
                 tagger_file = M4aTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
             elif suffix == ".mp3":
-                tagger_file = Mp3Tagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
+                tagger_file = Mp3Tagger(path, picture_scanner=self._picture_scanner, padding=self._padding, id3v1=self._id3v1)
             elif suffix == ".ogg":
                 tagger_file = OggVorbisTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
             elif suffix in SUPPORTED_IMAGE_SUFFIXES:

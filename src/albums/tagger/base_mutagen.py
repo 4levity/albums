@@ -35,6 +35,9 @@ class AbstractMutagenTagger(TaggerFile):
             logger.warning(f"couldn't determine codec in {file.filename}")
             return "unknown"
 
+    def _save(self):
+        self._get_file().save(padding=self._padding)  # pyright: ignore[reportUnknownMemberType]
+
     @override
     def scan(self) -> ScanResult:
         file = self._get_file()
@@ -64,7 +67,7 @@ class AbstractMutagenTagger(TaggerFile):
     @override
     def close(self):
         if self._changed:
-            self._get_file().save(padding=self._padding)  # pyright: ignore[reportUnknownMemberType]
+            self._save()
 
 
 def _get_stream_info(filename: str, mutagen_file_info: Any, codec: str) -> StreamInfo:

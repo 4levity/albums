@@ -11,6 +11,7 @@ from rich.prompt import FloatPrompt, IntPrompt
 from ..app import Context
 from ..configuration import PathCompatibilityOption, RescanOption
 from ..database import db_config
+from ..tagger.mp3 import ID3v1Policy
 
 
 def interactive_config(ctx: Context, db: sqlite3.Connection):
@@ -65,6 +66,7 @@ def _configure_settings(ctx: Context, db: sqlite3.Connection):
                 ("default_import_path", f"default_import_path ({ctx.config.default_import_path.template})"),
                 ("default_import_path_various", f"default_import_path_various ({ctx.config.default_import_path_various.template})"),
                 ("more_import_paths", f"more_import_paths ({','.join(t.template for t in ctx.config.more_import_paths)})"),
+                ("id3v1", f"id3v1 ({ctx.config.id3v1.name})"),
                 ("back", "<< go back"),
             ],
         )
@@ -86,6 +88,7 @@ def _configure_setting(
         "default_import_path",
         "default_import_path_various",
         "more_import_paths",
+        "id3v1",
     ],
 ):
     match setting:
@@ -132,6 +135,15 @@ def _configure_setting(
             default_str = ",".join(t.template for t in ctx.config.more_import_paths)
             more_paths = prompt("Enter more import path templates separated by comma: ", default=default_str)
             ctx.config.more_import_paths = [Template(path.strip()) for path in more_paths.split(",")]
+            db_config.save(db, ctx.config)
+        case "id3v1":
+            options = [(opt, opt.name) for opt in ID3v1Policy]
+            option = choice(
+                message="(MP3 only) ID3 version 2 tags are always used. What to do with ID3 version 1 tags?",
+                options=options,
+                default=ctx.config.id3v1,
+            )
+            ctx.config.id3v1 = ID3v1Policy(option)
             db_config.save(db, ctx.config)
 
 

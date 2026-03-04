@@ -29,5 +29,5 @@ class Check:
 
     def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None):
         self.ctx = ctx
-        self.tagger = tagger if tagger else AlbumTaggerProvider(ctx.config.library)
+        self.tagger = tagger if tagger else AlbumTaggerProvider(ctx.config.library, id3v1=ctx.config.id3v1)
         self.init(ctx.config.checks[self.name])

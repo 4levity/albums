@@ -1,5 +1,6 @@
 import logging
 import textwrap
+from enum import IntEnum
 from pathlib import Path
 from typing import Callable, Generator, List, Tuple, override
 
@@ -29,14 +30,22 @@ BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
 # "date": "tdrc",  # recordingdate?
 
 
+class ID3v1Policy(IntEnum):
+    REMOVE = 0
+    UPDATE = 1
+    CREATE = 2
+
+
 class Mp3Tagger(AbstractMutagenTagger):
     _file: MP3
     _picture_scanner: PictureScanner
+    _id3v1: ID3v1Policy
 
-    def __init__(self, path: Path, picture_scanner: PictureScanner, padding: Callable[[PaddingInfo], int]):
+    def __init__(self, path: Path, picture_scanner: PictureScanner, padding: Callable[[PaddingInfo], int], id3v1: ID3v1Policy):
         super().__init__(padding)
         self._file = MP3(path)
         self._picture_scanner = picture_scanner
+        self._id3v1 = id3v1
 
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]:
         tags: ID3 = self._file.tags  # type: ignore
@@ -218,6 +227,9 @@ class Mp3Tagger(AbstractMutagenTagger):
             id3.add(TRCK(encoding=Encoding.UTF8, text=[value]))  # pyright: ignore[reportUnknownMemberType]
         elif value is not None and id3["TRCK"].text != [value]:  # pyright: ignore[reportUnknownMemberType]
             id3["TRCK"] = TRCK(encoding=Encoding.UTF8, text=[value])
+
+    def _save(self):
+        self._file.save(padding=self._padding, v1=self._id3v1)  # pyright: ignore[reportUnknownMemberType]
 
 
 def _get_text(id3: ID3 | None, frame_name: str):

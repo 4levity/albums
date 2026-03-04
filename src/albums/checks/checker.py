@@ -57,7 +57,7 @@ class Checker:
             raise ValueError("invalid preview setting")  # not allowed by cli
         preview_failed_checks: list[str] = []
 
-        tagger = AlbumTaggerProvider(self.ctx.config.library)
+        tagger = AlbumTaggerProvider(self.ctx.config.library, id3v1=self.ctx.config.id3v1)
         check_instances = [check(self.ctx, tagger) for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
 
         issues_displayed = 0

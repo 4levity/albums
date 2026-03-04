@@ -6,6 +6,7 @@ from pathlib import Path
 from string import Template
 from typing import Dict, Iterator, Mapping, Union
 
+from .tagger.mp3 import ID3v1Policy
 from .types import CheckConfiguration, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class Configuration:
     path_replace_invalid = ""
     rescan: RescanOption = RescanOption.AUTO
     tagger: str = ""
+    id3v1: ID3v1Policy = ID3v1Policy.UPDATE
 
     def to_values(self) -> Mapping[str, Union[str, int, float, bool, Sequence[str]]]:
         values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
@@ -62,6 +64,7 @@ class Configuration:
             "settings.path_replace_slash": str(self.path_replace_slash),
             "settings.rescan": str(self.rescan),
             "settings.tagger": self.tagger,
+            "settings.id3v1": self.id3v1.value,
         }
         defaults = default_checks_config()
         for check_name, check_config in self.checks.items():
@@ -112,6 +115,8 @@ class Configuration:
                     config.rescan = RescanOption(value)
                 elif name == "tagger":
                     config.tagger = str(value)
+                elif name == "id3v1":
+                    config.id3v1 = ID3v1Policy(value)
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
                     ignored_values = True
