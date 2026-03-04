@@ -46,12 +46,27 @@ depends on the `path_compatibility` global configuration setting (see
 
 ### track-filename
 
-Track filenames should match tags. They should include the track number and
-title. The filename should start with the disc number if part of a set, and
-include the artist name if the album is a compilation. Filenames should be valid
-(see `path_compatibility` and related path settings in [Usage](./usage.md)).
+Track filenames should match tags. Typically they include the track number and
+title. They start with the disc number if part of a set, and include the artist
+name if the album is a compilation. Filenames should be valid (see
+`path_compatibility` and related path settings in [Usage](./usage.md)).
 
-This check will compare filenames against filenames generated like this:
+The filename format is a template string. The template substitutions are:
+
+<!-- pyml disable line-length -->
+
+| Substitution       | Example                     | Description                                                   |
+| ------------------ | --------------------------- | ------------------------------------------------------------- |
+| **`$track_auto`**  | `1-02` or `02`              | Disc#-Track# if there is a Disc#, or just Track#              |
+| **`$tracknumber`** | `02`                        | Track# only (blank if none)                                   |
+| **`$discnumber`**  | `1`                         | Disc# only (blank if none)                                    |
+| **`$title_auto`**  | `Artist - Title` or `Title` | "Artist - Title" if artist is not album artist, or just Title |
+| **`$artist`**      | `Artist`                    | Track artist                                                  |
+| **`$title`**       | `Title`                     | Track title                                                   |
+
+<!-- pyml enable line-length -->
+
+The default template `"$track_auto $title_auto"` generates filenames like this:
 
 | Disc   | Track  | Title | Artist | Album Artist    | Filename           |
 | ------ | ------ | ----- | ------ | --------------- | ------------------ |
@@ -61,8 +76,6 @@ This check will compare filenames against filenames generated like this:
 | 1      | 01     | Foo   | Bar    | _none_          | `1-01 Foo.mp3`     |
 | _none_ | _none_ | Foo   | Bar    | _none_          | `Foo.mp3`          |
 
-See options below if you prefer e.g. `01. Foo.mp3` or `01 - Foo.mp3` instead.
-
 !!!success "Dependency"
 
     Requires the `"album-artist`, `artist-tag`, `track-numbering`,
@@ -70,13 +83,9 @@ See options below if you prefer e.g. `01. Foo.mp3` or `01 - Foo.mp3` instead.
 
 **Automatic fix**: Rename all tracks according to configuration.
 
-<!-- pyml disable line-length -->
-
-| Option = default                            | Description                                |
-| ------------------------------------------- | ------------------------------------------ |
-| `track_number_suffix` = `" "` _(one space)_ | Put this right after the disc/track number |
-
-<!-- pyml enable line-length -->
+| Option   | Default                     | Description                    |
+| -------- | --------------------------- | ------------------------------ |
+| `format` | `"$track_auto $title_auto"` | Template to generate filenames |
 
 ### cover-filename
 
@@ -160,11 +169,11 @@ automatic fix if the policy is "always".)
 
 <!-- pyml disable line-length -->
 
-| Option = default                          | Description                                                             |
-| ----------------------------------------- | ----------------------------------------------------------------------- |
-| `discs_in_separate_folders` = **true**    | if true, albums with multiple discs may be stored in separate folders   |
-| `remove_redundant_discnumber` = **false** | if true, disc number tag "1" can be removed if there are no other discs |
-| `disctotal_policy` = `"consistent"`       | Set the tag presence policy for disc total                              |
+| Option = default                          | Description                                                     |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| `discs_in_separate_folders` = **true**    | if true, discs from one album may be stored in separate folders |
+| `remove_redundant_discnumber` = **false** | if true, disc number tag "1" can be removed if no other discs   |
+| `disctotal_policy` = `"consistent"`       | Set the tag presence policy for disc total                      |
 
 <!-- pyml enable line-length -->
 

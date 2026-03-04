@@ -15,13 +15,28 @@ class TestCheckTrackFilename:
         ]
         assert not CheckTrackFilename(Context()).check(Album("", tracks))
 
-    def test_track_filename_ok_custom_suffix(self):
+    def test_track_filename_ok_custom_format(self):
         tracks = [
             Track("1 - foo.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["foo"]}),
             Track("2 - bar.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),
         ]
         ctx = Context()
-        ctx.config.checks["track-filename"]["track_number_suffix"] = " - "
+        ctx.config.checks["track-filename"]["format"] = "$track_auto - $title_auto"
+        assert not CheckTrackFilename(ctx).check(Album("", tracks))
+
+    def test_track_filename_ok_custom_format_more(self):
+        tracks = [
+            Track(
+                "[disc 1 track 1] baz - foo.flac",
+                {BasicTag.DISCNUMBER: ["1"], BasicTag.TRACKNUMBER: ["1"], BasicTag.ARTIST: ["baz"], BasicTag.TITLE: ["foo"]},
+            ),
+            Track(
+                "[disc 1 track 2] baz - bar.flac",
+                {BasicTag.DISCNUMBER: ["1"], BasicTag.TRACKNUMBER: ["2"], BasicTag.ARTIST: ["baz"], BasicTag.TITLE: ["bar"]},
+            ),
+        ]
+        ctx = Context()
+        ctx.config.checks["track-filename"]["format"] = "[disc $discnumber track $tracknumber] $artist / $title"  # "/" will become "-"
         assert not CheckTrackFilename(ctx).check(Album("", tracks))
 
     def test_track_filename_ok_no_title(self):

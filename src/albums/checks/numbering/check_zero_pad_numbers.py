@@ -37,7 +37,7 @@ class CheckZeroPadNumbers(Check):
     name = "zero-pad-numbers"
     default_config = {
         "enabled": True,
-        "tracknumber_pad": "TWO_DIGIT_MINIMUM",
+        "tracknumber_pad": "two_digit_minimum",
         "tracktotal_pad": "two_digit_minimum",
         "discnumber_pad": "if_needed",
         "disctotal_pad": "never",
