@@ -1,8 +1,10 @@
 import logging
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 from ...interactive.image_table import render_image_table
+from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
@@ -24,13 +26,13 @@ class CheckDuplicateImage(Check):
         album_art.extend([(filename, False, [file.picture]) for filename, file in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        picture_sources: defaultdict[Picture, list[tuple[str, bool, int]]] = defaultdict(list)
+        picture_sources: defaultdict[Picture, list[str]] = defaultdict(list)
         for filename, embedded, pictures in album_art:
             file_pics_by_content: defaultdict[Picture, list[Picture]] = defaultdict(list)
-            for embed_ix, picture in enumerate(pictures):
+            for picture in pictures:
                 if picture.type != PictureType.COVER_FRONT and self.cover_only:
                     continue
-                picture_sources[picture].append((filename, embedded, embed_ix))
+                picture_sources[picture].append(filename)
                 pictures_by_type[picture.type].add(picture)
                 if embedded:
                     file_pics_by_content[picture].append(picture)
@@ -44,9 +46,11 @@ class CheckDuplicateImage(Check):
 
         # TODO dedup for all pictures, if not self.cover_only
         front_covers = pictures_by_type.get(PictureType.COVER_FRONT, [])
-        cover_image_file = list(pic for pic in front_covers if any(not embedded for (_, embedded, _ix) in picture_sources[pic]))
+        cover_image_file = list(
+            pic for pic in front_covers if any(Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
+        )
         for pic in cover_image_file:
-            filenames = sorted(filename for (filename, embedded, _ix) in picture_sources[pic] if not embedded)
+            filenames = sorted(filename for filename in picture_sources[pic] if Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES)
             if len(filenames) > 1:
                 table = (filenames, lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic] * len(filenames), picture_sources))
                 option_automatic_index = filenames.index(min(filenames, key=lambda s: len(s)))  # pick shortest filename

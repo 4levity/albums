@@ -29,7 +29,7 @@ class CheckCoverEmbedded(Check):
         "create_max_height_width": 600,
         "create_jpeg_quality": 80,
     }
-    must_pass_checks = {"duplicate-image"}  # cover-unique is recommended but not required
+    must_pass_checks = {"conflicting-embedded"}  # cover-unique is recommended but not required
 
     def init(self, check_config: dict[str, Any]):
         defaults = CheckCoverEmbedded.default_config
@@ -47,11 +47,8 @@ class CheckCoverEmbedded(Check):
 
     def check(self, album: Album) -> CheckResult | None:
         cover_source = next(((filename, pic) for filename, pic in album.picture_files.items() if pic.cover_source), None)
-        # depends on duplicate-image, which ensures there is only one COVER_FRONT embedded per track
-        track_covers = [
-            next(((t.filename, p, embed_ix) for embed_ix, p in enumerate(t.pictures) if p.type == PictureType.COVER_FRONT), None)
-            for t in album.tracks
-        ]
+        # depends on conflicting-embedded, which ensures there is only one COVER_FRONT embedded per track
+        track_covers = [next(((t.filename, p) for p in t.pictures if p.type == PictureType.COVER_FRONT), None) for t in album.tracks]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
         missing = sum(0 if c else 1 for c in track_covers)
 
@@ -77,15 +74,15 @@ class CheckCoverEmbedded(Check):
                 track_cover = next(filter(None, track_covers), None)
                 headers = [f"Front Cover Source {cover_source_filename}"]
                 pictures = [cover_source_file.picture]
-                pic_sources: dict[Picture, list[tuple[str, bool, int]]] = {cover_source_file.picture: [(cover_source_filename, False, 0)]}
+                pic_sources: dict[Picture, list[str]] = {cover_source_file.picture: [cover_source_filename]}
                 if track_cover:
-                    (_, track_cover_pic, _) = track_cover
+                    (_, track_cover_pic) = track_cover
                     headers.append("Current Embedded Cover")
                     pictures.append(track_cover_pic)
                     for tc in track_covers:
                         if tc:
-                            (filename, _, embed_ix) = tc
-                            src = (filename, True, embed_ix)
+                            (filename, _) = tc
+                            src = filename
                             if track_cover_pic in pic_sources:
                                 pic_sources[track_cover_pic].append(src)
                             else:
@@ -136,23 +133,23 @@ class CheckCoverEmbedded(Check):
                     (filename, _) = cover_files[0]
                     options = [f">> Mark as front cover source: {filename}"]
                     option_automatic_index = 0
-                    table = ([filename], lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [(filename, False, 0)]}))
+                    table = ([filename], lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [filename]}))
                     return CheckResult(
                         f"{problem_summary}, but the file {filename} can be marked as cover_source (afterwards, a recheck can fix tracks)",
                         Fixer(lambda _: self._fix_mark_cover_source(album, filename), options, False, option_automatic_index, table),
                     )
                 # else
                 # create a cover.jpg/.png file and mark it as cover source
-                (filename, cover, embed_ix) = next(filter(None, track_covers))
+                (filename, cover) = next(filter(None, track_covers))
                 options = [">> Extract embedded cover and mark as front cover source"]
                 option_automatic_index = 0
                 table = (
                     ["Embedded Cover"],
-                    lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [(filename, True, embed_ix)]}),
+                    lambda: render_image_table(self.ctx, self.tagger.get(album.path), [cover], {cover: [filename]}),
                 )
                 return CheckResult(
                     f"{problem_summary}, but the cover can be extracted and marked as cover_source (afterwards, a recheck can fix tracks)",
-                    Fixer(lambda _: self._fix_extract_cover_source(album, filename, cover, embed_ix), options, False, option_automatic_index, table),
+                    Fixer(lambda _: self._fix_extract_cover_source(album, filename, cover), options, False, option_automatic_index, table),
                 )
             # else: no covers available, cover not required by earlier checks
         # else: no cover_source + all tracks have "good enough" embedded cover art
@@ -204,12 +201,12 @@ class CheckCoverEmbedded(Check):
         update_picture_files(self.ctx.db, album.album_id, album.picture_files)
         return True
 
-    def _fix_extract_cover_source(self, album: Album, filename: str, cover: Picture, embed_ix: int):
+    def _fix_extract_cover_source(self, album: Album, filename: str, cover: Picture):
         if not self.ctx.db or not album.album_id:
             raise ValueError("extracting cover source requires database and album_id")
 
         with self.tagger.get(album.path).open(filename) as tags:
-            image_data = tags.get_image_data(cover.type, embed_ix)
+            image_data = tags.get_image_data(cover)
         source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
 
@@ -229,7 +226,7 @@ class CheckCoverEmbedded(Check):
         self,
         album: Album,
         some_pictures: list[Picture],
-        pic_sources: dict[Picture, list[tuple[str, bool, int]]],
+        pic_sources: dict[Picture, list[str]],
         source_picture: Picture,
         source_filename: str,
     ) -> Sequence[Sequence[RenderableType]]:

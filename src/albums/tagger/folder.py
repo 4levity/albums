@@ -5,8 +5,10 @@ from typing import Any, Callable, Collection, Generator, List, Tuple
 
 from mutagen._tags import PaddingInfo
 
+from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ..picture.scan import PictureScanner
 from .flac import FlacTagger
+from .image_file_reader import ImageFileReader
 from .m4a import M4aTagger
 from .mp3 import Mp3Tagger
 from .oggvorbis import OggVorbisTagger
@@ -27,6 +29,7 @@ SUFFIX_SUPPORT = {
     ".mp3": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
     ".ogg": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
 }
+SUFFIX_SUPPORT.update((suffix, {Cap.PICTURES}) for suffix in SUPPORTED_IMAGE_SUFFIXES)
 
 
 class AlbumTagger:
@@ -68,12 +71,14 @@ class AlbumTagger:
                 tagger_file = Mp3Tagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
             elif suffix == ".ogg":
                 tagger_file = OggVorbisTagger(path, picture_scanner=self._picture_scanner, padding=self._padding)
+            elif suffix in SUPPORTED_IMAGE_SUFFIXES:
+                tagger_file = ImageFileReader(path, picture_scanner=self._picture_scanner)
             else:
                 tagger_file = UniversalTagger(path, padding=self._padding)
             yield tagger_file
         finally:
             if tagger_file is not None:
-                tagger_file.save_if_changed()
+                tagger_file.close()
 
     def get_picture_scanner(self) -> PictureScanner:
         return self._picture_scanner

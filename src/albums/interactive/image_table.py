@@ -11,7 +11,6 @@ from rich_pixels import Pixels
 from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
 
 from ..app import Context
-from ..library.folder import read_binary_file
 from ..tagger.folder import AlbumTagger
 from ..tagger.types import Picture
 
@@ -22,7 +21,7 @@ def render_image_table(
     ctx: Context,
     tags: AlbumTagger,
     pictures: Sequence[Picture | Tuple[Picture, Image.Image, bytes]],  # type: ignore
-    picture_sources: Dict[Picture, List[Tuple[str, bool, int]]],
+    picture_sources: Dict[Picture, List[str]],
 ) -> Sequence[Sequence[RenderableType]]:
     pixelses: list[RenderableType] = []
     target_width = int((ctx.console.width - 3) / len(pictures))
@@ -33,12 +32,9 @@ def render_image_table(
     for cover_ref in pictures:
         if isinstance(cover_ref, Picture):
             cover = cover_ref
-            (filename, embedded, embed_ix) = picture_sources[cover][0]
-            if embedded:
-                with tags.open(filename) as f:
-                    image_data = f.get_image_data(cover_ref.type, embed_ix)
-            else:
-                image_data = read_binary_file(tags.path() / filename)
+            filename = picture_sources[cover][0]
+            with tags.open(filename) as f:
+                image_data = f.get_image_data(cover_ref)
             image = Image.open(io.BytesIO(image_data))
         else:
             (cover, image, image_data) = cover_ref

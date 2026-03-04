@@ -2,11 +2,13 @@ import logging
 import mimetypes
 from collections import defaultdict
 from os import rename
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Sequence
 
 from rich.markup import escape
 
 from ...interactive.image_table import render_image_table
+from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer
@@ -28,14 +30,14 @@ class CheckCoverAvailable(Check):
         if self.cover_required and not all(AlbumTagger.supports(track.filename, Cap.PICTURES) for track in album.tracks):
             return None  # if cover is required, only run check on albums where embedded pictures are supported
 
-        album_art = [(track.filename, True, track.pictures) for track in album.tracks]
-        album_art.extend([(filename, False, [file.picture]) for filename, file in album.picture_files.items()])
+        album_art = [(track.filename, track.pictures) for track in album.tracks]
+        album_art.extend([(filename, [file.picture]) for filename, file in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        picture_sources: Dict[Picture, List[Tuple[str, bool, int]]] = defaultdict(list)
-        for filename, embedded, pictures in album_art:
-            for embed_ix, picture in enumerate(pictures):
-                picture_sources[picture].append((filename, embedded, embed_ix))
+        picture_sources: Dict[Picture, List[str]] = defaultdict(list)
+        for filename, pictures in album_art:
+            for picture in pictures:
+                picture_sources[picture].append(filename)
                 pictures_by_type[picture.type].add(picture)
 
         front_covers: set[Picture] = pictures_by_type.get(PictureType.COVER_FRONT, set())
@@ -66,28 +68,26 @@ class CheckCoverAvailable(Check):
         # else front cover image(s) available
         return None
 
-    def _describe_album_art(self, picture: Picture, picture_sources: Dict[Picture, List[Tuple[str, bool, int]]]):
+    def _describe_album_art(self, picture: Picture, picture_sources: Dict[Picture, List[str]]):
         sources = picture_sources[picture]
-        (filename, embedded, embed_ix) = sources[0]
-        first_source = f"{escape(filename)}{f'#{embed_ix}' if embedded else ''}"
+        filename = sources[0]
+        first_source = f"{escape(filename)}"
         details = f"{picture.file_info.mime_type} {picture.type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
-    def _fix_set_cover(
-        self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[Tuple[str, bool, int]]]
-    ):
+    def _fix_set_cover(self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[str]]):
         ix = options.index(option)
         pic = pics[ix]
-        file_sources = [filename for filename, embedded, _ in sources[pic] if not embedded]
+        file_sources = [filename for filename in sources[pic] if Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES]
         if file_sources:
             path = self.ctx.config.library / album.path / file_sources[0]
             new_filename = f"{FRONT_COVER_FILENAME}{path.suffix}"
             self.ctx.console.print(f"Renaming {file_sources[0]} to {new_filename}")
             rename(path, self.ctx.config.library / album.path / new_filename)
         else:
-            (filename, _, embed_ix) = sources[pic][0]
+            filename = sources[pic][0]
             with self.tagger.get(album.path).open(filename) as tags:
-                image_data = tags.get_image_data(pic.type, embed_ix)
+                image_data = tags.get_image_data(pic)
             suffix = mimetypes.guess_extension(pic.file_info.mime_type)
             new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
             self.ctx.console.print(f"Creating {len(image_data)} byte {pic.file_info.mime_type} file {new_filename}")

@@ -1,3 +1,4 @@
+import contextlib
 import os
 from pathlib import Path
 from unittest.mock import call
@@ -6,6 +7,8 @@ from rich_pixels import Pixels
 
 from albums.app import Context
 from albums.checks.picture.check_cover_unique import CheckCoverUnique
+from albums.database import connection, selector
+from albums.library import scanner
 from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, PictureFile, Track
@@ -91,11 +94,14 @@ class TestCheckCoverUnique:
             [],
             [],
             picture_files,
-            999,
         )
         ctx = Context()
-        ctx.db = True
         ctx.config.library = create_library("front_cover", [album])
+        # actually scan and load the album so picture hashes will be correct
+        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+            scanner.scan(ctx)
+            album = next(selector.select_albums(ctx.db, [], [], False))
+
         result = CheckCoverUnique(ctx).check(album)
         assert result is not None
         assert (
@@ -120,7 +126,7 @@ class TestCheckCoverUnique:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert update_picture_files_mock.call_count == 1
-        assert update_picture_files_mock.call_args.args[1] == 999
+        assert update_picture_files_mock.call_args.args[1] == album.album_id
         assert update_picture_files_mock.call_args.args[2]["cover.png"].cover_source
 
     def test_multiple_cover_image_files_no_embedded(self, mocker):

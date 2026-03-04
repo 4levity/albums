@@ -10,7 +10,6 @@ from PIL import Image
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
-from ...library.folder import read_binary_file
 from ...picture.format import IMAGE_MODE_BPP, MIME_PILLOW_FORMAT
 from ...picture.info import PictureInfo
 from ...tagger.types import Picture, PictureType
@@ -55,11 +54,11 @@ class CheckCoverDimensions(Check):
 
     def check(self, album: Album) -> CheckResult | None:
         issues: set[str] = set()
-        embedded_covers: dict[Picture, tuple[int, str]] = {}
+        embedded_covers: dict[Picture, str] = {}
         for track in album.tracks:
-            covers = [(embed_ix, pic) for embed_ix, pic in enumerate(track.pictures) if pic.type == PictureType.COVER_FRONT]
+            covers = [pic for pic in track.pictures if pic.type == PictureType.COVER_FRONT]
             if covers:
-                embedded_covers[covers[0][1]] = (covers[0][0], track.filename)
+                embedded_covers[covers[0]] = track.filename
         cover_files = [
             (file, filename) for filename, file in album.picture_files.items() if PictureType.from_filename(filename) == PictureType.COVER_FRONT
         ]
@@ -77,9 +76,8 @@ class CheckCoverDimensions(Check):
             )
 
         if embedded_covers:
-            (embedded_cover, (embed_ix, _)) = list(embedded_covers.items())[0]
+            (embedded_cover, _filename) = list(embedded_covers.items())[0]
         else:
-            embed_ix = 0
             embedded_cover = None
 
         if (
@@ -97,7 +95,7 @@ class CheckCoverDimensions(Check):
             cover = cover_file.picture
             embedded = False
         elif embedded_cover:
-            (cover, (embed_ix, from_file)) = list(embedded_covers.items())[0]
+            (cover, from_file) = list(embedded_covers.items())[0]
             embedded = True
         else:
             return None  # no cover means cover-available is not configured to require one
@@ -113,20 +111,20 @@ class CheckCoverDimensions(Check):
             if not issues and self._can_squarify(cover.file_info.width, cover.file_info.height):  # squarify if image is not too small/large/unsquare
                 options = [">> Make cover image square"]
                 option_automatic_index = 0
-                picture_source: Dict[Picture, List[Tuple[str, bool, int]]] = {cover: [(from_file, embedded, embed_ix)]}
+                picture_source: Dict[Picture, List[str]] = {cover: [from_file]}
                 source_file = from_file if not embedded else None
                 new_cover: list[Tuple[Picture, Image.Image, bytes]] = []
 
                 def make_new_cover():
                     if not new_cover:
-                        (filename, embedded, embed_ix) = picture_source[cover][0]
-                        (image, image_data, mime_type) = self._squarify(cover, embedded, embed_ix, self.ctx.config.library / album.path, filename)
+                        filename = picture_source[cover][0]
+                        (image, image_data, mime_type) = self._squarify(cover, self.ctx.config.library / album.path, filename)
                         pic_info = PictureInfo(mime_type, image.width, image.height, IMAGE_MODE_BPP.get(image.mode, 0), len(image_data), b"")
                         new_cover.append((Picture(pic_info, cover.type, "", ()), image, image_data))
                     return new_cover[0]
 
                 table = (
-                    [f"Front cover {from_file}{f'#{embed_ix}' if embedded else ''}", "Preview"],
+                    [f"Front cover {from_file}", "Preview"],
                     lambda: self._render_table(album, cover, picture_source, make_new_cover),
                 )
                 return CheckResult(
@@ -181,7 +179,7 @@ class CheckCoverDimensions(Check):
         self,
         album: Album,
         cover: Picture,
-        picture_source: Dict[Picture, List[Tuple[str, bool, int]]],
+        picture_source: Dict[Picture, List[str]],
         get_preview: Callable[[], Tuple[Picture, Image.Image, bytes]],
     ):
         preview = get_preview()
@@ -203,12 +201,9 @@ class CheckCoverDimensions(Check):
     def _can_squarify(self, w: int, h: int):
         return not self._cover_square_enough(w, h) and self._aspect(w, h) >= self.fixable_squareness
 
-    def _squarify(self, pic: Picture, embedded: bool, embed_ix: int, path: Path, filename: str):
-        if embedded:
-            with self.tagger.get(path).open(filename) as tags:
-                image_data = tags.get_image_data(pic.type, embed_ix)
-        else:
-            image_data = read_binary_file(path / filename)
+    def _squarify(self, pic: Picture, path: Path, filename: str):
+        with self.tagger.get(path).open(filename) as tags:
+            image_data = tags.get_image_data(pic)
 
         image = Image.open(io.BytesIO(image_data))
         if image.mode not in {"RGB", "L"}:

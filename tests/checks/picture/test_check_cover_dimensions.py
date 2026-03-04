@@ -138,7 +138,10 @@ class TestCheckCoverDimensions:
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(cover.file_info.width, cover.file_info.height, "JPEG")
-        mock_read_binary_file = mocker.patch("albums.checks.picture.check_cover_dimensions.read_binary_file", return_value=image_data)
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
         mock_unlink = mocker.patch("albums.checks.picture.check_cover_dimensions.unlink")
         mock_update_picture_files = mocker.patch("albums.checks.picture.check_cover_dimensions.update_picture_files")
         m_open = mock_open()
@@ -146,7 +149,7 @@ class TestCheckCoverDimensions:
         with patch("builtins.open", m_open):
             result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_read_binary_file.call_count == 1
+        assert mock_get_image_data.call_count == 1
         assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.jpg")]
         assert mock_update_picture_files.call_count == 1
         assert mock_update_picture_files.call_args.args[0]
@@ -177,14 +180,17 @@ class TestCheckCoverDimensions:
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(cover.file_info.width, cover.file_info.height, "PNG")
-        mock_read_binary_file = mocker.patch("albums.checks.picture.check_cover_dimensions.read_binary_file", return_value=image_data)
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
         mock_update_picture_files = mocker.patch("albums.checks.picture.check_cover_dimensions.update_picture_files")
         m_open = mock_open()
 
         with patch("builtins.open", m_open):
             result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_read_binary_file.call_count == 1
+        assert mock_get_image_data.call_count == 1
         assert mock_update_picture_files.call_count == 1
         assert mock_update_picture_files.call_args.args[0]
         assert mock_update_picture_files.call_args.args[1] == 1

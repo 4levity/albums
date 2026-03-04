@@ -51,7 +51,7 @@ class TestCheckCoverAvailable:
         assert result is not None
         assert "album has pictures but none is COVER_FRONT picture" in result.message
         assert result.fixer is not None
-        assert result.fixer.options == ["1.flac#0 (and 1 more) image/png COVER_BACK"]
+        assert result.fixer.options == ["1.flac (and 1 more) image/png COVER_BACK"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
@@ -125,7 +125,7 @@ class TestCheckCoverAvailable:
         assert "album has pictures but none is COVER_FRONT picture" in result.message
 
         assert result.fixer is not None
-        assert result.fixer.options == ["1.flac#0 (and 2 more) image/png OTHER"]
+        assert result.fixer.options == ["1.flac (and 2 more) image/png OTHER"]
         assert result.fixer.option_automatic_index == 0
 
         # same image was found embedded and in other.png - rename other.png instead of creating new cover.png

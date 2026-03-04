@@ -21,3 +21,6 @@ MIME_PILLOW_FORMAT = {
     "image/vnd.zbrush.pcx": "PCX",
     "image/webp": "WEBP",
 }
+
+# Can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
+SUPPORTED_IMAGE_SUFFIXES = frozenset({".bmp", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".tif", ".tiff", ".webp"})

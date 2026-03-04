@@ -1,11 +1,13 @@
 import logging
 from collections import defaultdict
+from pathlib import Path
 from typing import Collection, Sequence
 
 from rich.markup import escape
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
+from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
@@ -28,11 +30,11 @@ class CheckCoverUnique(Check):
         album_art.extend([(filename, False, [file.picture]) for filename, file in album.picture_files.items()])
 
         pictures_by_type: defaultdict[PictureType, set[Picture]] = defaultdict(set)
-        picture_sources: defaultdict[Picture, list[tuple[str, bool, int]]] = defaultdict(list)
+        picture_sources: defaultdict[Picture, list[str]] = defaultdict(list)
         for filename, embedded, pictures in album_art:
             file_cover: Picture | None = None
-            for embed_ix, picture in enumerate(pictures):
-                picture_sources[picture].append((filename, embedded, embed_ix))
+            for picture in pictures:
+                picture_sources[picture].append(filename)
                 pictures_by_type[picture.type].add(picture)
                 if picture.type == PictureType.COVER_FRONT:
                     if file_cover is None:
@@ -45,13 +47,17 @@ class CheckCoverUnique(Check):
         cover_image_files = list(
             pic
             for pic in sorted(front_covers, key=lambda pic: pic.file_info.file_size, reverse=True)
-            if any(not embedded for (_, embedded, _ix) in picture_sources[pic])
+            if any(Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
         )
-        cover_image_filenames = [[file for (file, embedded, _) in picture_sources[pic] if not embedded][0] for pic in cover_image_files]
+        cover_image_filenames = [
+            [file for file in picture_sources[pic] if Path(file).suffix in SUPPORTED_IMAGE_SUFFIXES][0] for pic in cover_image_files
+        ]
         cover_source_filename = next((filename for filename, file in album.picture_files.items() if file.cover_source), None)
 
         if len(front_covers) > 1:
-            cover_embedded = list(pic for pic in front_covers if any(embedded for (_, embedded, _ix) in picture_sources[pic]))
+            cover_embedded = list(
+                pic for pic in front_covers if any(Path(filename).suffix not in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
+            )
             cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in cover_embedded]
             table = (
                 cover_image_filenames + cover_embedded_desc,
@@ -117,10 +123,10 @@ class CheckCoverUnique(Check):
         # else only one cover
         return None
 
-    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[tuple[str, bool, int]]]):
+    def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[str]]):
         sources = picture_sources[picture]
-        (filename, embedded, embed_ix) = sources[0]
-        first_source = f"{escape(filename)}{f'#{embed_ix}' if embedded else ''}"
+        filename = sources[0]
+        first_source = f"{escape(filename)}"
         details = f"{picture.file_info.mime_type} {picture.type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 

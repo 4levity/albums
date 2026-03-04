@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 
-from .types import BasicTag, MutagenFileType, Picture, PictureType, ScanResult, StreamInfo, TaggerFile
+from .types import BasicTag, MutagenFileType, Picture, ScanResult, StreamInfo, TaggerFile
 
 ALL_BASIC_TAGS = frozenset(tag.value for tag in BasicTag)
 MAX_BASIC_TAG_VALUE_LENGTH = 4096
@@ -42,13 +42,11 @@ class AbstractMutagenTagger(TaggerFile):
         return ScanResult(self._scan_tags(), tuple(pic for pic, _data in self.get_pictures()), stream_info)
 
     @override
-    def get_image_data(self, picture_type: PictureType, embed_ix: int) -> bytes:
-        pic_info = next(((pic, data) for ix, (pic, data) in enumerate(self.get_pictures()) if ix == embed_ix), None)
+    def get_image_data(self, picture: Picture) -> bytes:
+        pic_info = next(((pic, data) for pic, data in self.get_pictures() if pic == picture), None)
         if pic_info is None:
-            raise ValueError(f"cannot read image#{embed_ix} from {self._get_file().filename}")
-        (picture, image_data) = pic_info
-        if picture.type != picture_type:
-            raise ValueError(f"image #{embed_ix} in {self._get_file().filename} expected type {picture_type} but was {picture.type}")
+            raise ValueError(f"cannot find matching {picture.type.value} image in {self._get_file().filename}")
+        (_, image_data) = pic_info
         return image_data
 
     def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None:
@@ -64,7 +62,7 @@ class AbstractMutagenTagger(TaggerFile):
         self._changed = True
 
     @override
-    def save_if_changed(self):
+    def close(self):
         if self._changed:
             self._get_file().save(padding=self._padding)  # pyright: ignore[reportUnknownMemberType]
 

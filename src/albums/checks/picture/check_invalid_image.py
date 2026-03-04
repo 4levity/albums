@@ -1,10 +1,12 @@
 import logging
 from os import unlink
+from pathlib import Path
 from typing import Sequence
 
 from rich.console import RenderableType
 from rich.markup import escape
 
+from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import Cap
 from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
@@ -17,20 +19,20 @@ class CheckInvalidImage(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album) -> CheckResult | None:
-        album_art = [(track.filename, True, track.pictures) for track in album.tracks]
-        album_art.extend([(filename, False, [file.picture]) for filename, file in album.picture_files.items()])
+        album_art = [(track.filename, track.pictures) for track in album.tracks]
+        album_art.extend([(filename, [file.picture]) for filename, file in album.picture_files.items()])
         table_rows: Sequence[Sequence[RenderableType]] = []
         issues: set[str] = set()
         any_bad_image_files = False
         any_bad_embedded_images = False
-        for filename, embedded, pictures in album_art:
-            for embed_ix, picture in enumerate(pictures):
+        for source_filename, pictures in album_art:
+            for picture in pictures:
                 load_issue = dict(picture.load_issue)
                 if picture.load_issue and "error" in load_issue:
-                    source = f"{filename}{f'#{embed_ix}' if embedded else ''}"
                     error = str(load_issue["error"])
-                    table_rows.append([source, picture.type.name, error])
+                    table_rows.append([source_filename, picture.type.name, error])
                     issues.add(error)
+                    embedded = Path(source_filename).suffix not in SUPPORTED_IMAGE_SUFFIXES
                     any_bad_embedded_images |= embedded
                     any_bad_image_files |= not embedded
         if issues:
