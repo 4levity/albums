@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-import sqlite3
 from collections import defaultdict
 from copy import copy
 from functools import reduce
@@ -27,11 +26,10 @@ PLATFORM_DIRS = PlatformDirs("albums", "4levity")
 DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 
-def require_persistent_context(ctx: Context) -> sqlite3.Connection:
+def require_persistent_context(ctx: Context) -> None:
     if not ctx.is_persistent or not ctx.db:
         ctx.console.print("This operation acts on a persistent library and cannot be used with --dir / -d option.")
         raise SystemExit(1)
-    return ctx.db
 
 
 def require_library(ctx: Context) -> None:

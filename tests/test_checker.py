@@ -1,4 +1,3 @@
-import contextlib
 import os
 
 import pytest
@@ -24,11 +23,13 @@ class TestChecker:
             ],
         )
         ctx = Context()
+        ctx.db = connection.open(connection.MEMORY)
         ctx.select_albums = lambda _: [album]
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            ctx.db = db
+        try:
             showed_issues = Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             assert showed_issues == 0
+        finally:
+            ctx.db.dispose()
 
     def test_run_enabled_automatic_dependent_check_ok(self):
         album = Album(
@@ -37,9 +38,9 @@ class TestChecker:
         )
         ctx = Context()
         ctx.config.library = create_library("checker_automatic", [album])
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            ctx.db = db
-            ctx.select_albums = lambda _: selector.load_albums(db)
+        ctx.db = connection.open(connection.MEMORY)
+        try:
+            ctx.select_albums = lambda _: selector.load_albums(ctx.db)
             scanner.scan(ctx)
             showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
 
@@ -49,6 +50,8 @@ class TestChecker:
             album = next(ctx.select_albums(True))
             assert album.tracks[0].tags[BasicTag.DISCNUMBER] == ("1",)
             assert album.tracks[0].tags[BasicTag.TRACKNUMBER] == ("01",)
+        finally:
+            ctx.db.dispose()
 
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(
@@ -61,14 +64,16 @@ class TestChecker:
         )
         ctx = Context()
         ctx.select_albums = lambda _: [album]
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            ctx.db = db
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             print_spy = mocker.spy(ctx.console, "print")
             Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
             assert f'dependency not met for check invalid-track-or-disc-number on "foo{os.sep}": disc-in-track-number must pass first' in output
             assert f'dependency not met for check disc-numbering on "foo{os.sep}": invalid-track-or-disc-number must pass first' in output
+        finally:
+            ctx.db.dispose()
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()

@@ -13,7 +13,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("check_names", nargs=-1)
 @pass_context
 def checks_notice(ctx: Context, force: bool, check_names: list[str]):
-    db = require_persistent_context(ctx)
+    require_persistent_context(ctx)
     for album in ctx.select_albums(False):
         changed = False
         error = False
@@ -32,7 +32,7 @@ def checks_notice(ctx: Context, force: bool, check_names: list[str]):
             if force or ctx.is_filtered or confirm(f"stop ignoring checks {check_names} for all albums?"):
                 if album.album_id is None:
                     raise ValueError(f"unexpected album.album_id=None for {album_display_name(ctx, album)}")
-                operations.update_ignore_checks(db, album.album_id, album.ignore_checks)
+                operations.update_ignore_checks(ctx.db, album.album_id, album.ignore_checks)
         elif not error and ctx.is_filtered:
             ctx.console.print(f"no changes to album {album_display_name(ctx, album)}")
         elif error:

@@ -1,5 +1,3 @@
-import contextlib
-
 from albums.app import Context
 from albums.database import connection, db_config
 from albums.interactive.configurator import interactive_config
@@ -7,13 +5,19 @@ from albums.interactive.configurator import interactive_config
 
 class TestConfigurator:
     def test_configurator_start(self, mocker):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        ctx = Context()
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             mock_choice = mocker.patch("albums.interactive.configurator.choice", return_value="exit")
-            interactive_config(Context(), db)
+            interactive_config(ctx)
             assert mock_choice.call_count == 1
+        finally:
+            ctx.db.dispose()
 
     def test_enable_disable_checks(self, mocker):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        ctx = Context()
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             mock_choice = mocker.patch("albums.interactive.configurator.choice")
             mock_choice.side_effect = ["enable", "exit"]
 
@@ -25,12 +29,14 @@ class TestConfigurator:
 
             mock_checklist = mocker.patch("albums.interactive.configurator.checkboxlist_dialog", return_value=DialogRun())
 
-            interactive_config(Context(), db)
+            interactive_config(ctx)
 
             assert mock_choice.call_count == 2
             assert mock_checklist.call_count == 1
-            config = db_config.load(db)
+            config = db_config.load(ctx.db)
             config_enabled_checks = set(check_name for check_name, check_config in config.checks.items() if check_config["enabled"])
             assert config_enabled_checks == set(request_enabled_checks)
+        finally:
+            ctx.db.dispose()
 
     # TODO test settings, check configs

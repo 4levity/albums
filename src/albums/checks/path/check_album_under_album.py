@@ -1,7 +1,9 @@
-from albums.checks.helpers import album_display_name
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from ...types import Album, CheckResult
 from ..base_check import Check
+from ..helpers import album_display_name
 
 
 class CheckAlbumUnderAlbum(Check):
@@ -9,17 +11,11 @@ class CheckAlbumUnderAlbum(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
-        if not self.ctx.db:
-            raise ValueError("CheckAlbumUnderAlbum.check called without a db connection")
-
         path = album.path
         like_path = path.replace("|", "||").replace("%", "|%").replace("_", "|_") + "%"
-        (matches,) = self.ctx.db.execute(
-            "SELECT COUNT(*) FROM album WHERE path != ? AND path LIKE ? ESCAPE '|';",
-            (
-                path,
-                like_path,
-            ),
-        ).fetchone()
-        if matches > 0:
-            return CheckResult(f"there are {matches} albums in directories under album {album_display_name(self.ctx, album)}")
+        with Session(self.ctx.db) as session:
+            matches = session.scalar(
+                text("SELECT COUNT(*) FROM album WHERE path != :path AND path LIKE :like_path ESCAPE '|';"), {"path": path, "like_path": like_path}
+            )  # TODO sqlalchemy can build this query
+            if matches > 0:
+                return CheckResult(f"there are {matches} albums in directories under album {album_display_name(self.ctx, album)}")

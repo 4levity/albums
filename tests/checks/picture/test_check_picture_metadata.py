@@ -1,4 +1,3 @@
-import contextlib
 import os
 
 from mutagen.flac import FLAC
@@ -48,7 +47,8 @@ class TestCheckPictureMetadata:
         flac.add_picture(pic)
         flac.save()
 
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
             assert result[0].tracks[0].pictures[0].load_issue
@@ -68,6 +68,8 @@ class TestCheckPictureMetadata:
             assert result[0].tracks[0].pictures[0].file_info.height == 400
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
+        finally:
+            ctx.db.dispose()
 
     def test_picture_metadata_mismatch_fix_mp3(self):
         album = Album("foo", [Track("1.mp3", {BasicTag.TITLE: ["1"]}, 0, 0, StreamInfo(1.5, 0, 0, "MP3"))])
@@ -82,7 +84,8 @@ class TestCheckPictureMetadata:
         with tagger.open(album.tracks[0].filename) as tags:
             tags.add_picture(Picture(pic_info, PictureType.COVER_FRONT, "", pic_scan.load_issue), image_data)
 
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
             assert result[0].tracks[0].pictures[0].load_issue
@@ -102,6 +105,8 @@ class TestCheckPictureMetadata:
             assert result[0].tracks[0].pictures[0].file_info.height == 400
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
+        finally:
+            ctx.db.dispose()
 
     def test_picture_image_file_extension_mismatch(self):
         pic = Picture(PictureInfo("image/png", 1, 1, 1, 0, b""), PictureType.COVER_FRONT, "", ())
@@ -110,7 +115,8 @@ class TestCheckPictureMetadata:
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
             assert result[0].picture_files["cover.gif"].picture.file_info.mime_type == "image/png"
@@ -129,3 +135,5 @@ class TestCheckPictureMetadata:
             assert result[0].picture_files["cover.png"].picture.load_issue == ()
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
+        finally:
+            ctx.db.dispose()

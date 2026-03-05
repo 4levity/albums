@@ -32,11 +32,11 @@ class UniversalTagger(AbstractMutagenTagger):
 
     @override
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None:
-        raise NotImplementedError(f"unsupported file: cannot add {new_picture.type} picture to {self._file.filename}")
+        raise NotImplementedError(f"unsupported file: cannot add {new_picture.type.name} picture to {self._file.filename}")
 
     @override
     def _remove_picture(self, remove_picture: Picture) -> None:
-        raise NotImplementedError(f"unsupported file: cannot remove {remove_picture.type} picture from {self._file.filename}")
+        raise NotImplementedError(f"unsupported file: cannot remove {remove_picture.type.name} picture from {self._file.filename}")
 
     @override
     def _scan_tags(self):

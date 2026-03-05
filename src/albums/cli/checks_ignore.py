@@ -13,7 +13,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("check_names", nargs=-1)
 @pass_context
 def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
-    db = require_persistent_context(ctx)
+    require_persistent_context(ctx)
     for album in ctx.select_albums(False):
         changed = False
         error = False
@@ -33,6 +33,6 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
             if album.album_id is None:
                 raise ValueError(f"cannot ignore checks for album with no album_id: {album.path}")
             if force or ctx.is_filtered or confirm(f"ignore checks {check_names} for all albums?"):
-                operations.update_ignore_checks(db, album.album_id, album.ignore_checks)
+                operations.update_ignore_checks(ctx.db, album.album_id, album.ignore_checks)
         elif error:
             ctx.console.print("changes not saved because some options were invalid")

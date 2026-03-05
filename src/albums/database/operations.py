@@ -1,237 +1,202 @@
 import json
 import logging
-import sqlite3
 from typing import Any, Collection, Mapping, Sequence, Tuple
+
+from sqlalchemy import Engine, delete, desc, select
+from sqlalchemy.orm import Session
 
 from ..picture.info import PictureInfo
 from ..tagger.types import BASIC_TAGS, BasicTag, Picture, PictureType, StreamInfo
 from ..types import Album, PictureFile, ScanHistoryEntry, Track
+from .models import (
+    AlbumEntity,
+    CollectionEntity,
+    IgnoreCheckEntity,
+    PictureFileEntity,
+    ScanHistoryEntity,
+    TrackEntity,
+    TrackPictureEntity,
+    TrackTagEntity,
+)
 
 logger = logging.getLogger(__name__)
 
 PICTURE_TYPE_FRONT_COVER_SOURCE_FILE = 200
 
 
-def load_album(db: sqlite3.Connection, album_id: int, load_track_tag: bool = True) -> Album:
-    with db:
-        row = db.execute("SELECT path, scanner FROM album WHERE album_id = ?;", (album_id,)).fetchone()
+def load_album(db: Engine, album_id: int, load_track_tags: bool = True) -> Album:
+    with Session(db) as session:
+        row = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).first()
         if row is None:
             raise ValueError(f"load_album called with invalid album_id={album_id}")
-
-        (path, scanner) = row
-        collections = [
-            name
-            for (name,) in db.execute(
-                "SELECT collection_name FROM collection AS c JOIN album_collection AS ac ON c.collection_id = ac.collection_id WHERE ac.album_id = ?;",
-                (album_id,),
-            )
-        ]
-
-        ignore_checks: list[str] = []
-        for (name,) in db.execute("SELECT check_name FROM album_ignore_check WHERE album_id = ?;", (album_id,)):
-            ignore_checks.append(name)
-
-        tracks = list(_load_tracks(db, album_id, load_track_tag))
-        picture_files: dict[str, PictureFile] = dict(
-            (
-                filename,
-                PictureFile(
-                    Picture(
-                        PictureInfo(format, width, height, depth_bpp, file_size, file_hash),
-                        PictureType.from_filename(filename),
-                        "",
-                        _load_load_issue(load_issue),
-                    ),
-                    modify_timestamp,
-                    bool(cover_source),
-                ),
-            )
-            for (filename, modify_timestamp, format, width, height, depth_bpp, file_size, file_hash, load_issue, cover_source) in db.execute(
-                "SELECT filename, modify_timestamp, format, width, height, depth_bpp, file_size, file_hash, load_issue, cover_source FROM album_picture_file WHERE album_id = ? ORDER BY filename;",
-                (album_id,),
-            )
-        )
-        return Album(path, tracks, collections, ignore_checks, picture_files, album_id, scanner)
+        return album_to_album(row[0], load_track_tags)
 
 
-def add(db: sqlite3.Connection, album: Album) -> int:
-    with db:
-        (album_id,) = db.execute("INSERT INTO album (path, scanner) VALUES (?, ?) RETURNING album_id;", (album.path, album.scanner)).fetchone()
-        _insert_collections(db, album_id, album.collections)
-        _insert_ignore_checks(db, album_id, album.ignore_checks)
-        _insert_tracks(db, album_id, album.tracks)
-        _insert_picture_files(db, album_id, album.picture_files)
-        return album_id
+def album_to_album(entity: AlbumEntity, load_track_tags: bool) -> Album:
+    return Album(
+        entity.path,
+        [_track(track, load_track_tags) for track in entity.tracks],
+        [c.collection_name for c in entity.collections],
+        [i.check_name for i in entity.ignore_checks],
+        dict((picture_file.filename, _picture_file(picture_file)) for picture_file in entity.picture_files),
+        entity.album_id,
+        entity.scanner,
+    )
 
 
-def remove(db: sqlite3.Connection, album_id: int):
-    with db:
-        cur = db.execute("DELETE FROM album WHERE album_id = ?;", (album_id,))
-        if cur.rowcount == 0:
-            logger.warning(f"didn't delete album, not found: {album_id}")
-
-
-def update_scanner(db: sqlite3.Connection, album_id: int, scanner: int):
-    with db:
-        cur = db.execute("UPDATE album SET scanner = ? WHERE album_id = ?;", (scanner, album_id))
-        if cur.rowcount == 0:
-            logger.warning(f"didn't update scanner for album, not found: {album_id}")
-
-
-def update_collections(db: sqlite3.Connection, album_id: int, collections: Collection[str]):
-    with db:
-        db.execute("DELETE FROM album_collection WHERE album_id = ?;", (album_id,))
-        _insert_collections(db, album_id, collections)
-
-
-def _insert_collections(db: sqlite3.Connection, album_id: int, collections: Collection[str]):
-    for collection_name in collections:
-        collection_id = _get_collection_id(db, collection_name)
-        db.execute("INSERT INTO album_collection (album_id, collection_id) VALUES (?, ?);", (album_id, collection_id))
-
-
-def _get_collection_id(db: sqlite3.Connection, collection_name: str):
-    row = db.execute("SELECT collection_id FROM collection WHERE collection_name = ?;", (collection_name,)).fetchone()
-    if row is None:
-        row = db.execute("INSERT INTO collection (collection_name) VALUES (?) RETURNING collection_id;", (collection_name,)).fetchone()
-    return row[0]
-
-
-def update_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: Collection[str]):
-    with db:
-        db.execute("DELETE FROM album_ignore_check WHERE album_id = ?;", (album_id,))
-        _insert_ignore_checks(db, album_id, ignore_checks)
-
-
-def _insert_ignore_checks(db: sqlite3.Connection, album_id: int, ignore_checks: Collection[str]):
-    for check_name in ignore_checks:
-        db.execute("INSERT INTO album_ignore_check (album_id, check_name) VALUES (?, ?);", (album_id, check_name))
-
-
-def update_tracks(db: sqlite3.Connection, album_id: int, tracks: Sequence[Track]):
-    with db:
-        db.execute("DELETE FROM track WHERE album_id = ?;", (album_id,))
-        _insert_tracks(db, album_id, tracks)
-
-
-def _insert_tracks(db: sqlite3.Connection, album_id: int, tracks: Sequence[Track]):
-    for track in tracks:
-        if not track.stream:
-            raise ValueError(f"can't save track without stream info: {track.filename}")
-        (track_id,) = db.execute(
-            "INSERT INTO track ("
-            "album_id, filename, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate"
-            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING track_id",
-            (
-                album_id,
-                track.filename,
-                track.file_size,
-                track.modify_timestamp,
-                track.stream.bitrate,
-                track.stream.channels,
-                track.stream.codec,
-                track.stream.length,
-                track.stream.sample_rate,
-            ),
-        ).fetchone()
-        for name, values in track.tags.items():
-            for value in values:
-                db.execute("INSERT INTO track_tag (track_id, name, value) VALUES (?, ?, ?);", (track_id, name.value, value))
-        for embed_ix, picture in enumerate(track.pictures):
-            db.execute(
-                "INSERT INTO track_picture (track_id, picture_type, format, width, height, depth_bpp, file_size, file_hash, description, load_issue, embed_ix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                (
-                    track_id,
-                    picture.type.value,
-                    picture.file_info.mime_type,
-                    picture.file_info.width,
-                    picture.file_info.height,
-                    picture.file_info.depth_bpp,
-                    picture.file_info.file_size,
-                    picture.file_info.file_hash,
-                    picture.description,
-                    json.dumps(dict(picture.load_issue)) if picture.load_issue else None,
-                    embed_ix,
-                ),
-            )
-
-
-def update_picture_files(db: sqlite3.Connection, album_id: int, picture_files: Mapping[str, PictureFile]):
-    with db:
-        db.execute("DELETE FROM album_picture_file WHERE album_id = ?;", (album_id,))
-        _insert_picture_files(db, album_id, picture_files)
-
-
-def _insert_picture_files(db: sqlite3.Connection, album_id: int, picture_files: Mapping[str, PictureFile]):
-    for filename, file in picture_files.items():
-        db.execute(
-            "INSERT INTO album_picture_file (album_id, filename, modify_timestamp, format, width, height, depth_bpp, file_size, file_hash, load_issue, cover_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-            (
-                album_id,
-                filename,
-                file.modify_timestamp,
-                file.picture.file_info.mime_type,
-                file.picture.file_info.width,
-                file.picture.file_info.height,
-                file.picture.file_info.depth_bpp,
-                file.picture.file_info.file_size,
-                file.picture.file_info.file_hash,
-                json.dumps(dict(file.picture.load_issue)) if file.picture.load_issue else None,
-                1 if file.cover_source else 0,
-            ),
-        )
-
-
-def _load_tracks(db: sqlite3.Connection, album_id: int, load_tags: bool = True):
-    for (
-        track_id,
-        filename,
-        file_size,
-        modify_timestamp,
-        stream_bitrate,
-        stream_channels,
-        stream_codec,
-        stream_length,
-        stream_sample_rate,
-    ) in db.execute(
-        "SELECT track_id, filename, file_size, modify_timestamp, stream_bitrate, stream_channels, stream_codec, stream_length, stream_sample_rate "
-        "FROM track WHERE album_id = ? ORDER BY filename ASC;",
-        (album_id,),
-    ):
-        if load_tags:
-            tags = _load_tags(db, track_id)
-            pictures = _load_pictures(db, track_id)
-        else:
-            tags: Mapping[BasicTag, Sequence[str]] = {}
-            pictures: list[Picture] = []
-        stream = StreamInfo(stream_length, stream_bitrate, stream_channels, stream_codec, stream_sample_rate)
-        track = Track(filename, tags, file_size, modify_timestamp, stream, pictures)
-        yield track
-
-
-def _load_tags(db: sqlite3.Connection, track_id: int) -> Mapping[BasicTag, Sequence[str]]:
+def _track(entity: TrackEntity, load_track_tags: bool) -> Track:
     tags: dict[BasicTag, list[str]] = {}
-    for name, value in db.execute("SELECT name, value FROM track_tag WHERE track_id = ?;", (track_id,)):
-        if name in BASIC_TAGS:
-            tags.setdefault(BasicTag(name), []).append(value)
-        else:
-            logger.debug(f"ignoring tag {name}")
-    return dict((tag, tuple(values)) for tag, values in tags.items())
+    if load_track_tags:
+        for tag in entity.tags:
+            if tag.name in BASIC_TAGS:
+                tags.setdefault(BasicTag(tag.name), []).append(tag.value)
+            else:
+                logger.debug(f"ignoring tag {tag.name}")
+
+    return Track(
+        entity.filename,
+        dict((tag, tuple(values)) for tag, values in tags.items()),
+        entity.file_size,
+        entity.modify_timestamp,
+        StreamInfo(entity.stream_length, entity.stream_bitrate, entity.stream_channels, entity.stream_codec, entity.stream_sample_rate),
+        [_picture(picture, PictureType(picture.picture_type)) for picture in entity.pictures],
+    )
 
 
-def _load_pictures(db: sqlite3.Connection, track_id: int):
-    return [
-        Picture(
-            PictureInfo(format, width, height, depth_bpp, file_size, file_hash),
-            PictureType(picture_type),
-            description,
-            _load_load_issue(load_issue),
-        )
-        for picture_type, format, width, height, depth_bpp, file_size, file_hash, description, load_issue in db.execute(
-            "SELECT picture_type, format, width, height, depth_bpp, file_size, file_hash, description, load_issue FROM track_picture WHERE track_id = ? ORDER BY embed_ix;",
-            (track_id,),
-        )
-    ]
+def _picture(entity: TrackPictureEntity | PictureFileEntity, picture_type: PictureType) -> Picture:
+    return Picture(
+        PictureInfo(entity.format, entity.width, entity.height, entity.depth_bpp, entity.file_size, entity.file_hash),
+        picture_type,
+        "",
+        _load_load_issue(entity.load_issue),
+    )
+
+
+def _picture_file(entity: PictureFileEntity) -> PictureFile:
+    return PictureFile(
+        _picture(entity, PictureType.from_filename(entity.filename)),
+        entity.modify_timestamp,
+        entity.cover_source,
+    )
+
+
+def add(db: Engine, album: Album) -> int:
+    with Session(db) as session:
+        collections = dict((row[0].collection_name, row[0]) for row in session.execute(select(CollectionEntity)).all())
+        entity = AlbumEntity(path=album.path, scanner=album.scanner)
+        for collection_name in album.collections:
+            entity.collections.append(collections.get(collection_name, CollectionEntity(collection_name=collection_name)))
+        for check_name in album.ignore_checks:
+            entity.ignore_checks.append(IgnoreCheckEntity(check_name=check_name))
+        for track in album.tracks:
+            entity.tracks.append(_track_to_entity(track))
+        for filename, picture_file in album.picture_files.items():
+            entity.picture_files.append(_picture_file_to_entity(filename, picture_file))
+        session.add(entity)
+        session.commit()
+        if entity.album_id is None:
+            raise RuntimeError("no album_id after add")
+        return entity.album_id
+
+
+def _track_to_entity(track: Track) -> TrackEntity:
+    stream = track.stream if track.stream else StreamInfo()
+    entity = TrackEntity(
+        filename=track.filename,
+        file_size=track.file_size,
+        modify_timestamp=track.modify_timestamp,
+        stream_bitrate=stream.bitrate,
+        stream_channels=stream.channels,
+        stream_codec=stream.codec,
+        stream_length=stream.length,
+        stream_sample_rate=stream.sample_rate,
+    )
+    for embed_ix, picture in enumerate(track.pictures):
+        entity.pictures.append(_picture_to_entity(picture, embed_ix))
+    for tag, values in track.tags.items():
+        for value in values:
+            entity.tags.append(TrackTagEntity(name=tag.value, value=value))
+    return entity
+
+
+def _picture_file_to_entity(filename: str, file: PictureFile) -> PictureFileEntity:
+    return PictureFileEntity(
+        filename=filename,
+        modify_timestamp=file.modify_timestamp,
+        cover_source=file.cover_source,
+        format=file.picture.file_info.mime_type,
+        width=file.picture.file_info.width,
+        height=file.picture.file_info.height,
+        file_size=file.picture.file_info.file_size,
+        file_hash=file.picture.file_info.file_hash,
+        depth_bpp=file.picture.file_info.depth_bpp,
+        load_issue=json.dumps(dict(file.picture.load_issue)) if file.picture.load_issue else None,
+    )
+
+
+def _picture_to_entity(pic: Picture, embed_ix: int) -> TrackPictureEntity:
+    return TrackPictureEntity(
+        picture_type=pic.type,
+        format=pic.file_info.mime_type,
+        width=pic.file_info.width,
+        height=pic.file_info.height,
+        file_size=pic.file_info.file_size,
+        file_hash=pic.file_info.file_hash,
+        depth_bpp=pic.file_info.depth_bpp,
+        description=pic.description,
+        load_issue=json.dumps(dict(pic.load_issue)) if pic.load_issue else None,
+        embed_ix=embed_ix,
+    )
+
+
+def remove(db: Engine, album_id: int):
+    with Session(db) as session:
+        result = session.execute(delete(AlbumEntity).where(AlbumEntity.album_id == album_id))
+        if result.rowcount != 1:  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            logger.warning(f"didn't delete album, not found: {album_id}")
+        session.commit()
+
+
+def update_scanner(db: Engine, album_id: int, scanner_version: int):
+    with Session(db) as session:
+        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
+        album.scanner = scanner_version
+        session.commit()
+
+
+def update_collections(db: Engine, album_id: int, collections: Collection[str]):
+    with Session(db) as session:
+        all_collections = dict((row[0].collection_name, row[0]) for row in session.execute(select(CollectionEntity)).all())
+        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
+        album.collections.clear()
+        for collection_name in collections:
+            album.collections.append(all_collections.get(collection_name, CollectionEntity(collection_name=collection_name)))
+        session.commit()
+
+
+def update_ignore_checks(db: Engine, album_id: int, ignore_checks: Collection[str]):
+    with Session(db) as session:
+        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
+        album.ignore_checks.clear()
+        for check_name in ignore_checks:
+            album.ignore_checks.append(IgnoreCheckEntity(check_name=check_name))
+        session.commit()
+
+
+def update_tracks(db: Engine, album_id: int, tracks: Sequence[Track]):
+    with Session(db) as session:
+        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
+        album.tracks.clear()
+        album.tracks = [_track_to_entity(track) for track in tracks]
+        session.commit()
+
+
+def update_picture_files(db: Engine, album_id: int, picture_files: Mapping[str, PictureFile]):
+    with Session(db) as session:
+        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
+        album.picture_files.clear()
+        album.picture_files = [_picture_file_to_entity(filename, file) for filename, file in picture_files.items()]
+        session.commit()
 
 
 def _load_load_issue(value: Any) -> Tuple[Tuple[str, str | int], ...]:
@@ -242,17 +207,16 @@ def _load_load_issue(value: Any) -> Tuple[Tuple[str, str | int], ...]:
     return tuple([(k, v) for [k, v] in kv.items()])
 
 
-def record_full_scan(db: sqlite3.Connection, entry: ScanHistoryEntry):
-    with db:
-        db.execute(
-            "INSERT INTO scan_history (timestamp, folders_scanned, albums_total) VALUES (?, ?, ?)",
-            (entry.timestamp, entry.folders_scanned, entry.albums_total),
-        )
+def record_full_scan(db: Engine, entry: ScanHistoryEntry):
+    with Session(db) as session:
+        session.add(ScanHistoryEntity(timestamp=entry.timestamp, folders_scanned=entry.folders_scanned, albums_total=entry.albums_total))
+        session.commit()
 
 
-def get_last_scan_info(db: sqlite3.Connection) -> ScanHistoryEntry | None:
-    row = db.execute("SELECT timestamp, folders_scanned, albums_total FROM scan_history ORDER BY timestamp DESC LIMIT 1;").fetchone()
-    if row is None:
-        return None
-    (timestamp, folders_scanned, albums_total) = row
-    return ScanHistoryEntry(timestamp, folders_scanned, albums_total)
+def get_last_scan_info(db: Engine) -> ScanHistoryEntry | None:
+    with Session(db) as session:
+        row = session.execute(select(ScanHistoryEntity).order_by(desc(ScanHistoryEntity.timestamp))).first()
+        if row is None:
+            return None
+        (entity,) = row
+        return ScanHistoryEntry(entity.timestamp, entity.folders_scanned, entity.albums_total)

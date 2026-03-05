@@ -1,4 +1,3 @@
-import contextlib
 import os
 from pathlib import Path
 from unittest.mock import call
@@ -98,9 +97,12 @@ class TestCheckCoverUnique:
         ctx = Context()
         ctx.config.library = create_library("front_cover", [album])
         # actually scan and load the album so picture hashes will be correct
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             scanner.scan(ctx)
             album = next(selector.load_albums(ctx.db))
+        finally:
+            ctx.db.dispose()
 
         result = CheckCoverUnique(ctx).check(album)
         assert result is not None

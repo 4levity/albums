@@ -1,4 +1,3 @@
-import contextlib
 import os
 
 from albums.app import Context
@@ -19,17 +18,19 @@ class TestCheckAlbumUnderAlbum:
             Album("foobar" + os.sep, [track("1.flac")]),
         ]
 
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            ctx = Context()
-            ctx.db = db
+        ctx = Context()
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             checker = CheckAlbumUnderAlbum(ctx)
 
-            operations.add(db, albums[0])
-            operations.add(db, albums[1])
-            operations.add(db, albums[2])
+            operations.add(ctx.db, albums[0])
+            operations.add(ctx.db, albums[1])
+            operations.add(ctx.db, albums[2])
 
             result = checker.check(albums[1])
             assert "there are 1 albums in directories under album foo" in result.message
 
             result = checker.check(albums[0])
             assert result is None
+        finally:
+            ctx.db.dispose()
