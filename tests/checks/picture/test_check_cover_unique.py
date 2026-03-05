@@ -100,7 +100,7 @@ class TestCheckCoverUnique:
         # actually scan and load the album so picture hashes will be correct
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scanner.scan(ctx)
-            album = next(selector.select_albums(ctx.db, [], [], False))
+            album = next(selector.load_albums(ctx.db))
 
         result = CheckCoverUnique(ctx).check(album)
         assert result is not None

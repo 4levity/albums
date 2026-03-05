@@ -85,7 +85,9 @@ def setup(
     if db:
         app_context.db = db
         library_context_path_filter = [] if dir else paths
-        app_context.select_albums = lambda load_track_tag: selector.select_albums(db, collections, library_context_path_filter, regex, load_track_tag)
+        app_context.select_albums = lambda load_track_tag: selector.load_albums(
+            db, load_track_tags=load_track_tag, collection_names=collections, match_paths=library_context_path_filter, match_path_regex=regex
+        )
     if dir and collections:
         logger.error("error: cannot specify collections when targeting outside of library")
 
@@ -110,7 +112,7 @@ def enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: boo
     if ctx.click_ctx:
         ctx.click_ctx.call_on_close(lambda: connection.close(db))
     ctx.db = db
-    ctx.select_albums = lambda _: selector.select_albums(db, [], paths, regex)
+    ctx.select_albums = lambda _: selector.load_albums(db, match_paths=paths, match_path_regex=regex)
     ctx.is_filtered = bool(paths)
     ctx.is_persistent = False
 

@@ -47,7 +47,7 @@ class TestDatabase:
 
     def test_select_empty(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 0
 
     def test_add_and_select(self):
@@ -55,9 +55,9 @@ class TestDatabase:
             album_id = operations.add(db, album)
             assert isinstance(album_id, int)
 
-            assert len(list(selector.select_albums(db, [], [], False))) == 1
-            assert len(list(selector.select_albums(db, [], ["foo"], False))) == 0  # no partial match
-            result = list(selector.select_albums(db, [], ["foo" + os.sep], False))  # exact match
+            assert len(list(selector.load_albums(db))) == 1
+            assert len(list(selector.load_albums(db, match_paths=["foo"]))) == 0  # no partial match
+            result = list(selector.load_albums(db, match_paths=["foo" + os.sep]))  # exact match
             assert len(result) == 1
             assert result[0].path == "foo" + os.sep
             assert result[0].scanner == 3
@@ -88,10 +88,10 @@ class TestDatabase:
             operations.add(db, album2)
 
             re_sep = re.escape(os.sep)
-            assert len(list(selector.select_albums(db, [], [], False))) == 2
-            assert len(list(selector.select_albums(db, [], ["o." + re_sep], True))) == 1  # regex match
-            assert len(list(selector.select_albums(db, [], ["x." + re_sep], True))) == 0  # no regex match
-            assert len(list(selector.select_albums(db, [], ["(foo|baz)"], True))) == 2
+            assert len(list(selector.load_albums(db))) == 2
+            assert len(list(selector.load_albums(db, match_paths=["o." + re_sep], match_path_regex=True))) == 1  # regex match
+            assert len(list(selector.load_albums(db, match_paths=["x." + re_sep], match_path_regex=True))) == 0  # no regex match
+            assert len(list(selector.load_albums(db, match_paths=["(foo|baz)"], match_path_regex=True))) == 2
 
     def test_select_by_collection(self):
         album2 = copy(album)
@@ -101,40 +101,40 @@ class TestDatabase:
             operations.add(db, album)
             operations.add(db, album2)
 
-            assert len(list(selector.select_albums(db, [], [], False))) == 2
-            result = list(selector.select_albums(db, ["test", "anything"], [], False))
+            assert len(list(selector.load_albums(db))) == 2
+            result = list(selector.load_albums(db, collection_names=["test", "anything"]))
             assert len(result) == 1
             assert result[0].path.startswith("foo")
 
     def test_update_collections(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
-            assert len(list(selector.select_albums(db, ["test"], [], False))) == 1
-            assert len(list(selector.select_albums(db, ["new-collection"], [], False))) == 0
+            assert len(list(selector.load_albums(db, collection_names=["test"]))) == 1
+            assert len(list(selector.load_albums(db, collection_names=["new-collection"]))) == 0
 
             operations.update_collections(db, album_id, ["new-collection"])
 
-            assert len(list(selector.select_albums(db, ["test"], [], False))) == 0
-            assert len(list(selector.select_albums(db, ["new-collection"], [], False))) == 1
+            assert len(list(selector.load_albums(db, collection_names=["test"]))) == 0
+            assert len(list(selector.load_albums(db, collection_names=["new-collection"]))) == 1
 
     def test_update_ignore_checks(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert result[0].ignore_checks == ["artist-tag"]  # initial
 
             set_ignore_checks = ["album-artist", "cover-filename"]
             operations.update_ignore_checks(db, album_id, set_ignore_checks)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert sorted(result[0].ignore_checks) == set_ignore_checks
 
             operations.update_ignore_checks(db, album_id, [])  # remove all ignores
-            assert list(selector.select_albums(db, [], [], False))[0].ignore_checks == []
+            assert list(selector.load_albums(db))[0].ignore_checks == []
 
     def test_update_picture_files(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
-            picture_files = list(selector.select_albums(db, [], [], False))[0].picture_files
+            picture_files = list(selector.load_albums(db))[0].picture_files
             assert len(picture_files) == 1
             assert picture_files["folder.jpg"].cover_source
 
@@ -143,7 +143,7 @@ class TestDatabase:
             new_pic = Picture(PictureInfo("test", 200, 200, 24, 2048, b"abcd"), PictureType.OTHER, "", ())
             operations.update_picture_files(db, album_id, dict(picture_files) | {"other.jpg": PictureFile(new_pic, 999, False)})
 
-            picture_files = list(selector.select_albums(db, [], [], False))[0].picture_files
+            picture_files = list(selector.load_albums(db))[0].picture_files
             pic_folder = picture_files.get("folder.jpg")
             assert pic_folder
             assert pic_folder.picture.type == PictureType.COVER_FRONT
@@ -164,18 +164,18 @@ class TestDatabase:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
             operations.add(db, album2)
-            assert len(list(selector.select_albums(db, [], [], False))) == 2
+            assert len(list(selector.load_albums(db))) == 2
 
             operations.remove(db, album_id)
 
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 1
             assert result[0].path == "baz" + os.sep
 
     def test_update_tracks(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
-            tracks = list(selector.select_albums(db, [], [], False))[0].tracks
+            tracks = list(selector.load_albums(db))[0].tracks
             assert len(tracks) == 1
 
             tracks[0].tags = {BasicTag.ALBUM: ("Foo",)}
@@ -183,7 +183,7 @@ class TestDatabase:
             tracks[1].filename = "2.flac"
             operations.update_tracks(db, album_id, tracks)
 
-            tracks = list(selector.select_albums(db, [], [], False))[0].tracks
+            tracks = list(selector.load_albums(db))[0].tracks
             assert len(tracks) == 2
             assert all(track.tags[BasicTag.ALBUM] == ("Foo",) for track in tracks)
 
@@ -200,10 +200,10 @@ class TestDatabase:
     def test_update_scanner(self):
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             album_id = operations.add(db, album)
-            result = list(selector.select_albums(db, [], [], False))[0]
+            result = list(selector.load_albums(db))[0]
             assert result.scanner == 3
 
             operations.update_scanner(db, album_id, 4)
 
-            result = list(selector.select_albums(db, [], [], False))[0]
+            result = list(selector.load_albums(db))[0]
             assert result.scanner == 4

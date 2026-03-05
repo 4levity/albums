@@ -50,7 +50,7 @@ class TestCheckPictureMetadata:
 
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scan(ctx)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert result[0].tracks[0].pictures[0].load_issue
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is not None
@@ -60,7 +60,7 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert len(result[0].tracks[0].pictures) == 1
             assert not result[0].tracks[0].pictures[0].load_issue
             assert result[0].tracks[0].pictures[0].file_info.mime_type == "image/png"
@@ -84,7 +84,7 @@ class TestCheckPictureMetadata:
 
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scan(ctx)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert result[0].tracks[0].pictures[0].load_issue
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is not None
@@ -94,7 +94,7 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert len(result[0].tracks[0].pictures) == 1
             assert not result[0].tracks[0].pictures[0].load_issue
             assert result[0].tracks[0].pictures[0].file_info.mime_type == "image/png"
@@ -112,7 +112,7 @@ class TestCheckPictureMetadata:
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
         with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
             scan(ctx)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert result[0].picture_files["cover.gif"].picture.file_info.mime_type == "image/png"
             assert result[0].picture_files["cover.gif"].picture.load_issue == (("format", "image/gif"),)
 
@@ -124,7 +124,7 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.select_albums(ctx.db, [], [], False))
+            result = list(selector.load_albums(ctx.db))
             assert result[0].picture_files["cover.png"].picture.file_info.mime_type == "image/png"
             assert result[0].picture_files["cover.png"].picture.load_issue == ()
             result = CheckPictureMetadata(ctx).check(result[0])

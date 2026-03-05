@@ -39,7 +39,7 @@ class TestChecker:
         ctx.config.library = create_library("checker_automatic", [album])
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             ctx.db = db
-            ctx.select_albums = lambda load_track_tag: selector.select_albums(db, [], [], False)
+            ctx.select_albums = lambda _: selector.load_albums(db)
             scanner.scan(ctx)
             showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
 

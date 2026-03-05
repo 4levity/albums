@@ -43,7 +43,7 @@ class TestScanner:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_initial_scan", self.sample_library)
             scan(context(db, library))
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
 
             assert len(result) == 3
             assert result[0].path == "bar" + os.sep
@@ -85,7 +85,7 @@ class TestScanner:
         with contextlib.closing(connection.open(connection.MEMORY)) as db:
             library = create_library("test_scan_empty", [])
             scan(context(db, library))
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert result == []
 
     def test_scan_no_tags(self):
@@ -100,7 +100,7 @@ class TestScanner:
                 ],
             )
             scan(context(db, library))
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 4
 
     def test_scan_update(self):
@@ -108,7 +108,7 @@ class TestScanner:
             library = create_library("test_scan_update", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
 
             assert result[0].tracks[0].filename == "1.flac"
             assert result[0].tracks[0].tags[BasicTag.TITLE] == ("1",)
@@ -118,7 +118,7 @@ class TestScanner:
             file.save()
 
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert result[0].tracks[0].tags[BasicTag.TITLE] == ("new title",)
 
     def test_scan_add(self):
@@ -126,14 +126,14 @@ class TestScanner:
             library = create_library("test_scan_add", [self.sample_library[1]])
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 1
             assert result[0].path == "foo" + os.sep
 
             create_album_in_library(library, self.sample_library[0])
 
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 2
             assert result[0].path == "bar" + os.sep
 
@@ -142,14 +142,14 @@ class TestScanner:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 3
             assert result[0].path == "bar" + os.sep
 
             # remove a folder that contains an album (removed without scanning)
             shutil.rmtree(library / "bar", ignore_errors=True)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 2
             assert result[0].path == "baz" + os.sep
 
@@ -157,7 +157,7 @@ class TestScanner:
             shutil.rmtree(library / "baz", ignore_errors=True)
             os.mkdir(library / "baz")
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 1
             assert result[0].path == "foo" + os.sep
 
@@ -166,13 +166,13 @@ class TestScanner:
             library = create_library("test_scan_remove_picture", [self.sample_library[0]])
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result[0].picture_files) == 1
 
             (library / self.sample_library[0].path / "cover.jpg").unlink()
 
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result[0].picture_files) == 0
 
     def test_scan_filtered(self):
@@ -180,7 +180,7 @@ class TestScanner:
             library = create_library("test_scan_filtered", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 3
 
             delete_album = result[0].path
@@ -188,7 +188,7 @@ class TestScanner:
             scan(ctx, lambda: [(result[1].path, result[1].album_id)])
 
             # deleted path was not scanned, so album is still there
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 3
             assert result[0].path == delete_album
 
@@ -197,18 +197,18 @@ class TestScanner:
             library = create_library("test_scanner_version", self.sample_library[:2])
             ctx = context(db, library)
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 2
             assert all(album.scanner == SCANNER_VERSION for album in result)
 
             db.execute("UPDATE album SET scanner=0;")  # first album is unchanged but scanner version should be updated
             (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # second album changed
             create_album_in_library(library, self.sample_library[2])  # third album added
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 2  # third not scanned yet
             assert all(album.scanner == 0 for album in result)
 
             scan(ctx)
-            result = list(selector.select_albums(db, [], [], False))
+            result = list(selector.load_albums(db))
             assert len(result) == 3
             assert all(album.scanner == SCANNER_VERSION for album in result)
