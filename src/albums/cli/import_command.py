@@ -24,7 +24,7 @@ def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, 
     require_library(ctx)
     require_persistent_context(ctx)
     library = ctx.config.library
-    enter_folder_context(ctx, scan_folder, [], False)
+    enter_folder_context(ctx, scan_folder)
     (albums_total, _) = scan(ctx)
     if albums_total == 0:
         ctx.console.print(f"Album not found at {escape(scan_folder)}")

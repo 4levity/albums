@@ -2,8 +2,11 @@ import logging
 import os
 import shutil
 import sqlite3
+from collections import defaultdict
 from copy import copy
+from functools import reduce
 from pathlib import Path
+from typing import Sequence, Tuple
 
 import click
 from platformdirs import PlatformDirs
@@ -41,8 +44,7 @@ def setup(
     ctx: click.Context,
     app_context: Context,
     verbose: int,
-    collections: list[str],
-    paths: list[str],
+    matchers_list: Sequence[Tuple[str, str]],
     dir: str,
     regex: bool,
     new_library: str | None,
@@ -81,24 +83,23 @@ def setup(
         logger.debug("no external tagger configured - found easytag, using it")
         app_context.config.tagger = "easytag"
 
-    app_context.is_filtered = bool(collections or paths)
+    app_context.is_filtered = bool(matchers_list)
+    matchers: defaultdict[str, list[str]] = defaultdict(list)
+    matchers = reduce(lambda acc, kv: acc[kv[0]].append(kv[1]) or acc, matchers_list, matchers)
     if db:
         app_context.db = db
-        library_context_path_filter = [] if dir else paths
-        app_context.select_albums = lambda load_track_tag: selector.load_albums(
-            db, load_track_tags=load_track_tag, collection_names=collections, match_paths=library_context_path_filter, match_path_regex=regex
-        )
-    if dir and collections:
-        logger.error("error: cannot specify collections when targeting outside of library")
+        if dir and "path" in matchers:
+            del matchers["path"]
+        app_context.select_albums = lambda load_track_tag: selector.load_albums(db, regex=regex, load_track_tags=load_track_tag, **matchers)
 
     if dir:
-        enter_folder_context(app_context, dir, paths, regex)
+        enter_folder_context(app_context, dir)
     # else there is definitely a db
 
     return dir or new_library_path is not None or app_context.config.rescan == RescanOption.ALWAYS
 
 
-def enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: bool):
+def enter_folder_context(ctx: Context, folder: str):
     if ctx.parent:
         raise RuntimeError("enter_folder_context called on subcontext")
     parent = copy(ctx)
@@ -112,8 +113,8 @@ def enter_folder_context(ctx: Context, folder: str, paths: list[str], regex: boo
     if ctx.click_ctx:
         ctx.click_ctx.call_on_close(lambda: connection.close(db))
     ctx.db = db
-    ctx.select_albums = lambda _: selector.load_albums(db, match_paths=paths, match_path_regex=regex)
-    ctx.is_filtered = bool(paths)
+    ctx.select_albums = lambda _: selector.load_albums(db)
+    ctx.is_filtered = False
     ctx.is_persistent = False
 
 

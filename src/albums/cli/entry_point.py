@@ -22,12 +22,13 @@ rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_lengt
 
 
 @click.group(epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}")
-@click.option("--collection", "-c", "collections", multiple=True, help="match collection name")
-@click.option("--path", "-p", "paths", multiple=True, help="match album path within library")
-@click.option("--dir", "-d", help="operate on a directory outside of the library")
-@click.option("--regex", "-r", is_flag=True, help="enable regex match for album paths (default is exact path)")
-@click.option("--library", help="specify path to music library (use when initializing database)")
-@click.option("--db-file", help="specify path to albums.db (advanced)")
+@click.option("--match", "-m", "matchers", metavar="K=V", multiple=True, help="filter key=value, e.g. -m path=Artist/Album/")
+@click.option("--regex", "-r", is_flag=True, help="enable regex and partial matches")
+@click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")
+@click.option("--path", "-p", "paths", metavar="PATH", multiple=True, help="match album path (same as -m path=...)")
+@click.option("--dir", "-d", metavar="PATH", help="operate on a directory outside of the library")
+@click.option("--library", metavar="PATH", help="specify path to library (use when initializing database)")
+@click.option("--db-file", metavar="PATH", help="specify path to albums.db (advanced)")
 @click.option("--verbose", "-v", type=InvisibleCountParam(), count=True, help="enable verbose logging (-vv for more)")
 @click.version_option(version=albums.__version__, message="%(prog)s version %(version)s")
 @pass_context  # order of these decorators matters
@@ -37,13 +38,22 @@ def albums_group(
     app_context: app.Context,
     collections: list[str],
     paths: list[str],
+    matchers: list[str],
     dir: str,
     regex: bool,
     library: str,
     db_file: str,
     verbose: int,
 ):
-    initial_scan = setup(ctx, app_context, verbose, collections, paths, dir, regex, library, db_file)
+    if any(str.count(matcher, "=") != 1 for matcher in matchers):
+        app_context.console.print('--match/-m options must be in the format "key=value"')
+
+    matchers_list = (
+        [("collection", c) for c in (collections or [])]
+        + [("path", p) for p in (paths or [])]
+        + [(kv[0], kv[1]) for kv in (matcher.split("=") for matcher in matchers)]
+    )
+    initial_scan = setup(ctx, app_context, verbose, matchers_list, dir, regex, library, db_file)
 
     if initial_scan:
         ctx.invoke(scan)

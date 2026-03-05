@@ -8,16 +8,17 @@ from . import operations
 
 class LoadOptions(TypedDict, total=False):
     load_track_tags: bool
-    collection_names: Sequence[str]
-    match_paths: Sequence[str]
-    match_path_regex: bool
+    regex: bool
+
+    collection: Sequence[str]
+    path: Sequence[str]
 
 
 def load_albums(db: sqlite3.Connection, **kwargs: Unpack[LoadOptions]) -> Generator[Album, None, None]:
     load_track_tags = kwargs.get("load_track_tags", True)
-    collection_names = kwargs.get("collection_names", [])
-    match_path_regex = kwargs.get("match_path_regex", False)
-    match_paths = kwargs.get("match_paths", [])
+    collection_names = kwargs.get("collection", [])
+    match_path_regex = kwargs.get("regex", False)
+    match_paths = kwargs.get("path", [])
     collection_placeholders = ",".join(["?"] * len(collection_names))
     if len(match_paths) == 0 or match_path_regex:  # no path filter
         if len(collection_names) == 0:

@@ -144,6 +144,13 @@ class TestCli:
         assert len(obj) == 1
         assert obj[0]["path"] == "foo" + os.sep
 
+    def test_filter_path_regex_match(self):
+        self.run(["scan"], init=True)
+        result = self.run(["-rm", "path=.oo", "list", "--json"])
+        obj = json.loads(result.output)
+        assert len(obj) == 1
+        assert obj[0]["path"] == "foo" + os.sep
+
     def test_add_collection(self):
         self.run(["scan"], init=True)
         result = self.run(["-rp", "foo", "add", "test"])
@@ -156,6 +163,15 @@ class TestCli:
 
         result = self.run(["-c", "test", "list", "--json"])
         assert result.exit_code == 0
+        obj = json.loads(result.output)
+        assert len(obj) == 1
+        assert obj[0]["path"] == "foo" + os.sep
+
+    def test_filter_collection_match(self):
+        self.run(["scan"], init=True)
+        result = self.run(["-rp", "foo", "add", "test"])
+
+        result = self.run(["-m", "collection=test", "list", "--json"])
         obj = json.loads(result.output)
         assert len(obj) == 1
         assert obj[0]["path"] == "foo" + os.sep
