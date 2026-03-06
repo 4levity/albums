@@ -114,6 +114,80 @@ class TestCheckTrackFilename:
             call(Path(album.path) / "2.flac", Path(album.path) / "2 bar.flac"),
         ]
 
+    def test_track_filename_pad_m4a(self, mocker):
+        # these track numbers get padding per default zero-pad-numbers settings because m4a track numbers are numeric and cannot store formatting
+        tracks = [
+            Track("1.m4a", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["one"]}),
+            Track("2.m4a", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["two"]}),
+            Track("3.m4a", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TITLE: ["three"]}),
+            Track("4.m4a", {BasicTag.TRACKNUMBER: ["4"], BasicTag.TITLE: ["four"]}),
+            Track("5.m4a", {BasicTag.TRACKNUMBER: ["5"], BasicTag.TITLE: ["five"]}),
+            Track("6.m4a", {BasicTag.TRACKNUMBER: ["6"], BasicTag.TITLE: ["six"]}),
+            Track("7.m4a", {BasicTag.TRACKNUMBER: ["7"], BasicTag.TITLE: ["seven"]}),
+            Track("8.m4a", {BasicTag.TRACKNUMBER: ["8"], BasicTag.TITLE: ["eight"]}),
+            Track("9.m4a", {BasicTag.TRACKNUMBER: ["9"], BasicTag.TITLE: ["nine"]}),
+            Track("10.m4a", {BasicTag.TRACKNUMBER: ["10"], BasicTag.TITLE: ["ten"]}),
+        ]
+        album = Album("foo" + os.sep, tracks)
+        result = CheckTrackFilename(Context()).check(album)
+        assert result
+        assert "track filenames do not match configured pattern" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Use generated filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [
+            call(Path(album.path) / "1.m4a", Path(album.path) / "01 one.m4a"),
+            call(Path(album.path) / "2.m4a", Path(album.path) / "02 two.m4a"),
+            call(Path(album.path) / "3.m4a", Path(album.path) / "03 three.m4a"),
+            call(Path(album.path) / "4.m4a", Path(album.path) / "04 four.m4a"),
+            call(Path(album.path) / "5.m4a", Path(album.path) / "05 five.m4a"),
+            call(Path(album.path) / "6.m4a", Path(album.path) / "06 six.m4a"),
+            call(Path(album.path) / "7.m4a", Path(album.path) / "07 seven.m4a"),
+            call(Path(album.path) / "8.m4a", Path(album.path) / "08 eight.m4a"),
+            call(Path(album.path) / "9.m4a", Path(album.path) / "09 nine.m4a"),
+            call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
+        ]
+
+    def test_track_filename_use_formatted_tag(self, mocker):
+        # unlike above test, these track numbers will not get padding because ID3 track numbers are formatted strings
+        tracks = [
+            Track("1.mp3", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TITLE: ["one"]}),
+            Track("2.mp3", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["two"]}),
+            Track("3.mp3", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TITLE: ["three"]}),
+            Track("4.mp3", {BasicTag.TRACKNUMBER: ["4"], BasicTag.TITLE: ["four"]}),
+            Track("5.mp3", {BasicTag.TRACKNUMBER: ["5"], BasicTag.TITLE: ["five"]}),
+            Track("6.mp3", {BasicTag.TRACKNUMBER: ["6"], BasicTag.TITLE: ["six"]}),
+            Track("7.mp3", {BasicTag.TRACKNUMBER: ["7"], BasicTag.TITLE: ["seven"]}),
+            Track("8.mp3", {BasicTag.TRACKNUMBER: ["8"], BasicTag.TITLE: ["eight"]}),
+            Track("9.mp3", {BasicTag.TRACKNUMBER: ["9"], BasicTag.TITLE: ["nine"]}),
+            Track("10.mp3", {BasicTag.TRACKNUMBER: ["10"], BasicTag.TITLE: ["ten"]}),
+        ]
+        album = Album("foo" + os.sep, tracks)
+        result = CheckTrackFilename(Context()).check(album)
+        assert result
+        assert "track filenames do not match configured pattern" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Use generated filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [
+            call(Path(album.path) / "1.mp3", Path(album.path) / "1 one.mp3"),
+            call(Path(album.path) / "2.mp3", Path(album.path) / "2 two.mp3"),
+            call(Path(album.path) / "3.mp3", Path(album.path) / "3 three.mp3"),
+            call(Path(album.path) / "4.mp3", Path(album.path) / "4 four.mp3"),
+            call(Path(album.path) / "5.mp3", Path(album.path) / "5 five.mp3"),
+            call(Path(album.path) / "6.mp3", Path(album.path) / "6 six.mp3"),
+            call(Path(album.path) / "7.mp3", Path(album.path) / "7 seven.mp3"),
+            call(Path(album.path) / "8.mp3", Path(album.path) / "8 eight.mp3"),
+            call(Path(album.path) / "9.mp3", Path(album.path) / "9 nine.mp3"),
+            call(Path(album.path) / "10.mp3", Path(album.path) / "10 ten.mp3"),
+        ]
+
     def test_track_filename_swap(self, mocker):
         tracks = [
             Track("1 foo.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TITLE: ["bar"]}),

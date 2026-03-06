@@ -11,12 +11,13 @@ from ...tagger.folder import Cap
 from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
+from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
 
 
 class CheckTrackFilename(Check):
     name = "track-filename"
     default_config = {"enabled": True, "format": "$track_auto $title_auto", "join_multiple": ", "}
-    must_pass_checks = {"album-artist", "artist-tag", "track-numbering", "track-title", "zero-pad-numbers"}
+    must_pass_checks = {"album-artist", "artist-tag", "track-numbering", "track-title"}
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
@@ -27,9 +28,13 @@ class CheckTrackFilename(Check):
 
     def check(self, album: Album):
         generated_filenames = [self._generate_filename(album, track) for track in album.tracks]
-        if len(set(str.lower(filename) for filename in generated_filenames)) != len(generated_filenames):
-            # because of earlier checks the tracks should typically have unique track number and title by now so this is an error
-            return CheckResult("unable to generate unique filenames using tags on these tracks")
+        generated_filenames_lower: set[str] = set()
+        for ix, filename in enumerate(generated_filenames):
+            filename_lower = str.lower(filename)
+            if filename_lower in generated_filenames_lower:
+                # because of earlier checks the tracks should typically have unique track number and title by now so this is an error
+                return CheckResult(f"unable to generate unique filenames, example conflict: {album.tracks[ix].filename} -> {filename_lower}")
+            generated_filenames_lower.add(filename_lower)
         if any(filename.startswith(".") for filename in generated_filenames):
             return CheckResult("cannot generate filenames that start with . character (maybe a track has no track number or title)")
         if any(track.filename != generated_filenames[ix] for ix, track in enumerate(album.tracks)):
@@ -61,9 +66,13 @@ class CheckTrackFilename(Check):
         tracknumber = tracktag[0] if tracktag else ""
         discnumber = disctag[0] if disctag else ""
 
+        # for padding on m4a files
+        track_count = int(track.tags.get(BasicTag.TRACKTOTAL, ["0"])[0]) or len(album.tracks)
+        disc_count = int(track.tags.get(BasicTag.DISCTOTAL, ["0"])[0]) or 9
+
         already_formatted = self.tagger.get(album.path).supports(track.filename, Cap.FORMATTED_TRACK_NUMBER)
-        discnumber_pad = discnumber if already_formatted else self._pad("discnumber", discnumber)
-        tracknumber_pad = tracknumber if already_formatted else self._pad("tracknumber", tracknumber)
+        discnumber_pad = discnumber if already_formatted else self._pad("discnumber", discnumber, disc_count)
+        tracknumber_pad = tracknumber if already_formatted else self._pad("tracknumber", tracknumber, track_count)
         if tracknumber_pad:
             track_auto = f"{discnumber_pad}-{tracknumber_pad}" if discnumber_pad else f"{tracknumber_pad}"
         else:
@@ -120,8 +129,10 @@ class CheckTrackFilename(Check):
 
         return True
 
-    def _pad(self, tag_name: Literal["tracknumber", "tracktotal", "discnumber", "disctotal"], value: str) -> str:
-        if not int(value):
+    def _pad(self, tag_name: Literal["tracknumber", "tracktotal", "discnumber", "disctotal"], value: str, total: int) -> str:
+        if not value or not int(value):
             return ""
-        # TODO grab padding configuration from zero-pad-numbers and apply
-        return value
+        if not self.ctx.config.checks[CheckZeroPadNumbers.name]["enabled"]:
+            return value
+        policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{tag_name}_pad"]))
+        return apply_pad_policy(value, policy, total)

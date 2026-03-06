@@ -48,8 +48,8 @@ depends on the `path_compatibility` global configuration setting (see
 
 Track filenames should match tags. Typically they include the track number and
 title. They start with the disc number if part of a set, and include the artist
-name if the album is a compilation. Filenames should be valid (see
-`path_compatibility` and related path settings in [Usage](./usage.md)).
+name if the album is a compilation. Filenames should be valid, as described by
+`path_compatibility` and related path settings in [Usage](./usage.md).
 
 The filename format is a template string. The template substitutions are:
 
@@ -63,6 +63,14 @@ The filename format is a template string. The template substitutions are:
 | **`$title_auto`**  | `Artist - Title` or `Title` | "Artist - Title" if artist is not album artist, or just Title |
 | **`$artist`**      | `Artist`                    | Track artist                                                  |
 | **`$title`**       | `Title`                     | Track title                                                   |
+
+The zero-padding on track number and disc number (if any) normally comes from
+formatting applied to the corresponding tag value. `albums` can format the tags
+with the `zero-pad-numbers` check/fix. But in some formats like **M4A**, the
+tracknumber and discnumber tags don't support formatting. For such formats, if
+the `zero-pad-numbers` check is enabled, the `tracknumber_pad` and
+`discnumber_pad` options from _that_ check will be used to generate possibly
+zero-padded `$tracknumber` and `$discnumber` substitutions in _this_ check.
 
 <!-- pyml enable line-length -->
 
@@ -78,8 +86,8 @@ The default template `"$track_auto $title_auto"` generates filenames like this:
 
 !!!success "Dependency"
 
-    Requires the `"album-artist`, `artist-tag`, `track-numbering`,
-    `track-title`, and `zero-pad-numbers` checks to all pass first.
+    Requires the `"album-artist`, `artist-tag`, `track-numbering`, and
+    `track-title` checks to all pass first.
 
 **Automatic fix**: Rename all tracks according to configuration.
 
