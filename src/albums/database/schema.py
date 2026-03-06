@@ -1,5 +1,9 @@
 import logging
-import sqlite3
+
+from sqlalchemy import Engine, select, update
+from sqlalchemy.orm import Session
+
+from .models import schema_table
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +129,9 @@ ALTER TABLE track_picture ADD COLUMN depth_bpp INTEGER NOT NULL DEFAULT 0;
 CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())
 
 
-def migrate(db: sqlite3.Connection, quiet: bool):
-    (db_version,) = db.execute("SELECT version FROM _schema;").fetchone()
+def migrate(db: Engine, quiet: bool):
+    with Session(db) as session:
+        db_version = int(str(session.scalar(select(schema_table.c.version))))
     if db_version > CURRENT_SCHEMA_VERSION:
         raise RuntimeError(f"the database is newer than this version of albums ({db_version} > {CURRENT_SCHEMA_VERSION})")
     if db_version == CURRENT_SCHEMA_VERSION:
@@ -138,7 +143,9 @@ def migrate(db: sqlite3.Connection, quiet: bool):
     for migration in migrations:
         if not quiet:
             logger.info(f"migrating database: v{migration}")
-        with db:
-            db.executescript(MIGRATIONS[migration])
-    with db:
-        db.execute("UPDATE _schema SET version = ?;", (CURRENT_SCHEMA_VERSION,))
+        with db.begin() as conn:
+            connection = conn.connection
+            connection.executescript(MIGRATIONS[migration])
+    with Session(db) as session:
+        session.execute(update(schema_table), {"version": CURRENT_SCHEMA_VERSION})
+        session.commit()

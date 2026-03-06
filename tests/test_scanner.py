@@ -1,13 +1,13 @@
-import contextlib
 import os
 import shutil
-import sqlite3
 
 from mutagen.flac import FLAC
+from sqlalchemy import Engine, update
+from sqlalchemy.orm import Session
 
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection, selector
-from albums.library.scanner import scan
+from albums.library.scanner import AlbumEntity, scan
 from albums.picture.info import PictureInfo
 from albums.tagger.types import PictureType
 from albums.types import Album, BasicTag, Path, Picture, PictureFile, Track
@@ -15,7 +15,7 @@ from albums.types import Album, BasicTag, Path, Picture, PictureFile, Track
 from .fixtures.create_library import create_album_in_library, create_library
 
 
-def context(db: sqlite3.Connection, library: Path):
+def context(db: Engine, library: Path):
     context = Context()
     context.db = db
     context.config.library = library
@@ -40,7 +40,8 @@ class TestScanner:
     ]
 
     def test_initial_scan(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_initial_scan", self.sample_library)
             scan(context(db, library))
             result = list(selector.load_albums(db))
@@ -80,16 +81,22 @@ class TestScanner:
             assert cover_png.picture.file_info.mime_type == "image/jpeg"
             assert cover_png.modify_timestamp
             assert cover_png.picture.type == PictureType.COVER_FRONT
+        finally:
+            db.dispose()
 
     def test_scan_empty(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_empty", [])
             scan(context(db, library))
             result = list(selector.load_albums(db))
             assert result == []
+        finally:
+            db.dispose()
 
     def test_scan_no_tags(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library(
                 "test_scan_no_tags",
                 [
@@ -102,9 +109,12 @@ class TestScanner:
             scan(context(db, library))
             result = list(selector.load_albums(db))
             assert len(result) == 4
+        finally:
+            db.dispose()
 
     def test_scan_update(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_update", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
@@ -120,9 +130,12 @@ class TestScanner:
             scan(ctx)
             result = list(selector.load_albums(db))
             assert result[0].tracks[0].tags[BasicTag.TITLE] == ("new title",)
+        finally:
+            db.dispose()
 
     def test_scan_add(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_add", [self.sample_library[1]])
             ctx = context(db, library)
             scan(ctx)
@@ -136,9 +149,12 @@ class TestScanner:
             result = list(selector.load_albums(db))
             assert len(result) == 2
             assert result[0].path == "bar" + os.sep
+        finally:
+            db.dispose()
 
     def test_scan_remove_album(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
@@ -160,9 +176,12 @@ class TestScanner:
             result = list(selector.load_albums(db))
             assert len(result) == 1
             assert result[0].path == "foo" + os.sep
+        finally:
+            db.dispose()
 
     def test_scan_remove_picture(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_remove_picture", [self.sample_library[0]])
             ctx = context(db, library)
             scan(ctx)
@@ -174,9 +193,12 @@ class TestScanner:
             scan(ctx)
             result = list(selector.load_albums(db))
             assert len(result[0].picture_files) == 0
+        finally:
+            db.dispose()
 
     def test_scan_filtered(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scan_filtered", self.sample_library)
             ctx = context(db, library)
             scan(ctx)
@@ -191,9 +213,12 @@ class TestScanner:
             result = list(selector.load_albums(db))
             assert len(result) == 3
             assert result[0].path == delete_album
+        finally:
+            db.dispose()
 
     def test_scanner_version(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             library = create_library("test_scanner_version", self.sample_library[:2])
             ctx = context(db, library)
             scan(ctx)
@@ -201,7 +226,10 @@ class TestScanner:
             assert len(result) == 2
             assert all(album.scanner == SCANNER_VERSION for album in result)
 
-            db.execute("UPDATE album SET scanner=0;")  # first album is unchanged but scanner version should be updated
+            with Session(db) as session:
+                session.execute(update(AlbumEntity).values(scanner=0))
+                session.commit()
+
             (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # second album changed
             create_album_in_library(library, self.sample_library[2])  # third album added
             result = list(selector.load_albums(db))
@@ -212,3 +240,5 @@ class TestScanner:
             result = list(selector.load_albums(db))
             assert len(result) == 3
             assert all(album.scanner == SCANNER_VERSION for album in result)
+        finally:
+            db.dispose()

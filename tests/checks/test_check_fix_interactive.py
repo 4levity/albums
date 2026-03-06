@@ -1,8 +1,9 @@
-import contextlib
 import os
 from typing import Sequence, Tuple
 
 from rich.console import RenderableType
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.database import connection, operations
@@ -37,7 +38,8 @@ class TestCheckFixInteractive:
     def test_fix_ignore_check(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=StreamInfo())], album_id=1)
         ctx = Context()
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(ctx.db, album)
 
             fixer = MockFixer(ctx, album)
@@ -51,14 +53,17 @@ class TestCheckFixInteractive:
             assert mock_confirm.call_count == 1
             assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
 
-            rows = ctx.db.execute("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = ?", (album_id,)).fetchall()
-            assert len(rows) == 1
-            assert rows[0][0] == 1
+            with Session(ctx.db) as session:
+                rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album_id})
+                assert rows == 1
+        finally:
+            ctx.db.dispose()
 
     def test_fix_ignore_check_no_options(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=StreamInfo())], album_id=1)
         ctx = Context()
-        with contextlib.closing(connection.open(connection.MEMORY)) as ctx.db:
+        ctx.db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(ctx.db, album)
 
             fixer = MockFixer(ctx, album, [], False, None)
@@ -69,6 +74,8 @@ class TestCheckFixInteractive:
             assert mock_confirm.call_count == 1
             assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
 
-            rows = ctx.db.execute("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = ?", (album_id,)).fetchall()
-            assert len(rows) == 1
-            assert rows[0][0] == 1
+            with Session(ctx.db) as session:
+                rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album_id})
+                assert rows == 1
+        finally:
+            ctx.db.dispose()

@@ -1,5 +1,4 @@
 import re
-import sqlite3
 
 import rich_click as click
 from rich.markup import escape
@@ -18,7 +17,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("value", required=False)
 @pass_context
 def config(ctx: Context, show: bool, name: str, value: str):
-    db = require_persistent_context(ctx)
+    require_persistent_context(ctx)
     if name and not value:
         ctx.console.print("error: must specify both name and value, or neither")
         raise SystemExit(1)
@@ -30,13 +29,13 @@ def config(ctx: Context, show: bool, name: str, value: str):
         ctx.console.print(table)
 
     if name and value:
-        _set(ctx, db, name, value)
+        _set(ctx, name, value)
         ctx.console.print(f"{name} = {value}")
     elif not show:
-        interactive_config(ctx, db)
+        interactive_config(ctx)
 
 
-def _set(ctx: Context, db: sqlite3.Connection, setting_name: str, value: str):
+def _set(ctx: Context, setting_name: str, value: str):
     keys = setting_name.split(".")
     if len(keys) != 2:
         ctx.console.print(f"invalid setting {setting_name}")
@@ -45,23 +44,23 @@ def _set(ctx: Context, db: sqlite3.Connection, setting_name: str, value: str):
     [section, name] = keys
     if section == "settings":
         if name == "library":
-            set_library(ctx, db, value)
+            set_library(ctx, value)
         elif name == "rescan":
             ctx.config.rescan = RescanOption(value)
-            db_config.save(db, ctx.config)
+            db_config.save(ctx.db, ctx.config)
         elif name == "tagger":
             ctx.config.tagger = value
-            db_config.save(db, ctx.config)
+            db_config.save(ctx.db, ctx.config)
         elif name == "open_folder_command":
             ctx.config.open_folder_command = value
-            db_config.save(db, ctx.config)
+            db_config.save(ctx.db, ctx.config)
         else:
             ctx.console.print(f"{setting_name} is not a valid setting")
             raise SystemExit(1)
 
     else:
         _set_check(ctx, section, name, value)
-        db_config.save(db, ctx.config)
+        db_config.save(ctx.db, ctx.config)
 
 
 def _set_check(ctx: Context, check_name: str, name: str, value: str):

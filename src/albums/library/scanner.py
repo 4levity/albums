@@ -1,13 +1,16 @@
 import glob
 import itertools
 import logging
-import sqlite3
 import time
 from pathlib import Path
 from typing import Callable, Iterable
 
 from rich.markup import escape
 from rich.progress import Progress
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from albums.database.models import AlbumEntity
 
 from ..app import SCANNER_VERSION, Context
 from ..checks.helpers import album_display_name
@@ -30,7 +33,8 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
         stored_paths = path_selector()
         full_scan = False
     else:
-        stored_paths = ctx.db.execute("SELECT path, album_id FROM album;")
+        with Session(ctx.db) as session:
+            stored_paths = [(r.path, r.album_id) for r in session.execute(select(AlbumEntity.path, AlbumEntity.album_id))]
         full_scan = True
 
     unprocessed_albums: dict[str, int | None] = dict(
@@ -61,7 +65,7 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
                 paths = itertools.chain(["."], paths)
                 show_progress = True
 
-        def scan_all(db: sqlite3.Connection, library_root: Path, update_progress: Callable[[], None]):
+        def scan_all(library_root: Path, update_progress: Callable[[], None]):
             scanned = 0
             any_changes = False
             for path_str in paths:
@@ -70,29 +74,29 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
                     stored_album = None
                 else:
                     del unprocessed_albums[path_str]
-                    stored_album = operations.load_album(db, album_id, True)
+                    stored_album = operations.load_album(ctx.db, album_id, True)
 
                 (album, result) = scan_folder(library_root, path_str, stored_album, reread)
                 scan_results[result.name] += 1
 
                 if album and album_id is not None and result == AlbumScanResult.UNCHANGED:
                     logger.debug(f"no changes detected for album {album_display_name(ctx, album)}", extra={"highlighter": None})
-                    operations.update_scanner(db, album_id, SCANNER_VERSION)
+                    operations.update_scanner(ctx.db, album_id, SCANNER_VERSION)
                 elif album and result == AlbumScanResult.NEW:
                     logger.info(f"add album {album_display_name(ctx, album)}", extra={"highlighter": None})
-                    operations.add(db, album)
+                    operations.add(ctx.db, album)
                     any_changes = True
                 elif album and album_id is not None and result == AlbumScanResult.UPDATED:
                     logger.info(f"update track info for album {album_display_name(ctx, album)}", extra={"highlighter": None})
                     # TODO only update what changed
-                    operations.update_tracks(db, album_id, album.tracks)
-                    operations.update_picture_files(db, album_id, album.picture_files)
-                    operations.update_scanner(db, album_id, SCANNER_VERSION)
+                    operations.update_tracks(ctx.db, album_id, album.tracks)
+                    operations.update_picture_files(ctx.db, album_id, album.picture_files)
+                    operations.update_scanner(ctx.db, album_id, SCANNER_VERSION)
                     any_changes = True
                 elif not album and result == AlbumScanResult.NO_TRACKS:
                     if stored_album and album_id:
                         logger.info(f"remove album {album_id} {album_display_name(ctx, stored_album)}", extra={"highlighter": None})
-                        operations.remove(db, album_id)
+                        operations.remove(ctx.db, album_id)
                         any_changes = True
                 else:
                     raise ValueError(
@@ -106,13 +110,13 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
         if show_progress and ctx.console.is_interactive:
             with Progress(console=ctx.console) as progress:
                 scan_task = progress.add_task("Scanning", total=expected_path_count)
-                (scanned, any_changes) = scan_all(ctx.db, ctx.config.library, lambda: progress.update(scan_task, advance=1))
+                (scanned, any_changes) = scan_all(ctx.config.library, lambda: progress.update(scan_task, advance=1))
                 progress.update(scan_task, completed=expected_path_count)
         elif ctx.console.is_interactive:
             with ctx.console.status("Scanning album", spinner="bouncingBar"):
-                (scanned, any_changes) = scan_all(ctx.db, ctx.config.library, lambda: None)
+                (scanned, any_changes) = scan_all(ctx.config.library, lambda: None)
         else:
-            (scanned, any_changes) = scan_all(ctx.db, ctx.config.library, lambda: None)
+            (scanned, any_changes) = scan_all(ctx.config.library, lambda: None)
 
         # remaining entries in unchecked_albums are apparently no longer in the library
         for path, album_id in unprocessed_albums.items():

@@ -10,7 +10,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("collection_names", nargs=-1)
 @pass_context
 def collections_remove(ctx: Context, collection_names: list[str]):
-    db = require_persistent_context(ctx)
+    require_persistent_context(ctx)
     for album in ctx.select_albums(False):
         album_collections = list(album.collections) if album.collections else []
         changed = False
@@ -27,4 +27,4 @@ def collections_remove(ctx: Context, collection_names: list[str]):
             if album.album_id is None:
                 raise ValueError(f"unexpected album.album_id=None for {album.path}")
             album.collections = album_collections
-            operations.update_collections(db, album.album_id, album.collections)
+            operations.update_collections(ctx.db, album.album_id, album.collections)

@@ -1,10 +1,10 @@
 import logging
-import sqlite3
 from collections.abc import Generator
 from typing import Any, Callable, Self
 
 import click
 from rich.console import Console
+from sqlalchemy import Engine
 
 from .configuration import Configuration
 from .types import Album
@@ -18,7 +18,7 @@ class Context(dict[Any, Any]):  # this is a dict because it's required to be by 
     parent: Self | None = None
     console = Console()  # single shared Console
     click_ctx: click.Context | None
-    db: sqlite3.Connection | None
+    db: Engine
     select_albums: Callable[[bool], Generator[Album, None, None]]
     is_filtered: bool
     config: Configuration
@@ -27,5 +27,4 @@ class Context(dict[Any, Any]):  # this is a dict because it's required to be by 
 
     def __init__(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
         super(Context, self).__init__(*args, **kwargs)
-        self.db = None
         self.config = Configuration()

@@ -1,9 +1,15 @@
+import logging
 import re
-import sqlite3
 from typing import Generator, Sequence, TypedDict, Unpack
 
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session
+
 from ..types import Album
-from . import operations
+from .models import AlbumEntity, CollectionEntity
+from .operations import album_to_album
+
+logger = logging.getLogger(__name__)
 
 
 class LoadOptions(TypedDict, total=False):
@@ -14,38 +20,7 @@ class LoadOptions(TypedDict, total=False):
     path: Sequence[str]
 
 
-def load_albums(db: sqlite3.Connection, **kwargs: Unpack[LoadOptions]) -> Generator[Album, None, None]:
-    load_track_tags = kwargs.get("load_track_tags", True)
-    collection_names = kwargs.get("collection", [])
-    match_path_regex = kwargs.get("regex", False)
-    match_paths = kwargs.get("path", [])
-    collection_placeholders = ",".join(["?"] * len(collection_names))
-    if len(match_paths) == 0 or match_path_regex:  # no path filter
-        if len(collection_names) == 0:
-            cursor = db.execute("SELECT album_id, path FROM album ORDER BY path;")
-        else:
-            cursor = db.execute(
-                "SELECT album_id, path FROM album "
-                "WHERE album_id IN "
-                "(SELECT album_id FROM album_collection ac JOIN collection c ON ac.collection_id=c.collection_id "
-                f"WHERE collection_name IN ({collection_placeholders})) "
-                "ORDER BY path;",
-                collection_names,
-            )
-    else:  # with path filter
-        path_placeholders = ",".join(["?"] * len(match_paths))
-        if len(collection_names) == 0:
-            cursor = db.execute(f"SELECT album_id, path FROM album WHERE path IN ({path_placeholders}) ORDER BY path;", match_paths)
-        else:
-            cursor = db.execute(
-                "SELECT album_id, path FROM album "
-                f"WHERE path IN ({path_placeholders}) AND album_id IN "
-                "(SELECT album_id FROM album_collection ac JOIN collection c ON ac.collection_id=c.collection_id "
-                f"WHERE collection_name IN {collection_placeholders}) "
-                "ORDER BY path;",
-                (*match_paths, *collection_names),
-            )
-
+def load_albums(db: Engine, **kwargs: Unpack[LoadOptions]) -> Generator[Album, None, None]:
     def path_match_when_regex(path: str):
         if len(match_paths) == 0 or not match_path_regex:
             return True
@@ -54,4 +29,19 @@ def load_albums(db: sqlite3.Connection, **kwargs: Unpack[LoadOptions]) -> Genera
                 return True
         return False
 
-    yield from (operations.load_album(db, album_id, load_track_tags) for (album_id, path) in cursor if path_match_when_regex(path))
+    load_track_tags = kwargs.get("load_track_tags", True)
+    collection_names = kwargs.get("collection", [])
+    match_path_regex = kwargs.get("regex", False)
+    match_paths = kwargs.get("path", [])
+    with Session(db) as session:
+        stmt = select(AlbumEntity)
+        if collection_names:
+            stmt = stmt.where(AlbumEntity.collections.any(CollectionEntity.collection_name.in_(collection_names)))
+        if match_paths and not match_path_regex:
+            stmt = stmt.where(AlbumEntity.path.in_(match_paths))
+
+        yield from (
+            album_to_album(album[0], load_track_tags)
+            for album in session.execute(stmt.order_by(AlbumEntity.path))
+            if path_match_when_regex(album[0].path)
+        )

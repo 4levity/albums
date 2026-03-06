@@ -1,10 +1,11 @@
-import contextlib
 import os
 import re
 from copy import copy
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from albums.database import connection, operations, schema, selector
 from albums.picture.info import PictureInfo
@@ -19,16 +20,22 @@ album = Album("foo" + os.sep, [track], ["test"], ["artist-tag"], folder_jpg, Non
 
 class TestDatabase:
     def test_init_schema(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            schema_version = db.execute("SELECT version FROM _schema;").fetchall()
-            assert len(schema_version) == 1
-            assert schema_version[0][0] == max(schema.MIGRATIONS.keys()) == (len(schema.MIGRATIONS) + 1) == schema.CURRENT_SCHEMA_VERSION
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                schema_version = session.scalar(text("SELECT version FROM _schema;"))
+            assert schema_version == max(schema.MIGRATIONS.keys()) == (len(schema.MIGRATIONS) + 1) == schema.CURRENT_SCHEMA_VERSION
+        finally:
+            db.dispose()
 
     def test_foreign_key(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
-            foreign_keys = db.execute("PRAGMA foreign_keys;").fetchall()
-            assert len(foreign_keys) == 1
-            assert foreign_keys[0][0] == 1
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                foreign_keys = session.scalar(text("PRAGMA foreign_keys;"))
+            assert foreign_keys == 1
+        finally:
+            db.dispose()
 
     def test_schema_too_new(self):
         test_data_path = Path(__file__).resolve().parent / "fixtures" / "libraries"
@@ -36,22 +43,30 @@ class TestDatabase:
         db_file = test_data_path / "test_database.db"
         if db_file.exists():
             db_file.unlink()
-        with contextlib.closing(connection.open(db_file)) as db:
-            newer_version = schema.CURRENT_SCHEMA_VERSION + 1
-            db.execute("UPDATE _schema SET version = ?;", (newer_version,))
-            db.commit()
-            assert db.execute("SELECT version FROM _schema;").fetchall()[0][0] == newer_version
-        with pytest.raises(RuntimeError):
-            with contextlib.closing(connection.open(db_file)) as db:
+        db = connection.open(db_file)
+        try:
+            with Session(db) as session:
+                newer_version = schema.CURRENT_SCHEMA_VERSION + 1
+                session.execute(text("UPDATE _schema SET version = :version ;"), {"version": newer_version})
+                session.commit()
+                assert session.scalar(text("SELECT version FROM _schema;")) == newer_version
+            with pytest.raises(RuntimeError):
+                connection.open(db_file)
                 assert False  # shouldn't get this far
+        finally:
+            db.dispose()
 
     def test_select_empty(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             result = list(selector.load_albums(db))
             assert len(result) == 0
+        finally:
+            db.dispose()
 
     def test_add_and_select(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             assert isinstance(album_id, int)
 
@@ -78,12 +93,15 @@ class TestDatabase:
             assert file.picture.file_info.file_hash == b"1234"
             assert file.modify_timestamp == 999
             assert file.cover_source
+        finally:
+            db.dispose()
 
     def test_select_multiple_and_regex(self):
         album2 = copy(album)
         album2.path = "baz" + os.sep
         album2.collections = []
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             operations.add(db, album)
             operations.add(db, album2)
 
@@ -92,12 +110,15 @@ class TestDatabase:
             assert len(list(selector.load_albums(db, path=["o." + re_sep], regex=True))) == 1  # regex match
             assert len(list(selector.load_albums(db, path=["x." + re_sep], regex=True))) == 0  # no regex match
             assert len(list(selector.load_albums(db, path=["(foo|baz)"], regex=True))) == 2
+        finally:
+            db.dispose()
 
     def test_select_by_collection(self):
         album2 = copy(album)
         album2.path = "baz" + os.sep
         album2.collections = []
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             operations.add(db, album)
             operations.add(db, album2)
 
@@ -105,9 +126,12 @@ class TestDatabase:
             result = list(selector.load_albums(db, collection=["test", "anything"]))
             assert len(result) == 1
             assert result[0].path.startswith("foo")
+        finally:
+            db.dispose()
 
     def test_update_collections(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             assert len(list(selector.load_albums(db, collection=["test"]))) == 1
             assert len(list(selector.load_albums(db, collection=["new-collection"]))) == 0
@@ -116,9 +140,12 @@ class TestDatabase:
 
             assert len(list(selector.load_albums(db, collection=["test"]))) == 0
             assert len(list(selector.load_albums(db, collection=["new-collection"]))) == 1
+        finally:
+            db.dispose()
 
     def test_update_ignore_checks(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             result = list(selector.load_albums(db))
             assert result[0].ignore_checks == ["artist-tag"]  # initial
@@ -130,9 +157,12 @@ class TestDatabase:
 
             operations.update_ignore_checks(db, album_id, [])  # remove all ignores
             assert list(selector.load_albums(db))[0].ignore_checks == []
+        finally:
+            db.dispose()
 
     def test_update_picture_files(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             picture_files = list(selector.load_albums(db))[0].picture_files
             assert len(picture_files) == 1
@@ -156,12 +186,15 @@ class TestDatabase:
             assert pic_other.picture.file_info.width == pic_other.picture.file_info.height == 200
             assert pic_other.picture.file_info.file_size == 2048
             assert pic_other.picture.file_info.file_hash == b"abcd"
+        finally:
+            db.dispose()
 
     def test_remove_album(self):
         album2 = copy(album)
         album2.path = "baz" + os.sep
         album2.collections = []
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             operations.add(db, album2)
             assert len(list(selector.load_albums(db))) == 2
@@ -171,9 +204,12 @@ class TestDatabase:
             result = list(selector.load_albums(db))
             assert len(result) == 1
             assert result[0].path == "baz" + os.sep
+        finally:
+            db.dispose()
 
     def test_update_tracks(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             tracks = list(selector.load_albums(db))[0].tracks
             assert len(tracks) == 1
@@ -186,9 +222,12 @@ class TestDatabase:
             tracks = list(selector.load_albums(db))[0].tracks
             assert len(tracks) == 2
             assert all(track.tags[BasicTag.ALBUM] == ("Foo",) for track in tracks)
+        finally:
+            db.dispose()
 
     def test_scan_history(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             assert operations.get_last_scan_info(db) is None
             operations.record_full_scan(db, ScanHistoryEntry(3, 2, 1))
             entry = operations.get_last_scan_info(db)
@@ -196,9 +235,12 @@ class TestDatabase:
             assert entry.timestamp == 3
             assert entry.folders_scanned == 2
             assert entry.albums_total == 1
+        finally:
+            db.dispose()
 
     def test_update_scanner(self):
-        with contextlib.closing(connection.open(connection.MEMORY)) as db:
+        db = connection.open(connection.MEMORY)
+        try:
             album_id = operations.add(db, album)
             result = list(selector.load_albums(db))[0]
             assert result.scanner == 3
@@ -207,3 +249,5 @@ class TestDatabase:
 
             result = list(selector.load_albums(db))[0]
             assert result.scanner == 4
+        finally:
+            db.dispose()
