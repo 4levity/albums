@@ -5,6 +5,9 @@ from typing import Any, Sequence, Tuple
 
 from PIL import Image
 from rich.console import RenderableType
+from rich.markup import escape
+
+from albums.tagger.folder import Cap
 
 from ...database.operations import update_picture_files
 from ...interactive.image_table import render_image_table
@@ -48,9 +51,15 @@ class CheckCoverEmbedded(Check):
     def check(self, album: Album) -> CheckResult | None:
         cover_source = next(((filename, pic) for filename, pic in album.picture_files.items() if pic.cover_source), None)
         # depends on conflicting-embedded, which ensures there is only one COVER_FRONT embedded per track
-        track_covers = [next(((t.filename, p) for p in t.pictures if p.type == PictureType.COVER_FRONT), None) for t in album.tracks]
+        tagger = self.tagger.get(album.path)
+        track_covers = [
+            next(((t.filename, p) for p in t.pictures if p.type == PictureType.COVER_FRONT), None)
+            for t in album.tracks
+            if tagger.supports(t.filename, Cap.PICTURES)
+        ]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
         missing = sum(0 if c else 1 for c in track_covers)
+        unsupported = sum(0 if tagger.supports(t.filename) else 1 for t in album.tracks)
 
         if cover_source:
             (cover_source_filename, cover_source_file) = cover_source
@@ -64,7 +73,16 @@ class CheckCoverEmbedded(Check):
                     0 if not c or c and (c[1].file_info.width, c[1].file_info.height) == (expect_w, expect_h) else 1 for c in track_covers
                 )
                 not_expected_format = sum(0 if not c or c and c[1].file_info.mime_type == self.create_mime_type else 1 for c in track_covers)
-                problem_summary = f"{missing} with no cover, {not_expected_size} with wrong dimensions, {not_expected_format} with wrong MIME type"
+                problems: list[str] = []
+                if unsupported:
+                    problems.append(f"{unsupported} tracks where albums doesn't support embedded images")
+                if missing:
+                    problems.append(f"{missing} with no cover")
+                if not_expected_size:
+                    problems.append(f"{not_expected_size} with wrong dimensions")
+                if not_expected_format:
+                    problems.append(f"{not_expected_format} with wrong MIME type")
+                problem_summary = ", ".join(problems)
                 if len(unique_track_covers) > 1:
                     # TODO we could offer a non-automatic fix if user wants to overwrite non-unique covers
                     return CheckResult(
@@ -182,21 +200,25 @@ class CheckCoverEmbedded(Check):
         (image, image_data) = self._make_embedded(album, source_filename, source_picture)
         new_info = PictureInfo(self.create_mime_type, image.width, image.height, 24, len(image_data), b"")  # hash fixed on rescan
         new_cover = Picture(new_info, PictureType.COVER_FRONT, "", ())
+        tagger = self.tagger.get(album.path)
         for track in album.tracks:
-            with self.tagger.get(album.path).open(track.filename) as tags:
-                current_cover = next((pic for pic, _data in tags.get_pictures() if pic.type == PictureType.COVER_FRONT), None)
-                if current_cover:
-                    self.ctx.console.print(f"Replacing front cover image in {track.filename}")
-                    tags.remove_picture(current_cover)
-                else:
-                    self.ctx.console.print(f"Adding front cover image to {track.filename}")
-                tags.add_picture(new_cover, image_data)
+            if tagger.supports(track.filename, Cap.PICTURES):
+                with tagger.open(track.filename) as tags:
+                    current_cover = next((pic for pic, _data in tags.get_pictures() if pic.type == PictureType.COVER_FRONT), None)
+                    if current_cover:
+                        self.ctx.console.print(f"Replacing front cover image in {escape(track.filename)}")
+                        tags.remove_picture(current_cover)
+                    else:
+                        self.ctx.console.print(f"Adding front cover image to {escape(track.filename)}")
+                    tags.add_picture(new_cover, image_data)
+            else:
+                self.ctx.console.print(f"Skipping unsupported file {escape(track.filename)}")
         return True
 
     def _fix_mark_cover_source(self, album: Album, filename: str):
         if not self.ctx.db or not album.album_id:
             raise ValueError("marking cover source requires database and album_id")
-        self.ctx.console.print(f"Mark as front cover source: {filename}")
+        self.ctx.console.print(f"Mark as front cover source: {escape(filename)}")
         album.picture_files[filename].cover_source = True
         update_picture_files(self.ctx.db, album.album_id, album.picture_files)
         return True
@@ -212,7 +234,7 @@ class CheckCoverEmbedded(Check):
 
         suffix = mimetypes.guess_extension(cover.file_info.mime_type)
         new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
-        self.ctx.console.print(f"Extract to cover source: {new_filename}")
+        self.ctx.console.print(f"Extract to cover source: {escape(new_filename)}")
         with open(self.ctx.config.library / album.path / new_filename, "wb") as f:
             f.write(image_data)
         # create a record of the new image so it can be marked cover_source (details will be filled in when album is rescanned)
