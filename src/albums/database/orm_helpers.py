@@ -3,7 +3,7 @@ from typing import Any, override
 
 from sqlalchemy import Dialect, Integer, Text, TypeDecorator
 
-from ..picture.scan import LoadIssuesType
+from ..picture.info import LoadIssuesType
 
 
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):

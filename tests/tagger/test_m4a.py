@@ -26,8 +26,8 @@ track = Track(
     0,
     None,
     [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, "", ()),
-        Picture(PictureInfo("image/jpeg", 401, 401, 24, 2, b"2222"), PictureType.OTHER, "", ()),  # type ignored, logs a warning
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, ""),
+        Picture(PictureInfo("image/jpeg", 401, 401, 24, 2, b"2222"), PictureType.OTHER, ""),  # type ignored, logs a warning
     ],
 )
 album = Album("baz" + os.sep, [track])
@@ -164,9 +164,7 @@ class TestM4a:
         second = scan.pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")
-        replacement = Picture(
-            PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.COVER_FRONT, "", ()
-        )
+        replacement = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.COVER_FRONT, "")
 
         with TestM4a.tagger.open(track.filename) as file:
             file.remove_picture(first)

@@ -147,7 +147,7 @@ class CheckCoverUnique(Check):
             picture_files = [
                 file
                 if (file.cover_source == (file.filename == filename))
-                else PictureFile(file.filename, file.file_info, file.modify_timestamp, not file.cover_source, file.load_issue)
+                else PictureFile(file.filename, file.file_info, file.modify_timestamp, not file.cover_source)
                 for file in album.picture_files
             ]
             album.picture_files = picture_files

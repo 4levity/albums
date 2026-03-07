@@ -27,7 +27,7 @@ class TestCheckCoverDimensions:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )
@@ -35,8 +35,8 @@ class TestCheckCoverDimensions:
         assert result is None
 
     def test_cover_square_enough_not_unique(self):
-        pic1 = Picture(PictureInfo("image/png", 401, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, "", ())
-        pic2 = Picture(PictureInfo("image/png", 402, 400, 24, 1, b"2222"), PictureType.COVER_FRONT, "", ())
+        pic1 = Picture(PictureInfo("image/png", 401, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, "")
+        pic2 = Picture(PictureInfo("image/png", 402, 400, 24, 1, b"2222"), PictureType.COVER_FRONT, "")
         album = Album(
             "",
             [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic1]), Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic2])],
@@ -45,7 +45,7 @@ class TestCheckCoverDimensions:
         assert result is None
 
     def test_cover_not_square_enough_embedded(self, mocker):
-        cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "", ())
+        cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "")
         album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])], [], [], [], 1)
         ctx = Context()
         ctx.db = True
@@ -84,7 +84,7 @@ class TestCheckCoverDimensions:
         assert new_cover.width == new_cover.height == min(cover.file_info.width, cover.file_info.height)
 
     def test_cover_not_square_enough_embedded_preserve_type(self, mocker):
-        cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "", ())
+        cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "")
         album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])], [], [], [], 1)
         ctx = Context()
         ctx.db = True
@@ -124,7 +124,7 @@ class TestCheckCoverDimensions:
         assert new_cover.width == new_cover.height == min(cover.file_info.width, cover.file_info.height)
 
     def test_cover_not_square_enough_jpg_file(self, mocker):
-        cover = Picture(PictureInfo("image/jpeg", 1000, 800, 24, 1, b""), PictureType.COVER_FRONT, "", ())
+        cover = Picture(PictureInfo("image/jpeg", 1000, 800, 24, 1, b""), PictureType.COVER_FRONT, "")
         album = Album(
             "foo" + os.sep,
             [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))],
@@ -209,7 +209,7 @@ class TestCheckCoverDimensions:
         assert new_cover.width == new_cover.height == min(cover_info.width, cover_info.height)
 
     def test_cover_not_square_enough_extreme(self, mocker):
-        cover = Picture(PictureInfo("image/png", 1000, 500, 24, 1, b""), PictureType.COVER_FRONT, "", ())
+        cover = Picture(PictureInfo("image/png", 1000, 500, 24, 1, b""), PictureType.COVER_FRONT, "")
         album = Album("foo" + os.sep, [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [cover])])
         result = CheckCoverDimensions(Context()).check(album)
         assert result is not None
@@ -226,7 +226,7 @@ class TestCheckCoverDimensions:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 10, 10, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 10, 10, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )
@@ -244,7 +244,7 @@ class TestCheckCoverDimensions:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 9001, 9001, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 9001, 9001, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )

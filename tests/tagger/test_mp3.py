@@ -26,8 +26,8 @@ track = Track(
     0,
     None,
     [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, ""),
     ],
 )
 album = Album("baz" + os.sep, [track])
@@ -177,7 +177,7 @@ class TestMp3:
         back = scan.pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")
-        replacement = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.FISH, "", ())
+        replacement = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.FISH, "")
 
         with TestMp3.tagger.open(track.filename) as file:
             file.remove_picture(front)

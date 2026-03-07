@@ -28,8 +28,8 @@ class CheckPictureMetadata(Check):
         for track_index, track in enumerate(album.tracks):
             issues: set[str] = set()
             for picture in track.pictures:
-                load_issue = dict(picture.load_issue)
-                if picture.load_issue and any(issue in load_issue for issue in ["format", "width", "height"]):
+                load_issue = dict(picture.file_info.load_issue)
+                if picture.file_info.load_issue and any(issue in load_issue for issue in ["format", "width", "height"]):
                     if "format" in load_issue:
                         issues.add("wrong MIME type")
                     if "width" in load_issue or "height" in load_issue:
@@ -91,7 +91,7 @@ class CheckPictureMetadata(Check):
                     tags.remove_picture(pic)
                 for pic, image_data in all_pictures:
                     new_pic_scan = tagger.get_picture_scanner().scan(image_data)
-                    new_pic = Picture(new_pic_scan.picture_info, pic.type, pic.description, new_pic_scan.load_issue)
+                    new_pic = Picture(new_pic_scan, pic.type, pic.description)
                     tags.add_picture(new_pic, image_data)
         album_path = self.ctx.config.library / album.path
         for old_name, new_name in image_files_to_rename:

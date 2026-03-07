@@ -62,9 +62,7 @@ class CheckCoverDimensions(Check):
         cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
         if all(
             self._cover_good_enough(cover)
-            for cover in chain(
-                embedded_covers.keys(), (Picture(file.file_info, PictureType.COVER_FRONT, "", file.load_issue) for file in cover_files)
-            )
+            for cover in chain(embedded_covers.keys(), (Picture(file.file_info, PictureType.COVER_FRONT, "") for file in cover_files))
         ):
             return None
 
@@ -91,7 +89,7 @@ class CheckCoverDimensions(Check):
         if file_cover:  # either cover_source or identical to embedded images
             cover_file = cover_files[0]
             from_file = cover_file.filename
-            cover = Picture(cover_file.file_info, PictureType.COVER_FRONT, "", cover_file.load_issue)
+            cover = Picture(cover_file.file_info, PictureType.COVER_FRONT, "")
             embedded = False
         elif embedded_cover:
             (cover, from_file) = list(embedded_covers.items())[0]
@@ -119,7 +117,7 @@ class CheckCoverDimensions(Check):
                         filename = picture_source[cover][0]
                         (image, image_data, mime_type) = self._squarify(cover, self.ctx.config.library / album.path, filename)
                         pic_info = PictureInfo(mime_type, image.width, image.height, IMAGE_MODE_BPP.get(image.mode, 0), len(image_data), b"")
-                        new_cover.append((Picture(pic_info, cover.type, "", ()), image, image_data))
+                        new_cover.append((Picture(pic_info, cover.type, ""), image, image_data))
                     return new_cover[0]
 
                 table = (

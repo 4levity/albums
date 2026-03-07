@@ -35,7 +35,7 @@ class TestCheckCoverAvailable:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "")],
                 ),
                 Track(
                     "2.flac",
@@ -43,7 +43,7 @@ class TestCheckCoverAvailable:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "")],
                 ),
             ],
         )
@@ -105,7 +105,7 @@ class TestCheckCoverAvailable:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.OTHER, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.OTHER, "")],
                 ),
                 Track(
                     "2.flac",
@@ -113,7 +113,7 @@ class TestCheckCoverAvailable:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.OTHER, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.OTHER, "")],
                 ),
             ],
             [],

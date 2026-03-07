@@ -47,8 +47,8 @@ class M4aTagger(AbstractMutagenTagger):
                     expect_mime_type = "invalid"  # causes loader to report MIME type mismatch
 
             image_data = bytes(cover)  # pyright: ignore[reportUnknownArgumentType]
-            pic_scan = self._picture_scanner.scan(image_data, expect_mime_type)
-            picture = Picture(pic_scan.picture_info, PictureType.COVER_FRONT, "", pic_scan.load_issue)
+            picture_info = self._picture_scanner.scan(image_data, expect_mime_type)
+            picture = Picture(picture_info, PictureType.COVER_FRONT, "")
             yield (picture, image_data)
 
     @override

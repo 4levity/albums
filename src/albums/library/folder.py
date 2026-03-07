@@ -64,9 +64,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
                 cover_source_filename = next((file.filename for file in stored_album.picture_files if file.cover_source), None)
                 if cover_source_filename:
                     album.picture_files = [
-                        file
-                        if file.filename != cover_source_filename
-                        else PictureFile(file.filename, file.file_info, file.modify_timestamp, True, file.load_issue)
+                        file if file.filename != cover_source_filename else PictureFile(file.filename, file.file_info, file.modify_timestamp, True)
                         for file in album.picture_files
                     ]
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
@@ -136,8 +134,8 @@ def _picture_from_path(file: Path, picture_scanner: PictureScanner) -> PictureFi
         return None
 
     expect_mime_type, _ = mimetypes.guess_type(file.name)
-    scan_result = picture_scanner.scan(read_binary_file(file), expect_mime_type)
-    return PictureFile(file.name, scan_result.picture_info, int(stat.st_mtime), False, scan_result.load_issue)
+    picture_info = picture_scanner.scan(read_binary_file(file), expect_mime_type)
+    return PictureFile(file.name, picture_info, int(stat.st_mtime), False)
 
 
 def read_binary_file(path: Path) -> bytes:

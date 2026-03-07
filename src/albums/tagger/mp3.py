@@ -56,8 +56,8 @@ class Mp3Tagger(AbstractMutagenTagger):
             expect_mime_type = str(frame.mime) if frame.mime and isinstance(frame.mime, str) else "Unknown"  # type: ignore
             description = str(frame.desc)  # type: ignore
 
-            result = self._picture_scanner.scan(image_data, expect_mime_type)
-            picture = Picture(result.picture_info, picture_type, description, result.load_issue)
+            picture_info = self._picture_scanner.scan(image_data, expect_mime_type)
+            picture = Picture(picture_info, picture_type, description)
             yield (picture, image_data)
 
     @override

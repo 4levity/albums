@@ -12,7 +12,7 @@ from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, BasicTag, PictureFile, ScanHistoryEntry, Track
 
-embedded_cover = Picture(PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234"), PictureType.COVER_FRONT, "", (("format", "image/png"),))
+embedded_cover = Picture(PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234", (("format", "image/png"),)), PictureType.COVER_FRONT, "")
 track = Track("1.flac", {BasicTag.ARTIST: ["Bar"]}, 0, 0, StreamInfo(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
 folder_jpg = PictureFile("folder.jpg", PictureInfo("test", 100, 100, 24, 4096, b"1234"), 999, True)
 album = Album("foo" + os.sep, [track], ["test"], ["artist-tag"], [folder_jpg], None, 3)
@@ -167,7 +167,7 @@ class TestDatabase:
             assert picture_files[0].cover_source
 
             # modify existing image file + add one
-            file0 = PictureFile(picture_files[0].filename, picture_files[0].file_info, picture_files[0].modify_timestamp, False, ())
+            file0 = PictureFile(picture_files[0].filename, picture_files[0].file_info, picture_files[0].modify_timestamp, False)
             new_pic_info = PictureInfo("test", 200, 200, 24, 2048, b"abcd")
 
             operations.update_picture_files(db, album_id, [file0] + list(picture_files[1:]) + [PictureFile("other.jpg", new_pic_info, 999, False)])

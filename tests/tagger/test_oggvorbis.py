@@ -17,8 +17,8 @@ track = Track(
     0,
     None,
     [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
-        Picture(PictureInfo("image/jpeg", 300, 300, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+        Picture(PictureInfo("image/jpeg", 300, 300, 24, 1, b""), PictureType.COVER_BACK, ""),
     ],
 )
 album = Album("foobar" + os.sep, [track])
@@ -81,7 +81,7 @@ class TestOggVorbis:
 
         image_data = make_image_data(600, 600, "JPEG")
         pic_info = PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data))
-        replacement = Picture(pic_info, PictureType.FISH, "", ())
+        replacement = Picture(pic_info, PictureType.FISH, "")
 
         with TestOggVorbis.tagger.open(track.filename) as file:
             file.remove_picture(front)

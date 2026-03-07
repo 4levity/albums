@@ -16,7 +16,7 @@ mp3track = Track(
     0,
     0,
     None,
-    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
 )
 mp3album = Album("baz" + os.sep, [mp3track])
 

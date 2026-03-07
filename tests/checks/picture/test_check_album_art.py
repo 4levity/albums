@@ -22,7 +22,7 @@ class TestCheckAlbumArt:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )
@@ -39,7 +39,7 @@ class TestCheckAlbumArt:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/gif", 400, 400, 8, 1024, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/gif", 400, 400, 8, 1024, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )
@@ -77,7 +77,7 @@ class TestCheckAlbumArt:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 15 * 1024 * 1024, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 15 * 1024 * 1024, b""), PictureType.COVER_FRONT, "")],
                 )
             ],
         )

@@ -20,8 +20,8 @@ class TestCheckDuplicateImage:
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
                     [
-                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
-                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, ""),
                     ],
                 ),
                 Track(
@@ -31,8 +31,8 @@ class TestCheckDuplicateImage:
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
                     [
-                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
-                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+                        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, ""),
                     ],
                 ),
             ],
@@ -41,8 +41,16 @@ class TestCheckDuplicateImage:
 
     def test_duplicate_image_in_track(self):
         pictures = [
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ()),
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+            Picture(
+                PictureInfo("image/png", 400, 400, 24, 1, b""),
+                PictureType.COVER_BACK,
+                "",
+            ),
+            Picture(
+                PictureInfo("image/png", 400, 400, 24, 1, b""),
+                PictureType.COVER_BACK,
+                "",
+            ),
         ]
         album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), pictures)])
         result = CheckDuplicateImage(Context()).check(album)
@@ -50,7 +58,7 @@ class TestCheckDuplicateImage:
         assert "duplicate embedded image data in one or more files: COVER_BACK" in result.message
 
     def test_cover_duplicate_files(self, mocker):
-        pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())
+        pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")
         picture_files = [PictureFile("folder.png", pic.file_info, 0, False), PictureFile("cover.png", pic.file_info, 0, False)]
         album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)
         result = CheckDuplicateImage(Context()).check(album)

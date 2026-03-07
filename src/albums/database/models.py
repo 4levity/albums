@@ -74,7 +74,7 @@ class IgnoreCheckEntity(Base):
     album_ignore_check_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
 
     check_name: Mapped[str] = mapped_column(Text, nullable=False)
-    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"))
+    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
 
     album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="ignore_checks")
 
@@ -84,12 +84,11 @@ class PictureFileEntity(Base):
     __table_args__ = (Index("idx_album_picture_file_album_id", "album_id"),)
 
     album_picture_file_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"))
+    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
 
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     modify_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
     cover_source: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("0"))
-    load_issue: Mapped[LoadIssuesType] = mapped_column(LoadIssuesAsJson)
 
     _format: Mapped[str] = mapped_column("format", Text, nullable=False)
     _width: Mapped[int] = mapped_column("width", Integer, nullable=False)
@@ -97,7 +96,8 @@ class PictureFileEntity(Base):
     _depth_bpp: Mapped[int] = mapped_column("depth_bpp", Integer, nullable=False)
     _file_size: Mapped[int] = mapped_column("file_size", Integer, nullable=False)
     _file_hash: Mapped[bytes] = mapped_column("file_hash", LargeBinary, nullable=False)
-    file_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash)
+    _load_issue: Mapped[LoadIssuesType] = mapped_column("load_issue", LoadIssuesAsJson)
+    file_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash, _load_issue)
 
     album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="picture_files")
 
@@ -107,7 +107,7 @@ class TrackEntity(Base):
     __table_args__ = (Index("idx_track_album_id", "album_id"),)
 
     track_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"))
+    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
 
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -130,12 +130,11 @@ class TrackPictureEntity(Base):
     __table_args__ = (Index("idx_track_picture_track_id", "track_id"),)
 
     track_picture_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"))
+    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
 
     picture_type: Mapped[PictureType] = mapped_column(IntEnumAsInt[PictureType](PictureType), nullable=False)
     embed_ix: Mapped[int] = mapped_column(Integer, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    load_issue: Mapped[LoadIssuesType] = mapped_column(LoadIssuesAsJson)
 
     _format: Mapped[str] = mapped_column("format", Text, nullable=False)
     _width: Mapped[int] = mapped_column("width", Integer, nullable=False)
@@ -143,7 +142,8 @@ class TrackPictureEntity(Base):
     _depth_bpp: Mapped[int] = mapped_column("depth_bpp", Integer, nullable=False)
     _file_size: Mapped[int] = mapped_column("file_size", Integer, nullable=False)
     _file_hash: Mapped[bytes] = mapped_column("file_hash", LargeBinary, nullable=False)
-    file_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash)
+    _load_issue: Mapped[LoadIssuesType] = mapped_column("load_issue", LoadIssuesAsJson)
+    file_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash, _load_issue)
 
     track: Mapped[Optional[TrackEntity]] = relationship("TrackEntity", back_populates="pictures")
 
@@ -153,7 +153,7 @@ class TrackTagEntity(Base):
     __table_args__ = (Index("idx_track_tag_track_id", "track_id"),)
 
     track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"))
+    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
 
     name: Mapped[str] = mapped_column(Text, nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)

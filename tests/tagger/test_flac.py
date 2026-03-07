@@ -19,7 +19,7 @@ track1 = Track(
     0,
     None,
     [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
     ],
 )
 track2 = Track(
@@ -29,8 +29,8 @@ track2 = Track(
     0,
     None,
     [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ()),
-        Picture(PictureInfo("image/jpeg", 300, 300, 24, 1, b""), PictureType.COVER_BACK, "", ()),
+        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+        Picture(PictureInfo("image/jpeg", 300, 300, 24, 1, b""), PictureType.COVER_BACK, ""),
     ],
 )
 album = Album("bar" + os.sep, [track1, track2])
@@ -50,7 +50,7 @@ class TestFlac:
         assert scan.pictures[0].type == PictureType.COVER_FRONT
         assert scan.pictures[0].file_info.mime_type == "image/png"
         assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].load_issue == ()
+        assert scan.pictures[0].file_info.load_issue == ()
 
     def test_read_flac_two_pictures(self):
         with TestFlac.tagger.open(track2.filename) as file:
@@ -83,7 +83,7 @@ class TestFlac:
         assert len(scan.pictures) == 1
         assert scan.pictures[0].file_info.mime_type == "image/png"
         assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
+        assert scan.pictures[0].file_info.load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
 
     def test_remove_only_flac_pic(self):
         with TestFlac.tagger.open(track1.filename) as file:
@@ -142,7 +142,7 @@ class TestFlac:
 
         image_data = make_image_data(600, 600, "JPEG")
         pic_info = PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data))
-        replacement = Picture(pic_info, PictureType.FISH, "", ())
+        replacement = Picture(pic_info, PictureType.FISH, "")
         with TestFlac.tagger.open(track2.filename) as file:
             file.remove_picture(front)
             file.add_picture(replacement, image_data)

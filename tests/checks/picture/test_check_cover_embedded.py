@@ -26,7 +26,7 @@ class TestCheckCoverEmbedded:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 ),
                 Track(
                     "2.flac",
@@ -34,7 +34,7 @@ class TestCheckCoverEmbedded:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 ),
             ],
         )
@@ -51,7 +51,7 @@ class TestCheckCoverEmbedded:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 0, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 0, b""), PictureType.COVER_FRONT, "")],
                 ),
                 Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
             ],
@@ -97,7 +97,7 @@ class TestCheckCoverEmbedded:
                     0,
                     0,
                     StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "", ())],
+                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
                 ),
                 Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
             ],
@@ -125,7 +125,7 @@ class TestCheckCoverEmbedded:
         mock_remove_picture = mocker.patch.object(tagger, "remove_picture")
 
         mock_get_pictures = mocker.patch.object(tagger, "get_pictures")
-        pic_found = [(Picture(PictureInfo("", 0, 0, 0, 0, b""), PictureType.COVER_FRONT, "", ()), b"")]
+        pic_found = [(Picture(PictureInfo("", 0, 0, 0, 0, b""), PictureType.COVER_FRONT, ""), b"")]
         mock_get_pictures.side_effect = [pic_found, []]
 
         table = result.fixer.get_table()

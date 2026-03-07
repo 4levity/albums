@@ -27,8 +27,8 @@ class ImageFileReader(TaggerFile):
         if not self._image:
             with open(self._path, "rb") as f:
                 image_data = f.read()
-            scan = self._picture_scanner.scan(image_data)
-            picture = Picture(scan.picture_info, PictureType.from_filename(self._path.name), "", scan.load_issue)
+            picture_info = self._picture_scanner.scan(image_data)
+            picture = Picture(picture_info, PictureType.from_filename(self._path.name), "")
             self._image = (picture, image_data)
         yield self._image
 

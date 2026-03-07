@@ -66,7 +66,6 @@ def _picture(entity: TrackPictureEntity | PictureFileEntity, picture_type: Pictu
         entity.file_info,
         picture_type,
         "",
-        entity.load_issue,
     )
 
 
@@ -76,7 +75,6 @@ def _picture_file(entity: PictureFileEntity) -> PictureFile:
         entity.file_info,
         entity.modify_timestamp,
         entity.cover_source,
-        entity.load_issue,
     )
 
 
@@ -120,7 +118,6 @@ def _picture_file_to_entity(file: PictureFile) -> PictureFileEntity:
         modify_timestamp=file.modify_timestamp,
         cover_source=file.cover_source,
         file_info=file.file_info,
-        load_issue=file.load_issue,
     )
 
 
@@ -129,7 +126,6 @@ def _picture_to_entity(pic: Picture, embed_ix: int) -> TrackPictureEntity:
         picture_type=pic.type,
         file_info=pic.file_info,
         description=pic.description,
-        load_issue=pic.load_issue,
         embed_ix=embed_ix,
     )
 
