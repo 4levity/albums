@@ -35,12 +35,12 @@ class TestOggVorbis:
             scan = file.scan()
 
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
 
         assert scan.pictures[1].type == PictureType.COVER_BACK
-        assert scan.pictures[1].file_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].file_info.width == scan.pictures[1].file_info.height == 300
+        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
+        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 300
 
         tags = dict(scan.tags)
         assert tags[BasicTag.ARTIST] == ("C",)
@@ -55,8 +55,8 @@ class TestOggVorbis:
 
         assert len(scan.pictures) == 2
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
         front = scan.pictures[0]
         assert scan.pictures[1].type == PictureType.COVER_BACK
         back = scan.pictures[1]

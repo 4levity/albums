@@ -81,14 +81,14 @@ class TestDatabase:
             assert result[0].tracks[0].stream.codec == "FLAC"
             assert len(result[0].tracks[0].pictures) == 1
             assert result[0].tracks[0].pictures[0].type == PictureType.COVER_FRONT
-            assert result[0].tracks[0].pictures[0].file_info.file_size == 1024
+            assert result[0].tracks[0].pictures[0].picture_info.file_size == 1024
 
             assert len(result[0].picture_files) == 1
             file = next(file for file in result[0].picture_files if file.filename == "folder.jpg")
-            assert file.file_info.mime_type == "test"
-            assert file.file_info.width == file.file_info.height == 100
-            assert file.file_info.file_size == 4096
-            assert file.file_info.file_hash == b"1234"
+            assert file.picture_info.mime_type == "test"
+            assert file.picture_info.width == file.picture_info.height == 100
+            assert file.picture_info.file_size == 4096
+            assert file.picture_info.file_hash == b"1234"
             assert file.modify_timestamp == 999
             assert file.cover_source
         finally:
@@ -167,7 +167,7 @@ class TestDatabase:
             assert picture_files[0].cover_source
 
             # modify existing image file + add one
-            file0 = PictureFile(picture_files[0].filename, picture_files[0].file_info, picture_files[0].modify_timestamp, False)
+            file0 = PictureFile(picture_files[0].filename, picture_files[0].picture_info, picture_files[0].modify_timestamp, False)
             new_pic_info = PictureInfo("test", 200, 200, 24, 2048, b"abcd")
 
             operations.update_picture_files(db, album_id, [file0] + list(picture_files[1:]) + [PictureFile("other.jpg", new_pic_info, 999, False)])
@@ -175,14 +175,14 @@ class TestDatabase:
             picture_files = list(selector.load_albums(db))[0].picture_files
             pic_folder = next(p for p in picture_files if p.filename == "folder.jpg")
             assert pic_folder
-            assert pic_folder.file_info.file_hash == b"1234"
+            assert pic_folder.picture_info.file_hash == b"1234"
             assert not pic_folder.cover_source
             pic_other = next(p for p in picture_files if p.filename == "other.jpg")
             assert pic_other
-            assert pic_other.file_info.mime_type == "test"
-            assert pic_other.file_info.width == pic_other.file_info.height == 200
-            assert pic_other.file_info.file_size == 2048
-            assert pic_other.file_info.file_hash == b"abcd"
+            assert pic_other.picture_info.mime_type == "test"
+            assert pic_other.picture_info.width == pic_other.picture_info.height == 200
+            assert pic_other.picture_info.file_size == 2048
+            assert pic_other.picture_info.file_hash == b"abcd"
         finally:
             db.dispose()
 

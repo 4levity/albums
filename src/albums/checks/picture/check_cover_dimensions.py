@@ -62,7 +62,7 @@ class CheckCoverDimensions(Check):
         cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
         if all(
             self._cover_good_enough(cover)
-            for cover in chain(embedded_covers.keys(), (Picture(file.file_info, PictureType.COVER_FRONT, "") for file in cover_files))
+            for cover in chain(embedded_covers.keys(), (Picture(file.picture_info, PictureType.COVER_FRONT, "") for file in cover_files))
         ):
             return None
 
@@ -81,7 +81,12 @@ class CheckCoverDimensions(Check):
         else:
             embedded_cover = None
 
-        if file_cover and embedded_cover and not file_cover.cover_source and file_cover.file_info.file_hash != embedded_cover.file_info.file_hash:
+        if (
+            file_cover
+            and embedded_cover
+            and not file_cover.cover_source
+            and file_cover.picture_info.file_hash != embedded_cover.picture_info.file_hash
+        ):
             return CheckResult(
                 "some cover dimensions are out of range, cover image file is not unique and not cover_source (check cover-unique suggested)"
             )
@@ -89,7 +94,7 @@ class CheckCoverDimensions(Check):
         if file_cover:  # either cover_source or identical to embedded images
             cover_file = cover_files[0]
             from_file = cover_file.filename
-            cover = Picture(cover_file.file_info, PictureType.COVER_FRONT, "")
+            cover = Picture(cover_file.picture_info, PictureType.COVER_FRONT, "")
             embedded = False
         elif embedded_cover:
             (cover, from_file) = list(embedded_covers.items())[0]
@@ -97,15 +102,17 @@ class CheckCoverDimensions(Check):
         else:
             return None  # no cover means cover-available is not configured to require one
 
-        if min(cover.file_info.height, cover.file_info.width) < self.min_pixels:
+        if min(cover.picture_info.height, cover.picture_info.width) < self.min_pixels:
             # we think we have selected the best cover image, no automated fix here
-            issues.add(f"COVER_FRONT image is too small ({cover.file_info.width}x{cover.file_info.height})")
-        if max(cover.file_info.height, cover.file_info.width) > self.max_pixels:
+            issues.add(f"COVER_FRONT image is too small ({cover.picture_info.width}x{cover.picture_info.height})")
+        if max(cover.picture_info.height, cover.picture_info.width) > self.max_pixels:
             # TODO: extract original to file, then resize/compress
-            issues.add(f"COVER_FRONT image is too large ({cover.file_info.width}x{cover.file_info.height})")
-        if not self._cover_square_enough(cover.file_info.width, cover.file_info.height):
-            message = f"COVER_FRONT is not square ({cover.file_info.width}x{cover.file_info.height})"
-            if not issues and self._can_squarify(cover.file_info.width, cover.file_info.height):  # squarify if image is not too small/large/unsquare
+            issues.add(f"COVER_FRONT image is too large ({cover.picture_info.width}x{cover.picture_info.height})")
+        if not self._cover_square_enough(cover.picture_info.width, cover.picture_info.height):
+            message = f"COVER_FRONT is not square ({cover.picture_info.width}x{cover.picture_info.height})"
+            if not issues and self._can_squarify(
+                cover.picture_info.width, cover.picture_info.height
+            ):  # squarify if image is not too small/large/unsquare
                 options = [">> Make cover image square"]
                 option_automatic_index = 0
                 picture_source: Dict[Picture, List[str]] = {cover: [from_file]}
@@ -144,9 +151,9 @@ class CheckCoverDimensions(Check):
         if not self.ctx.db or album.album_id is None:
             raise RuntimeError("saving new cover requires db + album_id")
         (picture, _, image_data) = get_image_data()
-        suffix = mimetypes.guess_extension(picture.file_info.mime_type)
+        suffix = mimetypes.guess_extension(picture.picture_info.mime_type)
         if not suffix:
-            raise ValueError(f"couldn't generate image type {picture.file_info.mime_type} - can't guess file extension")
+            raise ValueError(f"couldn't generate image type {picture.picture_info.mime_type} - can't guess file extension")
         if source_filename:
             original_path = self.ctx.config.library / album.path / source_filename
             if original_path.suffix == suffix:
@@ -166,7 +173,7 @@ class CheckCoverDimensions(Check):
             picture_files = list(album.picture_files)
 
         # mark new/replaced image as cover_source
-        picture_files.append(PictureFile(new_path.name, picture.file_info, 0, cover_source=True))
+        picture_files.append(PictureFile(new_path.name, picture.picture_info, 0, cover_source=True))
         album.picture_files = picture_files
         update_picture_files(self.ctx.db, album.album_id, album.picture_files)
 
@@ -187,9 +194,9 @@ class CheckCoverDimensions(Check):
 
     def _cover_good_enough(self, cover: Picture):
         return (
-            min(cover.file_info.height, cover.file_info.width) >= self.min_pixels
-            and max(cover.file_info.height, cover.file_info.width) <= self.max_pixels
-            and self._cover_square_enough(cover.file_info.width, cover.file_info.height)
+            min(cover.picture_info.height, cover.picture_info.width) >= self.min_pixels
+            and max(cover.picture_info.height, cover.picture_info.width) <= self.max_pixels
+            and self._cover_square_enough(cover.picture_info.width, cover.picture_info.height)
         )
 
     def _cover_square_enough(self, w: int, h: int) -> bool:

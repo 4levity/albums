@@ -113,12 +113,12 @@ class PictureType(IntEnum):
 
 @dataclass(frozen=True)
 class Picture:
-    file_info: PictureInfo
+    picture_info: PictureInfo
     type: PictureType
     description: str
 
     def to_dict(self):
-        result = self.__dict__ | {"file_info": self.file_info.to_dict()}
+        result = self.__dict__ | {"picture_info": self.picture_info.to_dict()}
         return result
 
 

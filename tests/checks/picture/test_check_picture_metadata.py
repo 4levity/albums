@@ -19,7 +19,7 @@ class TestCheckPictureMetadata:
     def test_picture_metadata_ok(self):
         pic = Picture(PictureInfo("image/png", 1, 1, 1, 0, b""), PictureType.COVER_FRONT, "")
         album = Album(
-            "", [Track("1.flac", {}, 0, 0, StreamInfo(1, 0, 0, "FLAC"), [pic])], [], [], [PictureFile("cover.png", pic.file_info, 999, False)]
+            "", [Track("1.flac", {}, 0, 0, StreamInfo(1, 0, 0, "FLAC"), [pic])], [], [], [PictureFile("cover.png", pic.picture_info, 999, False)]
         )
         result = CheckPictureMetadata(Context()).check(album)
         assert result is None
@@ -53,7 +53,7 @@ class TestCheckPictureMetadata:
         try:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
-            assert result[0].tracks[0].pictures[0].file_info.load_issue
+            assert result[0].tracks[0].pictures[0].picture_info.load_issue
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is not None
             assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 399x399"
@@ -64,10 +64,10 @@ class TestCheckPictureMetadata:
             scan(ctx, reread=True)
             result = list(selector.load_albums(ctx.db))
             assert len(result[0].tracks[0].pictures) == 1
-            assert not result[0].tracks[0].pictures[0].file_info.load_issue
-            assert result[0].tracks[0].pictures[0].file_info.mime_type == "image/png"
-            assert result[0].tracks[0].pictures[0].file_info.width == 400
-            assert result[0].tracks[0].pictures[0].file_info.height == 400
+            assert not result[0].tracks[0].pictures[0].picture_info.load_issue
+            assert result[0].tracks[0].pictures[0].picture_info.mime_type == "image/png"
+            assert result[0].tracks[0].pictures[0].picture_info.width == 400
+            assert result[0].tracks[0].pictures[0].picture_info.height == 400
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
         finally:
@@ -90,7 +90,7 @@ class TestCheckPictureMetadata:
         try:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
-            assert result[0].tracks[0].pictures[0].file_info.load_issue
+            assert result[0].tracks[0].pictures[0].picture_info.load_issue
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is not None
             assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg"
@@ -101,10 +101,10 @@ class TestCheckPictureMetadata:
             scan(ctx, reread=True)
             result = list(selector.load_albums(ctx.db))
             assert len(result[0].tracks[0].pictures) == 1
-            assert not result[0].tracks[0].pictures[0].file_info.load_issue
-            assert result[0].tracks[0].pictures[0].file_info.mime_type == "image/png"
-            assert result[0].tracks[0].pictures[0].file_info.width == 400
-            assert result[0].tracks[0].pictures[0].file_info.height == 400
+            assert not result[0].tracks[0].pictures[0].picture_info.load_issue
+            assert result[0].tracks[0].pictures[0].picture_info.mime_type == "image/png"
+            assert result[0].tracks[0].pictures[0].picture_info.width == 400
+            assert result[0].tracks[0].pictures[0].picture_info.height == 400
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
         finally:
@@ -113,7 +113,7 @@ class TestCheckPictureMetadata:
     def test_picture_image_file_extension_mismatch(self):
         pic = Picture(PictureInfo("image/png", 1, 1, 1, 0, b""), PictureType.COVER_FRONT, "")
         track = Track("1.flac", {}, 0, 0, StreamInfo(1, 0, 0, "FLAC"), [pic])
-        album = Album("foo" + os.sep, [track], [], [], [PictureFile("cover.png", pic.file_info, 1, False)])
+        album = Album("foo" + os.sep, [track], [], [], [PictureFile("cover.png", pic.picture_info, 1, False)])
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
@@ -122,8 +122,8 @@ class TestCheckPictureMetadata:
             scan(ctx)
             result = list(selector.load_albums(ctx.db))
             gif = next(file for file in result[0].picture_files if file.filename == "cover.gif")
-            assert gif.file_info.mime_type == "image/png"
-            assert gif.file_info.load_issue == (("format", "image/gif"),)
+            assert gif.picture_info.mime_type == "image/png"
+            assert gif.picture_info.load_issue == (("format", "image/gif"),)
 
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is not None
@@ -135,8 +135,8 @@ class TestCheckPictureMetadata:
             scan(ctx, reread=True)
             result = list(selector.load_albums(ctx.db))
             png = next(file for file in result[0].picture_files if file.filename == "cover.png")
-            assert png.file_info.mime_type == "image/png"
-            assert png.file_info.load_issue == ()
+            assert png.picture_info.mime_type == "image/png"
+            assert png.picture_info.load_issue == ()
             result = CheckPictureMetadata(ctx).check(result[0])
             assert result is None
         finally:

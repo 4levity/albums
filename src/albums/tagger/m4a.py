@@ -53,12 +53,12 @@ class M4aTagger(AbstractMutagenTagger):
 
     @override
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None:
-        if new_picture.file_info.mime_type == "image/jpeg":
+        if new_picture.picture_info.mime_type == "image/jpeg":
             imageformat = MP4Cover.FORMAT_JPEG
-        elif new_picture.file_info.mime_type == "image/png":
+        elif new_picture.picture_info.mime_type == "image/png":
             imageformat = MP4Cover.FORMAT_PNG
         else:
-            raise ValueError(f"unsupported MIME type {new_picture.file_info.mime_type} for saving in covr tag")
+            raise ValueError(f"unsupported MIME type {new_picture.picture_info.mime_type} for saving in covr tag")
         if new_picture.type != PictureType.COVER_FRONT:
             logger.warning(f'embedding picture {new_picture.type.name} as "cover", picture type not supported in {self._file.filename}')
 

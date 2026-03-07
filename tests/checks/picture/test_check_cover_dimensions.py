@@ -57,7 +57,7 @@ class TestCheckCoverDimensions:
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
-        image_data = make_image_data(cover.file_info.width, cover.file_info.height, "JPEG")
+        image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
@@ -75,13 +75,13 @@ class TestCheckCoverDimensions:
         picture_files: Sequence[PictureFile] = mock_update_picture_files.call_args.args[2]
         cover = next(file for file in picture_files if file.filename == "cover.png")
         assert cover.cover_source
-        assert cover.file_info.mime_type == "image/png"
+        assert cover.picture_info.mime_type == "image/png"
 
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]
         m_open.assert_has_calls([call(Path(".") / album.path / "cover.png", "wb")])
         new_cover = Image.open(io.BytesIO(image_data_written))
-        assert new_cover.width == new_cover.height == min(cover.file_info.width, cover.file_info.height)
+        assert new_cover.width == new_cover.height == min(cover.picture_info.width, cover.picture_info.height)
 
     def test_cover_not_square_enough_embedded_preserve_type(self, mocker):
         cover = Picture(PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), PictureType.COVER_FRONT, "")
@@ -96,7 +96,7 @@ class TestCheckCoverDimensions:
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
-        image_data = make_image_data(cover.file_info.width, cover.file_info.height, "JPEG")
+        image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
@@ -114,14 +114,14 @@ class TestCheckCoverDimensions:
         picture_files: Sequence[PictureFile] = mock_update_picture_files.call_args.args[2]
         cover = next(file for file in picture_files if file.filename == "cover.jpg")
         assert cover.cover_source
-        assert cover.file_info.mime_type == "image/jpeg"
+        assert cover.picture_info.mime_type == "image/jpeg"
 
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]
         m_open.assert_has_calls([call(Path(".") / album.path / "cover.jpg", "wb")])
         new_cover = Image.open(io.BytesIO(image_data_written))
         assert new_cover.format == "JPEG"
-        assert new_cover.width == new_cover.height == min(cover.file_info.width, cover.file_info.height)
+        assert new_cover.width == new_cover.height == min(cover.picture_info.width, cover.picture_info.height)
 
     def test_cover_not_square_enough_jpg_file(self, mocker):
         cover = Picture(PictureInfo("image/jpeg", 1000, 800, 24, 1, b""), PictureType.COVER_FRONT, "")
@@ -130,7 +130,7 @@ class TestCheckCoverDimensions:
             [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))],
             [],
             [],
-            [PictureFile("folder.jpg", cover.file_info, 999, True)],
+            [PictureFile("folder.jpg", cover.picture_info, 999, True)],
             1,
         )
         ctx = Context()
@@ -141,7 +141,7 @@ class TestCheckCoverDimensions:
         assert result.fixer
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
-        image_data = make_image_data(cover.file_info.width, cover.file_info.height, "JPEG")
+        image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
@@ -161,13 +161,13 @@ class TestCheckCoverDimensions:
         picture_files: Sequence[PictureFile] = mock_update_picture_files.call_args.args[2]
         png = next(file for file in picture_files if file.filename == "folder.png")
         assert png.cover_source
-        assert png.file_info.mime_type == "image/png"
+        assert png.picture_info.mime_type == "image/png"
 
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]
         m_open.assert_has_calls([call(Path(".") / album.path / "folder.png", "wb")])
         new_cover = Image.open(io.BytesIO(image_data_written))
-        assert new_cover.width == new_cover.height == min(cover.file_info.width, cover.file_info.height)
+        assert new_cover.width == new_cover.height == min(cover.picture_info.width, cover.picture_info.height)
 
     def test_cover_not_square_enough_png_file(self, mocker):
         cover_info = PictureInfo("image/png", 1000, 800, 24, 1, b"")
@@ -200,7 +200,7 @@ class TestCheckCoverDimensions:
         picture_files: Sequence[PictureFile] = mock_update_picture_files.call_args.args[2]
         png = next(file for file in picture_files if file.filename == "folder.png")
         assert png.cover_source
-        assert png.file_info.mime_type == "image/png"
+        assert png.picture_info.mime_type == "image/png"
 
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]

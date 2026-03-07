@@ -27,8 +27,8 @@ class CheckInvalidImage(Check):
         any_bad_embedded_images = False
         for source_filename, pictures in album_art:
             for picture in pictures:
-                load_issue = dict(picture.file_info.load_issue)
-                if picture.file_info.load_issue and "error" in load_issue:
+                load_issue = dict(picture.picture_info.load_issue)
+                if picture.picture_info.load_issue and "error" in load_issue:
                     error = str(load_issue["error"])
                     table_rows.append([source_filename, picture.type.name, error])
                     issues.add(error)
@@ -50,7 +50,7 @@ class CheckInvalidImage(Check):
     def _fix_remove_bad_images(self, album: Album):
         changed = False
         for file in album.picture_files:
-            load_issue = dict(file.file_info.load_issue)
+            load_issue = dict(file.picture_info.load_issue)
             if "error" in load_issue:
                 self.ctx.console.print(f"Deleting image file {escape(file.filename)}")
                 path = self.ctx.config.library / album.path / file.filename
@@ -60,11 +60,11 @@ class CheckInvalidImage(Check):
         tagger = self.tagger.get(album.path)
         for track in album.tracks:
             for pic in track.pictures:
-                load_issue = dict(pic.file_info.load_issue)
+                load_issue = dict(pic.picture_info.load_issue)
                 if "error" in load_issue:
                     if tagger.supports(track.filename, Cap.PICTURES):
                         with tagger.open(track.filename) as tags:
-                            for file in [pic for pic, _data in tags.get_pictures() if (any(k == "error" for k, _ in pic.file_info.load_issue))]:
+                            for file in [pic for pic, _data in tags.get_pictures() if (any(k == "error" for k, _ in pic.picture_info.load_issue))]:
                                 self.ctx.console.print(f"Removing {file.type.name} embedded image from {escape(track.filename)}")
                                 tags.remove_picture(file)
                                 changed = True

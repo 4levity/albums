@@ -36,9 +36,9 @@ def scan_flac_picture(flac_picture: FlacPicture, picture_scanner: PictureScanner
 def album_picture_to_flac(picture: Picture, image_data: bytes) -> FlacPicture:
     flac_picture = FlacPicture()
     flac_picture.type = picture.type
-    flac_picture.mime = picture.file_info.mime_type
-    flac_picture.width = picture.file_info.width
-    flac_picture.height = picture.file_info.height
+    flac_picture.mime = picture.picture_info.mime_type
+    flac_picture.width = picture.picture_info.width
+    flac_picture.height = picture.picture_info.height
     flac_picture.data = image_data
-    flac_picture.depth = picture.file_info.depth_bpp
+    flac_picture.depth = picture.picture_info.depth_bpp
     return flac_picture

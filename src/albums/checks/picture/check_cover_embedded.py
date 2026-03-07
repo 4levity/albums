@@ -62,16 +62,16 @@ class CheckCoverEmbedded(Check):
         unsupported = sum(0 if tagger.supports(t.filename) else 1 for t in album.tracks)
 
         if cover_source:
-            (expect_w, expect_h) = self._embedded_image_spec(cover_source.file_info)
+            (expect_w, expect_h) = self._embedded_image_spec(cover_source.picture_info)
             all_as_expected = all(
-                c and (c[1].file_info.width, c[1].file_info.height, c[1].file_info.mime_type) == (expect_w, expect_h, self.create_mime_type)
+                c and (c[1].picture_info.width, c[1].picture_info.height, c[1].picture_info.mime_type) == (expect_w, expect_h, self.create_mime_type)
                 for c in track_covers
             )
             if not all_as_expected:
                 not_expected_size = sum(
-                    0 if not c or c and (c[1].file_info.width, c[1].file_info.height) == (expect_w, expect_h) else 1 for c in track_covers
+                    0 if not c or c and (c[1].picture_info.width, c[1].picture_info.height) == (expect_w, expect_h) else 1 for c in track_covers
                 )
-                not_expected_format = sum(0 if not c or c and c[1].file_info.mime_type == self.create_mime_type else 1 for c in track_covers)
+                not_expected_format = sum(0 if not c or c and c[1].picture_info.mime_type == self.create_mime_type else 1 for c in track_covers)
                 problems: list[str] = []
                 if unsupported:
                     problems.append(f"{unsupported} tracks where albums doesn't support embedded images")
@@ -90,7 +90,7 @@ class CheckCoverEmbedded(Check):
 
                 track_cover = next(filter(None, track_covers), None)
                 headers = [f"Front Cover Source {cover_source.filename}"]
-                cover_source_picture = Picture(cover_source.file_info, PictureType.COVER_FRONT, "")
+                cover_source_picture = Picture(cover_source.picture_info, PictureType.COVER_FRONT, "")
                 pictures = [cover_source_picture]
                 pic_sources: dict[Picture, list[str]] = {cover_source_picture: [cover_source.filename]}
                 if track_cover:
@@ -127,9 +127,9 @@ class CheckCoverEmbedded(Check):
         # else: there is no cover_source marked
         def good_enough(cover: Picture):
             return (
-                (cover.file_info.mime_type == self.require_mime_type or not self.require_mime_type)
-                and cover.file_info.width < self.max_height_width
-                and cover.file_info.height < self.max_height_width
+                (cover.picture_info.mime_type == self.require_mime_type or not self.require_mime_type)
+                and cover.picture_info.width < self.max_height_width
+                and cover.picture_info.height < self.max_height_width
             )
 
         all_good_enough = all(c and good_enough(c[1]) for c in track_covers)
@@ -138,7 +138,7 @@ class CheckCoverEmbedded(Check):
             problem_summary = f"{missing} tracks with no cover and {not_good_enough} tracks with out of spec covers"
             cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
 
-            unique_covers = unique_track_covers.union(Picture(file.file_info, PictureType.COVER_FRONT, "") for file in cover_files)
+            unique_covers = unique_track_covers.union(Picture(file.picture_info, PictureType.COVER_FRONT, "") for file in cover_files)
             if len(unique_covers) > 1:
                 return CheckResult(
                     f"{problem_summary}, but there are {len(unique_covers)} unique front covers and no cover_source (enable cover-unique for fixes)",
@@ -184,9 +184,9 @@ class CheckCoverEmbedded(Check):
 
         source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
-        (new_w, new_h) = self._embedded_image_spec(source_picture.file_info)
+        (new_w, new_h) = self._embedded_image_spec(source_picture.picture_info)
         new_format = self.create_mime_type
-        if source_image.width == new_w and source_image.height == new_h and source_picture.file_info.mime_type == new_format:
+        if source_image.width == new_w and source_image.height == new_h and source_picture.picture_info.mime_type == new_format:
             return (source_image, image_data)
         if source_image.mode not in {"RGB", "L"}:
             source_image = source_image.convert("RGB")
@@ -220,7 +220,8 @@ class CheckCoverEmbedded(Check):
             raise ValueError("marking cover source requires database and album_id")
         self.ctx.console.print(f"Mark as front cover source: {escape(filename)}")
         album.picture_files = [
-            PictureFile(filename, file.file_info, file.modify_timestamp, True) if file.filename == filename else file for file in album.picture_files
+            PictureFile(filename, file.picture_info, file.modify_timestamp, True) if file.filename == filename else file
+            for file in album.picture_files
         ]
         update_picture_files(self.ctx.db, album.album_id, album.picture_files)
         return True
@@ -234,7 +235,7 @@ class CheckCoverEmbedded(Check):
         source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
 
-        suffix = mimetypes.guess_extension(cover.file_info.mime_type)
+        suffix = mimetypes.guess_extension(cover.picture_info.mime_type)
         new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
         self.ctx.console.print(f"Extract to cover source: {escape(new_filename)}")
         path = self.ctx.config.library / album.path / new_filename
@@ -244,7 +245,7 @@ class CheckCoverEmbedded(Check):
             f.write(image_data)
         # create a record of the new image so it can be marked cover_source (details will be filled in when album is rescanned)
         album.picture_files = list(album.picture_files) + [
-            PictureFile(new_filename, PictureInfo(cover.file_info.mime_type, 0, 0, 0, 0, b""), 0, True)
+            PictureFile(new_filename, PictureInfo(cover.picture_info.mime_type, 0, 0, 0, 0, b""), 0, True)
         ]
         return self._fix_mark_cover_source(album, new_filename)
 

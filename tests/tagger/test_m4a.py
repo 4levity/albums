@@ -44,11 +44,11 @@ class TestM4a:
             scan = file.scan()
         assert len(scan.pictures) == 2
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
         assert scan.pictures[1].type == PictureType.COVER_FRONT  # always
-        assert scan.pictures[1].file_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].file_info.width == scan.pictures[1].file_info.height == 401
+        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
+        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 401
         tags = dict(scan.tags)
         assert tags[BasicTag.ARTIST] == tuple(track.tags[BasicTag.ARTIST])
         assert tags[BasicTag.ALBUMARTIST] == tuple(track.tags[BasicTag.ALBUMARTIST])
@@ -141,9 +141,9 @@ class TestM4a:
             scan = file.scan()
 
         assert len(scan.pictures) == 2
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[1].file_info.mime_type == "image/jpeg"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
 
         with TestM4a.tagger.open(track.filename) as file:
             file.remove_picture(scan.pictures[0])
@@ -151,16 +151,16 @@ class TestM4a:
             scan = file.scan()
 
         assert len(scan.pictures) == 1
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 401
-        assert scan.pictures[0].file_info.mime_type == "image/jpeg"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 401
+        assert scan.pictures[0].picture_info.mime_type == "image/jpeg"
 
     def test_replace_one_m4a_pic(self):
         with TestM4a.tagger.open(track.filename) as file:
             scan = file.scan()
         assert len(scan.pictures) == 2
-        assert scan.pictures[0].file_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
         first = scan.pictures[0]
-        assert scan.pictures[1].file_info.mime_type == "image/jpeg"
+        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
         second = scan.pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")

@@ -114,7 +114,7 @@ class CheckCoverFilename(Check):
 
             # preserve cover_source setting on the file, other metadata will be corrected on rescan
             picture_files = [
-                PictureFile(new_filename, file.file_info, file.modify_timestamp, file.cover_source) if file.filename == old_filename else file
+                PictureFile(new_filename, file.picture_info, file.modify_timestamp, file.cover_source) if file.filename == old_filename else file
                 for file in album.picture_files
             ]
             album.picture_files = picture_files

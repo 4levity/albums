@@ -64,7 +64,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
                 cover_source_filename = next((file.filename for file in stored_album.picture_files if file.cover_source), None)
                 if cover_source_filename:
                     album.picture_files = [
-                        file if file.filename != cover_source_filename else PictureFile(file.filename, file.file_info, file.modify_timestamp, True)
+                        file if file.filename != cover_source_filename else PictureFile(file.filename, file.picture_info, file.modify_timestamp, True)
                         for file in album.picture_files
                     ]
             # TODO if the scan was because of missing metadata but we still don't have metadata, return UNCHANGED instead
@@ -89,7 +89,7 @@ def _picture_files_modified(picture_files: Sequence[PictureFile], picture_paths:
     for path in picture_paths:
         stored = next(file for file in picture_files if file.filename == path.name)
         stat = path.stat()
-        if stored.file_info.file_size != stat.st_size or stored.modify_timestamp != int(stat.st_mtime):
+        if stored.picture_info.file_size != stat.st_size or stored.modify_timestamp != int(stat.st_mtime):
             return True
     return False
 

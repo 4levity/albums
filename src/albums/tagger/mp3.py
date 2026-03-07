@@ -64,14 +64,14 @@ class Mp3Tagger(AbstractMutagenTagger):
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None:
         id3 = self._ensure_id3()
         description = new_picture.description
-        apic = APIC(mime=new_picture.file_info.mime_type, type=new_picture.type, data=image_data, desc=description)
+        apic = APIC(mime=new_picture.picture_info.mime_type, type=new_picture.type, data=image_data, desc=description)
 
         # with future mutagen 1.48 or later, docs indicate we will be able to ensure distinct hash key like this:
         # while apic.HashKey in tags:
         #     apic.salt += "x"
         while apic.HashKey in id3:  # TODO don't alter description
             description += " "
-            apic = APIC(mime=new_picture.file_info.mime_type, type=new_picture.type, data=image_data, desc=description)
+            apic = APIC(mime=new_picture.picture_info.mime_type, type=new_picture.type, data=image_data, desc=description)
         id3.add(apic)  # pyright: ignore[reportUnknownMemberType]
 
     @override

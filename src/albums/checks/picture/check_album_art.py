@@ -34,12 +34,12 @@ class CheckAlbumArt(Check):
         largest_bad_file_size = 0
         for track in album.tracks:
             for picture in track.pictures:
-                if picture.file_info.mime_type not in {"image/png", "image/jpeg"}:
+                if picture.picture_info.mime_type not in {"image/png", "image/jpeg"}:
                     picture_sources[picture].append(track.filename)
-                    bad_formats.append(picture.file_info.mime_type)
-                if picture.file_info.file_size > self.embedded_size_max:
+                    bad_formats.append(picture.picture_info.mime_type)
+                if picture.picture_info.file_size > self.embedded_size_max:
                     picture_sources[picture].append(track.filename)
-                    largest_bad_file_size = max(largest_bad_file_size, picture.file_info.file_size)
+                    largest_bad_file_size = max(largest_bad_file_size, picture.picture_info.file_size)
                     bad_file_sizes += 1
 
         if picture_sources:
@@ -73,19 +73,19 @@ class CheckAlbumArt(Check):
         for pic, refs in embedded_to_extract.items():
             filename = refs[0]
             stem = FRONT_COVER_FILENAME if pic.type == PictureType.COVER_FRONT else str.lower(pic.type.name)
-            suffix = mimetypes.guess_extension(pic.file_info.mime_type)
+            suffix = mimetypes.guess_extension(pic.picture_info.mime_type)
             num = 0
             while (new_file := (self.ctx.config.library / album.path / f"{stem}{f'{num}' if num else ''}{suffix}")) and new_file.exists():
                 num += 1
 
-            self.ctx.console.print(f"Extracting {pic.type.name} {pic.file_info.mime_type} from {filename} to {new_file.name}")
+            self.ctx.console.print(f"Extracting {pic.type.name} {pic.picture_info.mime_type} from {filename} to {new_file.name}")
             with tagger.open(filename) as tags:
                 image_data = tags.get_image_data(pic)
             with open(new_file, "wb") as f:
                 f.write(image_data)
             for filename in refs:
                 with tagger.open(filename) as tags:
-                    self.ctx.console.print(f"Removing {pic.type.name} {pic.file_info.mime_type} from {filename}")
+                    self.ctx.console.print(f"Removing {pic.type.name} {pic.picture_info.mime_type} from {filename}")
                     tags.remove_picture(pic)
 
         return True

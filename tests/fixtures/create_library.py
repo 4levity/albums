@@ -30,7 +30,7 @@ def create_track_file(path: Path, spec: Track):
     tagger = AlbumTagger(path, padding=lambda _: 0)
     with tagger.open(spec.filename) as tags:
         for pic in spec.pictures:
-            image_data = make_image_data(pic.file_info.width, pic.file_info.height, MIME_PILLOW_FORMAT[pic.file_info.mime_type])
+            image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, MIME_PILLOW_FORMAT[pic.picture_info.mime_type])
             tags.add_picture(pic, image_data)
         for tag_name, values in spec.tags.items():
             tags.set_tag(BasicTag(tag_name), list(values))
@@ -47,7 +47,7 @@ def create_album_in_library(library_path: Path, album: Album):
     for track in album.tracks:
         create_track_file(path, track)
     for file in album.picture_files:
-        create_picture_file(path / file.filename, file.file_info.width, file.file_info.height)
+        create_picture_file(path / file.filename, file.picture_info.width, file.picture_info.height)
 
 
 def create_library(library_name: str, albums: list[Album]):

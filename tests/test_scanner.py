@@ -77,7 +77,7 @@ class TestScanner:
             assert len(result[0].picture_files) == 1
             cover_png = result[0].picture_files[0]
             assert cover_png.filename == "cover.jpg"
-            assert cover_png.file_info.mime_type == "image/jpeg"  # because file extension is not correct
+            assert cover_png.picture_info.mime_type == "image/jpeg"  # because file extension is not correct
             assert cover_png.modify_timestamp
         finally:
             db.dispose()

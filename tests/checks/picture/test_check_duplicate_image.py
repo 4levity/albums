@@ -59,7 +59,7 @@ class TestCheckDuplicateImage:
 
     def test_cover_duplicate_files(self, mocker):
         pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")
-        picture_files = [PictureFile("folder.png", pic.file_info, 0, False), PictureFile("cover.png", pic.file_info, 0, False)]
+        picture_files = [PictureFile("folder.png", pic.picture_info, 0, False), PictureFile("cover.png", pic.picture_info, 0, False)]
         album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], picture_files)
         result = CheckDuplicateImage(Context()).check(album)
         assert result is not None

@@ -47,13 +47,13 @@ class TestMp3:
         assert scan.pictures[0].type == PictureType.COVER_FRONT or scan.pictures[1].type == PictureType.COVER_FRONT
         assert scan.pictures[0].type == PictureType.COVER_BACK or scan.pictures[1].type == PictureType.COVER_BACK
         assert (
-            scan.pictures[0].file_info.width
-            == scan.pictures[0].file_info.height
-            == scan.pictures[1].file_info.width
-            == scan.pictures[1].file_info.height
+            scan.pictures[0].picture_info.width
+            == scan.pictures[0].picture_info.height
+            == scan.pictures[1].picture_info.width
+            == scan.pictures[1].picture_info.height
             == 400
         )
-        assert scan.pictures[0].file_info.mime_type == scan.pictures[1].file_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.mime_type == scan.pictures[1].picture_info.mime_type == "image/png"
         tags = dict(scan.tags)
         assert tags[BasicTag.ARTIST] == track.tags[BasicTag.ARTIST]
         assert tags[BasicTag.ALBUMARTIST] == track.tags[BasicTag.ALBUMARTIST]
@@ -149,13 +149,13 @@ class TestMp3:
         assert scan.pictures[0].type == PictureType.COVER_FRONT
         assert scan.pictures[1].type == PictureType.COVER_BACK
         assert (
-            scan.pictures[0].file_info.width
-            == scan.pictures[0].file_info.height
-            == scan.pictures[1].file_info.width
-            == scan.pictures[1].file_info.height
+            scan.pictures[0].picture_info.width
+            == scan.pictures[0].picture_info.height
+            == scan.pictures[1].picture_info.width
+            == scan.pictures[1].picture_info.height
             == 400
         )
-        assert scan.pictures[0].file_info.mime_type == scan.pictures[1].file_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.mime_type == scan.pictures[1].picture_info.mime_type == "image/png"
 
         with TestMp3.tagger.open(track.filename) as file:
             file.remove_picture(scan.pictures[0])
@@ -164,8 +164,8 @@ class TestMp3:
 
         assert len(scan.pictures) == 1
         assert scan.pictures[0].type == PictureType.COVER_BACK
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].file_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
 
     def test_replace_one_id3_pic(self):
         with TestMp3.tagger.open(track.filename) as file:

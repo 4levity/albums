@@ -13,7 +13,7 @@ class TestCheckCheckInvalidImage:
     def test_invalid_image_ok(self):
         pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")
         album = Album(
-            "", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], [PictureFile("cover.jpg", pic.file_info, 999, False)]
+            "", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], [PictureFile("cover.jpg", pic.picture_info, 999, False)]
         )
         assert not CheckInvalidImage(Context()).check(album)
 
@@ -31,7 +31,7 @@ class TestCheckCheckInvalidImage:
 
         tagger = TaggerFile()
         mock_remove_picture = mocker.patch.object(tagger, "remove_picture")
-        bad_pic = Picture(PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.file_info.load_issue)["error"]),)), PictureType.COVER_FRONT, "")
+        bad_pic = Picture(PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.picture_info.load_issue)["error"]),)), PictureType.COVER_FRONT, "")
         mock_get_pictures = mocker.patch.object(tagger, "get_pictures", return_value=[(bad_pic, b"")])
         mock_supports = mocker.patch.object(AlbumTagger, "supports", return_value=True)
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
@@ -43,7 +43,7 @@ class TestCheckCheckInvalidImage:
         assert mock_get_pictures.call_count == 1
         assert mock_remove_picture.call_count == 1
         assert mock_remove_picture.call_args_list[0][0][0].type == PictureType.COVER_FRONT
-        assert mock_remove_picture.call_args_list[0][0][0].file_info.load_issue == (("error", "test load failed"),)
+        assert mock_remove_picture.call_args_list[0][0][0].picture_info.load_issue == (("error", "test load failed"),)
 
     def test_error_image_in_file(self, mocker):
         pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), PictureType.COVER_FRONT, "")
@@ -52,7 +52,7 @@ class TestCheckCheckInvalidImage:
             [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))],
             [],
             [],
-            [PictureFile("cover.jpg", pic.file_info, 999, False)],
+            [PictureFile("cover.jpg", pic.picture_info, 999, False)],
         )
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None

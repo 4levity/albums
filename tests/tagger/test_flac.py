@@ -48,21 +48,21 @@ class TestFlac:
         assert len(scan.pictures) == 1
 
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].file_info.load_issue == ()
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+        assert scan.pictures[0].picture_info.load_issue == ()
 
     def test_read_flac_two_pictures(self):
         with TestFlac.tagger.open(track2.filename) as file:
             scan = file.scan()
         assert len(scan.pictures) == 2
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
 
         assert scan.pictures[1].type == PictureType.COVER_BACK
-        assert scan.pictures[1].file_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].file_info.width == scan.pictures[1].file_info.height == 300
+        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
+        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 300
 
     def test_read_flac_picture_mismatch(self):
         file = TestFlac.library / album.path / track1.filename
@@ -81,17 +81,17 @@ class TestFlac:
         with TestFlac.tagger.open(track1.filename) as file:
             scan = file.scan()
         assert len(scan.pictures) == 1
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
-        assert scan.pictures[0].file_info.load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+        assert scan.pictures[0].picture_info.load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
 
     def test_remove_only_flac_pic(self):
         with TestFlac.tagger.open(track1.filename) as file:
             scan = file.scan()
 
         assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].file_info.mime_type == "image/png"
-        assert scan.pictures[0].file_info.width == scan.pictures[0].file_info.height == 400
+        assert scan.pictures[0].picture_info.mime_type == "image/png"
+        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
 
         with TestFlac.tagger.open(track1.filename) as file:
             file.remove_picture(scan.pictures[0])
@@ -105,22 +105,22 @@ class TestFlac:
             scan = file.scan()
 
         assert scan.pictures[0].type == track2.pictures[0].type
-        assert scan.pictures[0].file_info.mime_type == track2.pictures[0].file_info.mime_type
+        assert scan.pictures[0].picture_info.mime_type == track2.pictures[0].picture_info.mime_type
         assert (
-            scan.pictures[0].file_info.width
-            == scan.pictures[0].file_info.height
-            == track2.pictures[0].file_info.height
-            == track2.pictures[0].file_info.width
+            scan.pictures[0].picture_info.width
+            == scan.pictures[0].picture_info.height
+            == track2.pictures[0].picture_info.height
+            == track2.pictures[0].picture_info.width
         )
         front = scan.pictures[0]
 
         assert scan.pictures[1].type == track2.pictures[1].type
-        assert scan.pictures[1].file_info.mime_type == track2.pictures[1].file_info.mime_type
+        assert scan.pictures[1].picture_info.mime_type == track2.pictures[1].picture_info.mime_type
         assert (
-            scan.pictures[1].file_info.width
-            == scan.pictures[1].file_info.height
-            == track2.pictures[1].file_info.height
-            == track2.pictures[1].file_info.width
+            scan.pictures[1].picture_info.width
+            == scan.pictures[1].picture_info.height
+            == track2.pictures[1].picture_info.height
+            == track2.pictures[1].picture_info.width
         )
         back = scan.pictures[1]
 

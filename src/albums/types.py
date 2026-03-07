@@ -32,15 +32,15 @@ class Track:
 @dataclass(frozen=True)
 class PictureFile:
     filename: str
-    file_info: PictureInfo
+    picture_info: PictureInfo
     modify_timestamp: int
     cover_source: bool
 
     def to_dict(self):
-        return self.__dict__ | {"file_info": self.file_info.to_dict()}
+        return self.__dict__ | {"picture_info": self.picture_info.to_dict()}
 
     def to_picture(self) -> Picture:
-        return Picture(self.file_info, PictureType.from_filename(self.filename), "")
+        return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
 
 
 @dataclass

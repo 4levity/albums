@@ -45,7 +45,7 @@ def render_image_table(
             pix_image = image.resize((int(image.width * scale), int(h * scale)), resample=Image.Resampling.LANCZOS)
             pixels = Pixels.from_image(pix_image)
             pixelses.append(pixels)
-            caption = f"[{cover.file_info.width} x {cover.file_info.height}] {humanize.naturalsize(len(image_data), binary=True)}"
+            caption = f"[{cover.picture_info.width} x {cover.picture_info.height}] {humanize.naturalsize(len(image_data), binary=True)}"
             if len(pictures) > 1:
                 image = image.convert("RGB")
                 aspect = image.width / image.height

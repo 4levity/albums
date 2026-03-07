@@ -63,7 +63,7 @@ def _track(entity: TrackEntity, load_track_tags: bool) -> Track:
 
 def _picture(entity: TrackPictureEntity | PictureFileEntity, picture_type: PictureType) -> Picture:
     return Picture(
-        entity.file_info,
+        entity.picture_info,
         picture_type,
         "",
     )
@@ -72,7 +72,7 @@ def _picture(entity: TrackPictureEntity | PictureFileEntity, picture_type: Pictu
 def _picture_file(entity: PictureFileEntity) -> PictureFile:
     return PictureFile(
         entity.filename,
-        entity.file_info,
+        entity.picture_info,
         entity.modify_timestamp,
         entity.cover_source,
     )
@@ -117,14 +117,14 @@ def _picture_file_to_entity(file: PictureFile) -> PictureFileEntity:
         filename=file.filename,
         modify_timestamp=file.modify_timestamp,
         cover_source=file.cover_source,
-        file_info=file.file_info,
+        picture_info=file.picture_info,
     )
 
 
 def _picture_to_entity(pic: Picture, embed_ix: int) -> TrackPictureEntity:
     return TrackPictureEntity(
         picture_type=pic.type,
-        file_info=pic.file_info,
+        picture_info=pic.picture_info,
         description=pic.description,
         embed_ix=embed_ix,
     )

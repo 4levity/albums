@@ -28,21 +28,21 @@ class CheckPictureMetadata(Check):
         for track_index, track in enumerate(album.tracks):
             issues: set[str] = set()
             for picture in track.pictures:
-                load_issue = dict(picture.file_info.load_issue)
-                if picture.file_info.load_issue and any(issue in load_issue for issue in ["format", "width", "height"]):
+                load_issue = dict(picture.picture_info.load_issue)
+                if picture.picture_info.load_issue and any(issue in load_issue for issue in ["format", "width", "height"]):
                     if "format" in load_issue:
                         issues.add("wrong MIME type")
                     if "width" in load_issue or "height" in load_issue:
                         issues.add("wrong dimensions")
                     if not example:
-                        actual = f"{picture.file_info.mime_type} {picture.file_info.width}x{picture.file_info.height}"
+                        actual = f"{picture.picture_info.mime_type} {picture.picture_info.width}x{picture.picture_info.height}"
                         if "height" in load_issue or "width" in load_issue:
                             expect_dimensions = (
-                                f" {load_issue.get('width', picture.file_info.width)}x{load_issue.get('height', picture.file_info.height)}"
+                                f" {load_issue.get('width', picture.picture_info.width)}x{load_issue.get('height', picture.picture_info.height)}"
                             )
                         else:
                             expect_dimensions = ""
-                        format = load_issue.get("format", picture.file_info.mime_type)
+                        format = load_issue.get("format", picture.picture_info.mime_type)
                         reported = f"{format if format else '(no MIME type)'}" + expect_dimensions
                         example = f"{actual} but container says {reported}"
             if issues:
@@ -51,7 +51,7 @@ class CheckPictureMetadata(Check):
 
         image_files_to_rename: list[tuple[str, str]] = []
         for file in album.picture_files:
-            expect_suffix = mimetypes.guess_extension(file.file_info.mime_type)
+            expect_suffix = mimetypes.guess_extension(file.picture_info.mime_type)
             path = Path(file.filename)
             if expect_suffix and str.lower(path.suffix) != str.lower(expect_suffix):
                 new_filename = path.with_suffix(expect_suffix).name

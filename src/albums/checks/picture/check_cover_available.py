@@ -72,7 +72,7 @@ class CheckCoverAvailable(Check):
         sources = picture_sources[picture]
         filename = sources[0]
         first_source = f"{escape(filename)}"
-        details = f"{picture.file_info.mime_type} {picture.type.name}"
+        details = f"{picture.picture_info.mime_type} {picture.type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _fix_set_cover(self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[str]]):
@@ -88,9 +88,9 @@ class CheckCoverAvailable(Check):
             filename = sources[pic][0]
             with self.tagger.get(album.path).open(filename) as tags:
                 image_data = tags.get_image_data(pic)
-            suffix = mimetypes.guess_extension(pic.file_info.mime_type)
+            suffix = mimetypes.guess_extension(pic.picture_info.mime_type)
             new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
-            self.ctx.console.print(f"Creating {len(image_data)} byte {pic.file_info.mime_type} file {new_filename}")
+            self.ctx.console.print(f"Creating {len(image_data)} byte {pic.picture_info.mime_type} file {new_filename}")
             new_path = self.ctx.config.library / album.path / new_filename
             if new_path.exists():
                 self.ctx.console.print(f"Error: the file {escape(str(new_path))} already exists (scan again)")

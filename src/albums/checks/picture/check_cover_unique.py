@@ -46,7 +46,7 @@ class CheckCoverUnique(Check):
         front_covers: set[Picture] = pictures_by_type.get(PictureType.COVER_FRONT, set())
         cover_image_files = list(
             pic
-            for pic in sorted(front_covers, key=lambda pic: pic.file_info.file_size, reverse=True)
+            for pic in sorted(front_covers, key=lambda pic: pic.picture_info.file_size, reverse=True)
             if any(Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
         )
         cover_image_filenames = [
@@ -127,14 +127,14 @@ class CheckCoverUnique(Check):
         sources = picture_sources[picture]
         filename = sources[0]
         first_source = f"{escape(filename)}"
-        details = f"{picture.file_info.mime_type} {picture.type.name}"
+        details = f"{picture.picture_info.mime_type} {picture.type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
     def _source_image_file_candidate(self, image_files: Collection[Picture], embedded_images: Collection[Picture]):
-        largest_image_file = max(image_files, key=lambda pic: pic.file_info.file_size) if image_files else None
-        largest_embedded_file = max(embedded_images, key=lambda pic: pic.file_info.file_size) if embedded_images else None
+        largest_image_file = max(image_files, key=lambda pic: pic.picture_info.file_size) if image_files else None
+        largest_embedded_file = max(embedded_images, key=lambda pic: pic.picture_info.file_size) if embedded_images else None
         if largest_embedded_file is None or (
-            largest_image_file and largest_image_file.file_info.file_size > largest_embedded_file.file_info.file_size
+            largest_image_file and largest_image_file.picture_info.file_size > largest_embedded_file.picture_info.file_size
         ):
             return largest_image_file
         return None
@@ -147,7 +147,7 @@ class CheckCoverUnique(Check):
             picture_files = [
                 file
                 if (file.cover_source == (file.filename == filename))
-                else PictureFile(file.filename, file.file_info, file.modify_timestamp, not file.cover_source)
+                else PictureFile(file.filename, file.picture_info, file.modify_timestamp, not file.cover_source)
                 for file in album.picture_files
             ]
             album.picture_files = picture_files
