@@ -22,6 +22,24 @@ class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):
         return self._enum_type(value)
 
 
+class SerializableValueAsJson[_VT](TypeDecorator[_VT]):
+    impl = Text
+
+    cache_ok = True
+
+    @override
+    def process_bind_param(self, value: _VT | None, dialect: Dialect):
+        return json.dumps(value)
+
+    @override
+    def process_result_value(self, value: str | None, dialect: Dialect) -> _VT | None:
+        return None if value is None else json.loads(value)
+
+    @override
+    def copy(self, **kw: dict[str, Any]) -> TypeDecorator[_VT]:
+        return SerializableValueAsJson[_VT]()
+
+
 class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
     impl = Text
 

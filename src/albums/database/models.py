@@ -5,9 +5,10 @@ from typing import Optional
 from sqlalchemy import REAL, Boolean, Column, ForeignKey, Index, Integer, LargeBinary, Table, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, composite, mapped_column, relationship
 
+from ..configuration import SettingValueType
 from ..picture.info import PictureInfo
 from ..tagger.types import PictureType, StreamInfo
-from .orm_helpers import IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType
+from .orm_helpers import IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SerializableValueAsJson
 
 
 class Base(DeclarativeBase):
@@ -64,7 +65,7 @@ class SettingEntity(Base):
     __tablename__ = "setting"
 
     name: Mapped[str] = mapped_column(Text, nullable=False, primary_key=True)
-    value_json: Mapped[str] = mapped_column(Text, nullable=False)  # TODO parse and map to Union[str, int, float, bool, Sequence[str]]
+    value: Mapped[SettingValueType] = mapped_column("value_json", SerializableValueAsJson[SettingValueType], nullable=False)
 
 
 class IgnoreCheckEntity(Base):

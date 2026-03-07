@@ -78,11 +78,11 @@ class TestDatabaseConfig:
         db = connection.open(connection.MEMORY)
         try:
             with Session(db) as session:
-                session.add(SettingEntity(name="foo.bar", value_json="true"))
+                session.add(SettingEntity(name="foo.bar", value=True))
                 retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).all()
                 assert len(retr) == 1
                 assert isinstance(retr[0][0], SettingEntity)
-                assert retr[0][0].value_json == "true"
+                assert retr[0][0].value
             load(db)
             with Session(db) as session:
                 # ignored setting removed from db

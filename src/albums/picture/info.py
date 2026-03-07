@@ -12,7 +12,6 @@ from .format import IMAGE_MODE_BPP
 # and specifying files=[] may avoid OS-specific bugs:
 mimetypes.init(files=[])
 
-
 type LoadIssuesType = Tuple[Tuple[str, str | int], ...]
 
 

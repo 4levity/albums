@@ -12,6 +12,9 @@ from .types import CheckConfiguration, Sequence, Tuple
 logger = logging.getLogger(__name__)
 
 
+type SettingValueType = Union[str, int, float, bool, Sequence[str]]
+
+
 class PathCompatibilityOption(StrEnum):
     LINUX = "Linux"
     WINDOWS = "Windows"
@@ -52,7 +55,7 @@ class Configuration:
     tagger: str = ""
     id3v1: ID3v1Policy = ID3v1Policy.UPDATE
 
-    def to_values(self) -> Mapping[str, Union[str, int, float, bool, Sequence[str]]]:
+    def to_values(self) -> Mapping[str, SettingValueType]:
         values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
             "settings.default_import_path": self.default_import_path.template,
             "settings.default_import_path_various": self.default_import_path_various.template,
@@ -79,7 +82,7 @@ class Configuration:
         return values
 
     @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, Union[str, int, float, bool, Sequence[str]]]]):
+    def from_values(cls, values: Iterator[Tuple[str, SettingValueType]]):
         config = Configuration()
         ignored_values = False
         for k, value in values:
