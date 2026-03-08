@@ -36,6 +36,8 @@ class TestScanner:
         ),
         Album("foo" + os.sep, [Track("1.mp3", {BasicTag.TITLE: ["1"]}), Track("2.mp3", {BasicTag.TITLE: ["2"]})]),
         Album("baz" + os.sep, [Track("1.wma", {BasicTag.TITLE: ["one"]}), Track("2.wma", {BasicTag.TITLE: ["two"]})]),
+        Album("eee" + os.sep, [Track("1.m4a", {BasicTag.TITLE: ["one"]}), Track("2.m4a", {BasicTag.TITLE: ["two"]})]),
+        Album("mob" + os.sep, [Track("1.aiff", {BasicTag.TITLE: ["one"]}), Track("2.aiff", {BasicTag.TITLE: ["two"]})]),
     ]
 
     def test_initial_scan(self):
@@ -45,33 +47,48 @@ class TestScanner:
             scan(context(db, library))
             result = list(selector.load_albums(db))
 
-            assert len(result) == 3
+            assert len(result) == 5
             assert result[0].path == "bar" + os.sep
-            assert result[2].path == "foo" + os.sep  # albums were scanned in lexical order
+            assert result[1].path == "baz" + os.sep  # albums were scanned in lexical order
 
             # flac files
+            assert result[0].tracks[0].stream.codec == "FLAC"
             assert len(result[0].tracks) == 3
             assert result[0].tracks[0].file_size > 1
             assert result[0].tracks[0].modify_timestamp > 1
             assert result[0].tracks[0].stream.sample_rate == 44100
-            assert result[0].tracks[0].stream.codec == "FLAC"
             assert result[0].tracks[0].tags[BasicTag.TITLE] == ("1",)
 
             # wma files
+            assert result[1].tracks[0].stream.codec == "Windows Media Audio V8"
             assert len(result[1].tracks) == 2
             assert result[1].tracks[0].file_size > 1
             assert result[1].tracks[0].modify_timestamp > 1
             assert result[1].tracks[0].stream.sample_rate == 44100
-            assert result[1].tracks[0].stream.codec == "Windows Media Audio V8"
             assert result[1].tracks[0].tags[BasicTag.TITLE] == ("one",)
 
-            # mp3 files
+            # m4a files
+            # TODO make sure we know what codec and stream rate is in sample file
             assert len(result[2].tracks) == 2
             assert result[2].tracks[0].file_size > 1
             assert result[2].tracks[0].modify_timestamp > 1
-            assert result[2].tracks[0].stream.sample_rate == 44100
-            assert result[2].tracks[0].stream.codec == "MP3"
-            assert result[2].tracks[0].tags[BasicTag.TITLE] == ("1",)
+            assert result[2].tracks[0].tags[BasicTag.TITLE] == ("one",)
+
+            # mp3 files
+            assert result[3].tracks[0].stream.codec == "MP3"
+            assert len(result[3].tracks) == 2
+            assert result[3].tracks[0].file_size > 1
+            assert result[3].tracks[0].modify_timestamp > 1
+            assert result[3].tracks[0].stream.sample_rate == 44100
+            assert result[3].tracks[0].tags[BasicTag.TITLE] == ("1",)
+
+            # aiff files
+            assert result[4].tracks[0].stream.codec == "AIFF"
+            assert len(result[4].tracks) == 2
+            assert result[4].tracks[0].file_size > 1
+            assert result[4].tracks[0].modify_timestamp > 1
+            assert result[4].tracks[0].stream.sample_rate == 8000
+            assert result[4].tracks[0].tags[BasicTag.TITLE] == ("one",)
 
             # image files in folder
             assert len(result[0].picture_files) == 1
@@ -157,14 +174,14 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             result = list(selector.load_albums(db))
-            assert len(result) == 3
+            assert len(result) == 5
             assert result[0].path == "bar" + os.sep
 
             # remove a folder that contains an album (removed without scanning)
             shutil.rmtree(library / "bar", ignore_errors=True)
             scan(ctx)
             result = list(selector.load_albums(db))
-            assert len(result) == 2
+            assert len(result) == 4
             assert result[0].path == "baz" + os.sep
 
             # remove the tracks but the folder is still there (removed when scanned)
@@ -172,8 +189,8 @@ class TestScanner:
             os.mkdir(library / "baz")
             scan(ctx)
             result = list(selector.load_albums(db))
-            assert len(result) == 1
-            assert result[0].path == "foo" + os.sep
+            assert len(result) == 3
+            assert result[0].path == "eee" + os.sep
         finally:
             db.dispose()
 
@@ -201,7 +218,7 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             result = list(selector.load_albums(db))
-            assert len(result) == 3
+            assert len(result) == 5
 
             delete_album = result[0].path
             shutil.rmtree(library / result[0].path, ignore_errors=True)
@@ -209,7 +226,7 @@ class TestScanner:
 
             # deleted path was not scanned, so album is still there
             result = list(selector.load_albums(db))
-            assert len(result) == 3
+            assert len(result) == 5
             assert result[0].path == delete_album
         finally:
             db.dispose()

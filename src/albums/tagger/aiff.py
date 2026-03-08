@@ -26,6 +26,10 @@ class AiffTagger(AbstractId3Tagger[AIFF]):
         return self._file
 
     @override
+    def _get_codec(self):
+        return "AIFF"
+
+    @override
     def _ensure_id3(self) -> ID3:
         if not self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             self._file.add_tags()

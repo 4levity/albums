@@ -10,12 +10,10 @@ import humanize
 from ..app import SCANNER_VERSION
 from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ..picture.scan import PictureScanner
-from ..tagger.folder import AlbumTagger
+from ..tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
 from ..types import Album, PictureFile, Track
 
 logger = logging.getLogger(__name__)
-
-SUPPORTED_FILE_TYPES = frozenset({".flac", ".mp3", ".m4a", ".wma", ".asf", ".ogg"})
 
 MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
@@ -37,7 +35,7 @@ def scan_folder(scan_root: Path, album_relpath: str, stored_album: Album | None,
     for entry in album_path.iterdir():
         if entry.is_file():
             suffix = str.lower(entry.suffix)
-            if suffix in SUPPORTED_FILE_TYPES:
+            if suffix in AUDIO_FILE_SUFFIXES:
                 track_files.append(entry)
             elif suffix in SUPPORTED_IMAGE_SUFFIXES:
                 picture_paths.append(entry)
