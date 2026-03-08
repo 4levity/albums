@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
@@ -35,6 +37,19 @@ class TestCheckIllegalPathname:
         assert result is not None
         assert "'CON' is a reserved name" in result.message
         assert "platform=universal" in result.message
+
+    def test_pathname_fix(self, mocker):
+        album = Album("Foo" + os.sep, [Track("CON.flac")])
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert "'CON' is a reserved name" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == [">> Sanitize all filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [call(Path(album.path) / "CON.flac", Path(album.path) / "CON_.flac")]
 
     def test_pathname_reserved_character_Windows(self):
         result = CheckIllegalPathname(Context()).check(Album("Foo" + os.sep, [Track("a:b.flac")]))

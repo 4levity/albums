@@ -41,15 +41,18 @@ album should not have two files named `folder.jpg` and `Folder.JPG`.
 
 Filenames should not include invalid characters or be operating system reserved
 words. This check flags filenames that might cause a problem. What is allowed
-depends on the `path_compatibility` global configuration setting (see
-[Usage](./usage.md)).
+and how illegal filenames are sanitized depends on the `path_compatibility` and
+related settings (see [Usage](./usage.md)).
+
+**Automatic fix**: Rename any tracks with illegal names, according to
+configuration.
 
 ### track-filename
 
 Track filenames should match tags. Typically they include the track number and
 title. They start with the disc number if part of a set, and include the artist
 name if the album is a compilation. Filenames should be valid, as described by
-`path_compatibility` and related path settings in [Usage](./usage.md).
+`path_compatibility` and related settings in [Usage](./usage.md).
 
 The filename format is a template string. The template substitutions are:
 
