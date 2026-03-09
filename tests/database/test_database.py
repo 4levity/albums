@@ -56,45 +56,6 @@ class TestDatabase:
         finally:
             db.dispose()
 
-    def test_update_collections(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert any(c == "test" for c in result.collections)
-                assert not any(c == "new-collection" for c in result.collections)
-
-            operations.update_collections(db, album_id, ["new-collection"])
-
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert not any(c == "test" for c in result.collections)
-                assert any(c == "new-collection" for c in result.collections)
-        finally:
-            db.dispose()
-
-    def test_update_ignore_checks(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert result.ignore_checks == ["artist-tag"]  # initial
-
-            set_ignore_checks = ["album-artist", "cover-filename"]
-            operations.update_ignore_checks(db, album_id, set_ignore_checks)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert sorted(result.ignore_checks) == set_ignore_checks
-
-            operations.update_ignore_checks(db, album_id, [])  # remove all ignores
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert result.ignore_checks == []
-        finally:
-            db.dispose()
-
     def test_update_picture_files(self):
         db = connection.open(connection.MEMORY)
         try:

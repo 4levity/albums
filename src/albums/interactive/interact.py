@@ -8,9 +8,11 @@ from typing import Tuple
 from prompt_toolkit import shortcuts
 from rich.markup import escape
 from rich.table import Table
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..database import operations
+from ..database.models import AlbumEntity
 from ..types import Album, CheckResult
 
 logger = logging.getLogger(__name__)
@@ -83,7 +85,7 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
                 done = True
                 user_quit = True
             elif choice == OPTION_IGNORE_CHECK:
-                done = prompt_ignore_checks(ctx, album, check_name)
+                done = prompt_ignore_checks(ctx, album.album_id, check_name) if album.album_id is not None else False
                 maybe_changed |= done
                 user_quit = done
             elif choice == OPTION_OPEN_FOLDER:
@@ -112,19 +114,16 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
     return (maybe_changed, user_quit)
 
 
-def prompt_ignore_checks(ctx: Context, album: Album, check_name: str):
-    if not ctx.db:
-        raise ValueError("prompt_ignore_checks requires a database connection")
-    if album.album_id is None:
-        raise ValueError("album does not have an album_id, cannot ignore checks")
-    ignore_checks = list(album.ignore_checks)
-    if check_name in ignore_checks:
-        logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
-    elif shortcuts.confirm(f'Do you want to ignore the check "{check_name}" for this album?'):
-        ignore_checks.append(check_name)
-        operations.update_ignore_checks(ctx.db, album.album_id, ignore_checks)
-        return True
-    return False
+def prompt_ignore_checks(ctx: Context, album_id: int, check_name: str):
+    with Session(ctx.db) as session:
+        album = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).tuples().one()[0]
+        if check_name in album.ignore_checks:
+            logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
+        elif shortcuts.confirm(f'Do you want to ignore the check "{check_name}" for this album?'):
+            album.ignore_checks.append(check_name)
+            session.commit()
+            return True
+        return False
 
 
 def os_open_folder(ctx: Context, path: Path):

@@ -1,5 +1,5 @@
 import logging
-from typing import Collection, Sequence
+from typing import Sequence
 
 from sqlalchemy import Engine, delete, desc, select
 from sqlalchemy.orm import Session
@@ -136,30 +136,6 @@ def update_scanner(db: Engine, album_id: int, scanner_version: int):
     with Session(db) as session:
         album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
         album.scanner = scanner_version
-        session.commit()
-
-
-def update_collections(db: Engine, album_id: int, collections: Collection[str]):
-    with Session(db) as session:
-        album = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).tuples().one()[0]
-        old_collections = set(album.collections)
-        new_collections = set(collections)
-        for collection_name in new_collections - old_collections:
-            album.collections.append(collection_name)
-        for collection_name in old_collections - new_collections:
-            album.collections.remove(collection_name)
-        session.commit()
-
-
-def update_ignore_checks(db: Engine, album_id: int, ignore_checks: Collection[str]):
-    with Session(db) as session:
-        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
-        old_ignore_checks = set(album.ignore_checks)
-        new_ignore_checks = set(ignore_checks)
-        for check_name in new_ignore_checks - old_ignore_checks:
-            album.ignore_checks.append(check_name)
-        for check_name in old_ignore_checks - new_ignore_checks:
-            album.ignore_checks.remove(check_name)
         session.commit()
 
 

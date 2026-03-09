@@ -178,6 +178,7 @@ class TestCli:
     def test_remove_collection(self):
         self.run(["scan"], init=True)
         result = self.run(["add", "test"])  # add all
+        assert result.exit_code == 0
         assert f"added album foo{os.sep} to collection test" in result.output
         assert f"added album bar{os.sep} to collection test" in result.output
 
