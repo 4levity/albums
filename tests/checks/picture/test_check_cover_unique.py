@@ -4,10 +4,14 @@ from typing import Sequence
 from unittest.mock import call
 
 from rich_pixels import Pixels
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.picture.check_cover_unique import CheckCoverUnique
-from albums.database import connection, selector
+from albums.database import connection
+from albums.database.models import AlbumEntity
+from albums.database.operations import album_to_album
 from albums.library import scanner
 from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
@@ -99,7 +103,8 @@ class TestCheckCoverUnique:
         ctx.db = connection.open(connection.MEMORY)
         try:
             scanner.scan(ctx)
-            album = next(selector.load_albums(ctx.db))
+            with Session(ctx.db) as session:
+                album = album_to_album(session.execute(select(AlbumEntity)).tuples().one()[0], True)
         finally:
             ctx.db.dispose()
 

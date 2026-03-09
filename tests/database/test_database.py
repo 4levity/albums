@@ -3,10 +3,11 @@ from copy import copy
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from albums.database import connection, operations, schema, selector
+from albums.database import connection, operations, schema
+from albums.database.models import AlbumEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
 from albums.types import Album, BasicTag, PictureFile, ScanHistoryEntry, Track
@@ -59,13 +60,17 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             album_id = operations.add(db, album)
-            assert len(list(selector.load_albums(db, collection=["test"]))) == 1
-            assert len(list(selector.load_albums(db, collection=["new-collection"]))) == 0
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert any(c == "test" for c in result.collections)
+                assert not any(c == "new-collection" for c in result.collections)
 
             operations.update_collections(db, album_id, ["new-collection"])
 
-            assert len(list(selector.load_albums(db, collection=["test"]))) == 0
-            assert len(list(selector.load_albums(db, collection=["new-collection"]))) == 1
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert not any(c == "test" for c in result.collections)
+                assert any(c == "new-collection" for c in result.collections)
         finally:
             db.dispose()
 
@@ -73,16 +78,20 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             album_id = operations.add(db, album)
-            result = list(selector.load_albums(db))
-            assert result[0].ignore_checks == ["artist-tag"]  # initial
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.ignore_checks == ["artist-tag"]  # initial
 
             set_ignore_checks = ["album-artist", "cover-filename"]
             operations.update_ignore_checks(db, album_id, set_ignore_checks)
-            result = list(selector.load_albums(db))
-            assert sorted(result[0].ignore_checks) == set_ignore_checks
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert sorted(result.ignore_checks) == set_ignore_checks
 
             operations.update_ignore_checks(db, album_id, [])  # remove all ignores
-            assert list(selector.load_albums(db))[0].ignore_checks == []
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.ignore_checks == []
         finally:
             db.dispose()
 
@@ -90,17 +99,21 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             album_id = operations.add(db, album)
-            picture_files = list(selector.load_albums(db))[0].picture_files
-            assert len(picture_files) == 1
-            assert picture_files[0].cover_source
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                picture_files = [operations.picture_file_from_entity(f) for f in result.picture_files]
+                assert len(picture_files) == 1
+                assert picture_files[0].cover_source
 
-            # modify existing image file + add one
-            file0 = PictureFile(picture_files[0].filename, picture_files[0].picture_info, picture_files[0].modify_timestamp, False)
-            new_pic_info = PictureInfo("test", 200, 200, 24, 2048, b"abcd")
+                # modify existing image file + add one
+                file0 = PictureFile(picture_files[0].filename, picture_files[0].picture_info, picture_files[0].modify_timestamp, False)
+                new_pic_info = PictureInfo("test", 200, 200, 24, 2048, b"abcd")
 
             operations.update_picture_files(db, album_id, [file0] + list(picture_files[1:]) + [PictureFile("other.jpg", new_pic_info, 999, False)])
 
-            picture_files = list(selector.load_albums(db))[0].picture_files
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                picture_files = [operations.picture_file_from_entity(f) for f in result.picture_files]
             pic_folder = next(p for p in picture_files if p.filename == "folder.jpg")
             assert pic_folder
             assert pic_folder.picture_info.file_hash == b"1234"
@@ -122,13 +135,15 @@ class TestDatabase:
         try:
             album_id = operations.add(db, album)
             operations.add(db, album2)
-            assert len(list(selector.load_albums(db))) == 2
+            with Session(db) as session:
+                assert len(session.execute(select(AlbumEntity)).all()) == 2
 
             operations.remove(db, album_id)
 
-            result = list(selector.load_albums(db))
-            assert len(result) == 1
-            assert result[0].path == "baz" + os.sep
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().all()
+                assert len(result) == 1
+                assert result[0][0].path == "baz" + os.sep
         finally:
             db.dispose()
 
@@ -136,7 +151,9 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             album_id = operations.add(db, album)
-            tracks = list(selector.load_albums(db))[0].tracks
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                tracks = [operations.track_from_entity(t) for t in result.tracks]
             assert len(tracks) == 1
 
             tracks[0].tags = {BasicTag.ALBUM: ("Foo",)}
@@ -144,9 +161,10 @@ class TestDatabase:
             tracks[1].filename = "2.flac"
             operations.update_tracks(db, album_id, tracks)
 
-            tracks = list(selector.load_albums(db))[0].tracks
-            assert len(tracks) == 2
-            assert all(track.tags[BasicTag.ALBUM] == ("Foo",) for track in tracks)
+            with Session(db) as session:
+                tracks = session.execute(select(AlbumEntity)).tuples().one()[0].tracks
+                assert len(tracks) == 2
+                assert all(track.get(BasicTag.ALBUM) == ("Foo",) for track in tracks)
         finally:
             db.dispose()
 
@@ -167,12 +185,14 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             album_id = operations.add(db, album)
-            result = list(selector.load_albums(db))[0]
-            assert result.scanner == 3
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.scanner == 3
 
             operations.update_scanner(db, album_id, 4)
 
-            result = list(selector.load_albums(db))[0]
-            assert result.scanner == 4
+            with Session(db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.scanner == 4
         finally:
             db.dispose()

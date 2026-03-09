@@ -2,6 +2,8 @@ import os
 import re
 from copy import copy
 
+from sqlalchemy.orm import Session
+
 from albums.database import connection, operations, selector
 from albums.picture.info import PictureInfo
 from albums.tagger.types import Picture, PictureType, StreamInfo
@@ -38,8 +40,9 @@ class TestSelector:
     def test_select_empty(self):
         db = connection.open(connection.MEMORY)
         try:
-            result = list(selector.load_albums(db))
-            assert len(result) == 0
+            with Session(db) as session:
+                result = list(selector.load_album_entities(session))
+                assert len(result) == 0
         finally:
             db.dispose()
 
@@ -48,28 +51,28 @@ class TestSelector:
         try:
             album_id = operations.add(db, album)
             assert isinstance(album_id, int)
+            with Session(db) as session:
+                assert len(list(selector.load_album_entities(session))) == 1
+                assert len(list(selector.load_album_entities(session, path=["foo"]))) == 0  # no partial match
+                result = list(selector.load_album_entities(session, path=["foo" + os.sep]))  # exact match
+                assert len(result) == 1
+                assert result[0].path == "foo" + os.sep
+                assert result[0].scanner == 3
+                assert sorted(result[0].tracks[0].get(BasicTag.ARTIST, default=[])) == ["Bar"]
+                assert result[0].tracks[0].stream.length == 1.0
+                assert result[0].tracks[0].stream.codec == "FLAC"
+                assert len(result[0].tracks[0].pictures) == 1
+                assert result[0].tracks[0].pictures[0].picture_type == PictureType.COVER_FRONT
+                assert result[0].tracks[0].pictures[0].picture_info.file_size == 1024
 
-            assert len(list(selector.load_albums(db))) == 1
-            assert len(list(selector.load_albums(db, path=["foo"]))) == 0  # no partial match
-            result = list(selector.load_albums(db, path=["foo" + os.sep]))  # exact match
-            assert len(result) == 1
-            assert result[0].path == "foo" + os.sep
-            assert result[0].scanner == 3
-            assert sorted(result[0].tracks[0].tags.get(BasicTag.ARTIST, [])) == ["Bar"]
-            assert result[0].tracks[0].stream.length == 1.0
-            assert result[0].tracks[0].stream.codec == "FLAC"
-            assert len(result[0].tracks[0].pictures) == 1
-            assert result[0].tracks[0].pictures[0].type == PictureType.COVER_FRONT
-            assert result[0].tracks[0].pictures[0].picture_info.file_size == 1024
-
-            assert len(result[0].picture_files) == 1
-            file = next(file for file in result[0].picture_files if file.filename == "folder.jpg")
-            assert file.picture_info.mime_type == "test"
-            assert file.picture_info.width == file.picture_info.height == 100
-            assert file.picture_info.file_size == 4096
-            assert file.picture_info.file_hash == b"1234"
-            assert file.modify_timestamp == 999
-            assert file.cover_source
+                assert len(result[0].picture_files) == 1
+                file = next(file for file in result[0].picture_files if file.filename == "folder.jpg")
+                assert file.picture_info.mime_type == "test"
+                assert file.picture_info.width == file.picture_info.height == 100
+                assert file.picture_info.file_size == 4096
+                assert file.picture_info.file_hash == b"1234"
+                assert file.modify_timestamp == 999
+                assert file.cover_source
         finally:
             db.dispose()
 
@@ -80,10 +83,11 @@ class TestSelector:
             operations.add(db, album2)
 
             re_sep = re.escape(os.sep)
-            assert len(list(selector.load_albums(db))) == 2
-            assert len(list(selector.load_albums(db, path=["o." + re_sep], regex=True))) == 1  # regex match
-            assert len(list(selector.load_albums(db, path=["x." + re_sep], regex=True))) == 0  # no regex match
-            assert len(list(selector.load_albums(db, path=["(foo|baz)"], regex=True))) == 2
+            with Session(db) as session:
+                assert len(list(selector.load_album_entities(session))) == 2
+                assert len(list(selector.load_album_entities(session, path=["o." + re_sep], regex=True))) == 1  # regex match
+                assert len(list(selector.load_album_entities(session, path=["x." + re_sep], regex=True))) == 0  # no regex match
+                assert len(list(selector.load_album_entities(session, path=["(foo|baz)"], regex=True))) == 2
         finally:
             db.dispose()
 
@@ -96,14 +100,15 @@ class TestSelector:
             operations.add(db, album)
             operations.add(db, album2)
 
-            result = list(selector.load_albums(db, collection=[".est"], regex=True))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
-            result = list(selector.load_albums(db, collection=[".est"]))
-            assert len(result) == 0
-            result = list(selector.load_albums(db, collection=["test", "anything"]))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
+            with Session(db) as session:
+                result = list(selector.load_album_entities(session, collection=[".est"], regex=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
+                result = list(selector.load_album_entities(session, collection=[".est"]))
+                assert len(result) == 0
+                result = list(selector.load_album_entities(session, collection=["test", "anything"]))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
         finally:
             db.dispose()
 
@@ -113,14 +118,15 @@ class TestSelector:
             operations.add(db, album)
             operations.add(db, album2)
 
-            result = list(selector.load_albums(db, ignore_check=["artist-t"], regex=True))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
-            result = list(selector.load_albums(db, ignore_check=["artist-t"]))
-            assert len(result) == 0
-            result = list(selector.load_albums(db, ignore_check=["artist-tag"]))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
+            with Session(db) as session:
+                result = list(selector.load_album_entities(session, ignore_check=["artist-t"], regex=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
+                result = list(selector.load_album_entities(session, ignore_check=["artist-t"]))
+                assert len(result) == 0
+                result = list(selector.load_album_entities(session, ignore_check=["artist-tag"]))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
         finally:
             db.dispose()
 
@@ -130,29 +136,30 @@ class TestSelector:
             operations.add(db, album)
             operations.add(db, album2)
 
-            result = list(selector.load_albums(db, tag=["artist:Baz"]))
-            assert len(result) == 1
-            assert result[0].path.startswith("baz")
+            with Session(db) as session:
+                result = list(selector.load_album_entities(session, tag=["artist:Baz"]))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
 
-            result = list(selector.load_albums(db, tag=["title:F(o)o"]))
-            assert len(result) == 0
+                result = list(selector.load_album_entities(session, tag=["title:F(o)o"]))
+                assert len(result) == 0
 
-            result = list(selector.load_albums(db, tag=["title:F(o)o"], regex=True))
-            assert len(result) == 2
+                result = list(selector.load_album_entities(session, tag=["title:F(o)o"], regex=True))
+                assert len(result) == 2
 
-            result = list(selector.load_albums(db, tag=["title:Foo"]))
-            assert len(result) == 2
+                result = list(selector.load_album_entities(session, tag=["title:Foo"]))
+                assert len(result) == 2
 
-            result = list(selector.load_albums(db, tag=["title:Foo", "artist:Baz"]))
-            assert len(result) == 1
-            assert result[0].path.startswith("baz")
+                result = list(selector.load_album_entities(session, tag=["title:Foo", "artist:Baz"]))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
 
-            result = list(selector.load_albums(db, tag=["albumartist"]))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
+                result = list(selector.load_album_entities(session, tag=["albumartist"]))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
 
-            result = list(selector.load_albums(db, tag=["album:=:="]))
-            assert len(result) == 1
-            assert result[0].path.startswith("foo")
+                result = list(selector.load_album_entities(session, tag=["album:=:="]))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
         finally:
             db.dispose()

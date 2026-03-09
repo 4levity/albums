@@ -124,6 +124,17 @@ ALTER TABLE album_picture_file ADD COLUMN depth_bpp INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE album_picture_file ADD COLUMN load_issue TEXT NULL;
 ALTER TABLE track_picture ADD COLUMN depth_bpp INTEGER NOT NULL DEFAULT 0;
 """,
+    11: """
+PRAGMA foreign_keys = OFF;
+CREATE TABLE new_collection (
+    collection_id INTEGER PRIMARY KEY,
+    collection_name TEXT NOT NULL UNIQUE ON CONFLICT IGNORE
+);
+INSERT INTO new_collection (collection_id, collection_name) SELECT collection_id, collection_name from collection;
+DROP TABLE collection;
+ALTER TABLE new_collection RENAME TO collection;
+PRAGMA foreign_keys = ON;
+""",  # cannot alter column constraints in sqlite3
 }
 
 CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())

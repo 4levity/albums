@@ -34,12 +34,10 @@ def scan(ctx: Context, path_selector: Callable[[], Iterable[tuple[str, int | Non
         full_scan = False
     else:
         with Session(ctx.db) as session:
-            stored_paths = [(r.path, r.album_id) for r in session.execute(select(AlbumEntity.path, AlbumEntity.album_id))]
+            stored_paths = [(path, album_id) for path, album_id in session.execute(select(AlbumEntity.path, AlbumEntity.album_id)).tuples()]
         full_scan = True
 
-    unprocessed_albums: dict[str, int | None] = dict(
-        ((str(path), int(album_id) if album_id is not None else None) for (path, album_id) in stored_paths if album_id)
-    )
+    unprocessed_albums: dict[str, int | None] = dict(((path, album_id) for (path, album_id) in stored_paths if album_id))
 
     scanned = 0
     any_changes = False

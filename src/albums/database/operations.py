@@ -8,8 +8,6 @@ from ..tagger.types import BasicTag, Picture, PictureType, StreamInfo
 from ..types import Album, PictureFile, ScanHistoryEntry, Track
 from .models import (
     AlbumEntity,
-    CollectionEntity,
-    IgnoreCheckEntity,
     PictureFileEntity,
     ScanHistoryEntity,
     TrackEntity,
@@ -24,25 +22,25 @@ PICTURE_TYPE_FRONT_COVER_SOURCE_FILE = 200
 
 def load_album(db: Engine, album_id: int, load_track_tags: bool = True) -> Album:
     with Session(db) as session:
-        row = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).first()
+        row = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).tuples().first()
         if row is None:
             raise ValueError(f"load_album called with invalid album_id={album_id}")
         return album_to_album(row[0], load_track_tags)
 
 
-def album_to_album(entity: AlbumEntity, load_track_tags: bool) -> Album:
+def album_to_album(entity: AlbumEntity, load_track_tags: bool = True) -> Album:
     return Album(
         entity.path,
-        [_track(track, load_track_tags) for track in entity.tracks],
-        [c.collection_name for c in entity.collections],
-        [i.check_name for i in entity.ignore_checks],
-        [_picture_file(picture_file) for picture_file in entity.picture_files],
+        [track_from_entity(track, load_track_tags) for track in entity.tracks],
+        list(entity.collections),
+        list(entity.ignore_checks),
+        [picture_file_from_entity(picture_file) for picture_file in entity.picture_files],
         entity.album_id,
         entity.scanner,
     )
 
 
-def _track(entity: TrackEntity, load_track_tags: bool) -> Track:
+def track_from_entity(entity: TrackEntity, load_track_tags: bool = True) -> Track:
     tags: dict[BasicTag, list[str]] = {}
     if load_track_tags:
         for tag_entity in entity.tags:
@@ -66,7 +64,7 @@ def _picture(entity: TrackPictureEntity | PictureFileEntity, picture_type: Pictu
     )
 
 
-def _picture_file(entity: PictureFileEntity) -> PictureFile:
+def picture_file_from_entity(entity: PictureFileEntity) -> PictureFile:
     return PictureFile(
         entity.filename,
         entity.picture_info,
@@ -77,12 +75,11 @@ def _picture_file(entity: PictureFileEntity) -> PictureFile:
 
 def add(db: Engine, album: Album) -> int:
     with Session(db) as session:
-        collections = dict((row[0].collection_name, row[0]) for row in session.execute(select(CollectionEntity)).all())
         entity = AlbumEntity(path=album.path, scanner=album.scanner)
         for collection_name in album.collections:
-            entity.collections.append(collections.get(collection_name, CollectionEntity(collection_name=collection_name)))
+            entity.collections.append(collection_name)
         for check_name in album.ignore_checks:
-            entity.ignore_checks.append(IgnoreCheckEntity(check_name=check_name))
+            entity.ignore_checks.append(check_name)
         for track in album.tracks:
             entity.tracks.append(_track_to_entity(track))
         for picture_file in album.picture_files:
@@ -144,20 +141,25 @@ def update_scanner(db: Engine, album_id: int, scanner_version: int):
 
 def update_collections(db: Engine, album_id: int, collections: Collection[str]):
     with Session(db) as session:
-        all_collections = dict((row[0].collection_name, row[0]) for row in session.execute(select(CollectionEntity)).all())
-        album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
-        album.collections.clear()
-        for collection_name in collections:
-            album.collections.append(all_collections.get(collection_name, CollectionEntity(collection_name=collection_name)))
+        album = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).tuples().one()[0]
+        old_collections = set(album.collections)
+        new_collections = set(collections)
+        for collection_name in new_collections - old_collections:
+            album.collections.append(collection_name)
+        for collection_name in old_collections - new_collections:
+            album.collections.remove(collection_name)
         session.commit()
 
 
 def update_ignore_checks(db: Engine, album_id: int, ignore_checks: Collection[str]):
     with Session(db) as session:
         album = session.scalars(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).one()
-        album.ignore_checks.clear()
-        for check_name in ignore_checks:
-            album.ignore_checks.append(IgnoreCheckEntity(check_name=check_name))
+        old_ignore_checks = set(album.ignore_checks)
+        new_ignore_checks = set(ignore_checks)
+        for check_name in new_ignore_checks - old_ignore_checks:
+            album.ignore_checks.append(check_name)
+        for check_name in old_ignore_checks - new_ignore_checks:
+            album.ignore_checks.remove(check_name)
         session.commit()
 
 
@@ -184,7 +186,7 @@ def record_full_scan(db: Engine, entry: ScanHistoryEntry):
 
 def get_last_scan_info(db: Engine) -> ScanHistoryEntry | None:
     with Session(db) as session:
-        row = session.execute(select(ScanHistoryEntity).order_by(desc(ScanHistoryEntity.timestamp))).first()
+        row = session.execute(select(ScanHistoryEntity).order_by(desc(ScanHistoryEntity.timestamp))).tuples().first()
         if row is None:
             return None
         (entity,) = row

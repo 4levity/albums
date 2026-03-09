@@ -2,10 +2,14 @@ import os
 
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.picture.check_picture_metadata import CheckPictureMetadata
-from albums.database import connection, selector
+from albums.database import connection
+from albums.database.models import AlbumEntity
+from albums.database.operations import album_to_album
 from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
@@ -52,9 +56,11 @@ class TestCheckPictureMetadata:
         ctx.db = connection.open(connection.MEMORY)
         try:
             scan(ctx)
-            result = list(selector.load_albums(ctx.db))
-            assert result[0].tracks[0].pictures[0].picture_info.load_issue
-            result = CheckPictureMetadata(ctx).check(result[0])
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.tracks[0].pictures[0].picture_info.load_issue
+
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
             assert result is not None
             assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 399x399"
             assert result.fixer
@@ -62,14 +68,15 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.load_albums(ctx.db))
-            assert len(result[0].tracks[0].pictures) == 1
-            assert not result[0].tracks[0].pictures[0].picture_info.load_issue
-            assert result[0].tracks[0].pictures[0].picture_info.mime_type == "image/png"
-            assert result[0].tracks[0].pictures[0].picture_info.width == 400
-            assert result[0].tracks[0].pictures[0].picture_info.height == 400
-            result = CheckPictureMetadata(ctx).check(result[0])
-            assert result is None
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert len(result.tracks[0].pictures) == 1
+                assert not result.tracks[0].pictures[0].picture_info.load_issue
+                assert result.tracks[0].pictures[0].picture_info.mime_type == "image/png"
+                assert result.tracks[0].pictures[0].picture_info.width == 400
+                assert result.tracks[0].pictures[0].picture_info.height == 400
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
+                assert result is None
         finally:
             ctx.db.dispose()
 
@@ -89,9 +96,10 @@ class TestCheckPictureMetadata:
         ctx.db = connection.open(connection.MEMORY)
         try:
             scan(ctx)
-            result = list(selector.load_albums(ctx.db))
-            assert result[0].tracks[0].pictures[0].picture_info.load_issue
-            result = CheckPictureMetadata(ctx).check(result[0])
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert result.tracks[0].pictures[0].picture_info.load_issue
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
             assert result is not None
             assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg"
             assert result.fixer
@@ -99,13 +107,14 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.load_albums(ctx.db))
-            assert len(result[0].tracks[0].pictures) == 1
-            assert not result[0].tracks[0].pictures[0].picture_info.load_issue
-            assert result[0].tracks[0].pictures[0].picture_info.mime_type == "image/png"
-            assert result[0].tracks[0].pictures[0].picture_info.width == 400
-            assert result[0].tracks[0].pictures[0].picture_info.height == 400
-            result = CheckPictureMetadata(ctx).check(result[0])
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                assert len(result.tracks[0].pictures) == 1
+                assert not result.tracks[0].pictures[0].picture_info.load_issue
+                assert result.tracks[0].pictures[0].picture_info.mime_type == "image/png"
+                assert result.tracks[0].pictures[0].picture_info.width == 400
+                assert result.tracks[0].pictures[0].picture_info.height == 400
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
             assert result is None
         finally:
             ctx.db.dispose()
@@ -120,12 +129,13 @@ class TestCheckPictureMetadata:
         ctx.db = connection.open(connection.MEMORY)
         try:
             scan(ctx)
-            result = list(selector.load_albums(ctx.db))
-            gif = next(file for file in result[0].picture_files if file.filename == "cover.gif")
-            assert gif.picture_info.mime_type == "image/png"
-            assert gif.picture_info.load_issue == (("format", "image/gif"),)
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                gif = next(file for file in result.picture_files if file.filename == "cover.gif")
+                assert gif.picture_info.mime_type == "image/png"
+                assert gif.picture_info.load_issue == (("format", "image/gif"),)
 
-            result = CheckPictureMetadata(ctx).check(result[0])
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
             assert result is not None
             assert result.message == "image files with wrong extension, example cover.gif should be cover.png"
             assert result.fixer
@@ -133,11 +143,12 @@ class TestCheckPictureMetadata:
             assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
             scan(ctx, reread=True)
-            result = list(selector.load_albums(ctx.db))
-            png = next(file for file in result[0].picture_files if file.filename == "cover.png")
-            assert png.picture_info.mime_type == "image/png"
-            assert png.picture_info.load_issue == ()
-            result = CheckPictureMetadata(ctx).check(result[0])
+            with Session(ctx.db) as session:
+                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                png = next(file for file in result.picture_files if file.filename == "cover.png")
+                assert png.picture_info.mime_type == "image/png"
+                assert png.picture_info.load_issue == ()
+                result = CheckPictureMetadata(ctx).check(album_to_album(result))
             assert result is None
         finally:
             ctx.db.dispose()

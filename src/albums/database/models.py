@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, Optional, Sequence, Unpack
+from typing import Any, List, Mapping, Optional, Sequence, Unpack
 
 from sqlalchemy import REAL, Boolean, Column, Enum, ForeignKey, Index, Integer, LargeBinary, Table, Text, text
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import DeclarativeBase, Mapped, composite, mapped_column, relationship
 
 from ..configuration import SettingValueType
@@ -18,12 +19,17 @@ class Base(DeclarativeBase):
 schema_table = Table("_schema", Base.metadata, Column("version", Integer, nullable=False, unique=True))
 
 
-album_collection_association_table = Table(
-    "album_collection",
-    Base.metadata,
-    Column[int]("album_id", ForeignKey("album.album_id")),
-    Column[int]("collection_id", ForeignKey("collection.collection_id")),
-)
+class AlbumCollectionAssociation(Base):
+    __tablename__ = "album_collection"
+
+    album_collection_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    album_id: Mapped[int] = mapped_column(Integer, ForeignKey("album.album_id"))
+    collection_id: Mapped[int] = mapped_column(Integer, ForeignKey("collection.collection_id"))
+
+    collection: Mapped[CollectionEntity] = relationship()
+    collection_name: AssociationProxy[str] = association_proxy("collection", "collection_name")
+
+    album: Mapped[AlbumEntity] = relationship(back_populates="collection_associations")
 
 
 class AlbumEntity(Base):
@@ -35,18 +41,24 @@ class AlbumEntity(Base):
     path: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     scanner: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
 
-    collections: Mapped[list[CollectionEntity]] = relationship(secondary=album_collection_association_table, back_populates="albums")
-    ignore_checks: Mapped[list[IgnoreCheckEntity]] = relationship("IgnoreCheckEntity", back_populates="album")
-    picture_files: Mapped[list[PictureFileEntity]] = relationship("PictureFileEntity", back_populates="album")
-    tracks: Mapped[list[TrackEntity]] = relationship("TrackEntity", back_populates="album")
+    collection_associations: Mapped[List[AlbumCollectionAssociation]] = relationship(back_populates="album", cascade="all, delete-orphan")
+    collections: AssociationProxy[List[str]] = association_proxy(
+        "collection_associations",
+        "collection_name",
+        creator=lambda collection_name: AlbumCollectionAssociation(collection=CollectionEntity(collection_name=collection_name)),  # pyright: ignore
+    )
+    ignore_check_entities: Mapped[List[IgnoreCheckEntity]] = relationship("IgnoreCheckEntity", back_populates="album")
+    ignore_checks: AssociationProxy[List[str]] = association_proxy("ignore_check_entities", "check_name")
+    picture_files: Mapped[List[PictureFileEntity]] = relationship("PictureFileEntity", back_populates="album")
+    tracks: Mapped[List[TrackEntity]] = relationship("TrackEntity", back_populates="album")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "album_id": self.album_id,
             "path": self.path,
             "scanner": self.scanner,
-            "collections": [c.collection_name for c in self.collections],
-            "ignore_checks": [i.check_name for i in self.ignore_checks],
+            "collections": list(self.collections),
+            "ignore_checks": list(self.ignore_checks),
             "tracks": [track.to_dict() for track in self.tracks],
             "picture_files": [picture_file.to_dict() for picture_file in self.picture_files],
         }
@@ -56,9 +68,10 @@ class CollectionEntity(Base):
     __tablename__ = "collection"
 
     collection_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    albums: Mapped[list[AlbumEntity]] = relationship(secondary=album_collection_association_table, back_populates="collections")
-
     collection_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+
+    def __repr__(self) -> str:
+        return f"CollectionEntity({self.collection_name})"
 
 
 class ScanHistoryEntity(Base):
@@ -85,9 +98,12 @@ class IgnoreCheckEntity(Base):
 
     album_ignore_check_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
-    album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="ignore_checks")
+    album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="ignore_check_entities")
 
     check_name: Mapped[str] = mapped_column(Text, nullable=False)
+
+    def __init__(self, check_name: str):
+        self.check_name = check_name
 
 
 class PictureFileEntity(Base):
@@ -137,8 +153,8 @@ class TrackEntity(Base):
     _stream_sample_rate: Mapped[int] = mapped_column("stream_sample_rate", Integer, nullable=False)
     stream = composite(StreamInfo, _stream_length, _stream_bitrate, _stream_channels, _stream_codec, _stream_sample_rate)
 
-    pictures: Mapped[list[TrackPictureEntity]] = relationship("TrackPictureEntity", back_populates="track")
-    tags: Mapped[list[TrackTagEntity]] = relationship("TrackTagEntity", back_populates="track")
+    pictures: Mapped[List[TrackPictureEntity]] = relationship("TrackPictureEntity", back_populates="track")
+    tags: Mapped[List[TrackTagEntity]] = relationship("TrackTagEntity", back_populates="track")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -151,7 +167,7 @@ class TrackEntity(Base):
         }
 
     def tag_dict(self) -> Mapping[BasicTag, Sequence[str]]:
-        tags: dict[BasicTag, list[str]] = {}
+        tags: dict[BasicTag, List[str]] = {}
         for tag_entity in self.tags:
             tags.setdefault(tag_entity.tag, []).append(tag_entity.value)
         return tags

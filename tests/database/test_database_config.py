@@ -79,14 +79,14 @@ class TestDatabaseConfig:
         try:
             with Session(db) as session:
                 session.add(SettingEntity(name="foo.bar", value=True))
-                retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).all()
+                retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).tuples().all()
                 assert len(retr) == 1
                 assert isinstance(retr[0][0], SettingEntity)
                 assert retr[0][0].value
             load(db)
             with Session(db) as session:
                 # ignored setting removed from db
-                retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).all()
+                retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).tuples().all()
                 assert len(retr) == 0
         finally:
             db.dispose()
