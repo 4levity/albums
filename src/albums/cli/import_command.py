@@ -4,8 +4,7 @@ import rich_click as click
 from prompt_toolkit import choice
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
-
-from albums.types import Album
+from sqlalchemy.orm import Session
 
 from ..app import Context
 from ..checks.checker import Checker
@@ -32,9 +31,9 @@ def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, 
     if albums_total > 1:
         ctx.console.print(f"More than one album found at {escape(scan_folder)}")
         raise SystemExit(1)
-
-    album = list(ctx.select_albums(True))[0]
-    existing_confirmed = _check_existing_destination(ctx, album, make_library_paths(ctx, album))
+    with Session(ctx.db) as session:
+        album = next(ctx.select_album_entities(session))
+        existing_confirmed = _check_existing_destination(ctx, make_library_paths(ctx, album))
 
     issues = 0
     quit = False
@@ -48,22 +47,23 @@ def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, 
         quit = issues == 0 or confirm("There are still issues, want to quit?")
 
     if not issues:
-        album = list(ctx.select_albums(True))[0]
-        library_paths = make_library_paths(ctx, album)
-        if not existing_confirmed:  # check again in case tag fixes changed the destination paths
-            _check_existing_destination(ctx, album, library_paths)
-        source_path = Path(scan_folder) / album.path
-        if automatic:
-            path_in_library = library_paths[0]
-        else:
-            options = [(album_path, f">> Copy to: {album_path}") for album_path in library_paths] + [("", ">> Cancel")]
-            path_in_library = choice(message=f"Ready to copy from {source_path}", options=options)
-        if path_in_library:
-            ctx.console.print(f"Import album from {source_path} to {str(library / path_in_library)}")
-            import_album(ctx, source_path, path_in_library, album, extra, recursive)
+        with Session(ctx.db) as session:
+            album = next(ctx.select_album_entities(session))
+            library_paths = make_library_paths(ctx, album)
+            if not existing_confirmed:  # check again in case tag fixes changed the destination paths
+                _check_existing_destination(ctx, library_paths)
+            source_path = Path(scan_folder) / album.path
+            if automatic:
+                path_in_library = library_paths[0]
+            else:
+                options = [(album_path, f">> Copy to: {album_path}") for album_path in library_paths] + [("", ">> Cancel")]
+                path_in_library = choice(message=f"Ready to copy from {source_path}", options=options)
+            if path_in_library:
+                ctx.console.print(f"Import album from {source_path} to {str(library / path_in_library)}")
+                import_album(ctx, source_path, path_in_library, album, extra, recursive)
 
 
-def _check_existing_destination(ctx: Context, album: Album, library_paths: list[str]) -> bool:
+def _check_existing_destination(ctx: Context, library_paths: list[str]) -> bool:
     root_ctx = ctx.parent if ctx.parent is not None else ctx
     # TODO check for duplicate album by tag values too
     existing = next((path for path in library_paths if (root_ctx.config.library / path).exists()), None)

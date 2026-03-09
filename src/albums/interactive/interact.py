@@ -30,7 +30,7 @@ def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Al
     #  - do nothing
     #  - open new window to browse album folder
     # if a tagger is configured: option to run tagger
-    # if the context is persistent: option to ignore this check for this album
+    # if show_ignore_option: option to ignore this check for this album
     #
     # if there is an automatic fix option, it is the default, otherwise do nothing is the default
 
