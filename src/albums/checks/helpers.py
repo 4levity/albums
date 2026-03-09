@@ -8,12 +8,13 @@ from rich.markup import escape
 from albums.tagger.types import BasicTag
 
 from ..app import Context
+from ..database.models import AlbumEntity
 from ..types import Album, Track
 
 FRONT_COVER_FILENAME = "cover"
 
 
-def album_display_name(ctx: Context, album: Album) -> str:
+def album_display_name(ctx: Context, album: Album | AlbumEntity) -> str:
     return ctx.config.library.name if album.path == "." else escape(album.path + " ").strip()
 
 

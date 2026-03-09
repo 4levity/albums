@@ -5,7 +5,7 @@ from rich.text import Text
 
 from albums.app import Context
 from albums.checks.checker import Checker
-from albums.database import connection, selector
+from albums.database import connection, operations, selector
 from albums.library import scanner
 from albums.types import Album, BasicTag, Track
 
@@ -24,8 +24,9 @@ class TestChecker:
         )
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
-        ctx.select_albums = lambda _: [album]
+        ctx.select_album_entities = lambda session: selector.load_album_entities(session)
         try:
+            operations.add(ctx.db, album)
             showed_issues = Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             assert showed_issues == 0
         finally:
@@ -40,7 +41,7 @@ class TestChecker:
         ctx.config.library = create_library("checker_automatic", [album])
         ctx.db = connection.open(connection.MEMORY)
         try:
-            ctx.select_albums = lambda _: selector.load_albums(ctx.db)
+            ctx.select_album_entities = lambda session: selector.load_album_entities(session)
             scanner.scan(ctx)
             showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
 
@@ -63,9 +64,10 @@ class TestChecker:
             ],
         )
         ctx = Context()
-        ctx.select_albums = lambda _: [album]
         ctx.db = connection.open(connection.MEMORY)
+        ctx.select_album_entities = lambda session: selector.load_album_entities(session)
         try:
+            operations.add(ctx.db, album)
             print_spy = mocker.spy(ctx.console, "print")
             Checker(ctx, automatic=False, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled()
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))

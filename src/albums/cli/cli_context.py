@@ -88,7 +88,7 @@ def setup(
         app_context.db = db
         if dir and "path" in matchers:
             del matchers["path"]
-        app_context.select_albums = lambda load_track_tag: selector.load_albums(db, regex=regex, load_track_tags=load_track_tag, **matchers)
+        app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, **matchers)
 
     if dir:
         enter_folder_context(app_context, dir)
@@ -111,7 +111,7 @@ def enter_folder_context(ctx: Context, folder: str):
     if ctx.click_ctx:
         ctx.click_ctx.call_on_close(lambda: connection.close(db))
     ctx.db = db
-    ctx.select_albums = lambda _: selector.load_albums(db)
+    ctx.select_album_entities = lambda session: selector.load_album_entities(session)
     ctx.is_filtered = False
     ctx.is_persistent = False
 

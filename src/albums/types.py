@@ -24,10 +24,6 @@ class Track:
         stat = file.stat()
         return cls(file.name, {}, stat.st_size, int(stat.st_mtime), None)
 
-    def to_dict(self):
-        pictures = [picture.to_dict() for picture in self.pictures]
-        return self.__dict__ | {"stream": self.stream.to_dict() if self.stream else {}} | {"pictures": pictures}
-
 
 @dataclass(frozen=True)
 class PictureFile:
@@ -35,9 +31,6 @@ class PictureFile:
     picture_info: PictureInfo
     modify_timestamp: int
     cover_source: bool
-
-    def to_dict(self):
-        return self.__dict__ | {"picture_info": self.picture_info.to_dict()}
 
     def to_picture(self) -> Picture:
         return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
@@ -52,10 +45,6 @@ class Album:
     picture_files: Sequence[PictureFile] = field(default_factory=list[PictureFile])
     album_id: int | None = None
     scanner: int = 0
-
-    def to_dict(self):
-        pictures = [picture.to_dict() for picture in self.picture_files]
-        return self.__dict__ | {"tracks": [track.to_dict() for track in self.tracks]} | {"picture_files": pictures}
 
     def codec(self):
         codecs = {track.stream.codec if track.stream else "unknown" for track in self.tracks}

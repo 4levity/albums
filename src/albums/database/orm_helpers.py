@@ -1,9 +1,13 @@
 import json
-from typing import Any, override
+from typing import Any, TypedDict, override
 
 from sqlalchemy import Dialect, Integer, Text, TypeDecorator
 
 from ..picture.info import LoadIssuesType
+
+
+class GetDefaultOption[_T](TypedDict, total=False):
+    default: _T
 
 
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):

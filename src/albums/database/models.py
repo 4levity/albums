@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Mapping, Optional, Sequence, Unpack
 
-from sqlalchemy import REAL, Boolean, Column, ForeignKey, Index, Integer, LargeBinary, Table, Text, text
+from sqlalchemy import REAL, Boolean, Column, Enum, ForeignKey, Index, Integer, LargeBinary, Table, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, composite, mapped_column, relationship
 
 from ..configuration import SettingValueType
 from ..picture.info import PictureInfo
-from ..tagger.types import PictureType, StreamInfo
-from .orm_helpers import IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SerializableValueAsJson
+from ..tagger.types import BasicTag, PictureType, StreamInfo
+from .orm_helpers import GetDefaultOption, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SerializableValueAsJson
 
 
 class Base(DeclarativeBase):
@@ -39,6 +39,17 @@ class AlbumEntity(Base):
     ignore_checks: Mapped[list[IgnoreCheckEntity]] = relationship("IgnoreCheckEntity", back_populates="album")
     picture_files: Mapped[list[PictureFileEntity]] = relationship("PictureFileEntity", back_populates="album")
     tracks: Mapped[list[TrackEntity]] = relationship("TrackEntity", back_populates="album")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "album_id": self.album_id,
+            "path": self.path,
+            "scanner": self.scanner,
+            "collections": [c.collection_name for c in self.collections],
+            "ignore_checks": [i.check_name for i in self.ignore_checks],
+            "tracks": [track.to_dict() for track in self.tracks],
+            "picture_files": [picture_file.to_dict() for picture_file in self.picture_files],
+        }
 
 
 class CollectionEntity(Base):
@@ -99,6 +110,14 @@ class PictureFileEntity(Base):
     _load_issue: Mapped[LoadIssuesType] = mapped_column("load_issue", LoadIssuesAsJson)
     picture_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash, _load_issue)
 
+    def to_dict(self):
+        return {
+            "filename": self.filename,
+            "modify_timestamp": self.modify_timestamp,
+            "cover_source": self.cover_source,
+            "picture_info": self.picture_info.to_dict(),
+        }
+
 
 class TrackEntity(Base):
     __tablename__ = "track"
@@ -121,6 +140,33 @@ class TrackEntity(Base):
     pictures: Mapped[list[TrackPictureEntity]] = relationship("TrackPictureEntity", back_populates="track")
     tags: Mapped[list[TrackTagEntity]] = relationship("TrackTagEntity", back_populates="track")
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "filename": self.filename,
+            "file_size": self.file_size,
+            "modify_timestamp": self.modify_timestamp,
+            "pictures": [picture.to_dict() for picture in sorted(self.pictures, key=lambda pic: pic.embed_ix)],
+            "stream": self.stream.to_dict() if self.stream else {},
+            "tags": self.tag_dict(),
+        }
+
+    def tag_dict(self) -> Mapping[BasicTag, Sequence[str]]:
+        tags: dict[BasicTag, list[str]] = {}
+        for tag_entity in self.tags:
+            tags.setdefault(tag_entity.tag, []).append(tag_entity.value)
+        return tags
+
+    def has(self, tag: BasicTag) -> bool:
+        return any(t.tag == tag for t in self.tags)
+
+    def get(self, tag: BasicTag, **kwargs: Unpack[GetDefaultOption[Sequence[str]]]) -> Sequence[str]:
+        result = tuple(t.value for t in self.tags if t.tag == tag)
+        if len(result) == 0:
+            if "default" in kwargs:
+                return kwargs["default"]
+            raise KeyError(f"{tag.value} is not in tags")
+        return result
+
 
 class TrackPictureEntity(Base):
     __tablename__ = "track_picture"
@@ -142,6 +188,9 @@ class TrackPictureEntity(Base):
     _load_issue: Mapped[LoadIssuesType] = mapped_column("load_issue", LoadIssuesAsJson)
     picture_info = composite(PictureInfo, _format, _width, _height, _depth_bpp, _file_size, _file_hash, _load_issue)
 
+    def to_dict(self) -> dict[str, Any]:
+        return {"picture_type": PictureType(self.picture_type), "description": self.description, "picture_info": self.picture_info.to_dict()}
+
 
 class TrackTagEntity(Base):
     __tablename__ = "track_tag"
@@ -151,5 +200,5 @@ class TrackTagEntity(Base):
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
     track: Mapped[Optional[TrackEntity]] = relationship("TrackEntity", back_populates="tags")
 
-    name: Mapped[str] = mapped_column(Text, nullable=False)
+    tag: Mapped[BasicTag] = mapped_column("name", Enum(BasicTag, native_enum=False, values_callable=lambda e: [x.value for x in e]))  # pyright: ignore[reportUnknownVariableType, reportUnknownLambdaType, reportUnknownMemberType]
     value: Mapped[str] = mapped_column(Text, nullable=False)

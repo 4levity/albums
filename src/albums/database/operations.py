@@ -4,7 +4,7 @@ from typing import Collection, Sequence
 from sqlalchemy import Engine, delete, desc, select
 from sqlalchemy.orm import Session
 
-from ..tagger.types import BASIC_TAGS, BasicTag, Picture, PictureType, StreamInfo
+from ..tagger.types import BasicTag, Picture, PictureType, StreamInfo
 from ..types import Album, PictureFile, ScanHistoryEntry, Track
 from .models import (
     AlbumEntity,
@@ -45,11 +45,8 @@ def album_to_album(entity: AlbumEntity, load_track_tags: bool) -> Album:
 def _track(entity: TrackEntity, load_track_tags: bool) -> Track:
     tags: dict[BasicTag, list[str]] = {}
     if load_track_tags:
-        for tag in entity.tags:
-            if tag.name in BASIC_TAGS:
-                tags.setdefault(BasicTag(tag.name), []).append(tag.value)
-            else:
-                logger.debug(f"ignoring tag {tag.name}")
+        for tag_entity in entity.tags:
+            tags.setdefault(tag_entity.tag, []).append(tag_entity.value)
 
     return Track(
         entity.filename,
@@ -108,7 +105,7 @@ def _track_to_entity(track: Track) -> TrackEntity:
         entity.pictures.append(_picture_to_entity(picture, embed_ix))
     for tag, values in track.tags.items():
         for value in values:
-            entity.tags.append(TrackTagEntity(name=tag.value, value=value))
+            entity.tags.append(TrackTagEntity(tag=tag, value=value))
     return entity
 
 

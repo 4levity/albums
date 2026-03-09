@@ -117,10 +117,6 @@ class Picture:
     type: PictureType
     description: str
 
-    def to_dict(self):
-        result = self.__dict__ | {"picture_info": self.picture_info.to_dict()}
-        return result
-
 
 @dataclass(frozen=True)
 class StreamInfo:
