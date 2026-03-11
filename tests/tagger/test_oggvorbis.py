@@ -26,7 +26,7 @@ album = Album("foobar" + os.sep, [track])
 
 class TestOggVorbis:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestOggVorbis.library = create_library("tagger_mp3", [album])
         TestOggVorbis.tagger = AlbumTagger(TestOggVorbis.library / album.path)
 

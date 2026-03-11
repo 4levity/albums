@@ -25,7 +25,7 @@ albums = [
 
 class TestCli:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestCli.library = create_library("cli", albums)
 
     def run(self, params: list[str], init=False):

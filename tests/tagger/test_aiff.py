@@ -35,7 +35,7 @@ album = Album("baz" + os.sep, [track])
 
 class TestAiff:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestAiff.library = create_library("tagger_aiff", [album])
         TestAiff.tagger = AlbumTagger(TestAiff.library / album.path)
 

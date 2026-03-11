@@ -8,7 +8,7 @@ from ..fixtures.create_library import create_library
 
 class TestCliConfig:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestCliConfig.library = create_library("cli_cfg", [])
 
     def run(self, params: list[str], init=False):

@@ -26,7 +26,7 @@ album = Album("baz" + os.sep, [track])
 
 class TestAsf:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestAsf.library = create_library("tagger_asf", [album])
         TestAsf.tagger = AlbumTagger(TestAsf.library / album.path)
 

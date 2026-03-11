@@ -35,7 +35,7 @@ album = Album("baz" + os.sep, [track])
 
 class TestMp3:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestMp3.library = create_library("tagger_mp3", [album])
         TestMp3.tagger = AlbumTagger(TestMp3.library / album.path)
 

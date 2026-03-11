@@ -35,7 +35,7 @@ album = Album("baz" + os.sep, [track])
 
 class TestM4a:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestM4a.library = create_library("tagger_mp3", [album])
         TestM4a.tagger = AlbumTagger(TestM4a.library / album.path)
 

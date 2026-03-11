@@ -38,7 +38,7 @@ album = Album("bar" + os.sep, [track1, track2])
 
 class TestFlac:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestFlac.library = create_library("tagger_flac", [album])
         TestFlac.tagger = AlbumTagger(TestFlac.library / album.path)
 

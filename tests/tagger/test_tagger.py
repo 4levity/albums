@@ -23,7 +23,7 @@ mp3album = Album("baz" + os.sep, [mp3track])
 
 class TestAlbumTagger:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestAlbumTagger.library = create_library("album_tagger", [mp3album])
 
     def test_contextmanager_save(self, mocker):

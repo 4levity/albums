@@ -16,7 +16,7 @@ album2 = Album("bar" + os.sep, [Track("1.flac")])
 
 class TestFolderContext:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestFolderContext.library = create_library("cli", [album1, album2])
 
     def test_zero_config(self):

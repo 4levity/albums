@@ -13,7 +13,7 @@ from albums.types import BasicTag
 
 class TestSelector:
     @pytest.fixture(scope="function", autouse=True)
-    def setup_cli_tests(self):
+    def setup_tests(self):
         TestSelector.album = AlbumEntity(
             path="foo" + os.sep,
             tracks=[
