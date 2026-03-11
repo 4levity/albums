@@ -6,9 +6,10 @@ from typing import Any
 from rich.markup import escape
 
 from ...app import Context
+from ...database.models import AlbumEntity, TrackEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, Track
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
 from . import total_tags
@@ -20,20 +21,20 @@ class TrackTotalFixer(Fixer):
     OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
     OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
 
-    def __init__(self, ctx: Context, tagger: AlbumTagger, album: Album, discnumber: int | None):
-        self.tracks: list[Track] = []
+    def __init__(self, ctx: Context, tagger: AlbumTagger, album: AlbumEntity, discnumber: int | None):
+        self.tracks: list[TrackEntity] = []
         for track in ordered_tracks(album):
             if discnumber is None or (
-                track.tags.get(BasicTag.DISCNUMBER, [""])[0].isdecimal() and int(track.tags[BasicTag.DISCNUMBER][0]) == discnumber
+                track.get(BasicTag.DISCNUMBER, default=[""])[0].isdecimal() and int(track.get(BasicTag.DISCNUMBER)[0]) == discnumber
             ):
                 self.tracks.append(track)
 
         self.max_tracktotal = max(
             (
-                int(track.tags[BasicTag.TRACKTOTAL][0])
+                int(track.get(BasicTag.TRACKTOTAL)[0])
                 for track in self.tracks
-                if track.tags.get(BasicTag.TRACKTOTAL, [""])[0].isdecimal()
-                and (discnumber is None or int(track.tags[BasicTag.DISCNUMBER][0]) == discnumber)
+                if track.get(BasicTag.TRACKTOTAL, default=[""])[0].isdecimal()
+                and (discnumber is None or int(track.get(BasicTag.DISCNUMBER)[0]) == discnumber)
             ),
             default=None,
         )
@@ -58,7 +59,7 @@ class TrackTotalFixer(Fixer):
             f"select option to apply to {len(self.tracks)} tracks{discnumber_notice}",
         )
 
-    def _fix(self, ctx: Context, tagger: AlbumTagger, album: Album, option: str | None):
+    def _fix(self, ctx: Context, tagger: AlbumTagger, album: AlbumEntity, option: str | None):
         if option is None:
             new_tracktotal = None
         elif option.startswith(TrackTotalFixer.OPTION_USE_TRACK_COUNT):
@@ -73,9 +74,9 @@ class TrackTotalFixer(Fixer):
         for track in self.tracks:
             path = ctx.config.library / album.path / track.filename
             track_changed = False
-            if new_tracktotal is None and BasicTag.TRACKTOTAL in track.tags:
+            if new_tracktotal is None and track.has(BasicTag.TRACKTOTAL):
                 ctx.console.print(f"removing tracktotal from {escape(track.filename)}", highlight=False)
-            elif new_tracktotal is not None and track.tags.get(BasicTag.TRACKTOTAL, []) != [str(new_tracktotal)]:
+            elif new_tracktotal is not None and track.get(BasicTag.TRACKTOTAL, default=[]) != [str(new_tracktotal)]:
                 ctx.console.print(f"setting tracktotal on {escape(track.filename)}", highlight=False)
                 track_changed = True
             if track_changed:
@@ -99,7 +100,7 @@ class CheckTrackNumbering(Check):
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
         self.tracktotal_policy = total_tags.Policy.from_str(str(check_config.get("tracktotal_policy", self.default_config["tracktotal_policy"])))
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         folder_str = Path(album.path).name
         if folder_str in self.ignore_folders:
             return None
@@ -128,13 +129,13 @@ class CheckTrackNumbering(Check):
             track_total_counts: defaultdict[int, int] = defaultdict(int)
             duplicate_tracks: list[int] = []
             for track in tracks:
-                if BasicTag.TRACKNUMBER in track.tags:
-                    tracknumber = int(track.tags[BasicTag.TRACKNUMBER][0])
+                if track.has(BasicTag.TRACKNUMBER):
+                    tracknumber = int(track.get(BasicTag.TRACKNUMBER)[0])
                     if tracknumber in actual_track_numbers:
                         duplicate_tracks.append(tracknumber)
                     actual_track_numbers.add(tracknumber)
-                if BasicTag.TRACKTOTAL in track.tags:
-                    tracktotal = int(track.tags[BasicTag.TRACKTOTAL][0])
+                if track.has(BasicTag.TRACKTOTAL):
+                    tracktotal = int(track.get(BasicTag.TRACKTOTAL)[0])
                     track_total_counts[tracktotal] += 1
                     if tracktotal > expect_track_total:
                         expect_track_total = tracktotal
@@ -172,10 +173,10 @@ class CheckTrackNumbering(Check):
 
         return None
 
-    def _renumber_fixer(self, album: Album, disc_number: int, tracks: list[Track]) -> Fixer | None:
+    def _renumber_fixer(self, album: AlbumEntity, disc_number: int, tracks: list[TrackEntity]) -> Fixer | None:
         new_tracknumbers: dict[str, str] = {}
         for track in tracks:
-            tag_tracknumber = int(track.tags.get(BasicTag.TRACKNUMBER, [0])[0])
+            tag_tracknumber = int(track.get(BasicTag.TRACKNUMBER, default=["0"])[0])
             (filename_discnumber, filename_tracknumber, _) = parse_filename(track.filename)
 
             if filename_discnumber and filename_discnumber != disc_number:
@@ -196,7 +197,7 @@ class CheckTrackNumbering(Check):
 
         return Fixer(lambda _: self._renumber(album, new_tracknumbers), options, False, option_automatic_index, table)
 
-    def _renumber(self, album: Album, new_tracknumbers: dict[str, str]) -> bool:
+    def _renumber(self, album: AlbumEntity, new_tracknumbers: dict[str, str]) -> bool:
         for track in album.tracks:
             if track.filename in new_tracknumbers:
                 new_tracknumber = new_tracknumbers[track.filename]

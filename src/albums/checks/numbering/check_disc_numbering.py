@@ -3,9 +3,10 @@ from typing import Any
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 from . import total_tags
@@ -29,7 +30,7 @@ class CheckDiscNumbering(Check):
         if self.remove_redundant_discnumber and self.discs_in_separate_folders:
             raise ValueError("disc-numbering check cannot have discs_in_separate_folders=True and remove_redundant_discnumber=True at the same time")
 
-    def check(self, album: Album) -> CheckResult | None:
+    def check(self, album: AlbumEntity) -> CheckResult | None:
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -49,8 +50,8 @@ class CheckDiscNumbering(Check):
 
         # we look at total before looking at the disc number values in order to extract the most value out of the totals -- a correct total helps
         # confirm disc numbering is correct, so totals that "look wrong" should ideally be fixed (or automatically removed) first.
-        all_disc_numbers = set(int(track.tags.get(BasicTag.DISCNUMBER, [0])[0]) for track in album.tracks)
-        all_disc_totals = list(set(int(track.tags.get(BasicTag.DISCTOTAL, [0])[0]) for track in album.tracks))
+        all_disc_numbers = set(int(track.get(BasicTag.DISCNUMBER, default=["0"])[0]) for track in album.tracks)
+        all_disc_totals = list(set(int(track.get(BasicTag.DISCTOTAL, default=["0"])[0]) for track in album.tracks))
         if len(all_disc_totals) > 1:
             message = "inconsistent disc total"
         else:
@@ -125,7 +126,7 @@ class CheckDiscNumbering(Check):
 
         return None
 
-    def _fix_disc_total(self, album: Album, option: str) -> bool:
+    def _fix_disc_total(self, album: AlbumEntity, option: str) -> bool:
         if option.startswith(OPTION_SET_DISC_TOTAL):
             value = option.split(" = ")[1]
         elif option.startswith(OPTION_REMOVE_DISC_TOTAL):
@@ -136,28 +137,28 @@ class CheckDiscNumbering(Check):
         changed = False
         for track in album.tracks:
             path = self.ctx.config.library / album.path / track.filename
-            if value is None and BasicTag.DISCTOTAL in track.tags:
+            if value is None and track.has(BasicTag.DISCTOTAL):
                 self.ctx.console.print(f"removing disctotal from {track.filename}")
                 self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCTOTAL, None)])
                 changed = True
-            if value is not None and (BasicTag.DISCTOTAL not in track.tags or int(track.tags[BasicTag.DISCTOTAL][0]) != int(value)):
+            if value is not None and (not track.has(BasicTag.DISCTOTAL) or int(track.get(BasicTag.DISCTOTAL)[0]) != int(value)):
                 self.ctx.console.print(f"setting disctotal on {track.filename}")
                 self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCTOTAL, value)])
                 changed = True
         return changed
 
-    def _fix_remove_disc_number_disc_total_1(self, album: Album) -> bool:
+    def _fix_remove_disc_number_disc_total_1(self, album: AlbumEntity) -> bool:
         changed = False
         tagger = self.tagger.get(album.path)
-        for track in (track for track in album.tracks if (BasicTag.DISCNUMBER in track.tags or BasicTag.DISCTOTAL in track.tags)):
+        for track in (track for track in album.tracks if (track.has(BasicTag.DISCNUMBER) or track.has(BasicTag.DISCTOTAL))):
             remove_tags: list[BasicTag] = []
-            if BasicTag.DISCNUMBER in track.tags:
-                if int(track.tags[BasicTag.DISCNUMBER][0]) != 1:
-                    raise ValueError(f"asked to remove disc number but it was not 1: {track.tags[BasicTag.DISCNUMBER]}")
+            if track.has(BasicTag.DISCNUMBER):
+                if int(track.get(BasicTag.DISCNUMBER)[0]) != 1:
+                    raise ValueError(f"asked to remove disc number but it was not 1: {track.get(BasicTag.DISCNUMBER)}")
                 remove_tags.append(BasicTag.DISCNUMBER)
-            if BasicTag.DISCTOTAL in track.tags:
-                if int(track.tags[BasicTag.DISCTOTAL][0]) != 1:
-                    raise ValueError(f"asked to remove disc total but it was not 1: {track.tags[BasicTag.DISCTOTAL]}")
+            if track.has(BasicTag.DISCTOTAL):
+                if int(track.get(BasicTag.DISCTOTAL)[0]) != 1:
+                    raise ValueError(f"asked to remove disc total but it was not 1: {track.get(BasicTag.DISCTOTAL)}")
                 remove_tags.append(BasicTag.DISCTOTAL)
             self.ctx.console.print(f"removing {' and '.join(remove_tag.value for remove_tag in remove_tags)} from {escape(track.filename)}")
             with tagger.open(track.filename) as tags:

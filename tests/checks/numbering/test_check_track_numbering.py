@@ -4,30 +4,37 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
 
 
 class TestCheckTrackNumbering:
     def test_check_track_numbering_ok(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"]}),
-                Track("3.flac", {BasicTag.TRACKNUMBER: ["3"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3")]),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
         assert result is None
 
     def test_check_track_number_total_ok(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["3"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["3"]}),
-                Track("3.flac", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TRACKTOTAL: ["3"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3")]
+                ),
+                TrackEntity(
+                    filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3")]
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -35,16 +42,23 @@ class TestCheckTrackNumbering:
 
     def test_check_tracktotal_policy(self):
         # just make sure config works, policy helper has its own tests for fixer
-        album_with_all = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"]}),
+        album_with_all = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
             ],
         )
-        album_with_none = Album(
-            "",
-            [Track("1.flac", {BasicTag.TRACKNUMBER: ["1"]}), Track("2.flac", {BasicTag.TRACKNUMBER: ["2"]})],
+        album_with_none = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]),
+            ],
         )
         ctx = Context()
         ctx.config.checks = {CheckTrackNumbering.name: {"tracktotal_policy": "consistent"}}  # default
@@ -69,12 +83,18 @@ class TestCheckTrackNumbering:
         assert "tracktotal policy=NEVER but it appears on tracks" in result.message
 
     def test_check_track_total_inconsistent(self, mocker):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("3.flac", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TRACKTOTAL: ["3"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
+                TrackEntity(
+                    filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3")]
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -92,7 +112,9 @@ class TestCheckTrackNumbering:
         ]
 
     def test_check_track_number_missing(self, mocker):
-        album = Album("foo" + os.sep, [Track("1.flac"), Track("2.flac"), Track("3.flac")])
+        album = AlbumEntity(
+            path="foo" + os.sep, tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac"), TrackEntity(filename="3.flac")]
+        )
         result = CheckTrackNumbering(Context()).check(album)
         assert "missing track numbers {1, 2, 3}" in result.message
         assert result.fixer
@@ -108,12 +130,15 @@ class TestCheckTrackNumbering:
         ]
 
     def test_check_track_number_missing_on_one_disc(self, mocker):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1-1.flac", {BasicTag.DISCNUMBER: ["1"]}),
-                Track("1-2.flac", {BasicTag.DISCNUMBER: ["1"]}),
-                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
+                TrackEntity(filename="1-2.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
+                TrackEntity(
+                    filename="2-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -130,12 +155,18 @@ class TestCheckTrackNumbering:
         ]
 
     def test_check_unexpected_track_number(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("3.flac", {BasicTag.TRACKNUMBER: ["3"], BasicTag.TRACKTOTAL: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
+                TrackEntity(
+                    filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -143,12 +174,12 @@ class TestCheckTrackNumbering:
         assert result.fixer is None
 
     def test_check_duplicate_track_number(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1 foo.flac", {BasicTag.TRACKNUMBER: ["1"]}),
-                Track("2 bar.flac", {BasicTag.TRACKNUMBER: ["2"]}),
-                Track("2 baz.flac", {BasicTag.TRACKNUMBER: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]),
+                TrackEntity(filename="2 bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]),
+                TrackEntity(filename="2 baz.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -156,11 +187,15 @@ class TestCheckTrackNumbering:
         assert result.fixer is None
 
     def test_check_missing_track_with_totals(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["4"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["4"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="4")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="4")]
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -168,13 +203,25 @@ class TestCheckTrackNumbering:
         assert result.fixer is None
 
     def test_check_missing_track_in_set(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["2"]}),
-                Track("2-4.flac", {BasicTag.TRACKNUMBER: ["4"], BasicTag.DISCNUMBER: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="1-2.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="2-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                ),
+                TrackEntity(
+                    filename="2-4.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                ),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -182,11 +229,11 @@ class TestCheckTrackNumbering:
         assert result.fixer is None
 
     def test_check_missing_track_without_totals(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"]}),
-                Track("4.flac", {BasicTag.TRACKNUMBER: ["4"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]),
+                TrackEntity(filename="4.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4")]),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)

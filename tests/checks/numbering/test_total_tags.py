@@ -2,23 +2,23 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering import total_tags
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
 
 
 class TestTotalTags:
-    def check(self, album: Album, policy: total_tags.Policy):
+    def check(self, album: AlbumEntity, policy: total_tags.Policy):
         return total_tags.check_policy(Context(), AlbumTagger(Path(album.path)), album, policy, BasicTag.TRACKTOTAL, BasicTag.TRACKNUMBER)
 
     def test_check_total_policy_ok(self):
-        album_with_all = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]}),
+        album_with_all = AlbumEntity(
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1")]),
             ],
         )
-        album_with_none = Album("", [Track("1.flac"), Track("2.flac")])
+        album_with_none = AlbumEntity(tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
 
         result = self.check(album_with_all, total_tags.Policy.CONSISTENT)
         assert result is None
@@ -32,14 +32,14 @@ class TestTotalTags:
         assert result is None
 
     def test_check_total_policy_always(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]})])
+        album = AlbumEntity(tracks= [TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1")])])
 
         result = self.check(album, total_tags.Policy.ALWAYS)
         assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
         assert not result.fixer
 
     def test_check_total_policy_consistent(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["1"]})])
+        album = AlbumEntity(tracks= [TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1")])])
 
         result = self.check(album, total_tags.Policy.CONSISTENT)
         assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
@@ -56,11 +56,10 @@ class TestTotalTags:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
 
     def test_check_total_policy_never(self, mocker):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["2"]}),
-                Track("2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.TRACKTOTAL: ["2"]}),
+        album = AlbumEntity(
+            tracks=            [
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]),
             ],
         )
 
@@ -79,7 +78,7 @@ class TestTotalTags:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
 
     def test_check_total_policy_total_without_index(self, mocker):
-        album = Album("", [Track("1.flac"), Track("2.flac", {BasicTag.TRACKTOTAL: ["1"]})])
+        album = AlbumEntity(tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1")])])
 
         result = self.check(album, total_tags.Policy.ALWAYS)
         assert "tracktotal appears on tracks without tracknumber" in result.message

@@ -4,41 +4,60 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 
 
 class TestCheckDiscInTrackNumber:
     def test_check_track_number_disc_in_tracknumber_ok(self, mocker):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["2"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["1"], BasicTag.DISCNUMBER: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="1-2.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="2-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                ),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
         assert result is None
 
     def test_check_track_number_disc_in_tracknumber_unfixable(self, mocker):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1-1"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["1-2"], BasicTag.DISCNUMBER: ["1"]}),
-                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["2-1"], BasicTag.DISCNUMBER: ["2"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="1-2.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-2"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                ),
+                TrackEntity(
+                    filename="2-1.flac",
+                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2-1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                ),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
         assert result is None
 
     def test_check_track_number_disc_in_tracknumber(self, mocker):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1-1.flac", {BasicTag.TRACKNUMBER: ["1-1"]}),
-                Track("1-2.flac", {BasicTag.TRACKNUMBER: ["1-2"]}),
-                Track("2-1.flac", {BasicTag.TRACKNUMBER: ["2-1"]}),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-1")]),
+                TrackEntity(filename="1-2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-2")]),
+                TrackEntity(filename="2-1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2-1")]),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)

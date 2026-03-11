@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..app import Context
 from ..database.models import AlbumEntity
-from ..types import Album, CheckResult
+from ..types import CheckResult
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ OPTION_DO_NOTHING = ">> Do nothing"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
-def interact(ctx: Context, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool) -> Tuple[bool, bool]:
+def interact(ctx: Context, check_name: str, check_result: CheckResult, album: AlbumEntity, show_ignore_option: bool) -> Tuple[bool, bool]:
     # if there is a fixer, offer the options it specifies
     #
     # always offer these options:

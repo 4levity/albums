@@ -3,9 +3,10 @@ from enum import Enum, auto
 from rich.markup import escape
 
 from ...app import Context
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..helpers import describe_track_number, ordered_tracks
 
 
@@ -26,11 +27,11 @@ OPTION_REMOVE_TAG = ">> Remove tag"
 
 
 def check_policy(
-    ctx: Context, tagger: AlbumTagger, album: Album, policy: Policy, tag: BasicTag, corresponding_index_tag: BasicTag, option_free_text: bool = False
+    ctx: Context, tagger: AlbumTagger, album: AlbumEntity, policy: Policy, tag: BasicTag, corresponding_index_tag: BasicTag, option_free_text: bool = False
 ) -> CheckResult | None:
-    on_all_tracks = all(tag in t.tags for t in album.tracks)
-    on_any_tracks = any(tag in t.tags for t in album.tracks)
-    any_total_without_index = any(tag in t.tags and corresponding_index_tag not in t.tags for t in album.tracks)
+    on_all_tracks = all(t.has(tag) for t in album.tracks)
+    on_any_tracks = any(t.has(tag) for t in album.tracks)
+    any_total_without_index = any(t.has(tag) and not t.has(corresponding_index_tag) for t in album.tracks)
 
     if any_total_without_index:
         message = f"{tag} appears on tracks without {corresponding_index_tag}"
@@ -55,11 +56,11 @@ def check_policy(
                 changed = False
                 for track in album.tracks:
                     path = ctx.config.library / album.path / track.filename
-                    if value is None and tag in track.tags:
+                    if value is None and track.has(tag):
                         ctx.console.print(f"removing {tag} from {track.filename}")
                         tagger.set_basic_tags(path, [(tag, None)])
                         changed = True
-                    if value is not None and (tag not in track.tags or track.tags[tag] != [value]):
+                    if value is not None and (not track.has(tag) or track.get(tag) != [value]):
                         ctx.console.print(f"setting {tag} on {track.filename}")
                         tagger.set_basic_tags(path, [(tag, value)])
                         changed = True
