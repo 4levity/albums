@@ -8,12 +8,12 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from PIL import Image
 
-from ...database.operations import update_picture_files
+from ...database.models import AlbumEntity, PictureFileEntity
 from ...interactive.image_table import render_image_table
 from ...picture.format import IMAGE_MODE_BPP, MIME_PILLOW_FORMAT
 from ...picture.info import PictureInfo
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer, PictureFile
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class CheckCoverDimensions(Check):
         if self.create_jpeg_quality < 1 or self.create_jpeg_quality > 95:
             raise ValueError("cover-dimensions.create_jpeg_quality must be between 1 and 95")
 
-    def check(self, album: Album) -> CheckResult | None:
+    def check(self, album: AlbumEntity) -> CheckResult | None:
         issues: set[str] = set()
         embedded_covers: dict[Picture, str] = {}
         for track in album.tracks:
@@ -147,7 +147,7 @@ class CheckCoverDimensions(Check):
         if issues:
             return CheckResult(", ".join(list(issues)))
 
-    def _fix_save_new_cover(self, album: Album, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
+    def _fix_save_new_cover(self, album: AlbumEntity, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
         if not self.ctx.db or album.album_id is None:
             raise RuntimeError("saving new cover requires db + album_id")
         (picture, _, image_data) = get_image_data()

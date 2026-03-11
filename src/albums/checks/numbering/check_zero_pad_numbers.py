@@ -5,9 +5,10 @@ from typing import Any, Mapping, Sequence
 from rich.console import RenderableType
 from rich.markup import escape
 
+from ...database.models import AlbumEntity, TrackEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, Track
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import get_tracks_by_disc
 from .check_track_numbering import describe_track_number
@@ -72,7 +73,7 @@ class CheckZeroPadNumbers(Check):
         ):
             logger.warning(f"{CheckZeroPadNumbers.name} configuration problem: all policies are set to IGNORE, nothing to do")
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -90,27 +91,26 @@ class CheckZeroPadNumbers(Check):
             for track in tracks:
                 table_rows.append([describe_track_number(track), escape(track.filename)])
                 if (
-                    BasicTag.TRACKNUMBER in track.tags
-                    and apply_pad_policy(track.tags[BasicTag.TRACKNUMBER][0], self.tracknumber_pad, len(tracks))
-                    != track.tags[BasicTag.TRACKNUMBER][0]
+                    track.has(BasicTag.TRACKNUMBER)
+                    and apply_pad_policy(track.get(BasicTag.TRACKNUMBER)[0], self.tracknumber_pad, len(tracks)) != track.get(BasicTag.TRACKNUMBER)[0]
                 ):
                     fix_tracknumbers += 1
 
                 if (
-                    BasicTag.TRACKTOTAL in track.tags
-                    and apply_pad_policy(track.tags[BasicTag.TRACKTOTAL][0], self.tracktotal_pad, len(tracks)) != track.tags[BasicTag.TRACKTOTAL][0]
+                    track.has(BasicTag.TRACKTOTAL)
+                    and apply_pad_policy(track.get(BasicTag.TRACKTOTAL)[0], self.tracktotal_pad, len(tracks)) != track.get(BasicTag.TRACKTOTAL)[0]
                 ):
                     fix_tracktotals += 1
 
                 if (
-                    BasicTag.DISCNUMBER in track.tags
-                    and apply_pad_policy(track.tags[BasicTag.DISCNUMBER][0], self.discnumber_pad, total_discs) != track.tags[BasicTag.DISCNUMBER][0]
+                    track.has(BasicTag.DISCNUMBER)
+                    and apply_pad_policy(track.get(BasicTag.DISCNUMBER)[0], self.discnumber_pad, total_discs) != track.get(BasicTag.DISCNUMBER)[0]
                 ):
                     fix_discnumbers += 1
 
                 if (
-                    BasicTag.DISCTOTAL in track.tags
-                    and apply_pad_policy(track.tags[BasicTag.DISCTOTAL][0], self.disctotal_pad, total_discs) != track.tags[BasicTag.DISCTOTAL][0]
+                    track.has(BasicTag.DISCTOTAL)
+                    and apply_pad_policy(track.get(BasicTag.DISCTOTAL)[0], self.disctotal_pad, total_discs) != track.get(BasicTag.DISCTOTAL)[0]
                 ):
                     fix_disctotals += 1
 
@@ -144,7 +144,7 @@ class CheckZeroPadNumbers(Check):
 
         return None
 
-    def _fix(self, album: Album, option: str, tracks_by_disc: Mapping[int, Sequence[Track]]) -> bool:
+    def _fix(self, album: AlbumEntity, option: str, tracks_by_disc: Mapping[int, Sequence[TrackEntity]]) -> bool:
         if not option.startswith(OPTION_APPLY_POLICY):
             raise ValueError(f"ZeroPadNumbers._fix invalid option {option}")
 
@@ -155,24 +155,24 @@ class CheckZeroPadNumbers(Check):
                 file = self.ctx.config.library / album.path / track.filename
                 new_values: list[tuple[BasicTag, str | list[str] | None]] = []
 
-                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and BasicTag.TRACKNUMBER in track.tags:
-                    new_tracknumber = apply_pad_policy(track.tags[BasicTag.TRACKNUMBER][0], self.tracknumber_pad, len(disc))
-                    if new_tracknumber != track.tags[BasicTag.TRACKNUMBER][0]:
+                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and track.has(BasicTag.TRACKNUMBER):
+                    new_tracknumber = apply_pad_policy(track.get(BasicTag.TRACKNUMBER)[0], self.tracknumber_pad, len(disc))
+                    if new_tracknumber != track.get(BasicTag.TRACKNUMBER)[0]:
                         new_values.append((BasicTag.TRACKNUMBER, new_tracknumber))
 
-                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and BasicTag.TRACKTOTAL in track.tags:
-                    new_tracktotal = apply_pad_policy(track.tags[BasicTag.TRACKTOTAL][0], self.tracktotal_pad, len(disc))
-                    if new_tracktotal != track.tags[BasicTag.TRACKTOTAL][0]:
+                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and track.has(BasicTag.TRACKTOTAL):
+                    new_tracktotal = apply_pad_policy(track.get(BasicTag.TRACKTOTAL)[0], self.tracktotal_pad, len(disc))
+                    if new_tracktotal != track.get(BasicTag.TRACKTOTAL)[0]:
                         new_values.append((BasicTag.TRACKTOTAL, new_tracktotal))
 
-                if self.discnumber_pad != ZeroPadPolicy.IGNORE and BasicTag.DISCNUMBER in track.tags:
-                    new_discnumber = apply_pad_policy(track.tags[BasicTag.DISCNUMBER][0], self.discnumber_pad, total_discs)
-                    if new_discnumber != track.tags[BasicTag.DISCNUMBER][0]:
+                if self.discnumber_pad != ZeroPadPolicy.IGNORE and track.has(BasicTag.DISCNUMBER):
+                    new_discnumber = apply_pad_policy(track.get(BasicTag.DISCNUMBER)[0], self.discnumber_pad, total_discs)
+                    if new_discnumber != track.get(BasicTag.DISCNUMBER)[0]:
                         new_values.append((BasicTag.DISCNUMBER, new_discnumber))
 
-                if self.disctotal_pad != ZeroPadPolicy.IGNORE and BasicTag.DISCTOTAL in track.tags:
-                    new_disctotal = apply_pad_policy(track.tags[BasicTag.DISCTOTAL][0], self.disctotal_pad, total_discs)
-                    if new_disctotal != track.tags[BasicTag.DISCTOTAL][0]:
+                if self.disctotal_pad != ZeroPadPolicy.IGNORE and track.has(BasicTag.DISCTOTAL):
+                    new_disctotal = apply_pad_policy(track.get(BasicTag.DISCTOTAL)[0], self.disctotal_pad, total_discs)
+                    if new_disctotal != track.get(BasicTag.DISCTOTAL)[0]:
                         new_values.append((BasicTag.DISCTOTAL, new_disctotal))
 
                 if new_values:

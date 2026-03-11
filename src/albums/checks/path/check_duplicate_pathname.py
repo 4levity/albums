@@ -1,7 +1,8 @@
 import logging
 from collections import defaultdict
 
-from ...types import Album, CheckResult
+from ...database.models import AlbumEntity
+from ...types import CheckResult
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ class CheckDuplicatePathname(Check):
     name = "duplicate-pathname"
     default_config = {"enabled": True}
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         issues: set[str] = set()
         filenames: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:

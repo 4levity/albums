@@ -6,8 +6,8 @@ from PIL import Image
 
 from albums.app import Context
 from albums.checks.path.check_cover_filename import CheckCoverFilename
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity
 from albums.picture.info import PictureInfo
-from albums.types import Album, PictureFile, Track
 
 from ...fixtures.create_library import make_image_data
 
@@ -15,59 +15,49 @@ from ...fixtures.create_library import make_image_data
 class TestCheckCoverFilename:
     def test_cover_filename_ok1(self):
         assert not CheckCoverFilename(Context()).check(
-            Album(
+            AlbumEntity(path=
                 "",
-                [Track("1.flac")],
-                [],
-                [],
-                [PictureFile("cover.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False)],
+                tracks=[TrackEntity(filename="1.flac")],
+                picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
             )
         )
 
     def test_cover_filename_ok2(self):
         assert not CheckCoverFilename(Context()).check(
-            Album(
+            AlbumEntity(path=
                 "",
-                [Track("1.flac")],
-                [],
-                [],
-                [PictureFile("cover.png", PictureInfo("image/png", 1, 1, 1, 1, b""), 0, False)],
+                tracks=[TrackEntity(filename="1.flac")],
+                picture_files=[PictureFileEntity(filename="cover.png", picture_info=PictureInfo("image/png", 1, 1, 1, 1, b""))],
             )
         )
 
     def test_cover_filename_ok3(self):
         assert not CheckCoverFilename(Context()).check(
-            Album(
+            AlbumEntity(path=
                 "",
-                [Track("1.flac")],
-                [],
-                [],
-                [PictureFile("other.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False)],
+                tracks=[TrackEntity(filename="1.flac")],
+                picture_files=[PictureFileEntity(filename="other.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
             )
         )
 
     def test_cover_filename_multiple_with_target(self):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [
-                PictureFile("cover.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False),  # check will pass because this file exists
-                PictureFile("folder.png", PictureInfo("image/png", 1, 1, 1, 1, b""), 0, False),
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[
+                PictureFileEntity(filename="cover.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b"")),  # check will pass because this file exists
+                PictureFileEntity(filename="folder.png", picture_info=PictureInfo("image/png", 1, 1, 1, 1, b"")),
             ],
         )
         assert not CheckCoverFilename(Context()).check(album)
 
     def test_cover_filename_multiple(self):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [
-                PictureFile("folder.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False),
-                PictureFile("folder.png", PictureInfo("image/png", 1, 1, 1, 1, b""), 0, False),
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[
+                PictureFileEntity(filename="folder.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b"")),
+                PictureFileEntity(filename="folder.png", picture_info=PictureInfo("image/png", 1, 1, 1, 1, b"")),
             ],
         )
         result = CheckCoverFilename(Context()).check(album)
@@ -76,12 +66,10 @@ class TestCheckCoverFilename:
         assert not result.fixer
 
     def test_cover_filename_rename(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [PictureFile("folder.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False)],
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[PictureFileEntity(filename="folder.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
         )
         result = CheckCoverFilename(Context()).check(album)
         assert result
@@ -96,13 +84,10 @@ class TestCheckCoverFilename:
         assert mock_rename.call_args_list == [call(Path(album.path) / "folder.jpg", Path(album.path) / "cover.jpg")]
 
     def test_cover_filename_rename_cover_source(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [PictureFile("folder.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 999, True)],
-            1,
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[PictureFileEntity(filename="folder.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
         )
         ctx = Context()
         ctx.db = True
@@ -114,25 +99,17 @@ class TestCheckCoverFilename:
         assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_cover_filename.rename")
-        mock_update_picture_files = mocker.patch("albums.checks.path.check_cover_filename.update_picture_files")
 
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_rename.call_args_list == [call(Path(album.path) / "folder.jpg", Path(album.path) / "cover.jpg")]
-        assert mock_update_picture_files.call_count == 1
-        assert mock_update_picture_files.call_args.args == (
-            True,
-            1,
-            [PictureFile("cover.jpg", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 999, True)],
-        )
+        assert album.picture_files[0].filename == "cover.jpg"
 
     def test_cover_filename_rename_case_insensitive(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [PictureFile("Cover.JPG", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False)],
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[PictureFileEntity(filename="Cover.JPG", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
         )
         result = CheckCoverFilename(Context()).check(album)
         assert result
@@ -150,12 +127,10 @@ class TestCheckCoverFilename:
         ]
 
     def test_cover_filename_convert(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("1.flac")],
-            [],
-            [],
-            [PictureFile("cover.png", PictureInfo("image/jpeg", 1, 1, 1, 1, b""), 0, False)],
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[PictureFileEntity(filename="cover.png", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
         )
         ctx = Context()
         ctx.config.checks["cover-filename"]["filename"] = "cover.jpg"

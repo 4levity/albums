@@ -76,7 +76,7 @@ class TrackTotalFixer(Fixer):
             track_changed = False
             if new_tracktotal is None and track.has(BasicTag.TRACKTOTAL):
                 ctx.console.print(f"removing tracktotal from {escape(track.filename)}", highlight=False)
-            elif new_tracktotal is not None and track.get(BasicTag.TRACKTOTAL, default=[]) != [str(new_tracktotal)]:
+            elif new_tracktotal is not None and track.get(BasicTag.TRACKTOTAL, default=["0"])[0] != str(new_tracktotal):
                 ctx.console.print(f"setting tracktotal on {escape(track.filename)}", highlight=False)
                 track_changed = True
             if track_changed:

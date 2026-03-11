@@ -80,7 +80,7 @@ class Checker:
                             )
                             issues_displayed += 1
                         else:
-                            disposition = self._run_check(check, album)
+                            disposition = self._run_check(session, check, album)
                             # album = disposition.album
                             if disposition.passed:
                                 checks_passed.add(check.name)
@@ -105,7 +105,7 @@ class Checker:
                         required_disabled[dep] = [check.name]
         return required_disabled
 
-    def _run_check(self, check: Check, album: AlbumEntity) -> CheckDisposition:
+    def _run_check(self, session: Session, check: Check, album: AlbumEntity) -> CheckDisposition:
         maybe_changed = False
         maybe_fixable = True
         passed = False
@@ -115,7 +115,7 @@ class Checker:
         while maybe_fixable and not passed and not quit:
             check_result = check.check(album)
             if check_result:
-                disposition = self._handle_check_result(check, check_result, album)
+                disposition = self._handle_check_result(session, check, check_result, album)
                 if disposition.suppressed_failure_message:
                     suppressed_failure_message = disposition.suppressed_failure_message
                 displayed |= disposition.displayed
@@ -136,7 +136,7 @@ class Checker:
                 passed = True
         return CheckDisposition(passed, maybe_changed, quit, displayed, suppressed_failure_message)
 
-    def _handle_check_result(self, check: Check, check_result: CheckResult, album: AlbumEntity) -> CheckDisposition:
+    def _handle_check_result(self, session: Session, check: Check, check_result: CheckResult, album: AlbumEntity) -> CheckDisposition:
         fixer = check_result.fixer
         displayed_any = False
         maybe_changed = False
@@ -158,7 +158,7 @@ class Checker:
         elif self._interactive or (fixer and self._fix):
             self.ctx.console.print()
             self.ctx.console.print(f'>> "{album_display_name(self.ctx, album)}"', highlight=False)
-            (maybe_changed, user_quit) = interact(self.ctx, check.name, check_result, album, self._show_ignore_option)
+            (maybe_changed, user_quit) = interact(self.ctx, session, check.name, check_result, album, self._show_ignore_option)
             displayed_any = True
         else:
             message = f'[bold]{check.name}[/bold] {escape(check_result.message)} : "{album_display_name(self.ctx, album)}"'

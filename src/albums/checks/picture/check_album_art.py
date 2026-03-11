@@ -5,11 +5,11 @@ from typing import Any, Mapping
 
 import humanize
 
-from albums.checks.helpers import FRONT_COVER_FILENAME
-from albums.interactive.image_table import render_image_table
-
+from ...checks.helpers import FRONT_COVER_FILENAME
+from ...database.models import AlbumEntity
+from ...interactive.image_table import render_image_table
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class CheckAlbumArt(Check):
     def init(self, check_config: dict[str, Any]):
         self.embedded_size_max = int(check_config.get("embedded_size_max", CheckAlbumArt.default_config["embedded_size_max"]))
 
-    def check(self, album: Album) -> CheckResult | None:
+    def check(self, album: AlbumEntity) -> CheckResult | None:
         picture_sources: defaultdict[Picture, list[str]] = defaultdict(list)
         bad_formats: list[str] = []
         bad_file_sizes = 0
@@ -68,7 +68,7 @@ class CheckAlbumArt(Check):
                 ),
             )
 
-    def _fix_extract(self, album: Album, embedded_to_extract: Mapping[Picture, list[str]]):
+    def _fix_extract(self, album: AlbumEntity, embedded_to_extract: Mapping[Picture, list[str]]):
         tagger = self.tagger.get(album.path)
         for pic, refs in embedded_to_extract.items():
             filename = refs[0]

@@ -30,10 +30,11 @@ class TestCheckFixInteractive:
         fixer = MockFixer(ctx, album)
         mock_choice = mocker.patch("albums.interactive.interact.shortcuts.choice", return_value=fixer.options[0])
 
-        (changed, quit) = interact(ctx, "", CheckResult("hello", fixer), album, True)
-        assert changed
-        assert not quit
-        assert mock_choice.call_count == 1
+        with Session(ctx.db) as session:
+            (changed, quit) = interact(ctx, session, "", CheckResult("hello", fixer), album, True)
+            assert changed
+            assert not quit
+            assert mock_choice.call_count == 1
 
     def test_fix_ignore_check(self, mocker):
         album = Album(os.sep, [Track("1.flac", stream=StreamInfo())], album_id=1)
@@ -46,14 +47,14 @@ class TestCheckFixInteractive:
             mock_choice = mocker.patch("albums.interactive.interact.shortcuts.choice", return_value=OPTION_IGNORE_CHECK)
             mock_confirm = mocker.patch("albums.interactive.interact.shortcuts.confirm", return_value=True)
 
-            (changed, quit) = interact(ctx, "album-tag", CheckResult("hello", fixer), album, True)
-            assert changed
-            assert quit
-            assert mock_choice.call_count == 1
-            assert mock_confirm.call_count == 1
-            assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
-
             with Session(ctx.db) as session:
+                (changed, quit) = interact(ctx, session, "album-tag", CheckResult("hello", fixer), album, True)
+                assert changed
+                assert quit
+                assert mock_choice.call_count == 1
+                assert mock_confirm.call_count == 1
+                assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
+
                 rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album_id})
                 assert rows == 1
         finally:

@@ -5,41 +5,39 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
 from albums.configuration import PathCompatibilityOption
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity
 from albums.picture.info import PictureInfo
-from albums.types import Album, PictureFile, Track
 
 
 class TestCheckIllegalPathname:
     def test_pathname_ok(self):
-        album = Album(
+        album = AlbumEntity(path=
             "Foo" + os.sep,
-            [Track("normal.flac")],
-            [],
-            [],
-            [PictureFile("normal.jpg", PictureInfo("image/png", 1, 1, 24, 1, b""), 0, False)],
+            tracks=[TrackEntity(filename="normal.flac")],
+            picture_files=[PictureFileEntity(filename="normal.jpg", picture_info=PictureInfo("image/png", 1, 1, 24, 1, b""))],
         )
         assert not CheckIllegalPathname(Context()).check(album)
 
     def test_pathname_reserved_name_universal(self):
-        result = CheckIllegalPathname(Context()).check(Album("Foo" + os.sep, [Track(":.flac")]))
+        result = CheckIllegalPathname(Context()).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename=":.flac")]))
         assert result is not None
         assert "':' is a reserved name" in result.message
         assert "platform=universal" in result.message
 
     def test_pathname_reserved_character_universal(self):
-        result = CheckIllegalPathname(Context()).check(Album("Foo" + os.sep, [Track("a/b.flac")]))
+        result = CheckIllegalPathname(Context()).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename="a/b.flac")]))
         assert result is not None
         assert "invalid characters found: invalids=('/')" in result.message
         assert "platform=universal" in result.message
 
     def test_pathname_reserved_name_Windows(self):
-        result = CheckIllegalPathname(Context()).check(Album("Foo" + os.sep, [Track("CON.flac")]))
+        result = CheckIllegalPathname(Context()).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename="CON.flac")]))
         assert result is not None
         assert "'CON' is a reserved name" in result.message
         assert "platform=universal" in result.message
 
     def test_pathname_fix(self, mocker):
-        album = Album("Foo" + os.sep, [Track("CON.flac")])
+        album = AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename="CON.flac")])
         result = CheckIllegalPathname(Context()).check(album)
         assert result is not None
         assert "'CON' is a reserved name" in result.message
@@ -52,7 +50,7 @@ class TestCheckIllegalPathname:
         assert mock_rename.call_args_list == [call(Path(album.path) / "CON.flac", Path(album.path) / "CON_.flac")]
 
     def test_pathname_reserved_character_Windows(self):
-        result = CheckIllegalPathname(Context()).check(Album("Foo" + os.sep, [Track("a:b.flac")]))
+        result = CheckIllegalPathname(Context()).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename="a:b.flac")]))
         assert result is not None
         assert "invalid characters found: invalids=(':')" in result.message
         # not sure why pathvalidate reports this as "Windows" when platform="universal", while CON.flac validation reports as "universal"?
@@ -61,12 +59,12 @@ class TestCheckIllegalPathname:
     def test_pathname_ok_Linux(self):
         ctx = Context()
         ctx.config.path_compatibility = PathCompatibilityOption.LINUX
-        assert not CheckIllegalPathname(ctx).check(Album("Foo" + os.sep, [Track(":.flac")]))
+        assert not CheckIllegalPathname(ctx).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename=":.flac")]))
 
     def test_pathname_reserved_character_Linux(self):
         ctx = Context()
         ctx.config.path_compatibility = PathCompatibilityOption.LINUX
-        result = CheckIllegalPathname(ctx).check(Album("Foo" + os.sep, [Track("a/b.flac")]))
+        result = CheckIllegalPathname(ctx).check(AlbumEntity(path="Foo" + os.sep, tracks=[TrackEntity(filename="a/b.flac")]))
         assert result is not None
         assert "invalid characters found: invalids=('/')" in result.message
         assert "platform=universal" in result.message

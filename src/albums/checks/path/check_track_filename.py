@@ -7,9 +7,10 @@ from typing import Any, Literal, Sequence
 from pathvalidate import sanitize_filename
 from rich.console import RenderableType
 
+from ...database.models import AlbumEntity, TrackEntity
 from ...tagger.folder import Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, Track
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
 
@@ -26,7 +27,7 @@ class CheckTrackFilename(Check):
                 raise ValueError(f"invalid substitution '{id}' in track-filename.format")
         self.join_multiple = str(check_config.get("join_multiple", self.default_config["join_multiple"]))
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         generated_filenames = [self._generate_filename(album, track) for track in album.tracks]
         generated_filenames_lower: set[str] = set()
         for ix, filename in enumerate(generated_filenames):
@@ -47,10 +48,10 @@ class CheckTrackFilename(Check):
                 Fixer(lambda _: self._fix_use_generated(album), options, False, option_automatic_index, table),
             )
 
-    def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
-        title_tags = ", ".join(track.tags.get(BasicTag.TITLE, ["[bold italic]none[/bold italic]"]))
-        discnum = track.tags.get(BasicTag.DISCNUMBER, ["[bold italic]none[/bold italic]"])[0]
-        tracknum = track.tags.get(BasicTag.TRACKNUMBER, ["[bold italic]none[/bold italic]"])[0]
+    def _table_row(self, album: AlbumEntity, track: TrackEntity) -> Sequence[RenderableType]:
+        title_tags = ", ".join(track.get(BasicTag.TITLE, default=["[bold italic]none[/bold italic]"]))
+        discnum = track.get(BasicTag.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
+        tracknum = track.get(BasicTag.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
         new_filename = self._generate_filename(album, track)
         return [
             track.filename,
@@ -60,15 +61,15 @@ class CheckTrackFilename(Check):
             new_filename if new_filename != track.filename else "[bold italic]no change[/bold italic]",
         ]
 
-    def _generate_filename(self, album: Album, track: Track):
-        tracktag = track.tags.get(BasicTag.TRACKNUMBER)
-        disctag = track.tags.get(BasicTag.DISCNUMBER)
+    def _generate_filename(self, album: AlbumEntity, track: TrackEntity):
+        tracktag = track.get(BasicTag.TRACKNUMBER, default=None)
+        disctag = track.get(BasicTag.DISCNUMBER, default=None)
         tracknumber = tracktag[0] if tracktag else ""
         discnumber = disctag[0] if disctag else ""
 
         # for padding on m4a files
-        track_count = int(track.tags.get(BasicTag.TRACKTOTAL, ["0"])[0]) or len(album.tracks)
-        disc_count = int(track.tags.get(BasicTag.DISCTOTAL, ["0"])[0]) or 9
+        track_count = int(track.get(BasicTag.TRACKTOTAL, default=["0"])[0]) or len(album.tracks)
+        disc_count = int(track.get(BasicTag.DISCTOTAL, default=["0"])[0]) or 9
 
         already_formatted = self.tagger.get(album.path).supports(track.filename, Cap.FORMATTED_TRACK_NUMBER)
         discnumber_pad = discnumber if already_formatted else self._pad("discnumber", discnumber, disc_count)
@@ -78,10 +79,10 @@ class CheckTrackFilename(Check):
         else:
             track_auto = ""
 
-        title = self.join_multiple.join(track.tags.get(BasicTag.TITLE, [f"Track {tracknumber}" if tracknumber else ""]))
-        artist = self.join_multiple.join(track.tags.get(BasicTag.ARTIST, [""]))
+        title = self.join_multiple.join(track.get(BasicTag.TITLE, default=[f"Track {tracknumber}" if tracknumber else ""]))
+        artist = self.join_multiple.join(track.get(BasicTag.ARTIST, default=[""]))
 
-        if BasicTag.ARTIST in track.tags and BasicTag.ALBUMARTIST in track.tags and track.tags[BasicTag.ARTIST] != track.tags[BasicTag.ALBUMARTIST]:
+        if track.has(BasicTag.ARTIST) and track.has(BasicTag.ALBUMARTIST) and track.get(BasicTag.ARTIST) != track.get(BasicTag.ALBUMARTIST):
             title_auto = f"{artist} - {title}"
         else:
             title_auto = title
@@ -102,7 +103,7 @@ class CheckTrackFilename(Check):
         )
         return filename
 
-    def _fix_use_generated(self, album: Album):
+    def _fix_use_generated(self, album: AlbumEntity):
         album_path = self.ctx.config.library / album.path
 
         tracks_to_rename = [copy(track) for track in album.tracks if self._generate_filename(album, track) != track.filename]
