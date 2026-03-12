@@ -3,34 +3,31 @@ import os
 import pytest
 import xxhash
 
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track = Track(
-    "1.aiff",
-    {
-        BasicTag.ARTIST: ("A",),
-        BasicTag.TITLE: ("T",),
-        BasicTag.ALBUM: ("baz",),
-        BasicTag.ALBUMARTIST: ("baz+foo",),
-        BasicTag.TRACKNUMBER: ("1",),
-        BasicTag.TRACKTOTAL: ("3",),
-        BasicTag.DISCNUMBER: ("2",),
-        BasicTag.DISCTOTAL: ("2",),
-    },
-    0,
-    0,
-    None,
-    [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, ""),
+track = TrackEntity(
+    filename="1.aiff",
+    tags=[
+        TrackTagEntity(tag=BasicTag.ARTIST, value="A"),
+        TrackTagEntity(tag=BasicTag.TITLE, value="T"),
+        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
+        TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
+        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3"),
+        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
+        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2"),
+    ],
+    pictures=[
+        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
+        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK, description=""),
     ],
 )
-album = Album("baz" + os.sep, [track])
+album = AlbumEntity(path="baz" + os.sep,tracks= [track])
 
 
 class TestAiff:
@@ -55,10 +52,11 @@ class TestAiff:
         )
         assert scan.pictures[0].picture_info.mime_type == scan.pictures[1].picture_info.mime_type == "image/png"
         tags = dict(scan.tags)
-        assert tags[BasicTag.ARTIST] == track.tags[BasicTag.ARTIST]
-        assert tags[BasicTag.ALBUMARTIST] == track.tags[BasicTag.ALBUMARTIST]
-        assert tags[BasicTag.ALBUM] == track.tags[BasicTag.ALBUM]
-        assert tags[BasicTag.TITLE] == track.tags[BasicTag.TITLE]
+        track_tags = track.tag_dict()
+        assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
+        assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
+        assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
+        assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
 
     def test_update_aiff_tags(self):
         TestAiff.tagger.set_basic_tags(

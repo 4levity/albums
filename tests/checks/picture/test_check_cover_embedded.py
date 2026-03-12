@@ -7,34 +7,26 @@ from PIL import Image
 
 from albums.app import Context
 from albums.checks.picture.check_cover_embedded import CheckCoverEmbedded
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.provider import AlbumTagger
-from albums.tagger.types import Picture, PictureType, StreamInfo, TaggerFile
-from albums.types import Album, PictureFile, Track
+from albums.tagger.types import Picture, PictureType, TaggerFile
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckCoverEmbedded:
     def test_cover_embedded_ok(self):
-        album = Album(
+        album = AlbumEntity(path=
             "",
-            [
-                Track(
+            tracks=[
+                TrackEntity(filename=
                     "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
-                Track(
+                TrackEntity(filename=
                     "2.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""),  picture_type=PictureType.COVER_FRONT)],
                 ),
             ],
         )
@@ -42,18 +34,14 @@ class TestCheckCoverEmbedded:
         assert result is None
 
     def test_cover_embedded_some(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "",
-            [
-                Track(
+            tracks=[
+                TrackEntity(filename=
                     "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 0, b""), PictureType.COVER_FRONT, "")],
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 0, b""),  picture_type=PictureType.COVER_FRONT)],
                 ),
-                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
+                TrackEntity(filename="2.flac"),
             ],
         )
         album.album_id = 1
@@ -70,40 +58,31 @@ class TestCheckCoverEmbedded:
         mock_read_image = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_update_picture_files = mocker.patch("albums.checks.picture.check_cover_embedded.update_picture_files")
         m_open = mock_open()
         with patch("builtins.open", m_open):
             result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_read_image.call_count == 1
-        assert mock_update_picture_files.call_count == 1
-        assert mock_update_picture_files.call_args.args == (
-            True,
-            1,
-            [PictureFile("cover.png", PictureInfo("image/png", 0, 0, 0, 0, b""), 0, True)],
-        )
-        m_open.assert_has_calls([call(Path(".") / album.path / "cover.png", "wb")])
 
+        assert mock_read_image.call_count == 1
+        assert len(album.picture_files) == 1
+        assert album.picture_files[0].filename == "cover.png"
+        assert album.picture_files[0].cover_source
+
+        m_open.assert_has_calls([call(Path(".") / album.path / "cover.png", "wb")])
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]
         assert image_data_written == image_data
 
     def test_cover_embedded_some_with_source(self, mocker):
-        album = Album(
+        album = AlbumEntity(path=
             "foo" + os.sep,
-            [
-                Track(
+            tracks=[
+                TrackEntity(filename=
                     "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""),  picture_type=PictureType.COVER_FRONT)],
                 ),
-                Track("2.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC")),
+                TrackEntity(filename="2.flac"),
             ],
-            [],
-            [],
-            [PictureFile("cover.png", PictureInfo("image/png", 0, 0, 0, 0, b""), 0, True)],
+            picture_files=[PictureFileEntity(filename="cover.png", picture_info= PictureInfo("image/png", 0, 0, 0, 0, b""), cover_source= True)],
         )
         album.album_id = 1
         ctx = Context()

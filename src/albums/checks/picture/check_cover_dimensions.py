@@ -56,13 +56,15 @@ class CheckCoverDimensions(Check):
         issues: set[str] = set()
         embedded_covers: dict[Picture, str] = {}
         for track in album.tracks:
-            covers = [pic for pic in track.pictures if pic.type == PictureType.COVER_FRONT]
+            covers = [pic for pic in track.pictures if pic.picture_type == PictureType.COVER_FRONT]
             if covers:
-                embedded_covers[covers[0]] = track.filename
+                cover = covers[0]
+                embedded_covers[cover.to_picture()] = track.filename
+
         cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
         if all(
-            self._cover_good_enough(cover)
-            for cover in chain(embedded_covers.keys(), (Picture(file.picture_info, PictureType.COVER_FRONT, "") for file in cover_files))
+            self._cover_good_enough(pic.picture_info)
+            for pic in chain(embedded_covers.keys(), (file.to_picture() for file in cover_files))
         ):
             return None
 
@@ -94,7 +96,7 @@ class CheckCoverDimensions(Check):
         if file_cover:  # either cover_source or identical to embedded images
             cover_file = cover_files[0]
             from_file = cover_file.filename
-            cover = Picture(cover_file.picture_info, PictureType.COVER_FRONT, "")
+            cover = cover_file.to_picture()
             embedded = False
         elif embedded_cover:
             (cover, from_file) = list(embedded_covers.items())[0]
@@ -148,8 +150,6 @@ class CheckCoverDimensions(Check):
             return CheckResult(", ".join(list(issues)))
 
     def _fix_save_new_cover(self, album: AlbumEntity, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
-        if not self.ctx.db or album.album_id is None:
-            raise RuntimeError("saving new cover requires db + album_id")
         (picture, _, image_data) = get_image_data()
         suffix = mimetypes.guess_extension(picture.picture_info.mime_type)
         if not suffix:
@@ -158,7 +158,6 @@ class CheckCoverDimensions(Check):
             original_path = self.ctx.config.library / album.path / source_filename
             if original_path.suffix == suffix:
                 new_path = original_path
-                original_path = None  # overwrite
             else:
                 new_path = original_path.with_suffix(suffix)
         else:
@@ -166,16 +165,14 @@ class CheckCoverDimensions(Check):
             new_path = self.ctx.config.library / album.path / f"cover{suffix}"
 
         if original_path and source_filename:
-            self.ctx.console.print(f"Deleting {source_filename}")
-            unlink(original_path)
-            picture_files = [file for file in album.picture_files if file.filename != source_filename]
-        else:
-            picture_files = list(album.picture_files)
+            if new_path != original_path:
+                self.ctx.console.print(f"Deleting {source_filename}")
+                unlink(original_path)
+            source_file = next(file for file in album.picture_files if file.filename == source_filename)
+            album.picture_files.remove(source_file)
 
         # mark new/replaced image as cover_source
-        picture_files.append(PictureFile(new_path.name, picture.picture_info, 0, cover_source=True))
-        album.picture_files = picture_files
-        update_picture_files(self.ctx.db, album.album_id, album.picture_files)
+        album.picture_files.append(PictureFileEntity(filename=new_path.name, picture_info=picture.picture_info, cover_source=True))
 
         with open(new_path, "wb") as f:
             self.ctx.console.print(f"Writing {new_path.name}")
@@ -184,7 +181,7 @@ class CheckCoverDimensions(Check):
 
     def _render_table(
         self,
-        album: Album,
+        album: AlbumEntity,
         cover: Picture,
         picture_source: Dict[Picture, List[str]],
         get_preview: Callable[[], Tuple[Picture, Image.Image, bytes]],
@@ -192,11 +189,11 @@ class CheckCoverDimensions(Check):
         preview = get_preview()
         return render_image_table(self.ctx, self.tagger.get(album.path), [cover, preview], picture_source)
 
-    def _cover_good_enough(self, cover: Picture):
+    def _cover_good_enough(self, picture_info: PictureInfo):
         return (
-            min(cover.picture_info.height, cover.picture_info.width) >= self.min_pixels
-            and max(cover.picture_info.height, cover.picture_info.width) <= self.max_pixels
-            and self._cover_square_enough(cover.picture_info.width, cover.picture_info.height)
+            min(picture_info.height, picture_info.width) >= self.min_pixels
+            and max(picture_info.height, picture_info.width) <= self.max_pixels
+            and self._cover_square_enough(picture_info.width, picture_info.height)
         )
 
     def _cover_square_enough(self, w: int, h: int) -> bool:

@@ -3,34 +3,33 @@ import os
 import pytest
 import xxhash
 
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track = Track(
-    "1.m4a",
-    {
-        BasicTag.ARTIST: ("A",),
-        BasicTag.TITLE: ("T",),
-        BasicTag.ALBUM: ("baz",),
-        BasicTag.ALBUMARTIST: ("baz+foo",),
-        BasicTag.TRACKNUMBER: ("1",),
-        BasicTag.TRACKTOTAL: ("3",),
-        BasicTag.DISCNUMBER: ("2",),
-        BasicTag.DISCTOTAL: ("2",),
-    },
-    0,
-    0,
-    None,
-    [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b"1111"), PictureType.COVER_FRONT, ""),
-        Picture(PictureInfo("image/jpeg", 401, 401, 24, 2, b"2222"), PictureType.OTHER, ""),  # type ignored, logs a warning
+track = TrackEntity(
+    filename="1.m4a",
+    tags=[
+        TrackTagEntity(tag=BasicTag.ARTIST, value="A"),
+        TrackTagEntity(tag=BasicTag.TITLE, value="T"),
+        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
+        TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
+        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3"),
+        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
+        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2"),
+    ],
+    pictures=[
+        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
+        TrackPictureEntity(
+            picture_info=PictureInfo("image/jpeg", 401, 401, 24, 2, b"2222"), picture_type=PictureType.OTHER
+        ),  # type ignored, logs a warning
     ],
 )
-album = Album("baz" + os.sep, [track])
+album = AlbumEntity(path="baz" + os.sep, tracks=[track])
 
 
 class TestM4a:
@@ -50,10 +49,11 @@ class TestM4a:
         assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
         assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 401
         tags = dict(scan.tags)
-        assert tags[BasicTag.ARTIST] == tuple(track.tags[BasicTag.ARTIST])
-        assert tags[BasicTag.ALBUMARTIST] == tuple(track.tags[BasicTag.ALBUMARTIST])
-        assert tags[BasicTag.ALBUM] == tuple(track.tags[BasicTag.ALBUM])
-        assert tags[BasicTag.TITLE] == tuple(track.tags[BasicTag.TITLE])
+        track_tags=track.tag_dict()
+        assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
+        assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
+        assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
+        assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
 
     def test_update_m4a_tags(self):
         TestM4a.tagger.set_basic_tags(

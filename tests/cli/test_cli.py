@@ -5,21 +5,26 @@ import shutil
 
 import pytest
 
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
-from albums.types import Album, BasicTag, PictureFile, Track
+from albums.types import BasicTag
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path
 
 albums = [
-    Album(
-        "foo" + os.sep,
-        [Track("1.mp3", {BasicTag.TITLE: ["1"]})],
-        [],
-        [],
-        [PictureFile("folder.png", PictureInfo("ignored", 400, 400, 24, 0, b""), 999, False)],
+    AlbumEntity(
+        path="foo" + os.sep,
+        tracks=[TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")])],
+        picture_files=[PictureFileEntity(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
-    Album("bar" + os.sep, [Track("1.flac", {BasicTag.TITLE: ["1"]}), Track("2.flac", {BasicTag.TITLE: ["2"]})]),
+    AlbumEntity(
+        path="bar" + os.sep,
+        tracks=[
+            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
+            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
+        ],
+    ),
 ]
 
 
@@ -217,9 +222,9 @@ class TestCli:
         result = self.run(["list"])
         assert "baz" not in result.output
 
-        new_album = Album(
+        new_album = AlbumEntity(path=
             "baz" + os.sep,
-            [Track("1.flac", {BasicTag.TITLE: ["1"], BasicTag.TRACKNUMBER: ["01"], BasicTag.ALBUM: ["baz"], BasicTag.ARTIST: ["baz"]})],
+            tracks=[TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE,value="1"),TrackTagEntity(tag= BasicTag.TRACKNUMBER,value="01"), TrackTagEntity(tag=BasicTag.ALBUM,value="baz"), TrackTagEntity(tag=BasicTag.ARTIST,value="baz")])]
         )
         src = create_library("cli_import", [new_album])
         result = self.run(["-v", "import", "--automatic", str(src)])

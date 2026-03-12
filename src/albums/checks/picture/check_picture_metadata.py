@@ -5,9 +5,10 @@ from pathlib import Path
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class CheckPictureMetadata(Check):
     default_config = {"enabled": True}
     must_pass_checks = {"invalid-image"}
 
-    def check(self, album: Album) -> CheckResult | None:
+    def check(self, album: AlbumEntity) -> CheckResult | None:
         if not all(AlbumTagger.supports(track.filename, Cap.PICTURES) for track in album.tracks):
             return None
 
@@ -80,7 +81,7 @@ class CheckPictureMetadata(Check):
                 Fixer(lambda _: self._fix(album, embedded_mismatches, image_files_to_rename), options, False, option_automatic_index, table),
             )
 
-    def _fix(self, album: Album, mismatch_tracks: list[int], image_files_to_rename: list[tuple[str, str]]):
+    def _fix(self, album: AlbumEntity, mismatch_tracks: list[int], image_files_to_rename: list[tuple[str, str]]):
         for track_index in mismatch_tracks:
             track = album.tracks[track_index]
             self.ctx.console.print(f"Re-embedding pictures in {escape(track.filename)}", highlight=False)

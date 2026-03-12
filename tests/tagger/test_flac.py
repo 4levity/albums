@@ -5,35 +5,27 @@ import xxhash
 from mutagen.flac import FLAC
 from mutagen.flac import Picture as FlacPicture
 
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track1 = Track(
-    "1.flac",
-    {},
-    0,
-    0,
-    None,
-    [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
+track1 = TrackEntity(
+    filename="1.flac",
+    pictures=[
+        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
     ],
 )
-track2 = Track(
-    "2.flac",
-    {},
-    0,
-    0,
-    None,
-    [
-        Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
-        Picture(PictureInfo("image/jpeg", 300, 300, 24, 1, b""), PictureType.COVER_BACK, ""),
+track2 = TrackEntity(
+    filename="2.flac",
+    pictures=[
+        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+        TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
     ],
 )
-album = Album("bar" + os.sep, [track1, track2])
+album = AlbumEntity(path="bar" + os.sep, tracks=[track1, track2])
 
 
 class TestFlac:
@@ -104,7 +96,7 @@ class TestFlac:
         with TestFlac.tagger.open(track2.filename) as file:
             scan = file.scan()
 
-        assert scan.pictures[0].type == track2.pictures[0].type
+        assert scan.pictures[0].type == track2.pictures[0].picture_type
         assert scan.pictures[0].picture_info.mime_type == track2.pictures[0].picture_info.mime_type
         assert (
             scan.pictures[0].picture_info.width
@@ -114,7 +106,7 @@ class TestFlac:
         )
         front = scan.pictures[0]
 
-        assert scan.pictures[1].type == track2.pictures[1].type
+        assert scan.pictures[1].type == track2.pictures[1].picture_type
         assert scan.pictures[1].picture_info.mime_type == track2.pictures[1].picture_info.mime_type
         assert (
             scan.pictures[1].picture_info.width
@@ -135,9 +127,9 @@ class TestFlac:
     def test_replace_one_flac_pic(self):
         with TestFlac.tagger.open(track2.filename) as file:
             scan = file.scan()
-        assert scan.pictures[0].type == track2.pictures[0].type
+        assert scan.pictures[0].type == track2.pictures[0].picture_type
         front = scan.pictures[0]
-        assert scan.pictures[1].type == track2.pictures[1].type
+        assert scan.pictures[1].type == track2.pictures[1].picture_type
         back = scan.pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")

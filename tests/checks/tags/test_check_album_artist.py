@@ -2,27 +2,36 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_album_artist import CheckAlbumArtist
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
 
 
 class TestCheckAlbumArtist:
     def test_check_needs_albumartist__all(self):
-        album = Album(
-            "",
-            [Track("1.flac", {BasicTag.ARTIST: ["A"]}), Track("2.flac", {BasicTag.ARTIST: ["B"]}), Track("3.flac", {BasicTag.ARTIST: ["B"]})],
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+            ],
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
 
     def test_check_missing_artist(self):
         # missing artist does not count as multiple artists, this passes
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("3.flac", {BasicTag.ALBUMARTIST: ["Foo"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -30,21 +39,29 @@ class TestCheckAlbumArtist:
 
     def test_check_needs_albumartist__one(self):
         # some tracks with albumartist
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("3.flac", {BasicTag.ARTIST: ["B"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "album artist is set on some tracks but not all (['Foo'] ...)"
 
     def test_check_needs_albumartist__fix(self, mocker):
-        album = Album(
-            "album/",
-            [Track("1.flac", {BasicTag.ARTIST: ["A"]}), Track("2.flac", {BasicTag.ARTIST: ["B"]}), Track("3.flac", {BasicTag.ARTIST: ["B"]})],
+        album = AlbumEntity(
+            path="album/",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+            ],
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert "multiple artists but no album artist" in result.message
@@ -64,17 +81,32 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ALBUMARTIST, "B")])
 
     def test_check_albumartist_require(self, mocker):
-        album_complies = Album(
-            "c/",
-            [
-                Track("1.mp3", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["A"]}),
-                Track("2.mp3", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["A"]}),
+        album_complies = AlbumEntity(
+            path="c/",
+            tracks=[
+                TrackEntity(
+                    filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
+                TrackEntity(
+                    filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
             ],
         )
-        album_no_auto = Album(
-            "b/", [Track("1.mp3", {BasicTag.ARTIST: ["A"]}), Track("2.mp3", {BasicTag.ARTIST: ["A"]}), Track("3.mp3", {BasicTag.ARTIST: ["B"]})]
+        album_no_auto = AlbumEntity(
+            path="b/",
+            tracks=[
+                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="3.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+            ],
         )
-        album_auto = Album("a/", [Track("1.mp3", {BasicTag.ARTIST: ["A"]}), Track("2.mp3", {BasicTag.ARTIST: ["A"]})])
+        album_auto = AlbumEntity(
+            path="a/",
+            tracks=[
+                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+            ],
+        )
 
         ctx = Context()
         ctx.config.checks = {"album-artist": {"require_redundant": True}}
@@ -105,17 +137,32 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicTag.ALBUMARTIST, "A")])
 
     def test_check_albumartist_remove(self, mocker):
-        album_auto = Album(
-            "c/",
-            [
-                Track("1.mp3", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["A"]}),
-                Track("2.mp3", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["A"]}),
+        album_auto = AlbumEntity(
+            path="c/",
+            tracks=[
+                TrackEntity(
+                    filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
+                TrackEntity(
+                    filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
             ],
         )
-        album_no_auto = Album(
-            "b/", [Track("1.mp3", {BasicTag.ARTIST: ["A"]}), Track("2.mp3", {BasicTag.ARTIST: ["A"]}), Track("3.mp3", {BasicTag.ARTIST: ["B"]})]
+        album_no_auto = AlbumEntity(
+            path="b/",
+            tracks=[
+                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="3.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+            ],
         )
-        album_complies = Album("a/", [Track("1.mp3", {BasicTag.ARTIST: ["A"]}), Track("2.mp3", {BasicTag.ARTIST: ["A"]})])
+        album_complies = AlbumEntity(
+            path="a/",
+            tracks=[
+                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+            ],
+        )
 
         ctx = Context()
         ctx.config.checks = {"album-artist": {"remove_redundant": True}}
@@ -146,14 +193,24 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicTag.ALBUMARTIST, None)])
 
     def test_multiple_albumartist(self):
-        album = Album(
-            "B",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("3.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Bar"]}),
-                Track("4.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Bar"]}),
-                Track("5.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["Bar"]}),
+        album = AlbumEntity(
+            path="B",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Bar")]
+                ),
+                TrackEntity(
+                    filename="4.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Bar")]
+                ),
+                TrackEntity(
+                    filename="5.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Bar")]
+                ),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -163,12 +220,18 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_free_text
 
     def test_multiple_albumartist__same_artist(self, mocker):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("3.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Bar"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Bar")]
+                ),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -187,22 +250,28 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ARTIST, "Bar")])
 
     def test_multiple_albumartist__same_artist_2(self):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["A"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert "album artist is set inconsistently and probably not needed (['Foo'] ...)" in result.message
 
     def test_albumartist_redundant(self):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["Foo"], BasicTag.ALBUMARTIST: ["Foo"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["Foo"], BasicTag.ALBUMARTIST: ["Foo"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Foo"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Foo"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Foo")]
+                ),
             ],
         )
         ctx = Context()
@@ -211,20 +280,23 @@ class TestCheckAlbumArtist:
         assert "album artist is not needed: Foo" in result.message
 
     def test_albumartist__ok(self):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ARTIST: ["A"], BasicTag.ALBUMARTIST: ["A"]}),
-                Track("2.flac", {BasicTag.ARTIST: ["B"], BasicTag.ALBUMARTIST: ["A"]}),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
+                TrackEntity(
+                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
+                ),
             ],
         )
         checker = CheckAlbumArtist(Context())
+        # different artists, all albumartist the same
         result = checker.check(album)
         assert result is None
 
-        # different artists, all albumartist the same
-        tags = dict(album.tracks[1].tags)
-        tags[BasicTag.ARTIST] = ["A"]
-        album.tracks[1].tags = tags
+        # same artists, all albumartist the same
+        album.tracks[1].tags = [TrackTagEntity(tag=BasicTag.ARTIST, value="A"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="A")]
         result = checker.check(album)
         assert result is None

@@ -3,23 +3,27 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.picture.check_invalid_image import CheckInvalidImage
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureType, StreamInfo, TaggerFile
-from albums.types import Album, PictureFile, Track
+from albums.tagger.types import PictureType, TaggerFile
 
 
 class TestCheckCheckInvalidImage:
     def test_invalid_image_ok(self):
-        pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")
-        album = Album(
-            "", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])], [], [], [PictureFile("cover.jpg", pic.picture_info, 999, False)]
+        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
+        album = AlbumEntity(
+            path="",
+            tracks=[TrackEntity(filename="1.flac", pictures=[pic])],
+            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=pic.picture_info)],
         )
         assert not CheckInvalidImage(Context()).check(album)
 
     def test_error_image_in_track(self, mocker):
-        pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), PictureType.COVER_FRONT, "")
-        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), [pic])])
+        pic = TrackPictureEntity(
+            picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), picture_type=PictureType.COVER_FRONT
+        )
+        album = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac", pictures=[pic])])
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None
         assert "image load errors: test load failed" in result.message
@@ -31,8 +35,11 @@ class TestCheckCheckInvalidImage:
 
         tagger = TaggerFile()
         mock_remove_picture = mocker.patch.object(tagger, "remove_picture")
-        bad_pic = Picture(PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.picture_info.load_issue)["error"]),)), PictureType.COVER_FRONT, "")
-        mock_get_pictures = mocker.patch.object(tagger, "get_pictures", return_value=[(bad_pic, b"")])
+        bad_pic = TrackPictureEntity(
+            picture_info=PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.picture_info.load_issue)["error"]),)),
+            picture_type=PictureType.COVER_FRONT,
+        )
+        mock_get_pictures = mocker.patch.object(tagger, "get_pictures", return_value=[(bad_pic.to_picture(), b"")])
         mock_supports = mocker.patch.object(AlbumTagger, "supports", return_value=True)
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
@@ -46,13 +53,13 @@ class TestCheckCheckInvalidImage:
         assert mock_remove_picture.call_args_list[0][0][0].picture_info.load_issue == (("error", "test load failed"),)
 
     def test_error_image_in_file(self, mocker):
-        pic = Picture(PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), PictureType.COVER_FRONT, "")
-        album = Album(
-            "",
-            [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"))],
-            [],
-            [],
-            [PictureFile("cover.jpg", pic.picture_info, 999, False)],
+        pic = TrackPictureEntity(
+            picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), picture_type=PictureType.COVER_FRONT
+        )
+        album = AlbumEntity(
+            path="",
+            tracks=[TrackEntity(filename="1.flac")],
+            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=pic.picture_info)],
         )
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None

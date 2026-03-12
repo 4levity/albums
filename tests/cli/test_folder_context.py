@@ -5,13 +5,13 @@ import pytest
 from click.testing import CliRunner
 
 from albums.cli import entry_point
-from albums.types import Album, Track
+from albums.database.models import AlbumEntity, TrackEntity
 
 from .. import helpers
 from ..fixtures.create_library import create_library
 
-album1 = Album("foo" + os.sep, [Track("1.mp3")])
-album2 = Album("bar" + os.sep, [Track("1.flac")])
+album1 = AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.mp3")])
+album2 = AlbumEntity(path="bar" + os.sep, tracks=[TrackEntity(filename="1.flac")])
 
 
 class TestFolderContext:

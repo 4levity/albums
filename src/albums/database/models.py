@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, composite, mapped_column, re
 
 from ..configuration import SettingValueType
 from ..picture.info import PictureInfo
-from ..tagger.types import BasicTag, PictureType, StreamInfo
+from ..tagger.types import BasicTag, Picture, PictureType, StreamInfo
 from .orm_helpers import GetDefaultOption, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SerializableValueAsJson
 
 
@@ -134,6 +134,9 @@ class PictureFileEntity(Base):
             "picture_info": self.picture_info.to_dict(),
         }
 
+    def to_picture(self) -> Picture:
+        return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
+
     def __lt__(self, other: TrackEntity):
         return self.filename < other.filename
 
@@ -212,6 +215,9 @@ class TrackPictureEntity(Base):
 
     def to_dict(self) -> dict[str, Any]:
         return {"picture_type": PictureType(self.picture_type), "description": self.description, "picture_info": self.picture_info.to_dict()}
+
+    def to_picture(self) -> Picture:
+        return Picture(self.picture_info, self.picture_type, self.description)
 
     def __lt__(self, other: TrackPictureEntity):
         return self.embed_ix < other.embed_ix

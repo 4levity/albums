@@ -3,9 +3,9 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
 from albums.types import BasicTag
-from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 
 
 class TestCheckDiscInTrackNumber:

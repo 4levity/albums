@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 from mutagen.flac import FLAC
 from sqlalchemy import Engine, select, update
@@ -7,9 +8,11 @@ from sqlalchemy.orm import Session
 
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection
-from albums.library.scanner import AlbumEntity, AlbumTagger, PictureFileEntity, TrackEntity, scan
+from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackTagEntity
+from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
-from albums.types import Album, BasicTag, Path, PictureFile, Track
+from albums.tagger.folder import AlbumTagger
+from albums.types import BasicTag
 
 from .fixtures.create_library import create_album_in_library, create_library, create_picture_file
 
@@ -23,21 +26,43 @@ def context(db: Engine, library: Path):
 
 class TestScanner:
     sample_library = [
-        Album(
-            "bar" + os.sep,
-            [
-                Track("1.flac", {BasicTag.TITLE: ["1"]}),
-                Track("2.flac", {BasicTag.TITLE: ["2"]}),
-                Track("3.flac", {BasicTag.TITLE: ["3"]}),
+        AlbumEntity(
+            path="bar" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="3")]),
             ],
-            [],
-            [],
-            [PictureFile("cover.jpg", PictureInfo("image/png", 410, 410, 24, 0, b""), 0, False)],
+            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
         ),
-        Album("foo" + os.sep, [Track("1.mp3", {BasicTag.TITLE: ["1"]}), Track("2.mp3", {BasicTag.TITLE: ["2"]})]),
-        Album("baz" + os.sep, [Track("1.wma", {BasicTag.TITLE: ["one"]}), Track("2.wma", {BasicTag.TITLE: ["two"]})]),
-        Album("eee" + os.sep, [Track("1.m4a", {BasicTag.TITLE: ["one"]}), Track("2.m4a", {BasicTag.TITLE: ["two"]})]),
-        Album("mob" + os.sep, [Track("1.aiff", {BasicTag.TITLE: ["one"]}), Track("2.aiff", {BasicTag.TITLE: ["two"]})]),
+        AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
+                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
+            ],
+        ),
+        AlbumEntity(
+            path="baz" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.wma", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
+                TrackEntity(filename="2.wma", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+            ],
+        ),
+        AlbumEntity(
+            path="eee" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.m4a", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
+                TrackEntity(filename="2.m4a", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+            ],
+        ),
+        AlbumEntity(
+            path="mob" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.aiff", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
+                TrackEntity(filename="2.aiff", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+            ],
+        ),
     ]
 
     def test_initial_scan(self):
@@ -122,10 +147,10 @@ class TestScanner:
             library = create_library(
                 "test_scan_no_tags",
                 [
-                    Album("bar" + os.sep, [Track("1.flac")]),
-                    Album("foo" + os.sep, [Track("1.mp3")]),
-                    Album("baz" + os.sep, [Track("1.wma")]),
-                    Album("foobar" + os.sep, [Track("1.ogg")]),
+                    AlbumEntity(path="bar" + os.sep, tracks=[TrackEntity(filename="1.flac")]),
+                    AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.mp3")]),
+                    AlbumEntity(path="baz" + os.sep, tracks=[TrackEntity(filename="1.wma")]),
+                    AlbumEntity(path="foobar" + os.sep, tracks=[TrackEntity(filename="1.ogg")]),
                 ],
             )
             scan(context(db, library))

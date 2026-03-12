@@ -3,22 +3,23 @@ import os
 import pytest
 from mutagen.mp3 import MP3
 
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
-from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Track
+from albums.tagger.types import PictureType
 
 from ..fixtures.create_library import create_library
 
-mp3track = Track(
-    "1.mp3",
-    {BasicTag.TITLE: ["T"], BasicTag.TRACKNUMBER: ["1"], BasicTag.TRACKTOTAL: ["3"]},
-    0,
-    0,
-    None,
-    [Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")],
+mp3track = TrackEntity(
+    filename="1.mp3",
+    tags=[
+        TrackTagEntity(tag=BasicTag.TITLE, value="T"),
+        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3"),
+    ],
+    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
 )
-mp3album = Album("baz" + os.sep, [mp3track])
+mp3album = AlbumEntity(path="baz" + os.sep, tracks=[mp3track])
 
 
 class TestAlbumTagger:
