@@ -31,9 +31,9 @@ def enable_foreign_keys(connection: Any, _):
         cursor.close()
 
 
-def open(filename: str | Path):
+def open(filename: str | Path, echo: bool = False):
     existing_db = Path(filename).exists()
-    db = create_engine("sqlite://" if filename == MEMORY else f"sqlite:///{filename}")  # , echo=True
+    db = create_engine("sqlite://" if filename == MEMORY else f"sqlite:///{filename}", echo=echo)
     try:
         if filename == MEMORY:
             with db.begin() as conn:

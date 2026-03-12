@@ -3,26 +3,24 @@ from unittest.mock import call, mock_open, patch
 
 from albums.app import Context
 from albums.checks.picture.check_album_art import CheckAlbumArt
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureType, StreamInfo, TaggerFile
-from albums.types import Album, Track
+from albums.tagger.types import PictureType, TaggerFile
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckAlbumArt:
     def test_album_art_ok(self):
-        album = Album(
-            "",
-            [
-                Track(
-                    "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), PictureType.COVER_FRONT, "")],
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[
+                        TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), picture_type=PictureType.COVER_FRONT)
+                    ],
                 )
             ],
         )
@@ -30,16 +28,14 @@ class TestCheckAlbumArt:
         assert result is None
 
     def test_album_art_format(self, mocker):
-        album = Album(
-            "",
-            [
-                Track(
-                    "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/gif", 400, 400, 8, 1024, b""), PictureType.COVER_FRONT, "")],
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[
+                        TrackPictureEntity(picture_info=PictureInfo("image/gif", 400, 400, 8, 1024, b""), picture_type=PictureType.COVER_FRONT)
+                    ],
                 )
             ],
         )
@@ -68,16 +64,16 @@ class TestCheckAlbumArt:
         assert image_data_written == image_data
 
     def test_album_art_file_too_large(self):
-        album = Album(
-            "",
-            [
-                Track(
-                    "1.flac",
-                    {},
-                    0,
-                    0,
-                    StreamInfo(1.5, 0, 0, "FLAC"),
-                    [Picture(PictureInfo("image/jpeg", 400, 400, 24, 15 * 1024 * 1024, b""), PictureType.COVER_FRONT, "")],
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[
+                        TrackPictureEntity(
+                            picture_info=PictureInfo("image/jpeg", 400, 400, 24, 15 * 1024 * 1024, b""), picture_type=PictureType.COVER_FRONT
+                        )
+                    ],
                 )
             ],
         )

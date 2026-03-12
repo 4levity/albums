@@ -222,9 +222,19 @@ class TestCli:
         result = self.run(["list"])
         assert "baz" not in result.output
 
-        new_album = AlbumEntity(path=
-            "baz" + os.sep,
-            tracks=[TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE,value="1"),TrackTagEntity(tag= BasicTag.TRACKNUMBER,value="01"), TrackTagEntity(tag=BasicTag.ALBUM,value="baz"), TrackTagEntity(tag=BasicTag.ARTIST,value="baz")])]
+        new_album = AlbumEntity(
+            path="baz" + os.sep,
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    tags=[
+                        TrackTagEntity(tag=BasicTag.TITLE, value="1"),
+                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
+                        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
+                        TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                    ],
+                )
+            ],
         )
         src = create_library("cli_import", [new_album])
         result = self.run(["-v", "import", "--automatic", str(src)])

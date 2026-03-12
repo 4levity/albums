@@ -2,9 +2,10 @@ from typing import Collection
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 
 
@@ -12,13 +13,13 @@ class CheckExtraWhitespace(Check):
     name = "extra-whitespace"
     default_config = {"enabled": True}
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
         tags: set[BasicTag] = set()
         filenames: set[str] = set()
         example: str | None = None
-        for tag, values, filename in [(k, v, track.filename) for track in album.tracks for k, v in track.tags.items()]:
+        for tag, values, filename in [(k, v, track.filename) for track in album.tracks for k, v in track.tag_dict().items()]:
             if bad_value := next((value for value in values if value.strip() != value), None):
                 example = f'{tag.value}="{bad_value}"'
                 tags.add(tag)
@@ -36,12 +37,12 @@ class CheckExtraWhitespace(Check):
                 ),
             )
 
-    def _fix_strip_tags(self, album: Album, filenames: Collection[str]) -> bool:
+    def _fix_strip_tags(self, album: AlbumEntity, filenames: Collection[str]) -> bool:
         changed = False
         tagger = self.tagger.get(album.path)
         for track in (track for track in album.tracks if track.filename in filenames):
             with tagger.open(track.filename) as tags:
-                for tag, values in track.tags.items():
+                for tag, values in track.tag_dict().items():
                     new_values = [v.strip() for v in values]
                     if any(new_values[ix] != v for ix, v in enumerate(values)):
                         self.ctx.console.print(f"Removing whitespace from {tag.value} in {escape(track.filename)}")

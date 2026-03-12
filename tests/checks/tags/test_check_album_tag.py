@@ -3,42 +3,43 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_album_tag import CheckAlbumTag
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
 
 
 class TestCheckAlbumTag:
     def test_check_needs_album__all(self):
-        album = Album(
-            "foo" + os.sep,
-            [
-                Track("1.flac"),
-                Track("2.flac"),
-                Track("3.flac"),
+        album = AlbumEntity(
+            path="foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac"),
+                TrackEntity(filename="2.flac"),
+                TrackEntity(filename="3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
         assert "3 tracks missing album tag" in result.message
 
     def test_check_needs_album__one(self):
-        album = Album(
-            "",
-            [
-                Track("1.flac", {BasicTag.ALBUM: ["A"]}),
-                Track("2.flac", {BasicTag.ALBUM: ["A"]}),
-                Track("3.flac"),
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="A")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="A")]),
+                TrackEntity(filename="3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
         assert "1 tracks missing album tag" in result.message
 
     def test_check_needs_album__conflicting(self):
-        album = Album(
-            "A/",
-            [
-                Track("1.flac", {BasicTag.ALBUM: ["A"]}),
-                Track("2.flac", {BasicTag.ALBUM: ["A"]}),
-                Track("3.flac", {BasicTag.ALBUM: ["B"]}),
+        album = AlbumEntity(
+            path="A/",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="A")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="A")]),
+                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="B")]),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
@@ -50,12 +51,12 @@ class TestCheckAlbumTag:
 
     def test_check_needs_album__fix_auto(self, mocker):
         # album can be guessed from folder, no conflicting tags
-        album = Album(
-            "Foo" + os.sep,
-            [
-                Track("1.flac"),
-                Track("2.flac"),
-                Track("3.flac"),
+        album = AlbumEntity(
+            path="Foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac"),
+                TrackEntity(filename="2.flac"),
+                TrackEntity(filename="3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
@@ -71,12 +72,12 @@ class TestCheckAlbumTag:
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
-        album = Album(
-            "Foo" + os.sep,
-            [
-                Track("1.flac", {BasicTag.ALBUM: ["Bar"]}),
-                Track("2.flac", {BasicTag.ALBUM: ["Bar"]}),
-                Track("3.flac"),
+        album = AlbumEntity(
+            path="Foo" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="Bar")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ALBUM, value="Bar")]),
+                TrackEntity(filename="3.flac"),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)

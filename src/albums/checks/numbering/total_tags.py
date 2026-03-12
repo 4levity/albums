@@ -27,7 +27,13 @@ OPTION_REMOVE_TAG = ">> Remove tag"
 
 
 def check_policy(
-    ctx: Context, tagger: AlbumTagger, album: AlbumEntity, policy: Policy, tag: BasicTag, corresponding_index_tag: BasicTag, option_free_text: bool = False
+    ctx: Context,
+    tagger: AlbumTagger,
+    album: AlbumEntity,
+    policy: Policy,
+    tag: BasicTag,
+    corresponding_index_tag: BasicTag,
+    option_free_text: bool = False,
 ) -> CheckResult | None:
     on_all_tracks = all(t.has(tag) for t in album.tracks)
     on_any_tracks = any(t.has(tag) for t in album.tracks)

@@ -11,15 +11,23 @@ from albums.types import BasicTag
 class TestCheckTrackFilename:
     def test_track_filename_ok(self):
         tracks = [
-            TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-            TrackEntity(filename="2 bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
+            TrackEntity(
+                filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
+            TrackEntity(
+                filename="2 bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]
+            ),
         ]
         assert not CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
 
     def test_track_filename_ok_custom_format(self):
         tracks = [
-            TrackEntity(filename="1 - foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-            TrackEntity(filename="2 - bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
+            TrackEntity(
+                filename="1 - foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
+            TrackEntity(
+                filename="2 - bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]
+            ),
         ]
         ctx = Context()
         ctx.config.checks["track-filename"]["format"] = "$track_auto - $title_auto"
@@ -27,13 +35,23 @@ class TestCheckTrackFilename:
 
     def test_track_filename_ok_custom_format_more(self):
         tracks = [
-            TrackEntity(filename=
-                "[disc 1 track 1] baz - foo.flac",
-                tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.ARTIST, value="baz"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")],
+            TrackEntity(
+                filename="[disc 1 track 1] baz - foo.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"),
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="foo"),
+                ],
             ),
-            TrackEntity(filename=
-                "[disc 1 track 2] baz - bar.flac",
-                tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.ARTIST, value="baz"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")],
+            TrackEntity(
+                filename="[disc 1 track 2] baz - bar.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"),
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="bar"),
+                ],
             ),
         ]
         ctx = Context()
@@ -49,37 +67,79 @@ class TestCheckTrackFilename:
 
     def test_track_filename_disc_ok(self):
         tracks = [
-            TrackEntity(filename="2-01 foo.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-            TrackEntity(filename="2-02 bar.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="02"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
+            TrackEntity(
+                filename="2-01 foo.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="foo"),
+                ],
+            ),
+            TrackEntity(
+                filename="2-02 bar.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="02"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="bar"),
+                ],
+            ),
         ]
         assert not CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
 
     def test_track_filename_albumartist_ok(self):
         tracks = [
-            TrackEntity(filename=
-                "1 baz - foo.flac",
-                tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo"), TrackTagEntity(tag=BasicTag.ARTIST, value="baz"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Various Artists")],
+            TrackEntity(
+                filename="1 baz - foo.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="foo"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                    TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Various Artists"),
+                ],
             ),
-            TrackEntity(filename=
-                "2 mob - bar.flac",
-                tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar"), TrackTagEntity(tag=BasicTag.ARTIST, value="mob"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Various Artists")],
+            TrackEntity(
+                filename="2 mob - bar.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="bar"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="mob"),
+                    TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Various Artists"),
+                ],
             ),
         ]
         assert not CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
 
     def test_track_filename_guest_artist_ok(self):
         tracks = [
-            TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo"), TrackTagEntity(tag=BasicTag.ARTIST, value="baz"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz")]),
-            TrackEntity(filename=
-                "2 mob - bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar"), TrackTagEntity(tag=BasicTag.ARTIST, value="mob"), TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz")]
+            TrackEntity(
+                filename="1 foo.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="foo"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                    TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz"),
+                ],
+            ),
+            TrackEntity(
+                filename="2 mob - bar.flac",
+                tags=[
+                    TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"),
+                    TrackTagEntity(tag=BasicTag.TITLE, value="bar"),
+                    TrackTagEntity(tag=BasicTag.ARTIST, value="mob"),
+                    TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz"),
+                ],
             ),
         ]
         assert not CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
 
     def test_track_filename_not_unique(self):
         tracks = [
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
+            TrackEntity(
+                filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
+            TrackEntity(
+                filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
         ]
         result = CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
         assert result
@@ -87,7 +147,9 @@ class TestCheckTrackFilename:
 
     def test_track_filename_blank(self):
         tracks = [
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
+            TrackEntity(
+                filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
             TrackEntity(filename="2.flac"),
         ]
         result = CheckTrackFilename(Context()).check(AlbumEntity(path="", tracks=tracks))
@@ -96,9 +158,16 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set(self, mocker):
         tracks = [
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
-            TrackEntity(filename="3 is correct.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="is correct")]),
+            TrackEntity(
+                filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
+            TrackEntity(
+                filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]
+            ),
+            TrackEntity(
+                filename="3 is correct.flac",
+                tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="is correct")],
+            ),
         ]
         album = AlbumEntity(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -118,16 +187,36 @@ class TestCheckTrackFilename:
     def test_track_filename_pad_m4a(self, mocker):
         # these track numbers get padding per default zero-pad-numbers settings because m4a track numbers are numeric and cannot store formatting
         tracks = [
-            TrackEntity(filename="1.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
-            TrackEntity(filename="2.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
-            TrackEntity(filename="3.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="three")]),
-            TrackEntity(filename="4.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4"), TrackTagEntity(tag=BasicTag.TITLE, value="four")]),
-            TrackEntity(filename="5.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="5"), TrackTagEntity(tag=BasicTag.TITLE, value="five")]),
-            TrackEntity(filename="6.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="6"), TrackTagEntity(tag=BasicTag.TITLE, value="six")]),
-            TrackEntity(filename="7.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="7"), TrackTagEntity(tag=BasicTag.TITLE, value="seven")]),
-            TrackEntity(filename="8.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="8"), TrackTagEntity(tag=BasicTag.TITLE, value="eight")]),
-            TrackEntity(filename="9.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="9"), TrackTagEntity(tag=BasicTag.TITLE, value="nine")]),
-            TrackEntity(filename="10.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="10"), TrackTagEntity(tag=BasicTag.TITLE, value="ten")]),
+            TrackEntity(
+                filename="1.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="one")]
+            ),
+            TrackEntity(
+                filename="2.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="two")]
+            ),
+            TrackEntity(
+                filename="3.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="three")]
+            ),
+            TrackEntity(
+                filename="4.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4"), TrackTagEntity(tag=BasicTag.TITLE, value="four")]
+            ),
+            TrackEntity(
+                filename="5.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="5"), TrackTagEntity(tag=BasicTag.TITLE, value="five")]
+            ),
+            TrackEntity(
+                filename="6.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="6"), TrackTagEntity(tag=BasicTag.TITLE, value="six")]
+            ),
+            TrackEntity(
+                filename="7.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="7"), TrackTagEntity(tag=BasicTag.TITLE, value="seven")]
+            ),
+            TrackEntity(
+                filename="8.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="8"), TrackTagEntity(tag=BasicTag.TITLE, value="eight")]
+            ),
+            TrackEntity(
+                filename="9.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="9"), TrackTagEntity(tag=BasicTag.TITLE, value="nine")]
+            ),
+            TrackEntity(
+                filename="10.m4a", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="10"), TrackTagEntity(tag=BasicTag.TITLE, value="ten")]
+            ),
         ]
         album = AlbumEntity(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -155,16 +244,36 @@ class TestCheckTrackFilename:
     def test_track_filename_use_formatted_tag(self, mocker):
         # unlike above test, these track numbers will not get padding because ID3 track numbers are formatted strings
         tracks = [
-            TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
-            TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
-            TrackEntity(filename="3.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="three")]),
-            TrackEntity(filename="4.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4"), TrackTagEntity(tag=BasicTag.TITLE, value="four")]),
-            TrackEntity(filename="5.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="5"), TrackTagEntity(tag=BasicTag.TITLE, value="five")]),
-            TrackEntity(filename="6.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="6"), TrackTagEntity(tag=BasicTag.TITLE, value="six")]),
-            TrackEntity(filename="7.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="7"), TrackTagEntity(tag=BasicTag.TITLE, value="seven")]),
-            TrackEntity(filename="8.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="8"), TrackTagEntity(tag=BasicTag.TITLE, value="eight")]),
-            TrackEntity(filename="9.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="9"), TrackTagEntity(tag=BasicTag.TITLE, value="nine")]),
-            TrackEntity(filename="10.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="10"), TrackTagEntity(tag=BasicTag.TITLE, value="ten")]),
+            TrackEntity(
+                filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="one")]
+            ),
+            TrackEntity(
+                filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="two")]
+            ),
+            TrackEntity(
+                filename="3.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3"), TrackTagEntity(tag=BasicTag.TITLE, value="three")]
+            ),
+            TrackEntity(
+                filename="4.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4"), TrackTagEntity(tag=BasicTag.TITLE, value="four")]
+            ),
+            TrackEntity(
+                filename="5.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="5"), TrackTagEntity(tag=BasicTag.TITLE, value="five")]
+            ),
+            TrackEntity(
+                filename="6.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="6"), TrackTagEntity(tag=BasicTag.TITLE, value="six")]
+            ),
+            TrackEntity(
+                filename="7.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="7"), TrackTagEntity(tag=BasicTag.TITLE, value="seven")]
+            ),
+            TrackEntity(
+                filename="8.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="8"), TrackTagEntity(tag=BasicTag.TITLE, value="eight")]
+            ),
+            TrackEntity(
+                filename="9.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="9"), TrackTagEntity(tag=BasicTag.TITLE, value="nine")]
+            ),
+            TrackEntity(
+                filename="10.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="10"), TrackTagEntity(tag=BasicTag.TITLE, value="ten")]
+            ),
         ]
         album = AlbumEntity(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -191,8 +300,12 @@ class TestCheckTrackFilename:
 
     def test_track_filename_swap(self, mocker):
         tracks = [
-            TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
-            TrackEntity(filename="2 bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
+            TrackEntity(
+                filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="bar")]
+            ),
+            TrackEntity(
+                filename="2 bar.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo")]
+            ),
         ]
         album = AlbumEntity(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -213,8 +326,12 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal(self, mocker):
         tracks = [
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo?bar")]),
-            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="baz/baz")]),
+            TrackEntity(
+                filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo?bar")]
+            ),
+            TrackEntity(
+                filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="baz/baz")]
+            ),
         ]
         album = AlbumEntity(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -233,8 +350,12 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal_custom(self, mocker):
         tracks = [
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo?bar")]),
-            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="baz/baz")]),
+            TrackEntity(
+                filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TITLE, value="foo?bar")]
+            ),
+            TrackEntity(
+                filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.TITLE, value="baz/baz")]
+            ),
         ]
         album = AlbumEntity(path="foobar" + os.sep, tracks=tracks)
         ctx = Context()

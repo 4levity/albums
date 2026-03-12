@@ -11,8 +11,8 @@ from albums.picture.info import PictureInfo
 
 class TestCheckIllegalPathname:
     def test_pathname_ok(self):
-        album = AlbumEntity(path=
-            "Foo" + os.sep,
+        album = AlbumEntity(
+            path="Foo" + os.sep,
             tracks=[TrackEntity(filename="normal.flac")],
             picture_files=[PictureFileEntity(filename="normal.jpg", picture_info=PictureInfo("image/png", 1, 1, 24, 1, b""))],
         )

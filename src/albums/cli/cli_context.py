@@ -107,7 +107,7 @@ def enter_folder_context(ctx: Context, folder: str):
     require_library(ctx)
     logger.info(f"using in-memory context, library is {folder}")
 
-    db = connection.open(connection.MEMORY)
+    db = connection.open(connection.MEMORY, echo=ctx.verbose > 1)
     if ctx.click_ctx:
         ctx.click_ctx.call_on_close(lambda: connection.close(db))
     ctx.db = db
@@ -130,7 +130,7 @@ def _get_albums_db_path(db_file: str | None):
 
 def _open_db_and_set_context_config(ctx: click.Context, app_context: Context, album_db_path: Path):
     logger.info(f"using database {str(album_db_path)}")
-    db = connection.open(album_db_path)
+    db = connection.open(album_db_path, echo=app_context.verbose > 1)
     ctx.call_on_close(lambda: connection.close(db))
     app_context.config = db_config.load(db)
     return db

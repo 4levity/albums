@@ -21,7 +21,7 @@ class CheckConflictingEmbedded(Check):
     def check(self, album: AlbumEntity) -> CheckResult | None:
         for track in album.tracks:
             pics_by_type: defaultdict[PictureType, list[Picture]] = defaultdict(list[Picture])
-            pics_by_type = reduce(lambda acc, item: acc[item.type].append(item) or acc, track.pictures, pics_by_type)
+            pics_by_type = reduce(lambda acc, item: acc[item.picture_type].append(item.to_picture()) or acc, track.pictures, pics_by_type)
             conflict_type = next(
                 (t for t in pics_by_type if len(pics_by_type[t]) > 1 and (t == PictureType.COVER_FRONT or not self.cover_only)), None
             )

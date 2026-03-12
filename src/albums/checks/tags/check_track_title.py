@@ -2,9 +2,10 @@ import logging
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity, TrackEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, Track
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import parse_filename, show_tag
 
@@ -17,21 +18,21 @@ class CheckTrackTitle(Check):
     name = "track-title"
     default_config = {"enabled": True}
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
-        no_title = sum(0 if track.tags.get(BasicTag.TITLE) else 1 for track in album.tracks)
+        no_title = sum(0 if track.get(BasicTag.TITLE, default="") else 1 for track in album.tracks)
         if no_title:
             proposed_titles = list(self._proposed_title(track) for track in album.tracks)
-            any_fixable = any(not track.tags.get(BasicTag.TITLE) and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
+            any_fixable = any(not track.get(BasicTag.TITLE, default="") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
             if any_fixable:
                 table = (
                     ["filename", "title", "proposed new title"],
                     [
                         [
                             escape(track.filename),
-                            show_tag(track.tags.get(BasicTag.TITLE)),
+                            show_tag(track.get(BasicTag.TITLE, default=None)),
                             escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
                         ]
                         for (ix, track) in enumerate(album.tracks)
@@ -47,15 +48,15 @@ class CheckTrackTitle(Check):
 
         return None
 
-    def _proposed_title(self, track: Track):
-        if track.tags.get(BasicTag.TITLE):
+    def _proposed_title(self, track: TrackEntity):
+        if track.get(BasicTag.TITLE, default=""):
             return None
 
         (_, _, title) = parse_filename(track.filename)
         # TODO: if it looks like spaces were converted to underscores, consider trying to recover
         return title
 
-    def _fix(self, album: Album, option: str) -> bool:
+    def _fix(self, album: AlbumEntity, option: str) -> bool:
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename

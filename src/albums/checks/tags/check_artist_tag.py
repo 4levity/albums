@@ -5,9 +5,10 @@ from typing import Any
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
 
@@ -31,18 +32,18 @@ class CheckArtistTag(Check):
             ignore_parent_folders = []
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
-            if BasicTag.ARTIST in track.tags:
-                for artist_tag in track.tags[BasicTag.ARTIST]:
+            if track.has(BasicTag.ARTIST):
+                for artist_tag in track.get(BasicTag.ARTIST):
                     artist_values[artist_tag].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
-            for album_artist_tag in track.tags.get(BasicTag.ALBUMARTIST, []):
+            for album_artist_tag in track.get(BasicTag.ALBUMARTIST, default=[]):
                 artist_values[album_artist_tag].append(track.filename)
 
         if not artist_values[""]:  # no tracks missing artist tag
@@ -61,9 +62,9 @@ class CheckArtistTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.tags.get(BasicTag.ALBUMARTIST)),
-                    show_tag(track.tags.get(BasicTag.ARTIST)),
-                    show_tag([candidates[0]] if candidates and BasicTag.ARTIST not in track.tags else None),
+                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
+                    show_tag(track.get(BasicTag.ARTIST, default=None)),
+                    show_tag([candidates[0]] if candidates and not track.has(BasicTag.ARTIST) else None),
                 ]
                 for track in album.tracks
             ],
@@ -82,7 +83,7 @@ class CheckArtistTag(Check):
             ),
         )
 
-    def _fix(self, album: Album, option: str, filenames: list[str]) -> bool:
+    def _fix(self, album: AlbumEntity, option: str, filenames: list[str]) -> bool:
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {filename}")

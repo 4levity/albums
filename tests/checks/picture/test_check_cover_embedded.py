@@ -17,16 +17,16 @@ from ...fixtures.create_library import make_image_data
 
 class TestCheckCoverEmbedded:
     def test_cover_embedded_ok(self):
-        album = AlbumEntity(path=
-            "",
+        album = AlbumEntity(
+            path="",
             tracks=[
-                TrackEntity(filename=
-                    "1.flac",
+                TrackEntity(
+                    filename="1.flac",
                     pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
-                TrackEntity(filename=
-                    "2.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""),  picture_type=PictureType.COVER_FRONT)],
+                TrackEntity(
+                    filename="2.flac",
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
             ],
         )
@@ -34,12 +34,12 @@ class TestCheckCoverEmbedded:
         assert result is None
 
     def test_cover_embedded_some(self, mocker):
-        album = AlbumEntity(path=
-            "",
+        album = AlbumEntity(
+            path="",
             tracks=[
-                TrackEntity(filename=
-                    "1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 0, b""),  picture_type=PictureType.COVER_FRONT)],
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 0, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
                 TrackEntity(filename="2.flac"),
             ],
@@ -73,16 +73,16 @@ class TestCheckCoverEmbedded:
         assert image_data_written == image_data
 
     def test_cover_embedded_some_with_source(self, mocker):
-        album = AlbumEntity(path=
-            "foo" + os.sep,
+        album = AlbumEntity(
+            path="foo" + os.sep,
             tracks=[
-                TrackEntity(filename=
-                    "1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""),  picture_type=PictureType.COVER_FRONT)],
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
                 TrackEntity(filename="2.flac"),
             ],
-            picture_files=[PictureFileEntity(filename="cover.png", picture_info= PictureInfo("image/png", 0, 0, 0, 0, b""), cover_source= True)],
+            picture_files=[PictureFileEntity(filename="cover.png", picture_info=PictureInfo("image/png", 0, 0, 0, 0, b""), cover_source=True)],
         )
         album.album_id = 1
         ctx = Context()

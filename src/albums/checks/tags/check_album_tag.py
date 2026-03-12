@@ -5,9 +5,10 @@ from typing import Any
 
 from rich.markup import escape
 
+from ...database.models import AlbumEntity
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer
+from ...types import CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
 
@@ -27,7 +28,7 @@ class CheckAlbumTag(Check):
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
 
-    def check(self, album: Album):
+    def check(self, album: AlbumEntity):
         folder_str = Path(album.path).name
         if folder_str in self.ignore_folders:
             return None
@@ -37,8 +38,8 @@ class CheckAlbumTag(Check):
 
         track_album_tags: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
-            if BasicTag.ALBUM in track.tags:
-                for album_tag in track.tags[BasicTag.ALBUM]:
+            if track.has(BasicTag.ALBUM):
+                for album_tag in track.get(BasicTag.ALBUM):
                     track_album_tags[album_tag] += 1
             else:
                 track_album_tags[""] += 1
@@ -57,15 +58,15 @@ class CheckAlbumTag(Check):
 
         return None
 
-    def _make_fixer(self, album: Album, options: list[str]):
+    def _make_fixer(self, album: AlbumEntity, options: list[str]):
         table = (
             ["filename", "album tag", "artist", "album artist"],
             [
                 [
                     escape(track.filename),
-                    show_tag(track.tags.get(BasicTag.ALBUM)),
-                    show_tag(track.tags.get(BasicTag.ARTIST)),
-                    show_tag(track.tags.get(BasicTag.ALBUMARTIST)),
+                    show_tag(track.get(BasicTag.ALBUM, default=None)),
+                    show_tag(track.get(BasicTag.ARTIST, default=None)),
+                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
                 ]
                 for track in album.tracks
             ],
@@ -79,11 +80,11 @@ class CheckAlbumTag(Check):
             f"select album name to use for all {len(album.tracks)} tracks",
         )
 
-    def _fix(self, album: Album, option: str) -> bool:
+    def _fix(self, album: AlbumEntity, option: str) -> bool:
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename
-            if track.tags.get(BasicTag.ALBUM, []) != [option]:
+            if track.get(BasicTag.ALBUM, default=[]) != (option,):
                 self.ctx.console.print(f"setting album on {track.filename}")
                 self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUM, option)])
                 changed = True

@@ -1,13 +1,11 @@
 import json
-from typing import Any, TypedDict, override
+from typing import Any, override
 
 from sqlalchemy import Dialect, Integer, Text, TypeDecorator
 
 from ..picture.info import LoadIssuesType
 
-
-class GetDefaultOption[_T](TypedDict, total=False):
-    default: _T
+NO_DEFAULT_VALUE_LIST_STR = ["".join(["!", "NO DEFAULT VALUE"])]  # generate string at runtime and use special characters, so it won't be interned
 
 
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):

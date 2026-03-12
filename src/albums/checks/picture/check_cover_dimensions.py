@@ -62,10 +62,7 @@ class CheckCoverDimensions(Check):
                 embedded_covers[cover.to_picture()] = track.filename
 
         cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
-        if all(
-            self._cover_good_enough(pic.picture_info)
-            for pic in chain(embedded_covers.keys(), (file.to_picture() for file in cover_files))
-        ):
+        if all(self._cover_good_enough(pic.picture_info) for pic in chain(embedded_covers.keys(), (file.to_picture() for file in cover_files))):
             return None
 
         if len(cover_files) > 1:

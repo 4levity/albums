@@ -38,7 +38,7 @@ def get_tracks_by_disc(tracks: Sequence[TrackEntity]) -> Mapping[int, List[Track
 
     tracks_by_disc: defaultdict[int, list[TrackEntity]] = defaultdict(list)
     for track in tracks:
-        discnumber = int(track.get(BasicTag.DISCNUMBER,default= ["0"])[0])
+        discnumber = int(track.get(BasicTag.DISCNUMBER, default=["0"])[0])
         tracks_by_disc[discnumber].append(track)
 
     for discnumber in tracks_by_disc.keys():

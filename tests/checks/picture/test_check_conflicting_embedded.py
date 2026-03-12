@@ -1,25 +1,39 @@
 from albums.app import Context
 from albums.checks.picture.check_conflicting_embedded import CheckConflictingEmbedded
+from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity
 from albums.picture.info import PictureInfo
-from albums.tagger.types import Picture, PictureType, StreamInfo
-from albums.types import Album, Track
+from albums.tagger.types import PictureType
 
 
 class TestCheckConflictingEmbedded:
     def test_duplicate_image_ok(self):
-        pictures = [
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""),
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_BACK, ""),
-        ]
-        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), pictures)])
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[
+                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                    ],
+                )
+            ],
+        )
         assert not CheckConflictingEmbedded(Context()).check(album)
 
     def test_multiple_images_in_track(self):
-        pictures = [
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b"1111"), PictureType.COVER_BACK, ""),
-            Picture(PictureInfo("image/png", 400, 400, 24, 1, b"2222"), PictureType.COVER_BACK, ""),
-        ]
-        album = Album("", [Track("1.flac", {}, 0, 0, StreamInfo(1.5, 0, 0, "FLAC"), pictures)])
+        album = AlbumEntity(
+            path="",
+            tracks=[
+                TrackEntity(
+                    filename="1.flac",
+                    pictures=[
+                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_BACK),
+                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"2222"), picture_type=PictureType.COVER_BACK),
+                    ],
+                )
+            ],
+        )
         result = CheckConflictingEmbedded(Context()).check(album)
         assert result is not None
         assert "there are 2 different images for COVER_BACK in 1.flac" in result.message

@@ -53,7 +53,7 @@ class CheckCoverEmbedded(Check):
         # depends on conflicting-embedded, which ensures there is only one COVER_FRONT embedded per track
         tagger = self.tagger.get(album.path)
         track_covers = [
-            next(((t.filename, p) for p in t.pictures if p.picture_type == PictureType.COVER_FRONT), None)
+            next(((t.filename, p.to_picture()) for p in t.pictures if p.picture_type == PictureType.COVER_FRONT), None)
             for t in album.tracks
             if tagger.supports(t.filename, Cap.PICTURES)
         ]
@@ -96,15 +96,15 @@ class CheckCoverEmbedded(Check):
                 if track_cover:
                     (_, track_cover_pic) = track_cover
                     headers.append("Current Embedded Cover")
-                    pictures.append(track_cover_pic.to_picture())
+                    pictures.append(track_cover_pic)
                     for tc in track_covers:
                         if tc:
                             (filename, _) = tc
                             src = filename
-                            if track_cover_pic.to_picture() in pic_sources:
-                                pic_sources[track_cover_pic.to_picture()].append(src)
+                            if track_cover_pic in pic_sources:
+                                pic_sources[track_cover_pic].append(src)
                             else:
-                                pic_sources[track_cover_pic.to_picture()] = [src]
+                                pic_sources[track_cover_pic] = [src]
                 headers.append("Preview New Embedded Cover")
                 options = [">> Embed new cover art in all tracks"]
                 option_automatic_index = 0
@@ -132,9 +132,9 @@ class CheckCoverEmbedded(Check):
                 and cover.picture_info.height < self.max_height_width
             )
 
-        all_good_enough = all(c and good_enough(c[1].to_picture()) for c in track_covers)
+        all_good_enough = all(c and good_enough(c[1]) for c in track_covers)
         if not all_good_enough:
-            not_good_enough = sum(0 if not c or c and good_enough(c[1].to_picture()) else 1 for c in track_covers)
+            not_good_enough = sum(0 if not c or c and good_enough(c[1]) else 1 for c in track_covers)
             problem_summary = f"{missing} tracks with no cover and {not_good_enough} tracks with out of spec covers"
             cover_files = [file for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
 
@@ -216,17 +216,12 @@ class CheckCoverEmbedded(Check):
         return True
 
     def _fix_mark_cover_source(self, album: AlbumEntity, filename: str):
-        if not self.ctx.db or not album.album_id:
-            raise ValueError("marking cover source requires database and album_id")
         self.ctx.console.print(f"Mark as front cover source: {escape(filename)}")
         file = next(file for file in album.picture_files if file.filename == filename)
         file.cover_source = True
         return True
 
     def _fix_extract_cover_source(self, album: AlbumEntity, filename: str, cover: Picture):
-        if not self.ctx.db or not album.album_id:
-            raise ValueError("extracting cover source requires database and album_id")
-
         with self.tagger.get(album.path).open(filename) as tags:
             image_data = tags.get_image_data(cover)
         source_image = Image.open(io.BytesIO(image_data))

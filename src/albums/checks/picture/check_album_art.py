@@ -35,10 +35,10 @@ class CheckAlbumArt(Check):
         for track in album.tracks:
             for picture in track.pictures:
                 if picture.picture_info.mime_type not in {"image/png", "image/jpeg"}:
-                    picture_sources[picture].append(track.filename)
+                    picture_sources[picture.to_picture()].append(track.filename)
                     bad_formats.append(picture.picture_info.mime_type)
                 if picture.picture_info.file_size > self.embedded_size_max:
-                    picture_sources[picture].append(track.filename)
+                    picture_sources[picture.to_picture()].append(track.filename)
                     largest_bad_file_size = max(largest_bad_file_size, picture.picture_info.file_size)
                     bad_file_sizes += 1
 

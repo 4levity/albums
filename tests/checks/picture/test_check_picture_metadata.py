@@ -62,7 +62,9 @@ class TestCheckPictureMetadata:
 
                 result = CheckPictureMetadata(ctx).check(result)
                 assert result is not None
-                assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 399x399"
+                assert (
+                    result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 399x399"
+                )
                 assert result.fixer
                 assert result.fixer.option_automatic_index is not None
                 assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])

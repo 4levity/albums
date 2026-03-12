@@ -4,21 +4,25 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, Track
+from albums.types import BasicTag
 
 
 class TestCheckArtistTag:
     def test_artist_tag_ok(self):
-        album = Album(
-            "A" + os.sep,
-            [Track("1.flac", {BasicTag.ARTIST: ["A"]}), Track("2.flac", {BasicTag.ARTIST: ["B"]})],
+        album = AlbumEntity(
+            path="A" + os.sep,
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+            ],
         )
         result = CheckArtistTag(Context()).check(album)
         assert result is None
 
     def test_artist_tag_automatic(self, mocker):
-        album = Album(f"Foo{os.sep}Bar{os.sep}", [Track("1.flac"), Track("2.flac")])
+        album = AlbumEntity(path=f"Foo{os.sep}Bar{os.sep}", tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
         result = CheckArtistTag(Context()).check(album)
         assert result
         assert "2 tracks missing artist tag" in result.message
@@ -36,8 +40,13 @@ class TestCheckArtistTag:
         ]
 
     def test_artist_tag_conflict(self, mocker):
-        album = Album(
-            f"Foo{os.sep}Bar{os.sep}", [Track("1.flac", {BasicTag.ARTIST: ["Baz"]}), Track("2.flac", {BasicTag.ARTIST: ["Baz"]}), Track("3.flac")]
+        album = AlbumEntity(
+            path=f"Foo{os.sep}Bar{os.sep}",
+            tracks=[
+                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Baz")]),
+                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Baz")]),
+                TrackEntity(filename="3.flac"),
+            ],
         )
         result = CheckArtistTag(Context()).check(album)
         assert result

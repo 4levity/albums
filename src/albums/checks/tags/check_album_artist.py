@@ -103,9 +103,9 @@ class CheckAlbumArtist(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicTag.ALBUM) if track.has(BasicTag.ALBUM) else None),
-                    show_tag(track.get(BasicTag.ARTIST) if track.has(BasicTag.ARTIST) else None),
-                    show_tag(track.get(BasicTag.ALBUMARTIST) if track.has(BasicTag.ALBUMARTIST) else None),
+                    show_tag(track.get(BasicTag.ALBUM, default=None)),
+                    show_tag(track.get(BasicTag.ARTIST, default=None)),
+                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
                 ]
                 for track in album.tracks
             ],

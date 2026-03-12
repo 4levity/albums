@@ -27,7 +27,7 @@ track = TrackEntity(
         TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK, description=""),
     ],
 )
-album = AlbumEntity(path="baz" + os.sep,tracks= [track])
+album = AlbumEntity(path="baz" + os.sep, tracks=[track])
 
 
 class TestAiff:

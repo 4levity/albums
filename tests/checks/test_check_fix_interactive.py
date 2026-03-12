@@ -67,7 +67,6 @@ class TestCheckFixInteractive:
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
         try:
-            # album_id = operations.add(ctx.db, album)
             with Session(ctx.db) as session:
                 session.add(album)
                 session.flush()

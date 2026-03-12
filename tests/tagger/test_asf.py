@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
+from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.asf import WmPicture
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import PictureType

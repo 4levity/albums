@@ -1,4 +1,3 @@
-from copy import copy
 from os import rename
 from pathlib import Path
 from string import Template
@@ -106,7 +105,7 @@ class CheckTrackFilename(Check):
     def _fix_use_generated(self, album: AlbumEntity):
         album_path = self.ctx.config.library / album.path
 
-        tracks_to_rename = [copy(track) for track in album.tracks if self._generate_filename(album, track) != track.filename]
+        tracks_to_rename = [track for track in album.tracks if self._generate_filename(album, track) != track.filename]
         new_filenames = [self._generate_filename(album, track) for track in tracks_to_rename]
 
         old_filenames_lower = {str.lower(track.filename) for track in tracks_to_rename}
@@ -127,6 +126,7 @@ class CheckTrackFilename(Check):
             new_filename = new_filenames[ix]
             self.ctx.console.print(f"Renaming {track.filename} to {new_filename}")
             rename(album_path / track.filename, album_path / new_filename)
+            track.filename = new_filename
 
         return True
 

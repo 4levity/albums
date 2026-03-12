@@ -49,7 +49,7 @@ class TestM4a:
         assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
         assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 401
         tags = dict(scan.tags)
-        track_tags=track.tag_dict()
+        track_tags = track.tag_dict()
         assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
         assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
         assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])

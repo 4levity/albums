@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Mapping, Sequence
 
 from rich.markup import escape
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
@@ -80,8 +79,10 @@ class Checker:
                             )
                             issues_displayed += 1
                         else:
-                            disposition = self._run_check(session, check, album)
-                            # album = disposition.album
+                            with session.begin_nested() as session_transaction:
+                                disposition = self._run_check(session, check, album)
+                                if disposition.maybe_changed:
+                                    session_transaction.commit()
                             if disposition.passed:
                                 checks_passed.add(check.name)
                             if disposition.suppressed_failure_message:
@@ -90,6 +91,7 @@ class Checker:
                                 issues_displayed += 1
                     else:
                         logger.debug(f"skipping ignored check {check.name} for album {album.path}")
+                    session.flush()
         return issues_displayed
 
     def get_required_disabled_checks(self) -> Mapping[str, Sequence[str]]:
@@ -123,10 +125,8 @@ class Checker:
                 quit = disposition.user_quit
 
                 if disposition.maybe_changed:
-                    reread = True  # probably could be False -> faster
-                    with Session(self.ctx.db) as session:
-                        (album_entity,) = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album.album_id)).tuples().one()
-                        (_, any_changes) = scanner.scan(self.ctx, session, iter([album_entity]), reread)
+                    # (album_entity,) = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album.album_id)).tuples().one()
+                    (_, any_changes) = scanner.scan(self.ctx, session, iter([album]))
                     maybe_fixable = any_changes
                     # if self.ctx.db and album.album_id:
                     #     album = operations.load_album(self.ctx.db, album.album_id, True)
