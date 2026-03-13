@@ -57,6 +57,19 @@ class TestCli:
         assert result.exit_code == 0
         assert re.search("bar.+00:00.+\\d+ Bytes.+total: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
+    def test_scan_remove(self):
+        result = self.run(["-v", "scan"], init=True)
+        assert result.exit_code == 0
+        assert result.output.startswith("creating database")
+        assert "scanned 3 folders" in result.output
+
+        shutil.rmtree(TestCli.library / "foo")
+
+        result = self.run(["-v", "scan"])
+        assert "removed: 1" in result.output
+        result = self.run(["list"])
+        assert "foo" not in result.output
+
     def test_check(self):
         result = self.run(["check", "--default", "album-tag"], init=True)
         assert result.exit_code == 0

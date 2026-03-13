@@ -211,25 +211,27 @@ class TestScanner:
         try:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
-            scan(ctx)
             with Session(db) as session:
+                scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 assert result[0][0].path == "bar" + os.sep
+                session.commit()
 
             # remove a folder that contains an album (removed without scanning)
             shutil.rmtree(library / "bar", ignore_errors=True)
-            scan(ctx)
             with Session(db) as session:
+                scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 4
                 assert result[0][0].path == "baz" + os.sep
+                session.commit()
 
             # remove the tracks but the folder is still there (removed when scanned)
             shutil.rmtree(library / "baz", ignore_errors=True)
             os.mkdir(library / "baz")
-            scan(ctx)
             with Session(db) as session:
+                scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 3
                 assert result[0][0].path == "eee" + os.sep

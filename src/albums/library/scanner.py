@@ -144,6 +144,7 @@ def scan_library(
         update_progress()
 
     for album_id in unvisited_album_ids:
+        scan_results[AlbumScanResult.REMOVED] += 1
         logger.info(f"{AlbumScanResult.REMOVED.name} album {album_id} (not found)")
         session.execute(delete(Album).where(Album.album_id == album_id))
     return scan_results

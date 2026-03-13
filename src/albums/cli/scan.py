@@ -21,4 +21,6 @@ def scan(ctx: Context, reread: bool):
         return
 
     with Session(ctx.db) as session:
-        scanner.scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
+        (_, any_changes) = scanner.scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
+        if any_changes:
+            session.commit()
