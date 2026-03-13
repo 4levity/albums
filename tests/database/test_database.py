@@ -1,21 +1,11 @@
 import os
-from copy import copy
 from pathlib import Path
 
 import pytest
-from sqlalchemy import desc, select, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from albums.database import connection, operations, schema
-from albums.database.models import AlbumEntity, ScanHistoryEntity
-from albums.picture.info import PictureInfo
-from albums.tagger.types import Picture, PictureType, StreamInfo
-from albums.types import Album, BasicTag, PictureFile, Track
-
-embedded_cover = Picture(PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234", (("format", "image/png"),)), PictureType.COVER_FRONT, "")
-track = Track("1.flac", {BasicTag.ARTIST: ["Bar"]}, 0, 0, StreamInfo(1.0, 128000, 2, "FLAC", 44100), [embedded_cover])
-folder_jpg = PictureFile("folder.jpg", PictureInfo("test", 100, 100, 24, 4096, b"1234"), 999, True)
-album = Album("foo" + os.sep, [track], ["test"], ["artist-tag"], [folder_jpg], None, 3)
+from albums.database import connection, schema
 
 
 class TestDatabase:
@@ -53,113 +43,5 @@ class TestDatabase:
             with pytest.raises(RuntimeError):
                 connection.open(db_file)
                 assert False  # shouldn't get this far
-        finally:
-            db.dispose()
-
-    def test_update_picture_files(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                picture_files = [operations.picture_file_from_entity(f) for f in result.picture_files]
-                assert len(picture_files) == 1
-                assert picture_files[0].cover_source
-
-                # modify existing image file + add one
-                file0 = PictureFile(picture_files[0].filename, picture_files[0].picture_info, picture_files[0].modify_timestamp, False)
-                new_pic_info = PictureInfo("test", 200, 200, 24, 2048, b"abcd")
-
-            operations.update_picture_files(db, album_id, [file0] + list(picture_files[1:]) + [PictureFile("other.jpg", new_pic_info, 999, False)])
-
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                picture_files = [operations.picture_file_from_entity(f) for f in result.picture_files]
-            pic_folder = next(p for p in picture_files if p.filename == "folder.jpg")
-            assert pic_folder
-            assert pic_folder.picture_info.file_hash == b"1234"
-            assert not pic_folder.cover_source
-            pic_other = next(p for p in picture_files if p.filename == "other.jpg")
-            assert pic_other
-            assert pic_other.picture_info.mime_type == "test"
-            assert pic_other.picture_info.width == pic_other.picture_info.height == 200
-            assert pic_other.picture_info.file_size == 2048
-            assert pic_other.picture_info.file_hash == b"abcd"
-        finally:
-            db.dispose()
-
-    def test_remove_album(self):
-        album2 = copy(album)
-        album2.path = "baz" + os.sep
-        album2.collections = []
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            operations.add(db, album2)
-            with Session(db) as session:
-                assert len(session.execute(select(AlbumEntity)).all()) == 2
-
-            operations.remove(db, album_id)
-
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
-                assert len(result) == 1
-                assert result[0][0].path == "baz" + os.sep
-        finally:
-            db.dispose()
-
-    def test_update_tracks(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                tracks = [operations.track_from_entity(t) for t in result.tracks]
-            assert len(tracks) == 1
-
-            tracks[0].tags = {BasicTag.ALBUM: ("Foo",)}
-            tracks.append(copy(tracks[0]))
-            tracks[1].filename = "2.flac"
-            operations.update_tracks(db, album_id, tracks)
-
-            with Session(db) as session:
-                tracks = session.execute(select(AlbumEntity)).tuples().one()[0].tracks
-                assert len(tracks) == 2
-                assert all(track.get(BasicTag.ALBUM) == ("Foo",) for track in tracks)
-        finally:
-            db.dispose()
-
-    def test_scan_history(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            with Session(db) as session:
-                last_scan = session.execute(select(ScanHistoryEntity).order_by(desc(ScanHistoryEntity.timestamp))).tuples().one_or_none()
-                assert last_scan is None
-
-                session.add(ScanHistoryEntity(timestamp=999, folders_scanned=1001, albums_total=1000))
-                session.flush()
-
-                last_scan = session.execute(select(ScanHistoryEntity).order_by(desc(ScanHistoryEntity.timestamp))).tuples().one_or_none()
-                assert last_scan
-                (scan,) = last_scan
-                assert scan.timestamp == 999
-                assert scan.folders_scanned == 1001
-                assert scan.albums_total == 1000
-        finally:
-            db.dispose()
-
-    def test_update_scanner(self):
-        db = connection.open(connection.MEMORY)
-        try:
-            album_id = operations.add(db, album)
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert result.scanner == 3
-
-            operations.update_scanner(db, album_id, 4)
-
-            with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
-                assert result.scanner == 4
         finally:
             db.dispose()

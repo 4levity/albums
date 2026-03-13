@@ -12,7 +12,7 @@ from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, 
 from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 from .fixtures.create_library import create_album_in_library, create_library, create_picture_file
 

@@ -59,7 +59,7 @@ class CheckCoverEmbedded(Check):
         ]
         unique_track_covers = set(cover_spec[1] for cover_spec in track_covers if cover_spec)
         missing = sum(0 if c else 1 for c in track_covers)
-        unsupported = sum(0 if tagger.supports(t.filename) else 1 for t in album.tracks)
+        unsupported = sum(0 if tagger.supports(t.filename, Cap.PICTURES) else 1 for t in album.tracks)
 
         if cover_source:
             (expect_w, expect_h) = self._embedded_image_spec(cover_source.picture_info)

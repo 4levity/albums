@@ -9,7 +9,7 @@ from PIL import Image
 from albums.database.models import AlbumEntity, TrackEntity, TrackPictureEntity
 from albums.picture.format import MIME_PILLOW_FORMAT
 from albums.tagger.folder import AlbumTagger
-from albums.types import Picture
+from albums.tagger.types import Picture
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,

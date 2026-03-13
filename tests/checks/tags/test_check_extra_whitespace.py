@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_extra_whitespace import CheckExtraWhitespace
 from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger, TaggerFile
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 
 class TestCheckExtraWhitespace:

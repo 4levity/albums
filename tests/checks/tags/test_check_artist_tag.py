@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
 from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 
 class TestCheckArtistTag:

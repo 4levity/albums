@@ -48,7 +48,7 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
     def get_image_data(self, picture: Picture) -> bytes:
         pic_info = next(((pic, data) for pic, data in self.get_pictures() if pic == picture), None)
         if pic_info is None:
-            raise ValueError(f"cannot find matching {picture.type.value} image in {self._get_file().filename}")
+            raise ValueError(f"cannot find matching {picture.type.name} image in {self._get_file().filename}")
         (_, image_data) = pic_info
         return image_data
 

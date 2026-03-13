@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
 from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 
 class TestCheckInvalidTrackOrDiscNumber:

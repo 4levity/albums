@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.database.models import AlbumEntity, TrackEntity, TrackTagEntity
 from albums.tagger.folder import AlbumTagger, TaggerFile
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 
 class TestCheckDiscNumbering:

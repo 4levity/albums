@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 from albums.database import connection, selector
 from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
-from albums.tagger.types import PictureType, StreamInfo
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag, PictureType, StreamInfo
 
 
 class TestSelector:

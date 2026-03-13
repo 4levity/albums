@@ -1,54 +1,9 @@
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Callable, Collection, Dict, Mapping, Sequence, Tuple, Union
+from dataclasses import dataclass
+from typing import Callable, Dict, Sequence, Tuple, Union
 
 from rich.console import RenderableType
 
-from .picture.info import PictureInfo
-from .tagger.types import BasicTag, Picture, PictureType, StreamInfo
-
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
-
-
-@dataclass
-class Track:
-    filename: str
-    tags: Mapping[BasicTag, Sequence[str]] = field(default_factory=dict[BasicTag, Sequence[str]])
-    file_size: int = 0
-    modify_timestamp: int = 0
-    stream: StreamInfo | None = None
-    pictures: Sequence[Picture] = field(default_factory=list[Picture])
-
-    @classmethod
-    def from_path(cls, file: Path):
-        stat = file.stat()
-        return cls(file.name, {}, stat.st_size, int(stat.st_mtime), None)
-
-
-@dataclass(frozen=True)
-class PictureFile:
-    filename: str
-    picture_info: PictureInfo
-    modify_timestamp: int
-    cover_source: bool
-
-    def to_picture(self) -> Picture:
-        return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
-
-
-@dataclass
-class Album:
-    path: str
-    tracks: Sequence[Track] = field(default_factory=list[Track])
-    collections: Collection[str] = field(default_factory=list[str])
-    ignore_checks: Collection[str] = field(default_factory=list[str])
-    picture_files: Sequence[PictureFile] = field(default_factory=list[PictureFile])
-    album_id: int | None = None
-    scanner: int = 0
-
-    def codec(self):
-        codecs = {track.stream.codec if track.stream else "unknown" for track in self.tracks}
-        return codecs.pop() if len(codecs) == 1 else "multiple"
 
 
 @dataclass

@@ -7,7 +7,7 @@ import pytest
 
 from albums.database.models import AlbumEntity, PictureFileEntity, TrackEntity, TrackTagEntity
 from albums.picture.info import PictureInfo
-from albums.types import BasicTag
+from albums.tagger.types import BasicTag
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path

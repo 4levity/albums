@@ -75,7 +75,7 @@ def scan(ctx: Context, session: Session | None = None, scan_albums: Iterator[Alb
                 scan_results = do_scan(lambda: progress.update(scan_task, advance=1))
                 progress.update(scan_task, completed=expected_path_count)
         elif ctx.console.is_interactive:
-            with ctx.console.status("Scanning album", spinner="bouncingBar"):
+            with ctx.console.status("Scanning albums", spinner="bouncingBar"):
                 scan_results = do_scan()
         else:
             scan_results = do_scan()
@@ -118,7 +118,7 @@ def scan_library(
             album_match = (None,)
         (album,) = album_match
         tagger = AlbumTagger(ctx.config.library / path)
-        with session.begin_nested() as nested_transaction:
+        with session.begin_nested() as path_scan_transacion:
             if album and album.album_id is not None:
                 unvisited_album_ids.remove(album.album_id)
                 result = _scan_album(ctx, tagger, album, reread)
@@ -127,14 +127,14 @@ def scan_library(
                         session.delete(album)
                     else:
                         album.scanner = SCANNER_VERSION
-                    nested_transaction.commit()
+                    path_scan_transacion.commit()
             else:
                 album = AlbumEntity(path=path, scanner=SCANNER_VERSION)
                 new_result = _scan_album(ctx, tagger, album, False)
                 if new_result == AlbumScanResult.UPDATED:
                     result = AlbumScanResult.NEW
                     session.add(album)
-                    nested_transaction.commit()
+                    path_scan_transacion.commit()
                 else:
                     result = AlbumScanResult.NO_TRACKS
         if result not in {AlbumScanResult.NO_TRACKS, AlbumScanResult.UNCHANGED}:
@@ -154,14 +154,14 @@ def rescan_albums(
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for album in scan_albums:
         tagger = AlbumTagger(ctx.config.library / album.path)
-        with session.begin_nested() as subsession:
+        with session.begin_nested() as album_scan_transaction:
             result = _scan_album(ctx, tagger, album, reread)
             scan_results[result] += 1
             if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                 if result == AlbumScanResult.REMOVED:
                     session.execute(delete(AlbumEntity).where(AlbumEntity.album_id == album.album_id))
                 album.scanner = SCANNER_VERSION
-                subsession.commit()
+                album_scan_transaction.commit()
         update_progress()
     return scan_results
 
