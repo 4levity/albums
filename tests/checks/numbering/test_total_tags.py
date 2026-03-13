@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.numbering import total_tags
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestTotalTags:
@@ -15,8 +15,8 @@ class TestTotalTags:
         album_with_all = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="1")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="1")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
             ],
         )
         album_with_none = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
@@ -37,7 +37,7 @@ class TestTotalTags:
             path="",
             tracks=[
                 Track(filename="1.flac"),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="1")]),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -50,7 +50,7 @@ class TestTotalTags:
             path="",
             tracks=[
                 Track(filename="1.flac"),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="1")]),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -72,8 +72,8 @@ class TestTotalTags:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "2"}),
             ],
         )
 
@@ -92,10 +92,7 @@ class TestTotalTags:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TRACKTOTAL, None)])
 
     def test_check_total_policy_total_without_index(self, mocker):
-        album = Album(
-            path="",
-            tracks=[Track(filename="1.flac"), Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKTOTAL, value="1")])],
-        )
+        album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac", tag={BasicTag.TRACKTOTAL: "1"})])
 
         result = self.check(album, total_tags.Policy.ALWAYS)
         assert "tracktotal appears on tracks without tracknumber" in result.message

@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestCheckArtistTag:
@@ -14,8 +14,8 @@ class TestCheckArtistTag:
         album = Album(
             path="A" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         result = CheckArtistTag(Context()).check(album)
@@ -43,8 +43,8 @@ class TestCheckArtistTag:
         album = Album(
             path=f"Foo{os.sep}Bar{os.sep}",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Baz")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Baz")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "Baz"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Baz"}),
                 Track(filename="3.flac"),
             ],
         )

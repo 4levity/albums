@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestCheckInvalidTrackOrDiscNumber:
@@ -14,13 +14,7 @@ class TestCheckInvalidTrackOrDiscNumber:
             tracks=[
                 Track(filename="1.flac"),  # no tags is ok
                 Track(
-                    filename="2.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
-                        Tag(tag=BasicTag.TRACKTOTAL, value="12"),
-                        Tag(tag=BasicTag.DISCNUMBER, value="01"),
-                        Tag(tag=BasicTag.DISCTOTAL, value="2"),
-                    ],
+                    filename="2.flac", tag={BasicTag.TRACKNUMBER: "01", BasicTag.TRACKTOTAL: "12", BasicTag.DISCNUMBER: "01", BasicTag.DISCTOTAL: "2"}
                 ),
             ],
         )
@@ -30,9 +24,7 @@ class TestCheckInvalidTrackOrDiscNumber:
     def test_duplicate_value(self, mocker):
         album = Album(
             path="",
-            tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKNUMBER, value="1")])
-            ],  #  1 will be preserved
+            tracks=[Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: ["1", "1"]})],  #  1 will be preserved
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -50,9 +42,7 @@ class TestCheckInvalidTrackOrDiscNumber:
     def test_multiple_value(self, mocker):
         album = Album(
             path="",
-            tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKNUMBER, value="2")])
-            ],  # ambiguous will be deleted
+            tracks=[Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: ["1", "2"]})],  # ambiguous will be deleted
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -68,10 +58,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_non_numeric_value(self, mocker):
-        album = Album(
-            path="",
-            tracks=[Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="one")])],
-        )
+        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "one"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert "track/disc numbering tags with non-numeric values" in result.message
@@ -85,10 +72,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_zero_value(self, mocker):
-        album = Album(
-            path="",
-            tracks=[Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="0")])],
-        )
+        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "0"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert "track/disc numbering tags where the value is 0" in result.message
@@ -107,14 +91,7 @@ class TestCheckInvalidTrackOrDiscNumber:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
-                        Tag(tag=BasicTag.TRACKTOTAL, value="1"),
-                        Tag(tag=BasicTag.TRACKTOTAL, value="2"),
-                        Tag(tag=BasicTag.DISCNUMBER, value="foo"),
-                        Tag(tag=BasicTag.DISCTOTAL, value="0"),
-                    ],
+                    tag={BasicTag.TRACKNUMBER: ["1", "1"], BasicTag.TRACKTOTAL: ["1", "2"], BasicTag.DISCNUMBER: "foo", BasicTag.DISCTOTAL: "0"},
                 ),
             ],
         )

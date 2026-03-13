@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from albums.database import connection, selector
 from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicTag, PictureType, StreamInfo
-from albums.types import Album, PictureFile, Tag, Track, TrackPicture
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 
 class TestSelector:
@@ -18,12 +18,7 @@ class TestSelector:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TITLE, value="Foo"),
-                        Tag(tag=BasicTag.ARTIST, value="Bar"),
-                        Tag(tag=BasicTag.ALBUMARTIST, value="Various Artists"),
-                        Tag(tag=BasicTag.ALBUM, value="=:="),
-                    ],
+                    tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Bar", BasicTag.ALBUMARTIST: "Various Artists", BasicTag.ALBUM: "=:="},
                     stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100),
                     pictures=[
                         TrackPicture(
@@ -45,22 +40,8 @@ class TestSelector:
         TestSelector.album2 = Album(
             path="baz" + os.sep,
             tracks=[
-                Track(
-                    filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TITLE, value="A"),
-                        Tag(tag=BasicTag.ARTIST, value="Baz"),
-                        Tag(tag=BasicTag.ALBUM, value="al bum"),
-                    ],
-                ),
-                Track(
-                    filename="2.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TITLE, value="Foo"),
-                        Tag(tag=BasicTag.ARTIST, value="Baz"),
-                        Tag(tag=BasicTag.ALBUM, value="al bum"),
-                    ],
-                ),
+                Track(filename="1.flac", tag={BasicTag.TITLE: "A", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"}),
+                Track(filename="2.flac", tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"}),
             ],
         )
 

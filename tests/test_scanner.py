@@ -14,7 +14,7 @@ from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture, PictureType
-from albums.types import Album, PictureFile, Tag, Track, TrackPicture
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 from .fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 
@@ -31,39 +31,27 @@ class TestScanner:
         Album(
             path="bar" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TITLE, value="3")]),
+                Track(filename="1.flac", tag={BasicTag.TITLE: "1"}),
+                Track(filename="2.flac", tag={BasicTag.TITLE: "2"}),
+                Track(filename="3.flac", tag={BasicTag.TITLE: "3"}),
             ],
             picture_files=[PictureFile(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
         ),
         Album(
             path="foo" + os.sep,
-            tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
-            ],
+            tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1"}), Track(filename="2.mp3", tag={BasicTag.TITLE: "2"})],
         ),
         Album(
             path="baz" + os.sep,
-            tracks=[
-                Track(filename="1.wma", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
-                Track(filename="2.wma", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
-            ],
+            tracks=[Track(filename="1.wma", tag={BasicTag.TITLE: "one"}), Track(filename="2.wma", tag={BasicTag.TITLE: "two"})],
         ),
         Album(
             path="eee" + os.sep,
-            tracks=[
-                Track(filename="1.m4a", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
-                Track(filename="2.m4a", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
-            ],
+            tracks=[Track(filename="1.m4a", tag={BasicTag.TITLE: "one"}), Track(filename="2.m4a", tag={BasicTag.TITLE: "two"})],
         ),
         Album(
             path="mob" + os.sep,
-            tracks=[
-                Track(filename="1.aiff", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
-                Track(filename="2.aiff", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
-            ],
+            tracks=[Track(filename="1.aiff", tag={BasicTag.TITLE: "one"}), Track(filename="2.aiff", tag={BasicTag.TITLE: "two"})],
         ),
     ]
 
@@ -433,7 +421,7 @@ class TestScanner:
                 tracks=[
                     Track(
                         filename="1.flac",
-                        tags=[Tag(tag=BasicTag.TITLE, value="1")],
+                        tag={BasicTag.TITLE: "1"},
                         pictures=[
                             TrackPicture(picture_info=PictureInfo("image/png", 402, 402, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
                             TrackPicture(picture_info=PictureInfo("image/png", 401, 401, 24, 1, b""), picture_type=PictureType.COVER_BACK),

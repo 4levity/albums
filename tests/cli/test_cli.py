@@ -7,7 +7,7 @@ import pytest
 
 from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicTag
-from albums.types import Album, PictureFile, Tag, Track
+from albums.types import Album, PictureFile, Track
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path
@@ -15,14 +15,14 @@ from ..fixtures.create_library import create_library, test_data_path
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tags=[Tag(tag=BasicTag.TITLE, value="1")])],
+        tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
-            Track(filename="2.flac", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
+            Track(filename="1.flac", tag={BasicTag.TITLE: "1"}),
+            Track(filename="2.flac", tag={BasicTag.TITLE: "2"}),
         ],
     ),
 ]
@@ -237,17 +237,7 @@ class TestCli:
 
         new_album = Album(
             path="baz" + os.sep,
-            tracks=[
-                Track(
-                    filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.TITLE, value="1"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
-                        Tag(tag=BasicTag.ALBUM, value="baz"),
-                        Tag(tag=BasicTag.ARTIST, value="baz"),
-                    ],
-                )
-            ],
+            tracks=[Track(filename="1.flac", tag={BasicTag.TITLE: "1", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "baz", BasicTag.ARTIST: "baz"})],
         )
         src = create_library("cli_import", [new_album])
         result = self.run(["-v", "import", "--automatic", str(src)])

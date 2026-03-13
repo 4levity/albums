@@ -6,19 +6,19 @@ import xxhash
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Tag, Track, TrackPicture
+from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
 track = Track(
     filename="1.ogg",
-    tags=[
-        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
-        Tag(tag=BasicTag.TRACKTOTAL, value="1"),
-        Tag(tag=BasicTag.ARTIST, value="C"),
-        Tag(tag=BasicTag.TITLE, value="one"),
-        Tag(tag=BasicTag.ALBUM, value="foobar"),
-    ],
+    tag={
+        BasicTag.TRACKNUMBER: "1",
+        BasicTag.TRACKTOTAL: "1",
+        BasicTag.ARTIST: "C",
+        BasicTag.TITLE: "one",
+        BasicTag.ALBUM: "foobar",
+    },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
         TrackPicture(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),

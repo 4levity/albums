@@ -5,7 +5,7 @@ from albums.app import Context
 from albums.checks.tags.check_album_tag import CheckAlbumTag
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestCheckAlbumTag:
@@ -25,8 +25,8 @@ class TestCheckAlbumTag:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ALBUM, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ALBUM, value="A")]),
+                Track(filename="1.flac", tag={BasicTag.ALBUM: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ALBUM: "A"}),
                 Track(filename="3.flac"),
             ],
         )
@@ -37,9 +37,9 @@ class TestCheckAlbumTag:
         album = Album(
             path="A/",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ALBUM, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ALBUM, value="A")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ALBUM, value="B")]),
+                Track(filename="1.flac", tag={BasicTag.ALBUM: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ALBUM: "A"}),
+                Track(filename="3.flac", tag={BasicTag.ALBUM: "B"}),
             ],
         )
         result = CheckAlbumTag(Context()).check(album)
@@ -75,8 +75,8 @@ class TestCheckAlbumTag:
         album = Album(
             path="Foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ALBUM, value="Bar")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ALBUM, value="Bar")]),
+                Track(filename="1.flac", tag={BasicTag.ALBUM: "Bar"}),
+                Track(filename="2.flac", tag={BasicTag.ALBUM: "Bar"}),
                 Track(filename="3.flac"),
             ],
         )

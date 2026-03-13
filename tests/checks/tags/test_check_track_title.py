@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.tags.check_track_title import CheckTrackTitle
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestCheckTrackTitle:
@@ -14,9 +14,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.mp3", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
-                Track(filename="2 bar.mp3", tags=[Tag(tag=BasicTag.TITLE, value="bar")]),
-                Track(filename="3 baz.mp3", tags=[Tag(tag=BasicTag.TITLE, value="baz")]),
+                Track(filename="1 foo.mp3", tag={BasicTag.TITLE: "foo"}),
+                Track(filename="2 bar.mp3", tag={BasicTag.TITLE: "bar"}),
+                Track(filename="3 baz.mp3", tag={BasicTag.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -54,7 +54,7 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
+                Track(filename="1 foo.flac", tag={BasicTag.TITLE: "foo"}),
                 Track(filename="2 bar.flac"),
                 Track(filename="3.flac"),
             ],
@@ -82,9 +82,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
+                Track(filename="1 foo.flac", tag={BasicTag.TITLE: "foo"}),
                 Track(filename="2 bar.flac"),
-                Track(filename="3 baz.flac", tags=[Tag(tag=BasicTag.TITLE, value="baz")]),
+                Track(filename="3 baz.flac", tag={BasicTag.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)

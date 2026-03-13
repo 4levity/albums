@@ -9,7 +9,7 @@ from albums.checks.checker import Checker
 from albums.database import connection, selector
 from albums.library import scanner
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 from .fixtures.create_library import create_library
 
@@ -21,30 +21,15 @@ class TestChecker:
             tracks=[
                 Track(
                     filename="01 one.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="A"),
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
-                        Tag(tag=BasicTag.TITLE, value="one"),
-                    ],
+                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "01", BasicTag.TITLE: "one"},
                 ),
                 Track(
                     filename="02 two.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="A"),
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="02"),
-                        Tag(tag=BasicTag.TITLE, value="two"),
-                    ],
+                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "02", BasicTag.TITLE: "two"},
                 ),
                 Track(
                     filename="03 three.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="A"),
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="03"),
-                        Tag(tag=BasicTag.TITLE, value="three"),
-                    ],
+                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "03", BasicTag.TITLE: "three"},
                 ),
             ],
         )
@@ -66,12 +51,7 @@ class TestChecker:
             tracks=[
                 Track(
                     filename="1-01 one.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="A"),
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1-01"),
-                        Tag(tag=BasicTag.TITLE, value="one"),
-                    ],
+                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-01", BasicTag.TITLE: "one"},
                 )
             ],
         )
@@ -100,30 +80,9 @@ class TestChecker:
         album = Album(
             path="foo" + os.sep,
             tracks=[  # disc-in-track-number fails -> invalid-track-or-disc-number does not run -> other checks do not run
-                Track(
-                    filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1-01"),
-                        Tag(tag=BasicTag.TITLE, value="one"),
-                    ],
-                ),
-                Track(
-                    filename="2.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1-02"),
-                        Tag(tag=BasicTag.TITLE, value="two"),
-                    ],
-                ),
-                Track(
-                    filename="3.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ALBUM, value="Foo"),
-                        Tag(tag=BasicTag.TRACKNUMBER, value="1-03"),
-                        Tag(tag=BasicTag.TITLE, value="three"),
-                    ],
-                ),
+                Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-01", BasicTag.TITLE: "one"}),
+                Track(filename="2.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-02", BasicTag.TITLE: "two"}),
+                Track(filename="3.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-03", BasicTag.TITLE: "three"}),
             ],
         )
         ctx = Context()

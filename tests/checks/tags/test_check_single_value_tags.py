@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_single_value_tags import CheckSingleValueTags
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 def context(checks, db=None):
@@ -19,8 +19,8 @@ class TestCheckSingleValueTags:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="blue")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
@@ -32,14 +32,12 @@ class TestCheckSingleValueTags:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="Alice"),
-                        Tag(tag=BasicTag.ARTIST, value="Bob"),
-                        Tag(tag=BasicTag.TITLE, value="blue"),
-                        Tag(tag=BasicTag.TITLE, value="no, yellow"),
-                    ],
+                    tag={
+                        BasicTag.ARTIST: ["Alice", "Bob"],
+                        BasicTag.TITLE: ["blue", "no, yellow"],
+                    },
                 ),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
@@ -67,16 +65,8 @@ class TestCheckSingleValueTags:
         album = Album(
             path="",
             tracks=[
-                Track(
-                    filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="Alice"),
-                        Tag(tag=BasicTag.ARTIST, value="Bob"),
-                        Tag(tag=BasicTag.TITLE, value="blue"),
-                        Tag(tag=BasicTag.TITLE, value="no, yellow"),
-                    ],
-                ),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: ["Alice", "Bob"], BasicTag.TITLE: ["blue", "no, yellow"]}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
             ],
         )
         ctx = Context()
@@ -101,19 +91,7 @@ class TestCheckSingleValueTags:
     def test_single_value_tags_duplicates(self, mocker):
         album = Album(
             path="",
-            tracks=[
-                Track(
-                    filename="1.flac",
-                    tags=[
-                        Tag(tag=BasicTag.ARTIST, value="Alice"),
-                        Tag(tag=BasicTag.ARTIST, value="Alice"),
-                        Tag(tag=BasicTag.ARTIST, value="Bob"),
-                        Tag(tag=BasicTag.TITLE, value="blue"),
-                        Tag(tag=BasicTag.TITLE, value="blue"),
-                        Tag(tag=BasicTag.TITLE, value="blue"),
-                    ],
-                )
-            ],
+            tracks=[Track(filename="1.flac", tag={BasicTag.ARTIST: ["Alice", "Alice", "Bob"], BasicTag.TITLE: ["blue", "blue", "blue"]})],
         )
         result = CheckSingleValueTags(Context()).check(album)
         assert "multiple values for single value tags" in result.message

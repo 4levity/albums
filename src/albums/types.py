@@ -156,6 +156,13 @@ class Track(Base):
             return default
         return result
 
+    def __init__(self, **kw: Any):
+        if "tags" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
+            t: Mapping[BasicTag, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
+            kw["tags"] = [Tag(tag=tag, value=v) for tag, values in t.items() for v in ([values] if isinstance(values, str) else values)]
+            del kw["tag"]
+        super().__init__(**kw)
+
     def __lt__(self, other: Track):
         return self.filename < other.filename
 

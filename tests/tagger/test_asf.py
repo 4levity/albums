@@ -5,22 +5,22 @@ import pytest
 from albums.tagger.asf import WmPicture
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import PictureType
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library
 
 track = Track(
     filename="1.wma",
-    tags=[
-        Tag(tag=BasicTag.ARTIST, value="A"),
-        Tag(tag=BasicTag.TITLE, value="T"),
-        Tag(tag=BasicTag.ALBUM, value="baz"),
-        Tag(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
-        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
-        Tag(tag=BasicTag.TRACKTOTAL, value="3"),
-        Tag(tag=BasicTag.DISCNUMBER, value="2"),
-        Tag(tag=BasicTag.DISCTOTAL, value="2"),
-    ],
+    tag={
+        BasicTag.ARTIST: "A",
+        BasicTag.TITLE: "T",
+        BasicTag.ALBUM: "baz",
+        BasicTag.ALBUMARTIST: "baz+foo",
+        BasicTag.TRACKNUMBER: "1",
+        BasicTag.TRACKTOTAL: "3",
+        BasicTag.DISCNUMBER: "2",
+        BasicTag.DISCTOTAL: "2",
+    },
 )
 album = Album(path="baz" + os.sep, tracks=[track])
 

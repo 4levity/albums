@@ -6,17 +6,13 @@ from mutagen.mp3 import MP3
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import PictureType
-from albums.types import Album, Tag, Track, TrackPicture
+from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library
 
 mp3track = Track(
     filename="1.mp3",
-    tags=[
-        Tag(tag=BasicTag.TITLE, value="T"),
-        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
-        Tag(tag=BasicTag.TRACKTOTAL, value="3"),
-    ],
+    tag={BasicTag.TITLE: "T", BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "3"},
     pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
 )
 mp3album = Album(path="baz" + os.sep, tracks=[mp3track])

@@ -12,9 +12,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -25,9 +25,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicTag.ALBUMARTIST: "Foo"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -38,9 +38,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -50,9 +50,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="album/",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -76,23 +76,23 @@ class TestCheckAlbumArtist:
         album_complies = Album(
             path="c/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
             ],
         )
         album_no_auto = Album(
             path="b/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="3.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="3.mp3", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         album_auto = Album(
             path="a/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
             ],
         )
 
@@ -128,23 +128,23 @@ class TestCheckAlbumArtist:
         album_auto = Album(
             path="c/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
             ],
         )
         album_no_auto = Album(
             path="b/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="3.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="3.mp3", tag={BasicTag.ARTIST: "B"}),
             ],
         )
         album_complies = Album(
             path="a/",
             tracks=[
-                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
-                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
             ],
         )
 
@@ -180,11 +180,11 @@ class TestCheckAlbumArtist:
         album = Album(
             path="B",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Bar")]),
-                Track(filename="4.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Bar")]),
-                Track(filename="5.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="Bar")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
+                Track(filename="4.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
+                Track(filename="5.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -197,9 +197,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Bar")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Bar"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -221,8 +221,8 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "A"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -232,8 +232,8 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Foo"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Foo"), Tag(tag=BasicTag.ALBUMARTIST, value="Foo")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "Foo", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Foo", BasicTag.ALBUMARTIST: "Foo"}),
             ],
         )
         ctx = Context()
@@ -245,8 +245,8 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B"), Tag(tag=BasicTag.ALBUMARTIST, value="A")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "A"}),
             ],
         )
         checker = CheckAlbumArtist(Context())

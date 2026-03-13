@@ -14,9 +14,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="3")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2"}),
+                Track(filename="3.flac", tag={BasicTag.TRACKNUMBER: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -26,9 +26,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="3")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="3")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="3"), Tag(tag=BasicTag.TRACKTOTAL, value="3")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "3"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "3"}),
+                Track(filename="3.flac", tag={BasicTag.TRACKNUMBER: "3", BasicTag.TRACKTOTAL: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -39,15 +39,15 @@ class TestCheckTrackNumbering:
         album_with_all = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "2"}),
             ],
         )
         album_with_none = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2"}),
             ],
         )
         ctx = Context()
@@ -76,9 +76,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="3"), Tag(tag=BasicTag.TRACKTOTAL, value="3")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", tag={BasicTag.TRACKNUMBER: "3", BasicTag.TRACKTOTAL: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -117,10 +117,7 @@ class TestCheckTrackNumbering:
             tracks=[
                 Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
                 Track(filename="1-2.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
-                Track(
-                    filename="2-1.flac",
-                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.DISCNUMBER, value="2")],
-                ),
+                Track(filename="2-1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.DISCNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -140,9 +137,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
-                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="3"), Tag(tag=BasicTag.TRACKTOTAL, value="2")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", tag={BasicTag.TRACKNUMBER: "3", BasicTag.TRACKTOTAL: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -153,9 +150,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1")]),
-                Track(filename="2 bar.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2")]),
-                Track(filename="2 baz.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2")]),
+                Track(filename="1 foo.flac", tag={BasicTag.TRACKNUMBER: "1"}),
+                Track(filename="2 bar.flac", tag={BasicTag.TRACKNUMBER: "2"}),
+                Track(filename="2 baz.flac", tag={BasicTag.TRACKNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -166,8 +163,8 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKTOTAL, value="4")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.TRACKTOTAL, value="4")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "4"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.TRACKTOTAL: "4"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -178,22 +175,10 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(
-                    filename="1-1.flac",
-                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
-                ),
-                Track(
-                    filename="1-2.flac",
-                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
-                ),
-                Track(
-                    filename="2-1.flac",
-                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.DISCNUMBER, value="2")],
-                ),
-                Track(
-                    filename="2-4.flac",
-                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="4"), Tag(tag=BasicTag.DISCNUMBER, value="2")],
-                ),
+                Track(filename="1-1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.DISCNUMBER: "2"}),
+                Track(filename="2-4.flac", tag={BasicTag.TRACKNUMBER: "4", BasicTag.DISCNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -204,8 +189,8 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1")]),
-                Track(filename="4.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="4")]),
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1"}),
+                Track(filename="4.flac", tag={BasicTag.TRACKNUMBER: "4"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)

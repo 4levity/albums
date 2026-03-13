@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_extra_whitespace import CheckExtraWhitespace
 from albums.tagger.folder import AlbumTagger, TaggerFile
 from albums.tagger.types import BasicTag
-from albums.types import Album, Tag, Track
+from albums.types import Album, Track
 
 
 class TestCheckExtraWhitespace:
@@ -12,8 +12,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="blue")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
@@ -23,8 +23,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice "), Tag(tag=BasicTag.TITLE, value="blue")]),
-                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice "), Tag(tag=BasicTag.TITLE, value="red ")]),
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice ", BasicTag.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice ", BasicTag.TITLE: "red "}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
