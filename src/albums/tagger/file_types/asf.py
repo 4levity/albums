@@ -20,6 +20,7 @@ BASIC_ASF_PROPERTIES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ALBUMARTIST, "WM/AlbumArtist"),
     (BasicTag.ARTIST, "Author"),
     (BasicTag.TITLE, "Title"),
+    (BasicTag.GENRE, "WM/Genre"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
@@ -133,6 +134,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     del tags["WM/AlbumArtist"]
                 case BasicTag.ARTIST:
                     del tags["Author"]
+                case BasicTag.GENRE:
+                    del tags["WM/Genre"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(None, disc_total)
@@ -156,6 +159,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     tags["WM/AlbumArtist"] = value_list
                 case BasicTag.ARTIST:
                     tags["Author"] = value_list
+                case BasicTag.GENRE:
+                    tags["WM/Genre"] = value_list
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(value_list[0] if value_list[0] else None, disc_total)

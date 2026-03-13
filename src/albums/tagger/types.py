@@ -41,6 +41,7 @@ class BasicTag(StrEnum):
     TITLE = auto()
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()
+    GENRE = auto()
 
 
 BASIC_TAGS = frozenset(tag.value for tag in BasicTag)

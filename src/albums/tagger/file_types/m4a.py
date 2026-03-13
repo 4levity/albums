@@ -18,6 +18,7 @@ BASIC_M4A_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ALBUMARTIST, "aART"),
     (BasicTag.ARTIST, "©ART"),
     (BasicTag.TITLE, "©nam"),
+    (BasicTag.GENRE, "©gen"),
     # trkn and disk too but they are not text or 1:1
 )
 
@@ -98,6 +99,8 @@ class M4aTagger(AbstractMutagenTagger[MP4]):
             if disc_total is not None:
                 basic_tags.append((BasicTag.DISCTOTAL, (str(disc_total),)))
 
+        # TODO also load legacy "gnre" value with id3v1 genre number
+
         return tuple(basic_tags)
 
     @override
@@ -112,6 +115,8 @@ class M4aTagger(AbstractMutagenTagger[MP4]):
                     del tags["aART"]
                 case BasicTag.ARTIST:
                     del tags["©ART"]
+                case BasicTag.GENRE:
+                    del tags["©gen"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(None, disc_total)
@@ -135,6 +140,8 @@ class M4aTagger(AbstractMutagenTagger[MP4]):
                     tags["aART"] = value_list
                 case BasicTag.ARTIST:
                     tags["©ART"] = value_list
+                case BasicTag.GENRE:
+                    tags["©gen"] = value_list
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(int(value_list[0]) if value_list[0] else None, disc_total)

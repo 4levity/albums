@@ -6,7 +6,7 @@ from typing import Callable, Generator, List, Tuple, override
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TIT2, TPE1, TPE2, TPOS, TRCK
+from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
@@ -21,6 +21,7 @@ BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ALBUMARTIST, "TPE2"),
     (BasicTag.ARTIST, "TPE1"),
     (BasicTag.TITLE, "TIT2"),
+    # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
 )
 # TODO also pull other common values, like
@@ -94,6 +95,9 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
             id3 = self._ensure_id3()
             basic_tags.extend((tag, tuple(_must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
 
+            if "TCON" in id3:
+                basic_tags.append((BasicTag.GENRE, tuple(id3["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+
             (track_number, track_total) = self._get_trck()
             if track_number is not None:
                 basic_tags.append((BasicTag.TRACKNUMBER, (track_number,)))
@@ -119,6 +123,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     del tags["TPE2"]
                 case BasicTag.ARTIST:
                     del tags["TPE1"]
+                case BasicTag.GENRE:
+                    del tags["TCON"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_tpos()
                     self._set_tpos(None, disc_total)
@@ -148,6 +154,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_tpos()
                     self._set_tpos(disc_number, value_list[0] if value_list[0] else None)
+                case BasicTag.GENRE:
+                    tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TITLE:
                     tags["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TRACKNUMBER:
