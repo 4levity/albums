@@ -6,7 +6,7 @@ from typing import Any, Callable, Collection, Generator, List, Tuple
 from mutagen._tags import PaddingInfo
 
 from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
-from ..picture.scan import PictureScanner
+from ..picture.scan import PictureScanner, PictureScannerCache
 from .aiff import AiffTagger
 from .asf import AsfTagger
 from .flac import FlacTagger
@@ -57,10 +57,11 @@ class AlbumTagger:
         folder: Path,
         padding: Callable[[PaddingInfo], int] = lambda info: info.get_default_padding(),
         id3v1: ID3v1Policy = ID3v1Policy.UPDATE,
+        preload: PictureScannerCache = {},
     ):
         self._folder = folder
         self._padding = padding
-        self._picture_scanner = PictureScanner()
+        self._picture_scanner = PictureScanner(preload)
         self._id3v1 = id3v1
 
     @contextmanager

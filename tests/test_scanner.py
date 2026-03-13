@@ -2,7 +2,9 @@ import os
 import shutil
 from pathlib import Path
 
+import xxhash
 from mutagen.flac import FLAC
+from PIL import Image
 from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
@@ -11,10 +13,10 @@ from albums.database import connection
 from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
-from albums.types import Album, PictureFile, Tag, Track
+from albums.tagger.types import BasicTag, Picture, PictureType
+from albums.types import Album, PictureFile, Tag, Track, TrackPicture
 
-from .fixtures.create_library import create_album_in_library, create_library, create_picture_file
+from .fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 
 
 def context(db: Engine, library: Path):
@@ -418,5 +420,54 @@ class TestScanner:
                 old_picture_file = session.execute(select(PictureFile).where(PictureFile.album_picture_file_id == picture_file_id)).one_or_none()
                 assert old_picture_file is None
 
+        finally:
+            db.dispose()
+
+    def test_scan_preload_picture_cache(self, mocker):
+        db = connection.open(connection.MEMORY)
+        try:
+            album = Album(
+                path="bar" + os.sep,
+                tracks=[
+                    Track(
+                        filename="1.flac",
+                        tags=[Tag(tag=BasicTag.TITLE, value="1")],
+                        pictures=[
+                            TrackPicture(picture_info=PictureInfo("image/png", 402, 402, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                            TrackPicture(picture_info=PictureInfo("image/png", 401, 401, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        ],
+                    ),
+                ],
+                picture_files=[
+                    PictureFile(filename="cover.jpg", picture_info=PictureInfo("image/png", 403, 403, 24, 0, b"")),
+                    PictureFile(filename="back.jpg", picture_info=PictureInfo("image/png", 404, 404, 24, 0, b"")),
+                ],
+            )
+
+            library = create_library("test_scan_preload", [album])
+            ctx = context(db, library)
+            spy_image_open = mocker.spy(Image, "open")
+            with Session(db) as session:
+                scan(ctx, session)
+                assert spy_image_open.call_count == 4
+
+                spy_image_open.reset_mock()
+                scan(ctx, session, reread=True)
+                assert spy_image_open.call_count == 0  # size/hash unchanged so pic info from database was reused
+
+                with AlbumTagger(library / album.path).open(album.tracks[0].filename) as tags:
+                    pic = album.tracks[0].pictures[0]
+                    assert pic.picture_type == PictureType.COVER_FRONT
+                    tags.remove_picture(album.tracks[0].pictures[0].to_picture())
+                    image_data = make_image_data(411, 411, "PNG")
+                    file_hash = xxhash.xxh32_digest(image_data)
+                    replacement_pic = Picture(PictureInfo("image/png", 411, 411, 24, len(image_data), file_hash), PictureType.COVER_FRONT, "")
+                    tags.add_picture(replacement_pic, image_data)
+                with open(library / album.path / "cover.jpg", "wb") as f:
+                    f.write(make_image_data(333, 333, "JPEG"))
+
+                spy_image_open.reset_mock()
+                scan(ctx, session, reread=True)
+                assert spy_image_open.call_count == 2  # 1 embedded image and 1 file were edited
         finally:
             db.dispose()

@@ -5,12 +5,30 @@ from PIL import Image, UnidentifiedImageError
 
 from .info import PictureInfo, get_picture_info
 
+type PictureScannerCache = Dict[Tuple[int, bytes], PictureInfo]
+
 
 class PictureScanner:
-    _cache: Dict[Tuple[int, bytes], PictureInfo]
+    _cache: PictureScannerCache
 
-    def __init__(self):
-        self._cache = {}
+    def __init__(self, preload_cache: PictureScannerCache = {}):
+        self._cache = dict(
+            (
+                pic_key,
+                info
+                if (len(info.load_issue) == 0 or (len(info.load_issue) == 1 and info.load_issue[0][0] == "error"))
+                else PictureInfo(
+                    info.mime_type,
+                    info.width,
+                    info.height,
+                    info.depth_bpp,
+                    info.file_size,
+                    info.file_hash,
+                    tuple((k, v) for k, v in info.load_issue if k == "error"),
+                ),
+            )
+            for pic_key, info in preload_cache.items()
+        )
 
     def scan(
         self,

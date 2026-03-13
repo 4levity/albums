@@ -16,6 +16,7 @@ from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session
 
 from ..app import SCANNER_VERSION, Context
+from ..picture.scan import PictureScannerCache
 from ..tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
 from ..types import Album, PictureFile, ScanHistoryEntity, Tag, Track, TrackPicture
 from .folder import Ministat, read_binary_file, stat_dir
@@ -117,7 +118,7 @@ def scan_library(
         else:
             album_match = (None,)
         (album,) = album_match
-        tagger = AlbumTagger(ctx.config.library / path)
+        tagger = AlbumTagger(ctx.config.library / path, preload=_picture_cache(album))
         with session.begin_nested() as path_scan_transacion:
             if album and album.album_id is not None:
                 unvisited_album_ids.remove(album.album_id)
@@ -153,7 +154,7 @@ def rescan_albums(
 ) -> Mapping[AlbumScanResult, int]:
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for album in scan_albums:
-        tagger = AlbumTagger(ctx.config.library / album.path)
+        tagger = AlbumTagger(ctx.config.library / album.path, preload=_picture_cache(album))
         with session.begin_nested() as album_scan_transaction:
             result = _scan_album(ctx, tagger, album, reread)
             scan_results[result] += 1
@@ -164,6 +165,17 @@ def rescan_albums(
                 album_scan_transaction.commit()
         update_progress()
     return scan_results
+
+
+def _picture_cache(album: Album | None) -> PictureScannerCache:
+    if not album:
+        return {}
+    return dict(
+        itertools.chain(
+            (((pic.picture_info.file_size, pic.picture_info.file_hash), pic.picture_info) for track in album.tracks for pic in track.pictures),
+            (((file.picture_info.file_size, file.picture_info.file_hash), file.picture_info) for file in album.picture_files),
+        )
+    )
 
 
 def _scan_track(tagger: AlbumTagger, filename: str, stat: Ministat):
