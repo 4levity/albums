@@ -4,7 +4,7 @@ from os import rename
 from pathvalidate import ValidationError, sanitize_filename, validate_filename
 from rich.markup import escape
 
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class CheckIllegalPathname(Check):
     name = "illegal-pathname"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         issues: set[str] = set()
         for track in album.tracks:
             issues = issues.union(self._check(track.filename))
@@ -45,7 +45,7 @@ class CheckIllegalPathname(Check):
     def _sanitize(self, filename: str) -> str:
         return sanitize_filename(filename, replacement_text=self.ctx.config.path_replace_invalid, platform=self.ctx.config.path_compatibility)
 
-    def _fix_sanitize_filenames(self, album: AlbumEntity):
+    def _fix_sanitize_filenames(self, album: Album):
         changed = False
         for track in album.tracks:
             new_filename = self._sanitize(track.filename)

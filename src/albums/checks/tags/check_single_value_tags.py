@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BASIC_TAGS, BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, ordered_tracks
 
@@ -30,7 +30,7 @@ class CheckSingleValueTags(Check):
         self.concatenators = concatenators
         self.automatic_concatenate = bool(check_config.get("automatic_concatenate", CheckSingleValueTags.default_config["automatic_concatenate"]))
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
 
@@ -62,7 +62,7 @@ class CheckSingleValueTags(Check):
                 ),
             )
 
-    def _fix(self, album: AlbumEntity, option: str) -> bool:
+    def _fix(self, album: Album, option: str) -> bool:
         if option.startswith(OPTION_CONCATENATE_WITH):
             concat = option[len(OPTION_CONCATENATE_WITH) + 1 : -1]
         elif option == OPTION_REMOVE_DUPLICATES_ONLY:

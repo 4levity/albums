@@ -4,22 +4,22 @@ from albums.app import Context
 from albums.checks.numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckInvalidTrackOrDiscNumber:
     def test_all_valid(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(filename="1.flac"),  # no tags is ok
-                TrackEntity(
+                Track(filename="1.flac"),  # no tags is ok
+                Track(
                     filename="2.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="12"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="12"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="01"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="2"),
                     ],
                 ),
             ],
@@ -28,12 +28,10 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert not result
 
     def test_duplicate_value(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]
-                )
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKNUMBER, value="1")])
             ],  #  1 will be preserved
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -50,12 +48,10 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, "1")])
 
     def test_multiple_value(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]
-                )
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.TRACKNUMBER, value="2")])
             ],  # ambiguous will be deleted
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -72,9 +68,9 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_non_numeric_value(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="one")])],
+            tracks=[Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="one")])],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -89,9 +85,9 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_zero_value(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="0")])],
+            tracks=[Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="0")])],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
@@ -106,18 +102,18 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKNUMBER, None)])
 
     def test_multiple_issues(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="foo"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="0"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="1"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="2"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="foo"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="0"),
                     ],
                 ),
             ],

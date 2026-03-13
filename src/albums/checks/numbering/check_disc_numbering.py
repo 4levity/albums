@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 from . import total_tags
@@ -29,7 +29,7 @@ class CheckDiscNumbering(Check):
         if self.remove_redundant_discnumber and self.discs_in_separate_folders:
             raise ValueError("disc-numbering check cannot have discs_in_separate_folders=True and remove_redundant_discnumber=True at the same time")
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -125,7 +125,7 @@ class CheckDiscNumbering(Check):
 
         return None
 
-    def _fix_disc_total(self, album: AlbumEntity, option: str) -> bool:
+    def _fix_disc_total(self, album: Album, option: str) -> bool:
         if option.startswith(OPTION_SET_DISC_TOTAL):
             value = option.split(" = ")[1]
         elif option.startswith(OPTION_REMOVE_DISC_TOTAL):
@@ -146,7 +146,7 @@ class CheckDiscNumbering(Check):
                 changed = True
         return changed
 
-    def _fix_remove_disc_number_disc_total_1(self, album: AlbumEntity) -> bool:
+    def _fix_remove_disc_number_disc_total_1(self, album: Album) -> bool:
         changed = False
         tagger = self.tagger.get(album.path)
         for track in (track for track in album.tracks if (track.has(BasicTag.DISCNUMBER) or track.has(BasicTag.DISCTOTAL))):

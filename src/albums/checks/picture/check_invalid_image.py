@@ -8,7 +8,7 @@ from rich.markup import escape
 
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import Cap
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class CheckInvalidImage(Check):
     name = "invalid-image"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         album_art = [(track.filename, [p.to_picture() for p in track.pictures]) for track in album.tracks]
         album_art.extend([(file.filename, [file.to_picture()]) for file in album.picture_files])
         table_rows: Sequence[Sequence[RenderableType]] = []
@@ -47,7 +47,7 @@ class CheckInvalidImage(Check):
                 ),
             )
 
-    def _fix_remove_bad_images(self, album: AlbumEntity):
+    def _fix_remove_bad_images(self, album: Album):
         changed = False
         for file in album.picture_files:
             load_issue = dict(file.picture_info.load_issue)

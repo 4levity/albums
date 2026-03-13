@@ -5,15 +5,15 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.checks.path.check_album_under_album import CheckAlbumUnderAlbum
 from albums.database import connection
-from albums.types import AlbumEntity, TrackEntity
+from albums.types import Album, Track
 
 
 class TestCheckAlbumUnderAlbum:
     def test_album_under_album(self):
         albums = [
-            AlbumEntity(path=f"foo{os.sep}bar{os.sep}", tracks=[TrackEntity(filename="1.flac")]),
-            AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.flac")]),
-            AlbumEntity(path="foobar" + os.sep, tracks=[TrackEntity(filename="1.flac")]),
+            Album(path=f"foo{os.sep}bar{os.sep}", tracks=[Track(filename="1.flac")]),
+            Album(path="foo" + os.sep, tracks=[Track(filename="1.flac")]),
+            Album(path="foobar" + os.sep, tracks=[Track(filename="1.flac")]),
         ]
 
         ctx = Context()

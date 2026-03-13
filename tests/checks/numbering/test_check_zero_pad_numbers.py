@@ -4,24 +4,24 @@ from albums.app import Context
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestZeroPadNumbers:
     def test_check_pad_track_if_needed(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1")]),
-                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2")]),
-                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="3")]),
-                TrackEntity(filename="4.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="4")]),
-                TrackEntity(filename="5.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="5")]),
-                TrackEntity(filename="6.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="6")]),
-                TrackEntity(filename="7.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="7")]),
-                TrackEntity(filename="8.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="8")]),
-                TrackEntity(filename="9.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="9")]),
-                TrackEntity(filename="10.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="10")]),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2")]),
+                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="3")]),
+                Track(filename="4.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="4")]),
+                Track(filename="5.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="5")]),
+                Track(filename="6.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="6")]),
+                Track(filename="7.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="7")]),
+                Track(filename="8.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="8")]),
+                Track(filename="9.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="9")]),
+                Track(filename="10.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="10")]),
             ],
         )
         ctx = Context()
@@ -46,25 +46,25 @@ class TestZeroPadNumbers:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicTag.TRACKNUMBER, "09")])
 
     def test_check_pad_remove_all_unnecessary(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="02"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="01"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="02"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="01"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="01"),
                     ],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="02"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="02"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="01"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="02"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="02"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="01"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="01"),
                     ],
                 ),
             ],
@@ -99,15 +99,15 @@ class TestZeroPadNumbers:
         )
 
     def test_check_pad_tracknumber_and_discnumber_if_needed(self, mocker):
-        album = AlbumEntity(path="a")
+        album = Album(path="a")
         for discnumber in range(1, 11):
             for tracknumber in range(1, 11):
                 album.tracks.append(
-                    TrackEntity(
+                    Track(
                         filename=f"{discnumber}-{tracknumber}.flac",
                         tags=[
-                            TrackTagEntity(tag=BasicTag.DISCNUMBER, value=str(discnumber)),
-                            TrackTagEntity(tag=BasicTag.TRACKNUMBER, value=str(tracknumber)),
+                            Tag(tag=BasicTag.DISCNUMBER, value=str(discnumber)),
+                            Tag(tag=BasicTag.TRACKNUMBER, value=str(tracknumber)),
                         ],
                     )
                 )
@@ -135,25 +135,25 @@ class TestZeroPadNumbers:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicTag.TRACKNUMBER, "09")])
 
     def test_check_pad_two_digit_minimum(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="2"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="01"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="1"),
                     ],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"),
-                        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2"),
-                        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"),
-                        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="2"),
+                        Tag(tag=BasicTag.TRACKTOTAL, value="2"),
+                        Tag(tag=BasicTag.DISCNUMBER, value="1"),
+                        Tag(tag=BasicTag.DISCTOTAL, value="1"),
                     ],
                 ),
             ],
@@ -188,13 +188,9 @@ class TestZeroPadNumbers:
         )
 
     def test_check_pad_with_id3(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[
-                TrackEntity(
-                    filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"), TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="2")]
-                )
-            ],
+            tracks=[Track(filename="1.mp3", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="01"), Tag(tag=BasicTag.TRACKTOTAL, value="2")])],
         )
         ctx = Context()
         ctx.config.checks = {

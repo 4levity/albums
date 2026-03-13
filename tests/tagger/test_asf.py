@@ -5,24 +5,24 @@ import pytest
 from albums.tagger.asf import WmPicture
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import PictureType
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 from ..fixtures.create_library import create_library
 
-track = TrackEntity(
+track = Track(
     filename="1.wma",
     tags=[
-        TrackTagEntity(tag=BasicTag.ARTIST, value="A"),
-        TrackTagEntity(tag=BasicTag.TITLE, value="T"),
-        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
-        TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
-        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
-        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3"),
-        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
-        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2"),
+        Tag(tag=BasicTag.ARTIST, value="A"),
+        Tag(tag=BasicTag.TITLE, value="T"),
+        Tag(tag=BasicTag.ALBUM, value="baz"),
+        Tag(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
+        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
+        Tag(tag=BasicTag.TRACKTOTAL, value="3"),
+        Tag(tag=BasicTag.DISCNUMBER, value="2"),
+        Tag(tag=BasicTag.DISCTOTAL, value="2"),
     ],
 )
-album = AlbumEntity(path="baz" + os.sep, tracks=[track])
+album = Album(path="baz" + os.sep, tracks=[track])
 
 
 class TestAsf:

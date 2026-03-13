@@ -6,25 +6,25 @@ import xxhash
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
+from albums.types import Album, Tag, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track = TrackEntity(
+track = Track(
     filename="1.ogg",
     tags=[
-        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
-        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="1"),
-        TrackTagEntity(tag=BasicTag.ARTIST, value="C"),
-        TrackTagEntity(tag=BasicTag.TITLE, value="one"),
-        TrackTagEntity(tag=BasicTag.ALBUM, value="foobar"),
+        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
+        Tag(tag=BasicTag.TRACKTOTAL, value="1"),
+        Tag(tag=BasicTag.ARTIST, value="C"),
+        Tag(tag=BasicTag.TITLE, value="one"),
+        Tag(tag=BasicTag.ALBUM, value="foobar"),
     ],
     pictures=[
-        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-        TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+        TrackPicture(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
     ],
 )
-album = AlbumEntity(path="foobar" + os.sep, tracks=[track])
+album = Album(path="foobar" + os.sep, tracks=[track])
 
 
 class TestOggVorbis:

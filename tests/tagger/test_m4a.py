@@ -6,30 +6,30 @@ import xxhash
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import AlbumEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
+from albums.types import Album, Tag, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track = TrackEntity(
+track = Track(
     filename="1.m4a",
     tags=[
-        TrackTagEntity(tag=BasicTag.ARTIST, value="A"),
-        TrackTagEntity(tag=BasicTag.TITLE, value="T"),
-        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
-        TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
-        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"),
-        TrackTagEntity(tag=BasicTag.TRACKTOTAL, value="3"),
-        TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"),
-        TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2"),
+        Tag(tag=BasicTag.ARTIST, value="A"),
+        Tag(tag=BasicTag.TITLE, value="T"),
+        Tag(tag=BasicTag.ALBUM, value="baz"),
+        Tag(tag=BasicTag.ALBUMARTIST, value="baz+foo"),
+        Tag(tag=BasicTag.TRACKNUMBER, value="1"),
+        Tag(tag=BasicTag.TRACKTOTAL, value="3"),
+        Tag(tag=BasicTag.DISCNUMBER, value="2"),
+        Tag(tag=BasicTag.DISCTOTAL, value="2"),
     ],
     pictures=[
-        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
-        TrackPictureEntity(
+        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
+        TrackPicture(
             picture_info=PictureInfo("image/jpeg", 401, 401, 24, 2, b"2222"), picture_type=PictureType.OTHER
         ),  # type ignored, logs a warning
     ],
 )
-album = AlbumEntity(path="baz" + os.sep, tracks=[track])
+album = Album(path="baz" + os.sep, tracks=[track])
 
 
 class TestM4a:

@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from ..helpers import get_tracks_by_disc
 from .check_track_numbering import describe_track_number
@@ -72,7 +72,7 @@ class CheckZeroPadNumbers(Check):
         ):
             logger.warning(f"{CheckZeroPadNumbers.name} configuration problem: all policies are set to IGNORE, nothing to do")
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -143,7 +143,7 @@ class CheckZeroPadNumbers(Check):
 
         return None
 
-    def _fix(self, album: AlbumEntity, option: str, tracks_by_disc: Mapping[int, Sequence[TrackEntity]]) -> bool:
+    def _fix(self, album: Album, option: str, tracks_by_disc: Mapping[int, Sequence[Track]]) -> bool:
         if not option.startswith(OPTION_APPLY_POLICY):
             raise ValueError(f"ZeroPadNumbers._fix invalid option {option}")
 

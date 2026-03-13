@@ -10,19 +10,19 @@ from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import PictureType, TaggerFile
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckCoverDimensions:
     def test_cover_square_enough(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
         )
@@ -30,18 +30,18 @@ class TestCheckCoverDimensions:
         assert result is None
 
     def test_cover_square_enough_not_unique(self):
-        pic1 = TrackPictureEntity(picture_info=PictureInfo("image/png", 401, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT)
-        pic2 = TrackPictureEntity(picture_info=PictureInfo("image/png", 402, 400, 24, 1, b"2222"), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(
+        pic1 = TrackPicture(picture_info=PictureInfo("image/png", 401, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT)
+        pic2 = TrackPicture(picture_info=PictureInfo("image/png", 402, 400, 24, 1, b"2222"), picture_type=PictureType.COVER_FRONT)
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", pictures=[pic1]), TrackEntity(filename="2.flac", pictures=[pic2])],
+            tracks=[Track(filename="1.flac", pictures=[pic1]), Track(filename="2.flac", pictures=[pic2])],
         )
         result = CheckCoverDimensions(Context()).check(album)
         assert result is None
 
     def test_cover_not_square_enough_embedded(self, mocker):
-        cover = TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.flac", pictures=[cover])])
+        cover = TrackPicture(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", pictures=[cover])])
         ctx = Context()
         ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
@@ -76,8 +76,8 @@ class TestCheckCoverDimensions:
         assert new_cover.width == new_cover.height == min(cover.picture_info.width, cover.picture_info.height)
 
     def test_cover_not_square_enough_embedded_preserve_type(self, mocker):
-        cover = TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.flac", pictures=[cover])])
+        cover = TrackPicture(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", pictures=[cover])])
         ctx = Context()
         ctx.db = True
         ctx.config.checks[CheckCoverDimensions.name]["create_mime_type"] = ""
@@ -114,10 +114,10 @@ class TestCheckCoverDimensions:
 
     def test_cover_not_square_enough_jpg_file(self, mocker):
         picture_info = PictureInfo("image/jpeg", 1000, 800, 24, 1, b"")
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
-            tracks=[TrackEntity(filename="1.flac")],
-            picture_files=[PictureFileEntity(filename="folder.jpg", picture_info=picture_info, cover_source=True)],
+            tracks=[Track(filename="1.flac")],
+            picture_files=[PictureFile(filename="folder.jpg", picture_info=picture_info, cover_source=True)],
         )
         ctx = Context()
         ctx.db = True
@@ -153,10 +153,10 @@ class TestCheckCoverDimensions:
 
     def test_cover_not_square_enough_png_file(self, mocker):
         cover_info = PictureInfo("image/png", 1000, 800, 24, 1, b"")
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
-            tracks=[TrackEntity(filename="1.flac")],
-            picture_files=[PictureFileEntity(filename="folder.png", picture_info=cover_info, cover_source=True)],
+            tracks=[Track(filename="1.flac")],
+            picture_files=[PictureFile(filename="folder.png", picture_info=cover_info, cover_source=True)],
         )
         ctx = Context()
         ctx.db = True
@@ -189,12 +189,12 @@ class TestCheckCoverDimensions:
         assert new_cover.width == new_cover.height == min(cover_info.width, cover_info.height)
 
     def test_cover_not_square_enough_extreme(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 1000, 500, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 1000, 500, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
         )
@@ -204,12 +204,12 @@ class TestCheckCoverDimensions:
         assert result.fixer is None  # too unsquare to fix
 
     def test_cover_dimensions_too_small(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 10, 10, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 10, 10, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
         )
@@ -218,14 +218,12 @@ class TestCheckCoverDimensions:
         assert result.message == "COVER_FRONT image is too small (10x10)"
 
     def test_cover_dimensions_too_large(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 9001, 9001, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
-                    ],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 9001, 9001, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
         )

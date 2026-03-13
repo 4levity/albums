@@ -8,7 +8,7 @@ from rich.console import RenderableType
 
 from ...tagger.folder import Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
 
@@ -25,7 +25,7 @@ class CheckTrackFilename(Check):
                 raise ValueError(f"invalid substitution '{id}' in track-filename.format")
         self.join_multiple = str(check_config.get("join_multiple", self.default_config["join_multiple"]))
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         generated_filenames = [self._generate_filename(album, track) for track in album.tracks]
         generated_filenames_lower: set[str] = set()
         for ix, filename in enumerate(generated_filenames):
@@ -46,7 +46,7 @@ class CheckTrackFilename(Check):
                 Fixer(lambda _: self._fix_use_generated(album), options, False, option_automatic_index, table),
             )
 
-    def _table_row(self, album: AlbumEntity, track: TrackEntity) -> Sequence[RenderableType]:
+    def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
         title_tags = ", ".join(track.get(BasicTag.TITLE, default=["[bold italic]none[/bold italic]"]))
         discnum = track.get(BasicTag.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
         tracknum = track.get(BasicTag.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
@@ -59,7 +59,7 @@ class CheckTrackFilename(Check):
             new_filename if new_filename != track.filename else "[bold italic]no change[/bold italic]",
         ]
 
-    def _generate_filename(self, album: AlbumEntity, track: TrackEntity):
+    def _generate_filename(self, album: Album, track: Track):
         tracktag = track.get(BasicTag.TRACKNUMBER, default=None)
         disctag = track.get(BasicTag.DISCNUMBER, default=None)
         tracknumber = tracktag[0] if tracktag else ""
@@ -101,7 +101,7 @@ class CheckTrackFilename(Check):
         )
         return filename
 
-    def _fix_use_generated(self, album: AlbumEntity):
+    def _fix_use_generated(self, album: Album):
         album_path = self.ctx.config.library / album.path
 
         tracks_to_rename = [track for track in album.tracks if self._generate_filename(album, track) != track.filename]

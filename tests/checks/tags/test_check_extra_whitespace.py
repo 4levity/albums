@@ -4,35 +4,27 @@ from albums.app import Context
 from albums.checks.tags.check_extra_whitespace import CheckExtraWhitespace
 from albums.tagger.folder import AlbumTagger, TaggerFile
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckExtraWhitespace:
     def test_whitespace_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="blue")]
-                ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="red")]
-                ),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="blue")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
         assert result is None
 
     def test_whitespace_fix(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice "), TrackTagEntity(tag=BasicTag.TITLE, value="blue")]
-                ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice "), TrackTagEntity(tag=BasicTag.TITLE, value="red ")]
-                ),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice "), Tag(tag=BasicTag.TITLE, value="blue")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice "), Tag(tag=BasicTag.TITLE, value="red ")]),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)

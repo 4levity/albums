@@ -12,33 +12,33 @@ from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture, PictureType
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 from ...fixtures.create_library import create_library, make_image_data
 
 
 class TestCheckPictureMetadata:
     def test_picture_metadata_ok(self):
-        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 1, 1, 1, 0, b""), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(
+        pic = TrackPicture(picture_info=PictureInfo("image/png", 1, 1, 1, 0, b""), picture_type=PictureType.COVER_FRONT)
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", pictures=[pic])],
-            picture_files=[PictureFileEntity(filename="cover.png", picture_info=pic.picture_info)],
+            tracks=[Track(filename="1.flac", pictures=[pic])],
+            picture_files=[PictureFile(filename="cover.png", picture_info=pic.picture_info)],
         )
         result = CheckPictureMetadata(Context()).check(album)
         assert result is None
 
     def test_picture_metadata_mismatch(self):
         load_issue = (("format", "image/jpeg"), ("width", 0), ("height", 0))
-        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 0, b"", load_issue), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac", pictures=[pic])])
+        pic = TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 0, b"", load_issue), picture_type=PictureType.COVER_FRONT)
+        album = Album(path="", tracks=[Track(filename="1.flac", pictures=[pic])])
         result = CheckPictureMetadata(Context()).check(album)
         assert result is not None
         assert result.message == "embedded image metadata mismatch on 1 tracks, example image/png 400x400 but container says image/jpeg 0x0"
         assert result.fixer
 
     def test_picture_metadata_mismatch_fix_flac(self):
-        album = AlbumEntity(path="foo", tracks=[TrackEntity(filename="1.flac")])
+        album = Album(path="foo", tracks=[Track(filename="1.flac")])
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_flac", [album])
         file = ctx.config.library / album.path / album.tracks[0].filename
@@ -57,7 +57,7 @@ class TestCheckPictureMetadata:
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 assert result.tracks[0].pictures[0].picture_info.load_issue
 
                 result = CheckPictureMetadata(ctx).check(result)
@@ -72,7 +72,7 @@ class TestCheckPictureMetadata:
 
                 scan(ctx, session, reread=True)
 
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 assert len(result.tracks[0].pictures) == 1
                 assert not result.tracks[0].pictures[0].picture_info.load_issue
                 assert result.tracks[0].pictures[0].picture_info.mime_type == "image/png"
@@ -84,7 +84,7 @@ class TestCheckPictureMetadata:
             ctx.db.dispose()
 
     def test_picture_metadata_mismatch_fix_mp3(self):
-        album = AlbumEntity(path="foo", tracks=[TrackEntity(filename="1.mp3")])
+        album = Album(path="foo", tracks=[Track(filename="1.mp3")])
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_mp3", [album])
 
@@ -100,7 +100,7 @@ class TestCheckPictureMetadata:
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 assert result.tracks[0].pictures[0].picture_info.load_issue
                 result = CheckPictureMetadata(ctx).check(result)
                 assert result is not None
@@ -111,7 +111,7 @@ class TestCheckPictureMetadata:
 
                 scan(ctx, session, reread=True)
 
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 assert len(result.tracks[0].pictures) == 1
                 assert not result.tracks[0].pictures[0].picture_info.load_issue
                 assert result.tracks[0].pictures[0].picture_info.mime_type == "image/png"
@@ -123,11 +123,9 @@ class TestCheckPictureMetadata:
             ctx.db.dispose()
 
     def test_picture_image_file_extension_mismatch(self):
-        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 1, 1, 1, 0, b""), picture_type=PictureType.COVER_FRONT)
-        track = TrackEntity(filename="1.flac", pictures=[pic])
-        album = AlbumEntity(
-            path="foo" + os.sep, tracks=[track], picture_files=[PictureFileEntity(filename="cover.png", picture_info=pic.picture_info)]
-        )
+        pic = TrackPicture(picture_info=PictureInfo("image/png", 1, 1, 1, 0, b""), picture_type=PictureType.COVER_FRONT)
+        track = Track(filename="1.flac", pictures=[pic])
+        album = Album(path="foo" + os.sep, tracks=[track], picture_files=[PictureFile(filename="cover.png", picture_info=pic.picture_info)])
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
@@ -135,7 +133,7 @@ class TestCheckPictureMetadata:
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 gif = next(file for file in result.picture_files if file.filename == "cover.gif")
                 assert gif.picture_info.mime_type == "image/png"
                 assert gif.picture_info.load_issue == (("format", "image/gif"),)
@@ -149,7 +147,7 @@ class TestCheckPictureMetadata:
 
                 scan(ctx, session, reread=True)
 
-                result = session.execute(select(AlbumEntity)).tuples().one()[0]
+                result = session.execute(select(Album)).tuples().one()[0]
                 png = next(file for file in result.picture_files if file.filename == "cover.png")
                 assert png.picture_info.mime_type == "image/png"
                 assert png.picture_info.load_issue == ()

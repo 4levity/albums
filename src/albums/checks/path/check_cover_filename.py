@@ -7,7 +7,7 @@ from PIL import Image
 
 from ...library.folder import read_binary_file
 from ...tagger.types import PictureType
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 
 
@@ -35,7 +35,7 @@ class CheckCoverFilename(Check):
         if self.jpeg_quality < 1 or self.jpeg_quality > 95:
             raise ValueError("cover-filename.jpeg_quality must be between 1 and 95")
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if album.picture_files and not any(self._matches(file.filename, True) for file in album.picture_files):
             cover_files = [file.filename for file in album.picture_files if PictureType.from_filename(file.filename) == PictureType.COVER_FRONT]
             if not cover_files:
@@ -75,7 +75,7 @@ class CheckCoverFilename(Check):
             )
         return None
 
-    def _fix_convert_cover(self, album: AlbumEntity, cover_file: str):
+    def _fix_convert_cover(self, album: Album, cover_file: str):
         file = next(file for file in album.picture_files if file.filename == cover_file)
         album_path = self.ctx.config.library / album.path
         image_data = read_binary_file(album_path / cover_file)
@@ -88,7 +88,7 @@ class CheckCoverFilename(Check):
         file.filename = new_filename
         return True
 
-    def _fix_rename_cover(self, album: AlbumEntity, cover_file: str, new_filename: str):
+    def _fix_rename_cover(self, album: Album, cover_file: str, new_filename: str):
         file = next(file for file in album.picture_files if file.filename == cover_file)
         album_path = self.ctx.config.library / album.path
         if str.lower(cover_file) == str.lower(new_filename):

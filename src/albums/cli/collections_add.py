@@ -20,7 +20,7 @@ def collections_add(ctx: Context, collection_names: list[str]):
                     ctx.console.print(f"album {album_display_name(ctx, album)} is already in collection {target_collection}", markup=False)
                 else:
                     # It shouldn't be and isn't really necessary to look up the collection. But the association_proxy creator implementation in
-                    # AlbumEntity creates a duplicate CollectionEntity when the collection already exists, causing this warning:
+                    # Album creates a duplicate CollectionEntity when the collection already exists, causing this warning:
                     # SAWarning: Identity map already had an identity for (<class 'albums.database.models.CollectionEntity'>, (1,), None), replacing it with newly flushed object.   Are there load operations occurring inside of an event handler within the flush?
                     collection = (
                         session.execute(select(CollectionEntity).where(CollectionEntity.collection_name == target_collection)).tuples().one_or_none()

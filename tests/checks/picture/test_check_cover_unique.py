@@ -12,28 +12,28 @@ from albums.database import connection
 from albums.library import scanner
 from albums.picture.info import PictureInfo
 from albums.tagger.types import PictureType
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 from ...fixtures.create_library import create_library
 
 
 class TestCheckCoverUnique:
     def test_cover_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
                     ],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
                     pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
                     ],
                 ),
             ],
@@ -41,16 +41,16 @@ class TestCheckCoverUnique:
         assert not CheckCoverUnique(Context()).check(album)
 
     def test_cover_multiple_unique(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 500, 500, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 500, 500, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 ),
             ],
         )
@@ -61,15 +61,15 @@ class TestCheckCoverUnique:
         assert result.fixer.options == []
 
     def test_has_unmarked_cover_source_file(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
-            picture_files=[PictureFileEntity(filename="cover.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b""))],
+            picture_files=[PictureFile(filename="cover.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b""))],
         )
         ctx = Context()
         ctx.config.library = create_library("front_cover", [album])
@@ -77,7 +77,7 @@ class TestCheckCoverUnique:
         try:
             with Session(ctx.db) as session:
                 scanner.scan(ctx, session)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 result = CheckCoverUnique(ctx).check(album)
                 assert result is not None
                 assert (
@@ -107,12 +107,12 @@ class TestCheckCoverUnique:
             ctx.db.dispose()
 
     def test_multiple_cover_image_files_no_embedded(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac")],
+            tracks=[Track(filename="1.flac")],
             picture_files=[
-                PictureFileEntity(filename="cover_big.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b"1111")),
-                PictureFileEntity(filename="cover_small.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 1000, b"2222")),
+                PictureFile(filename="cover_big.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b"1111")),
+                PictureFile(filename="cover_small.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 1000, b"2222")),
             ],
         )
         ctx = Context()
@@ -135,14 +135,12 @@ class TestCheckCoverUnique:
         assert cover.cover_source
 
     def test_multiple_cover_image_files_with_cover_source(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac")],
+            tracks=[Track(filename="1.flac")],
             picture_files=[
-                PictureFileEntity(filename="cover_big.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b"1111"), cover_source=True),
-                PictureFileEntity(
-                    filename="cover_small.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 1000, b"2222"), cover_source=False
-                ),
+                PictureFile(filename="cover_big.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 10000, b"1111"), cover_source=True),
+                PictureFile(filename="cover_small.png", picture_info=PictureInfo("image/png", 1000, 1000, 24, 1000, b"2222"), cover_source=False),
             ],
         )
         ctx = Context()

@@ -5,26 +5,26 @@ from albums.app import Context
 from albums.checks.picture.check_duplicate_image import CheckDuplicateImage
 from albums.picture.info import PictureInfo
 from albums.tagger.types import PictureType
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 
 class TestCheckDuplicateImage:
     def test_duplicate_image_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
                     ],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
                     pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
                     ],
                 ),
             ],
@@ -32,14 +32,14 @@ class TestCheckDuplicateImage:
         assert not CheckDuplicateImage(Context()).check(album)
 
     def test_duplicate_image_in_track(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     pictures=[
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
-                        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+                        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK),
                     ],
                 )
             ],
@@ -49,13 +49,13 @@ class TestCheckDuplicateImage:
         assert "duplicate embedded image data in one or more files: COVER_BACK" in result.message
 
     def test_cover_duplicate_files(self, mocker):
-        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(
+        pic = TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", pictures=[pic])],
+            tracks=[Track(filename="1.flac", pictures=[pic])],
             picture_files=[
-                PictureFileEntity(filename="folder.png", picture_info=pic.picture_info),
-                PictureFileEntity(filename="cover.png", picture_info=pic.picture_info),
+                PictureFile(filename="folder.png", picture_info=pic.picture_info),
+                PictureFile(filename="cover.png", picture_info=pic.picture_info),
             ],
         )
         result = CheckDuplicateImage(Context()).check(album)

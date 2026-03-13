@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from ...types import AlbumEntity, CheckResult
+from ...types import Album, CheckResult
 from ..base_check import Check
 from ..helpers import album_display_name
 
@@ -9,7 +9,7 @@ class CheckAlbumUnderAlbum(Check):
     name = "album-under-album"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         path = album.path
         like_path = path.replace("|", "||").replace("%", "|%").replace("_", "|_") + "%"
         conn = self.ctx.db.connect()

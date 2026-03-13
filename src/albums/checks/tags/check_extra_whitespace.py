@@ -4,7 +4,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 
 
@@ -12,7 +12,7 @@ class CheckExtraWhitespace(Check):
     name = "extra-whitespace"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
         tags: set[BasicTag] = set()
@@ -36,7 +36,7 @@ class CheckExtraWhitespace(Check):
                 ),
             )
 
-    def _fix_strip_tags(self, album: AlbumEntity, filenames: Collection[str]) -> bool:
+    def _fix_strip_tags(self, album: Album, filenames: Collection[str]) -> bool:
         changed = False
         tagger = self.tagger.get(album.path)
         for track in (track for track in album.tracks if track.filename in filenames):

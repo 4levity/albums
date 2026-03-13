@@ -12,7 +12,7 @@ from albums.library.scanner import scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, PictureFile, Tag, Track
 
 from .fixtures.create_library import create_album_in_library, create_library, create_picture_file
 
@@ -26,41 +26,41 @@ def context(db: Engine, library: Path):
 
 class TestScanner:
     sample_library = [
-        AlbumEntity(
+        Album(
             path="bar" + os.sep,
             tracks=[
-                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
-                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
-                TrackEntity(filename="3.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="3")]),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
+                Track(filename="3.flac", tags=[Tag(tag=BasicTag.TITLE, value="3")]),
             ],
-            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
+            picture_files=[PictureFile(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
         ),
-        AlbumEntity(
+        Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
-                TrackEntity(filename="2.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
+                Track(filename="1.mp3", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
+                Track(filename="2.mp3", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
             ],
         ),
-        AlbumEntity(
+        Album(
             path="baz" + os.sep,
             tracks=[
-                TrackEntity(filename="1.wma", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
-                TrackEntity(filename="2.wma", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+                Track(filename="1.wma", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
+                Track(filename="2.wma", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
             ],
         ),
-        AlbumEntity(
+        Album(
             path="eee" + os.sep,
             tracks=[
-                TrackEntity(filename="1.m4a", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
-                TrackEntity(filename="2.m4a", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+                Track(filename="1.m4a", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
+                Track(filename="2.m4a", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
             ],
         ),
-        AlbumEntity(
+        Album(
             path="mob" + os.sep,
             tracks=[
-                TrackEntity(filename="1.aiff", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="one")]),
-                TrackEntity(filename="2.aiff", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="two")]),
+                Track(filename="1.aiff", tags=[Tag(tag=BasicTag.TITLE, value="one")]),
+                Track(filename="2.aiff", tags=[Tag(tag=BasicTag.TITLE, value="two")]),
             ],
         ),
     ]
@@ -71,7 +71,7 @@ class TestScanner:
             library = create_library("test_initial_scan", self.sample_library)
             scan(context(db, library))
             with Session(db) as session:
-                result = [album for (album,) in session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples()]
+                result = [album for (album,) in session.execute(select(Album).order_by(Album.path)).tuples()]
 
                 assert len(result) == 5
                 assert result[0].path == "bar" + os.sep
@@ -136,7 +136,7 @@ class TestScanner:
             library = create_library("test_scan_empty", [])
             scan(context(db, library))
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 0
         finally:
             db.dispose()
@@ -147,15 +147,15 @@ class TestScanner:
             library = create_library(
                 "test_scan_no_tags",
                 [
-                    AlbumEntity(path="bar" + os.sep, tracks=[TrackEntity(filename="1.flac")]),
-                    AlbumEntity(path="foo" + os.sep, tracks=[TrackEntity(filename="1.mp3")]),
-                    AlbumEntity(path="baz" + os.sep, tracks=[TrackEntity(filename="1.wma")]),
-                    AlbumEntity(path="foobar" + os.sep, tracks=[TrackEntity(filename="1.ogg")]),
+                    Album(path="bar" + os.sep, tracks=[Track(filename="1.flac")]),
+                    Album(path="foo" + os.sep, tracks=[Track(filename="1.mp3")]),
+                    Album(path="baz" + os.sep, tracks=[Track(filename="1.wma")]),
+                    Album(path="foobar" + os.sep, tracks=[Track(filename="1.ogg")]),
                 ],
             )
             scan(context(db, library))
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 4
         finally:
             db.dispose()
@@ -167,7 +167,7 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).where(AlbumEntity.path.like("bar%"))).tuples().one()
+                result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
                 tracks = sorted(result[0].tracks)
                 assert tracks[0].filename == "1.flac"
                 assert tracks[0].get(BasicTag.TITLE) == ("1",)
@@ -178,7 +178,7 @@ class TestScanner:
             scan(ctx)
 
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).where(AlbumEntity.path.like("bar%"))).tuples().one()
+                result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
                 assert sorted(result[0].tracks)[0].get(BasicTag.TITLE) == ("new title",)
         finally:
             db.dispose()
@@ -190,7 +190,7 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 1
                 assert result[0][0].path == "foo" + os.sep
 
@@ -198,7 +198,7 @@ class TestScanner:
 
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 2
                 assert result[0][0].path == "bar" + os.sep
         finally:
@@ -211,7 +211,7 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 assert result[0][0].path == "bar" + os.sep
 
@@ -219,7 +219,7 @@ class TestScanner:
             shutil.rmtree(library / "bar", ignore_errors=True)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 4
                 assert result[0][0].path == "baz" + os.sep
 
@@ -228,7 +228,7 @@ class TestScanner:
             os.mkdir(library / "baz")
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 3
                 assert result[0][0].path == "eee" + os.sep
         finally:
@@ -241,14 +241,14 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()
+                result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].picture_files) == 1
 
             (library / self.sample_library[0].path / "cover.jpg").unlink()
 
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().one()
+                result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].picture_files) == 0
         finally:
             db.dispose()
@@ -260,7 +260,7 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 delete_album = result[0][0].path
                 shutil.rmtree(library / delete_album, ignore_errors=True)
@@ -268,7 +268,7 @@ class TestScanner:
                 scan(ctx, session, iter([result[1][0]]))
 
                 # deleted path was not scanned, so album is still there
-                result = session.execute(select(AlbumEntity).order_by(AlbumEntity.path)).tuples().all()
+                result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 assert result[0][0].path == delete_album
         finally:
@@ -281,23 +281,23 @@ class TestScanner:
             ctx = context(db, library)
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 2
                 assert all(album.scanner == SCANNER_VERSION for [album] in result)
 
-                session.execute(update(AlbumEntity).values(scanner=0))
+                session.execute(update(Album).values(scanner=0))
                 session.commit()
 
             (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # second album changed
             create_album_in_library(library, self.sample_library[2])  # third album added
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 2  # third not scanned yet
                 assert all(album.scanner == 0 for [album] in result)
 
             scan(ctx)
             with Session(db) as session:
-                result = session.execute(select(AlbumEntity)).tuples().all()
+                result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 3
                 assert all(album.scanner == SCANNER_VERSION for [album] in result)
         finally:
@@ -311,7 +311,7 @@ class TestScanner:
             ctx = context(db, library)
             with Session(db) as session:
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
                 assert tracks[0].get(BasicTag.TITLE) == ("1",)
@@ -322,7 +322,7 @@ class TestScanner:
                     tags.set_tag(BasicTag.ARTIST, "test replace track")
 
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
                 assert tracks[0].get(BasicTag.TITLE) == ("1",)
@@ -330,7 +330,7 @@ class TestScanner:
                 assert tracks[1].get(BasicTag.TITLE) == ("2",)
                 assert tracks[2].get(BasicTag.TITLE) == ("3",)
 
-                old_track = session.execute(select(TrackEntity).where(TrackEntity.track_id == track_id)).one_or_none()
+                old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None
 
         finally:
@@ -344,7 +344,7 @@ class TestScanner:
             ctx = context(db, library)
             with Session(db) as session:
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
                 assert tracks[0].get(BasicTag.TITLE) == ("1",)
@@ -355,13 +355,13 @@ class TestScanner:
                 os.unlink(library / created_album.path / tracks[2].filename)
 
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 2
                 tracks = sorted(album.tracks)
                 assert tracks[0].get(BasicTag.TITLE) == ("1",)
                 assert tracks[1].get(BasicTag.TITLE) == ("2",)
 
-                old_track = session.execute(select(TrackEntity).where(TrackEntity.track_id == track_id)).one_or_none()
+                old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None
 
         finally:
@@ -375,7 +375,7 @@ class TestScanner:
             ctx = context(db, library)
             with Session(db) as session:
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
                 assert album.picture_files[0].picture_info.width == 410
@@ -384,14 +384,12 @@ class TestScanner:
                 create_picture_file(library / album.path / "cover.jpg", 123, 321, "pink")
 
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
                 assert album.picture_files[0].picture_info.width == 123
 
-                old_picture_file = session.execute(
-                    select(PictureFileEntity).where(PictureFileEntity.album_picture_file_id == picture_file_id)
-                ).one_or_none()
+                old_picture_file = session.execute(select(PictureFile).where(PictureFile.album_picture_file_id == picture_file_id)).one_or_none()
                 assert old_picture_file is None
 
         finally:
@@ -405,7 +403,7 @@ class TestScanner:
             ctx = context(db, library)
             with Session(db) as session:
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
                 assert album.picture_files[0].picture_info.width == 410
@@ -414,12 +412,10 @@ class TestScanner:
                 os.unlink(library / album.path / "cover.jpg")
 
                 assert scan(ctx, session) == (1, True)
-                (album,) = session.execute(select(AlbumEntity)).tuples().one()
+                (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 0
 
-                old_picture_file = session.execute(
-                    select(PictureFileEntity).where(PictureFileEntity.album_picture_file_id == picture_file_id)
-                ).one_or_none()
+                old_picture_file = session.execute(select(PictureFile).where(PictureFile.album_picture_file_id == picture_file_id)).one_or_none()
                 assert old_picture_file is None
 
         finally:

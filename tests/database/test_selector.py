@@ -7,26 +7,26 @@ from sqlalchemy.orm import Session
 from albums.database import connection, selector
 from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicTag, PictureType, StreamInfo
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
+from albums.types import Album, PictureFile, Tag, Track, TrackPicture
 
 
 class TestSelector:
     @pytest.fixture(scope="function", autouse=True)
     def setup_tests(self):
-        TestSelector.album = AlbumEntity(
+        TestSelector.album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TITLE, value="Foo"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Bar"),
-                        TrackTagEntity(tag=BasicTag.ALBUMARTIST, value="Various Artists"),
-                        TrackTagEntity(tag=BasicTag.ALBUM, value="=:="),
+                        Tag(tag=BasicTag.TITLE, value="Foo"),
+                        Tag(tag=BasicTag.ARTIST, value="Bar"),
+                        Tag(tag=BasicTag.ALBUMARTIST, value="Various Artists"),
+                        Tag(tag=BasicTag.ALBUM, value="=:="),
                     ],
                     stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100),
                     pictures=[
-                        TrackPictureEntity(
+                        TrackPicture(
                             picture_info=PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234", (("format", "image/png"),)),
                             picture_type=PictureType.COVER_FRONT,
                         )
@@ -36,29 +36,29 @@ class TestSelector:
             collections=["test"],
             ignore_checks=["artist-tag"],
             picture_files=[
-                PictureFileEntity(
+                PictureFile(
                     filename="folder.jpg", picture_info=PictureInfo("test", 100, 100, 24, 4096, b"1234"), modify_timestamp=999, cover_source=True
                 )
             ],
             scanner=3,
         )
-        TestSelector.album2 = AlbumEntity(
+        TestSelector.album2 = Album(
             path="baz" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TITLE, value="A"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Baz"),
-                        TrackTagEntity(tag=BasicTag.ALBUM, value="al bum"),
+                        Tag(tag=BasicTag.TITLE, value="A"),
+                        Tag(tag=BasicTag.ARTIST, value="Baz"),
+                        Tag(tag=BasicTag.ALBUM, value="al bum"),
                     ],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TITLE, value="Foo"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Baz"),
-                        TrackTagEntity(tag=BasicTag.ALBUM, value="al bum"),
+                        Tag(tag=BasicTag.TITLE, value="Foo"),
+                        Tag(tag=BasicTag.ARTIST, value="Baz"),
+                        Tag(tag=BasicTag.ALBUM, value="al bum"),
                     ],
                 ),
             ],

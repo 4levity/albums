@@ -8,7 +8,7 @@ from rich.markup import escape
 from ...interactive.image_table import render_image_table
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import delete_files_except
 
@@ -23,7 +23,7 @@ class CheckCoverUnique(Check):
     default_config = {"enabled": True}
     must_pass_checks = {"duplicate-image"}
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         tracks_with_cover = 0
         album_art = [(track.filename, True, [p.to_picture() for p in track.pictures]) for track in album.tracks]
         album_art.extend([(file.filename, False, [file.to_picture()]) for file in album.picture_files])
@@ -138,7 +138,7 @@ class CheckCoverUnique(Check):
             return largest_image_file
         return None
 
-    def _fix_select_cover_source_or_delete(self, album: AlbumEntity, option: str, options: Sequence[str], all_filenames: Sequence[str]) -> bool:
+    def _fix_select_cover_source_or_delete(self, album: Album, option: str, options: Sequence[str], all_filenames: Sequence[str]) -> bool:
         if option.startswith(OPTION_DELETE_ALL_COVER_IMAGES):
             return delete_files_except(self.ctx, None, album, all_filenames)
         elif option.startswith(OPTION_SELECT_COVER_IMAGE):

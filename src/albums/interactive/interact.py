@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..types import AlbumEntity, CheckResult
+from ..types import Album, CheckResult
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,7 @@ OPTION_DO_NOTHING = ">> Do nothing"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
-def interact(
-    ctx: Context, session: Session, check_name: str, check_result: CheckResult, album: AlbumEntity, show_ignore_option: bool
-) -> Tuple[bool, bool]:
+def interact(ctx: Context, session: Session, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool) -> Tuple[bool, bool]:
     # if there is a fixer, offer the options it specifies
     #
     # always offer these options:
@@ -119,7 +117,7 @@ def interact(
 
 def prompt_ignore_checks(ctx: Context, album_id: int, check_name: str):
     with Session(ctx.db) as session:
-        album = session.execute(select(AlbumEntity).where(AlbumEntity.album_id == album_id)).tuples().one()[0]
+        album = session.execute(select(Album).where(Album.album_id == album_id)).tuples().one()[0]
         if check_name in album.ignore_checks:
             logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
         elif shortcuts.confirm(f'Do you want to ignore the check "{check_name}" for this album?'):

@@ -5,7 +5,7 @@ from rich.markup import escape
 from ...app import Context
 from ...tagger.folder import AlbumTagger
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..helpers import describe_track_number, ordered_tracks
 
 
@@ -28,7 +28,7 @@ OPTION_REMOVE_TAG = ">> Remove tag"
 def check_policy(
     ctx: Context,
     tagger: AlbumTagger,
-    album: AlbumEntity,
+    album: Album,
     policy: Policy,
     tag: BasicTag,
     corresponding_index_tag: BasicTag,

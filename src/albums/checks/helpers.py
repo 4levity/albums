@@ -7,16 +7,16 @@ from rich.markup import escape
 
 from ..app import Context
 from ..tagger.types import BasicTag
-from ..types import AlbumEntity, TrackEntity
+from ..types import Album, Track
 
 FRONT_COVER_FILENAME = "cover"
 
 
-def album_display_name(ctx: Context, album: AlbumEntity) -> str:
+def album_display_name(ctx: Context, album: Album) -> str:
     return ctx.config.library.name if album.path == "." else escape(album.path + " ").strip()
 
 
-def get_tracks_by_disc(tracks: Sequence[TrackEntity]) -> Mapping[int, List[TrackEntity]] | None:
+def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | None:
     """
     Return a dict mapping a list of tracks to discnumber values if possible. Tracks with no discnumber are mapped to 0.
 
@@ -36,7 +36,7 @@ def get_tracks_by_disc(tracks: Sequence[TrackEntity]) -> Mapping[int, List[Track
     ):
         return None
 
-    tracks_by_disc: defaultdict[int, list[TrackEntity]] = defaultdict(list)
+    tracks_by_disc: defaultdict[int, list[Track]] = defaultdict(list)
     for track in tracks:
         discnumber = int(track.get(BasicTag.DISCNUMBER, default=["0"])[0])
         tracks_by_disc[discnumber].append(track)
@@ -47,7 +47,7 @@ def get_tracks_by_disc(tracks: Sequence[TrackEntity]) -> Mapping[int, List[Track
     return tracks_by_disc
 
 
-def ordered_tracks(album: AlbumEntity):
+def ordered_tracks(album: Album):
     # sort by discnumber/tracknumber tag if all tracks have one
     has_discnumber = all(len(track.get(BasicTag.DISCNUMBER, default=[])) == 1 for track in album.tracks)
     if all(len(track.get(BasicTag.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
@@ -59,7 +59,7 @@ def ordered_tracks(album: AlbumEntity):
         return album.tracks
 
 
-def describe_track_number(track: TrackEntity):
+def describe_track_number(track: Track):
     tags = track.tag_dict()
 
     if BasicTag.DISCNUMBER in tags or BasicTag.DISCTOTAL in tags:
@@ -101,7 +101,7 @@ def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
     return (disc, track, title if title else None)
 
 
-def delete_files_except(ctx: Context, keep_filename: str | None, album: AlbumEntity, filenames: Collection[str]):
+def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, filenames: Collection[str]):
     if keep_filename is not None and keep_filename not in filenames:
         raise ValueError(f"invalid option {keep_filename} is not one of {filenames}")
 

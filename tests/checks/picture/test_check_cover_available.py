@@ -7,18 +7,18 @@ from albums.checks.picture.check_cover_available import CheckCoverAvailable
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import PictureType, TaggerFile
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 from ...fixtures.create_library import make_image_data
 
 
 class TestCheckCoverAvailable:
     def test_cover_missing_ok(self):
-        album = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
+        album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         assert not CheckCoverAvailable(Context()).check(album)
 
     def test_cover_missing_required(self):
-        album = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
+        album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         ctx = Context()
         ctx.config.checks = {CheckCoverAvailable.name: {"cover_required": True}}
         result = CheckCoverAvailable(ctx).check(album)
@@ -26,16 +26,16 @@ class TestCheckCoverAvailable:
         assert "album does not have a COVER_FRONT picture" in result.message
 
     def test_album_pictures_but_no_front_cover(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
                 ),
             ],
         )
@@ -67,10 +67,10 @@ class TestCheckCoverAvailable:
         )
 
     def test_album_picture_files_no_front_cover(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")],
-            picture_files=[PictureFileEntity(filename="other.png", picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""))],
+            tracks=[Track(filename="1.flac"), Track(filename="2.flac")],
+            picture_files=[PictureFile(filename="other.png", picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""))],
         )
         result = CheckCoverAvailable(Context()).check(album)
         assert result is not None
@@ -86,19 +86,19 @@ class TestCheckCoverAvailable:
         assert mock_rename.call_args_list == [call(Path(".") / album.path / "other.png", Path(".") / album.path / "cover.png")]
 
     def test_no_cover_prefer_rename(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.OTHER)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.OTHER)],
                 ),
-                TrackEntity(
+                Track(
                     filename="2.flac",
-                    pictures=[TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.OTHER)],
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.OTHER)],
                 ),
             ],
-            picture_files=[PictureFileEntity(filename="other.png", picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""))],
+            picture_files=[PictureFile(filename="other.png", picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""))],
         )
         result = CheckCoverAvailable(Context()).check(album)
         assert result is not None

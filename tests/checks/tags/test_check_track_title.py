@@ -6,30 +6,30 @@ from albums.app import Context
 from albums.checks.tags.check_track_title import CheckTrackTitle
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckTrackTitle:
     def test_check_track_title_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                TrackEntity(filename="1 foo.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-                TrackEntity(filename="2 bar.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="bar")]),
-                TrackEntity(filename="3 baz.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="baz")]),
+                Track(filename="1 foo.mp3", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
+                Track(filename="2 bar.mp3", tags=[Tag(tag=BasicTag.TITLE, value="bar")]),
+                Track(filename="3 baz.mp3", tags=[Tag(tag=BasicTag.TITLE, value="baz")]),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
         assert result is None
 
     def test_check_track_title_guess_all(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                TrackEntity(filename="1 foo.flac"),
-                TrackEntity(filename="2 - bar.flac"),
-                TrackEntity(filename="3. baz.flac"),
-                TrackEntity(filename="bop.flac"),
+                Track(filename="1 foo.flac"),
+                Track(filename="2 - bar.flac"),
+                Track(filename="3. baz.flac"),
+                Track(filename="bop.flac"),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -51,12 +51,12 @@ class TestCheckTrackTitle:
         ]
 
     def test_check_track_title_guess_some(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-                TrackEntity(filename="2 bar.flac"),
-                TrackEntity(filename="3.flac"),
+                Track(filename="1 foo.flac", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
+                Track(filename="2 bar.flac"),
+                Track(filename="3.flac"),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -72,19 +72,19 @@ class TestCheckTrackTitle:
         assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TITLE, "bar")])
 
     def test_check_track_title_no_guess(self, mocker):
-        album = AlbumEntity(path="Foobar" + os.sep, tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
+        album = Album(path="Foobar" + os.sep, tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         result = CheckTrackTitle(Context()).check(album)
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert not result.fixer
 
     def test_check_track_title_with_disc_number(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                TrackEntity(filename="1 foo.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="foo")]),
-                TrackEntity(filename="2 bar.flac"),
-                TrackEntity(filename="3 baz.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="baz")]),
+                Track(filename="1 foo.flac", tags=[Tag(tag=BasicTag.TITLE, value="foo")]),
+                Track(filename="2 bar.flac"),
+                Track(filename="3 baz.flac", tags=[Tag(tag=BasicTag.TITLE, value="baz")]),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)

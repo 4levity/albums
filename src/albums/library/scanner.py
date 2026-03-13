@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..app import SCANNER_VERSION, Context
 from ..tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
-from ..types import AlbumEntity, PictureFileEntity, ScanHistoryEntity, TrackEntity, TrackPictureEntity, TrackTagEntity
+from ..types import Album, PictureFile, ScanHistoryEntity, Tag, Track, TrackPicture
 from .folder import Ministat, read_binary_file, stat_dir
 
 MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
@@ -34,7 +34,7 @@ class AlbumScanResult(Enum):
 logger = logging.getLogger(__name__)
 
 
-def scan(ctx: Context, session: Session | None = None, scan_albums: Iterator[AlbumEntity] | None = None, reread: bool = False) -> tuple[int, bool]:
+def scan(ctx: Context, session: Session | None = None, scan_albums: Iterator[Album] | None = None, reread: bool = False) -> tuple[int, bool]:
     if session is None:
         with Session(ctx.db) as session:
             (albums_total, any_changes) = scan(ctx, session, scan_albums, reread)
@@ -106,14 +106,14 @@ def scan_library(
     for (
         album_id,
         path,
-    ) in session.execute(select(AlbumEntity.album_id, AlbumEntity.path)).tuples():
+    ) in session.execute(select(Album.album_id, Album.path)).tuples():
         if album_id is not None:  # it's not
             current_album_paths.add(path)
             unvisited_album_ids.add(album_id)
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for path in paths:
         if path in current_album_paths:  # 99% chance
-            album_match = session.execute(select(AlbumEntity).where(AlbumEntity.path == path)).tuples().one_or_none() or (None,)
+            album_match = session.execute(select(Album).where(Album.path == path)).tuples().one_or_none() or (None,)
         else:
             album_match = (None,)
         (album,) = album_match
@@ -129,7 +129,7 @@ def scan_library(
                         album.scanner = SCANNER_VERSION
                     path_scan_transacion.commit()
             else:
-                album = AlbumEntity(path=path, scanner=SCANNER_VERSION)
+                album = Album(path=path, scanner=SCANNER_VERSION)
                 new_result = _scan_album(ctx, tagger, album, False)
                 if new_result == AlbumScanResult.UPDATED:
                     result = AlbumScanResult.NEW
@@ -144,12 +144,12 @@ def scan_library(
 
     for album_id in unvisited_album_ids:
         logger.info(f"{AlbumScanResult.REMOVED.name} album {album_id} (not found)")
-        session.execute(delete(AlbumEntity).where(AlbumEntity.album_id == album_id))
+        session.execute(delete(Album).where(Album.album_id == album_id))
     return scan_results
 
 
 def rescan_albums(
-    ctx: Context, session: Session, scan_albums: Iterator[AlbumEntity], update_progress: Callable[[], None], reread: bool = False
+    ctx: Context, session: Session, scan_albums: Iterator[Album], update_progress: Callable[[], None], reread: bool = False
 ) -> Mapping[AlbumScanResult, int]:
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for album in scan_albums:
@@ -159,7 +159,7 @@ def rescan_albums(
             scan_results[result] += 1
             if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                 if result == AlbumScanResult.REMOVED:
-                    session.execute(delete(AlbumEntity).where(AlbumEntity.album_id == album.album_id))
+                    session.execute(delete(Album).where(Album.album_id == album.album_id))
                 album.scanner = SCANNER_VERSION
                 album_scan_transaction.commit()
         update_progress()
@@ -169,12 +169,12 @@ def rescan_albums(
 def _scan_track(tagger: AlbumTagger, filename: str, stat: Ministat):
     with tagger.open(filename) as tags:
         scan_result = tags.scan()
-        tags = [TrackTagEntity(tag=tag, value=value) for tag, values in scan_result.tags for value in values]
+        tags = [Tag(tag=tag, value=value) for tag, values in scan_result.tags for value in values]
         pictures = [
-            TrackPictureEntity(picture_type=picture.type, picture_info=picture.picture_info, description=picture.description, embed_ix=embed_ix)
+            TrackPicture(picture_type=picture.type, picture_info=picture.picture_info, description=picture.description, embed_ix=embed_ix)
             for embed_ix, picture in enumerate(scan_result.pictures)
         ]
-        return TrackEntity(
+        return Track(
             filename=filename,
             file_size=stat.file_size,
             modify_timestamp=stat.modify_timestamp,
@@ -195,10 +195,10 @@ def _scan_picture_file(tagger: AlbumTagger, filename: str, stat: Ministat):
 
     expect_mime_type, _ = mimetypes.guess_type(filename)
     picture_info = tagger.get_picture_scanner().scan(read_binary_file(tagger.path() / filename), expect_mime_type)
-    return PictureFileEntity(filename=filename, modify_timestamp=stat.modify_timestamp, cover_source=False, picture_info=picture_info)
+    return PictureFile(filename=filename, modify_timestamp=stat.modify_timestamp, cover_source=False, picture_info=picture_info)
 
 
-def _scan_file(album: AlbumEntity, tagger: AlbumTagger, path: Path, stat: Ministat, replace: bool) -> None:
+def _scan_file(album: Album, tagger: AlbumTagger, path: Path, stat: Ministat, replace: bool) -> None:
     if str.lower(path.suffix) in AUDIO_FILE_SUFFIXES:
         if replace:
             while (to_remove := next((t for t in album.tracks if t.filename == path.name), None)) is not None:
@@ -216,7 +216,7 @@ def _scan_file(album: AlbumEntity, tagger: AlbumTagger, path: Path, stat: Minist
             album.picture_files.append(new_picture_file)
 
 
-def _scan_album(ctx: Context, tagger: AlbumTagger, album: AlbumEntity, reread: bool = False) -> AlbumScanResult:
+def _scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = False) -> AlbumScanResult:
     album_path = ctx.config.library / album.path
     stored_files_list = [(t.filename, Ministat(t.file_size, t.modify_timestamp)) for t in album.tracks] + [
         (f.filename, Ministat(f.picture_info.file_size, f.modify_timestamp)) for f in album.picture_files

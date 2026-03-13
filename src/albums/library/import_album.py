@@ -10,14 +10,14 @@ from rich.markup import escape
 
 from albums.library.synchronizer import copy_files_with_progress
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity
+from albums.types import Album
 
 from ..app import Context
 
 logger = logging.getLogger(__name__)
 
 
-def import_album(ctx: Context, source_path: Path, destination_path_in_library: str, album: AlbumEntity, extra: bool, recursive: bool):
+def import_album(ctx: Context, source_path: Path, destination_path_in_library: str, album: Album, extra: bool, recursive: bool):
     src = source_path.resolve()
     if not src.is_dir():
         logger.error(f"import_album: not a directory: {str(src)}")
@@ -48,7 +48,7 @@ def import_album(ctx: Context, source_path: Path, destination_path_in_library: s
     # TODO add album to database immediately + include cover source mark or ignored checks from import process
 
 
-def make_library_paths(ctx: Context, album: AlbumEntity):
+def make_library_paths(ctx: Context, album: Album):
     used_identifiers = set(ctx.config.default_import_path.get_identifiers() + ctx.config.default_import_path_various.get_identifiers())
     used_identifiers.update(identifier for path_T in ctx.config.more_import_paths for identifier in path_T.get_identifiers())
     unknown_identifiers = used_identifiers - {"artist", "a1", "A1", "album"}

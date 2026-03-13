@@ -6,23 +6,23 @@ from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckArtistTag:
     def test_artist_tag_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="A" + os.sep,
             tracks=[
-                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="A")]),
-                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="B")]),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="A")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="B")]),
             ],
         )
         result = CheckArtistTag(Context()).check(album)
         assert result is None
 
     def test_artist_tag_automatic(self, mocker):
-        album = AlbumEntity(path=f"Foo{os.sep}Bar{os.sep}", tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
+        album = Album(path=f"Foo{os.sep}Bar{os.sep}", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         result = CheckArtistTag(Context()).check(album)
         assert result
         assert "2 tracks missing artist tag" in result.message
@@ -40,12 +40,12 @@ class TestCheckArtistTag:
         ]
 
     def test_artist_tag_conflict(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path=f"Foo{os.sep}Bar{os.sep}",
             tracks=[
-                TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Baz")]),
-                TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Baz")]),
-                TrackEntity(filename="3.flac"),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Baz")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Baz")]),
+                Track(filename="3.flac"),
             ],
         )
         result = CheckArtistTag(Context()).check(album)

@@ -6,24 +6,24 @@ from albums.checks.picture.check_invalid_image import CheckInvalidImage
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import PictureType, TaggerFile
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, PictureFile, Track, TrackPicture
 
 
 class TestCheckCheckInvalidImage:
     def test_invalid_image_ok(self):
-        pic = TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
-        album = AlbumEntity(
+        pic = TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac", pictures=[pic])],
-            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=pic.picture_info)],
+            tracks=[Track(filename="1.flac", pictures=[pic])],
+            picture_files=[PictureFile(filename="cover.jpg", picture_info=pic.picture_info)],
         )
         assert not CheckInvalidImage(Context()).check(album)
 
     def test_error_image_in_track(self, mocker):
-        pic = TrackPictureEntity(
+        pic = TrackPicture(
             picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), picture_type=PictureType.COVER_FRONT
         )
-        album = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac", pictures=[pic])])
+        album = Album(path="", tracks=[Track(filename="1.flac", pictures=[pic])])
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None
         assert "image load errors: test load failed" in result.message
@@ -35,7 +35,7 @@ class TestCheckCheckInvalidImage:
 
         tagger = TaggerFile()
         mock_remove_picture = mocker.patch.object(tagger, "remove_picture")
-        bad_pic = TrackPictureEntity(
+        bad_pic = TrackPicture(
             picture_info=PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.picture_info.load_issue)["error"]),)),
             picture_type=PictureType.COVER_FRONT,
         )
@@ -53,13 +53,13 @@ class TestCheckCheckInvalidImage:
         assert mock_remove_picture.call_args_list[0][0][0].picture_info.load_issue == (("error", "test load failed"),)
 
     def test_error_image_in_file(self, mocker):
-        pic = TrackPictureEntity(
+        pic = TrackPicture(
             picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"", (("error", "test load failed"),)), picture_type=PictureType.COVER_FRONT
         )
-        album = AlbumEntity(
+        album = Album(
             path="",
-            tracks=[TrackEntity(filename="1.flac")],
-            picture_files=[PictureFileEntity(filename="cover.jpg", picture_info=pic.picture_info)],
+            tracks=[Track(filename="1.flac")],
+            picture_files=[PictureFile(filename="cover.jpg", picture_info=pic.picture_info)],
         )
         result = CheckInvalidImage(Context()).check(album)
         assert result is not None

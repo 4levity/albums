@@ -4,7 +4,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from ..helpers import parse_filename, show_tag
 
@@ -17,7 +17,7 @@ class CheckTrackTitle(Check):
     name = "track-title"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
@@ -47,7 +47,7 @@ class CheckTrackTitle(Check):
 
         return None
 
-    def _proposed_title(self, track: TrackEntity):
+    def _proposed_title(self, track: Track):
         if track.get(BasicTag.TITLE, default=""):
             return None
 
@@ -55,7 +55,7 @@ class CheckTrackTitle(Check):
         # TODO: if it looks like spaces were converted to underscores, consider trying to recover
         return title
 
-    def _fix(self, album: AlbumEntity, option: str) -> bool:
+    def _fix(self, album: Album, option: str) -> bool:
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename

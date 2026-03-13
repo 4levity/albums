@@ -54,7 +54,7 @@ class IgnoreCheckEntity(Base):
 
     album_ignore_check_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
-    album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="ignore_check_entities")
+    album: Mapped[Optional[Album]] = relationship("Album", back_populates="ignore_check_entities")
 
     check_name: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -62,13 +62,13 @@ class IgnoreCheckEntity(Base):
         self.check_name = check_name
 
 
-class TrackPictureEntity(Base):
+class TrackPicture(Base):
     __tablename__ = "track_picture"
     __table_args__ = (Index("idx_track_picture_track_id", "track_id"),)
 
     track_picture_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[TrackEntity]] = relationship("TrackEntity", back_populates="pictures")
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="pictures")
 
     picture_type: Mapped[PictureType] = mapped_column(IntEnumAsInt[PictureType](PictureType), nullable=False)
     embed_ix: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -88,29 +88,29 @@ class TrackPictureEntity(Base):
     def to_picture(self) -> Picture:
         return Picture(self.picture_info, self.picture_type, self.description or "")
 
-    def __lt__(self, other: TrackPictureEntity):
+    def __lt__(self, other: TrackPicture):
         return self.embed_ix < other.embed_ix
 
 
-class TrackTagEntity(Base):
+class Tag(Base):
     __tablename__ = "track_tag"
     __table_args__ = (Index("idx_track_tag_track_id", "track_id"),)
 
     track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[TrackEntity]] = relationship("TrackEntity", back_populates="tags")
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
 
     tag: Mapped[BasicTag] = mapped_column("name", Enum(BasicTag, native_enum=False, values_callable=lambda e: [x.value for x in e]))  # pyright: ignore[reportUnknownVariableType, reportUnknownLambdaType, reportUnknownMemberType]
     value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-class TrackEntity(Base):
+class Track(Base):
     __tablename__ = "track"
     __table_args__ = (Index("idx_track_album_id", "album_id"),)
 
     track_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
-    album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="tracks")
+    album: Mapped[Optional[Album]] = relationship("Album", back_populates="tracks")
 
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -122,8 +122,8 @@ class TrackEntity(Base):
     _stream_sample_rate: Mapped[int] = mapped_column("stream_sample_rate", Integer, nullable=False, default=0)
     stream = composite(StreamInfo, _stream_length, _stream_bitrate, _stream_channels, _stream_codec, _stream_sample_rate)
 
-    pictures: Mapped[List[TrackPictureEntity]] = relationship("TrackPictureEntity", back_populates="track", cascade="all, delete-orphan")
-    tags: Mapped[List[TrackTagEntity]] = relationship("TrackTagEntity", back_populates="track", cascade="all, delete-orphan")
+    pictures: Mapped[List[TrackPicture]] = relationship("TrackPicture", back_populates="track", cascade="all, delete-orphan")
+    tags: Mapped[List[Tag]] = relationship("Tag", back_populates="track", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -156,17 +156,17 @@ class TrackEntity(Base):
             return default
         return result
 
-    def __lt__(self, other: TrackEntity):
+    def __lt__(self, other: Track):
         return self.filename < other.filename
 
 
-class PictureFileEntity(Base):
+class PictureFile(Base):
     __tablename__ = "album_picture_file"
     __table_args__ = (Index("idx_album_picture_file_album_id", "album_id"),)
 
     album_picture_file_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
-    album: Mapped[Optional[AlbumEntity]] = relationship("AlbumEntity", back_populates="picture_files")
+    album: Mapped[Optional[Album]] = relationship("Album", back_populates="picture_files")
 
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     modify_timestamp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -191,11 +191,11 @@ class PictureFileEntity(Base):
     def to_picture(self) -> Picture:
         return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
 
-    def __lt__(self, other: TrackEntity):
+    def __lt__(self, other: Track):
         return self.filename < other.filename
 
 
-class AlbumEntity(Base):
+class Album(Base):
     __tablename__ = "album"
     __table_args__ = (Index("album_path", "path", unique=True),)
 
@@ -212,8 +212,8 @@ class AlbumEntity(Base):
     )
     ignore_check_entities: Mapped[List[IgnoreCheckEntity]] = relationship("IgnoreCheckEntity", back_populates="album", cascade="all, delete-orphan")
     ignore_checks: AssociationProxy[List[str]] = association_proxy("ignore_check_entities", "check_name")
-    picture_files: Mapped[List[PictureFileEntity]] = relationship("PictureFileEntity", back_populates="album", cascade="all, delete-orphan")
-    tracks: Mapped[List[TrackEntity]] = relationship("TrackEntity", back_populates="album", cascade="all, delete-orphan")
+    picture_files: Mapped[List[PictureFile]] = relationship("PictureFile", back_populates="album", cascade="all, delete-orphan")
+    tracks: Mapped[List[Track]] = relationship("Track", back_populates="album", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -237,7 +237,7 @@ class AlbumCollectionAssociation(Base):
     collection: Mapped[CollectionEntity] = relationship()
     collection_name: AssociationProxy[str] = association_proxy("collection", "collection_name")
 
-    album: Mapped[AlbumEntity] = relationship(back_populates="collection_associations")
+    album: Mapped[Album] = relationship(back_populates="collection_associations")
 
 
 class ScanHistoryEntity(Base):

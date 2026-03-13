@@ -11,7 +11,7 @@ from ...interactive.image_table import render_image_table
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture, PictureType
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
 
@@ -26,7 +26,7 @@ class CheckCoverAvailable(Check):
     def init(self, check_config: dict[str, Any]):
         self.cover_required = bool(check_config.get("cover_required", CheckCoverAvailable.default_config["cover_required"]))
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         if self.cover_required and not all(AlbumTagger.supports(track.filename, Cap.PICTURES) for track in album.tracks):
             return None  # if cover is required, only run check on albums where embedded pictures are supported
 
@@ -75,7 +75,7 @@ class CheckCoverAvailable(Check):
         details = f"{picture.picture_info.mime_type} {picture.type.name}"
         return f"{first_source}{f' (and {len(sources) - 1} more)' if len(sources) > 1 else ''} {details}"
 
-    def _fix_set_cover(self, album: AlbumEntity, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[str]]):
+    def _fix_set_cover(self, album: Album, option: str, options: list[str], pics: list[Picture], sources: Mapping[Picture, Sequence[str]]):
         ix = options.index(option)
         pic = pics[ix]
         file_sources = [filename for filename in sources[pic] if Path(filename).suffix in SUPPORTED_IMAGE_SUFFIXES]

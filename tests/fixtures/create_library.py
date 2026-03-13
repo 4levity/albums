@@ -9,7 +9,7 @@ from PIL import Image
 from albums.picture.format import MIME_PILLOW_FORMAT
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture
-from albums.types import AlbumEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, Track, TrackPicture
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,
@@ -23,7 +23,7 @@ from .empty_files import (
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
 
-def create_track_file(path: Path, spec: TrackEntity):
+def create_track_file(path: Path, spec: Track):
     filename: Path = path / spec.filename
     with open(filename, "wb") as file:
         if filename.suffix == ".flac":
@@ -42,7 +42,7 @@ def create_track_file(path: Path, spec: TrackEntity):
     with tagger.open(spec.filename) as tags:
         for pic in spec.pictures:
             image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, MIME_PILLOW_FORMAT[pic.picture_info.mime_type])
-            picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPictureEntity) else pic
+            picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
             tags.add_picture(picture, image_data)
         for tag_name, values in spec.tag_dict().items():
             tags.set_tag(tag_name, list(values))
@@ -53,7 +53,7 @@ def create_picture_file(path: Path, width: int = 400, height: int = 400, color: 
     image.save(path)
 
 
-def create_album_in_library(library_path: Path, album: AlbumEntity):
+def create_album_in_library(library_path: Path, album: Album):
     path = library_path / album.path
     os.makedirs(path)
     for track in album.tracks:
@@ -62,7 +62,7 @@ def create_album_in_library(library_path: Path, album: AlbumEntity):
         create_picture_file(path / file.filename, file.picture_info.width, file.picture_info.height)
 
 
-def create_library(library_name: str, albums: Collection[AlbumEntity]):
+def create_library(library_name: str, albums: Collection[Album]):
     library_path = test_data_path / library_name
     shutil.rmtree(library_path, ignore_errors=True)
     os.makedirs(library_path)

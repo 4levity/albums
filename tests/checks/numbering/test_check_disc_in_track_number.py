@@ -5,25 +5,25 @@ from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckDiscInTrackNumber:
     def test_check_track_number_disc_in_tracknumber_ok(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1-1.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
                 ),
-                TrackEntity(
+                Track(
                     filename="1-2.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
                 ),
-                TrackEntity(
+                Track(
                     filename="2-1.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1"), Tag(tag=BasicTag.DISCNUMBER, value="2")],
                 ),
             ],
         )
@@ -31,20 +31,20 @@ class TestCheckDiscInTrackNumber:
         assert result is None
 
     def test_check_track_number_disc_in_tracknumber_unfixable(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1-1.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1-1"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
                 ),
-                TrackEntity(
+                Track(
                     filename="1-2.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-2"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1-2"), Tag(tag=BasicTag.DISCNUMBER, value="1")],
                 ),
-                TrackEntity(
+                Track(
                     filename="2-1.flac",
-                    tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2-1"), TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")],
+                    tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2-1"), Tag(tag=BasicTag.DISCNUMBER, value="2")],
                 ),
             ],
         )
@@ -52,12 +52,12 @@ class TestCheckDiscInTrackNumber:
         assert result is None
 
     def test_check_track_number_disc_in_tracknumber(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-1")]),
-                TrackEntity(filename="1-2.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="1-2")]),
-                TrackEntity(filename="2-1.flac", tags=[TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="2-1")]),
+                Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1-1")]),
+                Track(filename="1-2.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="1-2")]),
+                Track(filename="2-1.flac", tags=[Tag(tag=BasicTag.TRACKNUMBER, value="2-1")]),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)

@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
 
@@ -29,7 +29,7 @@ class CheckAlbumArtist(Check):
             self.remove_redundant = False
             self.require_redundant = False
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
@@ -96,7 +96,7 @@ class CheckAlbumArtist(Check):
                 self._make_fixer(album, candidates_various, show_free_text_option=True),
             )
 
-    def _make_fixer(self, album: AlbumEntity, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
+    def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
         table = (
             ["filename", "album tag", "artist", "album artist"],
             [
@@ -118,7 +118,7 @@ class CheckAlbumArtist(Check):
             "select album artist to use for all tracks",
         )
 
-    def _fix(self, album: AlbumEntity, album_artist_value: str) -> bool:
+    def _fix(self, album: Album, album_artist_value: str) -> bool:
         changed = False
         for track in sorted(album.tracks, key=lambda track: track.filename):
             file = self.ctx.config.library / album.path / track.filename

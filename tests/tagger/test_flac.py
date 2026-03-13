@@ -8,24 +8,24 @@ from mutagen.flac import Picture as FlacPicture
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture, PictureType
-from albums.types import AlbumEntity, TrackEntity, TrackPictureEntity
+from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
-track1 = TrackEntity(
+track1 = Track(
     filename="1.flac",
     pictures=[
-        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
     ],
 )
-track2 = TrackEntity(
+track2 = Track(
     filename="2.flac",
     pictures=[
-        TrackPictureEntity(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
-        TrackPictureEntity(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
+        TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
+        TrackPicture(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
     ],
 )
-album = AlbumEntity(path="bar" + os.sep, tracks=[track1, track2])
+album = Album(path="bar" + os.sep, tracks=[track1, track2])
 
 
 class TestFlac:

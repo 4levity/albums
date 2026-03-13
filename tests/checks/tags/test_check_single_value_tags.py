@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_single_value_tags import CheckSingleValueTags
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 def context(checks, db=None):
@@ -16,36 +16,30 @@ def context(checks, db=None):
 
 class TestCheckSingleValueTags:
     def test_single_value_tags_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="blue")]
-                ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="red")]
-                ),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="blue")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
         assert result is None
 
     def test_single_value_tags_concat(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Bob"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="blue"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="no, yellow"),
+                        Tag(tag=BasicTag.ARTIST, value="Alice"),
+                        Tag(tag=BasicTag.ARTIST, value="Bob"),
+                        Tag(tag=BasicTag.TITLE, value="blue"),
+                        Tag(tag=BasicTag.TITLE, value="no, yellow"),
                     ],
                 ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="red")]
-                ),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
@@ -70,21 +64,19 @@ class TestCheckSingleValueTags:
         )
 
     def test_single_value_tags_concat_no_auto(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Bob"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="blue"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="no, yellow"),
+                        Tag(tag=BasicTag.ARTIST, value="Alice"),
+                        Tag(tag=BasicTag.ARTIST, value="Bob"),
+                        Tag(tag=BasicTag.TITLE, value="blue"),
+                        Tag(tag=BasicTag.TITLE, value="no, yellow"),
                     ],
                 ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"), TrackTagEntity(tag=BasicTag.TITLE, value="red")]
-                ),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.ARTIST, value="Alice"), Tag(tag=BasicTag.TITLE, value="red")]),
             ],
         )
         ctx = Context()
@@ -107,18 +99,18 @@ class TestCheckSingleValueTags:
         )
 
     def test_single_value_tags_duplicates(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Alice"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="Bob"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="blue"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="blue"),
-                        TrackTagEntity(tag=BasicTag.TITLE, value="blue"),
+                        Tag(tag=BasicTag.ARTIST, value="Alice"),
+                        Tag(tag=BasicTag.ARTIST, value="Alice"),
+                        Tag(tag=BasicTag.ARTIST, value="Bob"),
+                        Tag(tag=BasicTag.TITLE, value="blue"),
+                        Tag(tag=BasicTag.TITLE, value="blue"),
+                        Tag(tag=BasicTag.TITLE, value="blue"),
                     ],
                 )
             ],

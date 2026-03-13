@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
 
@@ -20,7 +20,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
     default_config = {"enabled": True}
     must_pass_checks = {"disc-in-track-number"}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -42,7 +42,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
 
         return None
 
-    def _fix(self, album: AlbumEntity, option: str) -> bool:
+    def _fix(self, album: Album, option: str) -> bool:
         if option != OPTION_AUTOMATIC_REPAIR:
             raise ValueError(f"invalid option: {option}")
 
@@ -74,7 +74,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         return changed
 
 
-def get_issues_invalid_disc_or_track_number(tracks: Sequence[TrackEntity]):
+def get_issues_invalid_disc_or_track_number(tracks: Sequence[Track]):
     issues: set[str] = set()
     for track in tracks:
         track_tags = track.tag_dict()

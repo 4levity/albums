@@ -12,7 +12,7 @@ from ...interactive.image_table import render_image_table
 from ...picture.format import IMAGE_MODE_BPP, MIME_PILLOW_FORMAT
 from ...picture.info import PictureInfo
 from ...tagger.types import Picture, PictureType
-from ...types import AlbumEntity, CheckResult, Fixer, PictureFileEntity
+from ...types import Album, CheckResult, Fixer, PictureFile
 from ..base_check import Check
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class CheckCoverDimensions(Check):
         if self.create_jpeg_quality < 1 or self.create_jpeg_quality > 95:
             raise ValueError("cover-dimensions.create_jpeg_quality must be between 1 and 95")
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         issues: set[str] = set()
         embedded_covers: dict[Picture, str] = {}
         for track in album.tracks:
@@ -145,7 +145,7 @@ class CheckCoverDimensions(Check):
         if issues:
             return CheckResult(", ".join(list(issues)))
 
-    def _fix_save_new_cover(self, album: AlbumEntity, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
+    def _fix_save_new_cover(self, album: Album, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
         (picture, _, image_data) = get_image_data()
         suffix = mimetypes.guess_extension(picture.picture_info.mime_type)
         if not suffix:
@@ -168,7 +168,7 @@ class CheckCoverDimensions(Check):
             album.picture_files.remove(source_file)
 
         # mark new/replaced image as cover_source
-        album.picture_files.append(PictureFileEntity(filename=new_path.name, picture_info=picture.picture_info, cover_source=True))
+        album.picture_files.append(PictureFile(filename=new_path.name, picture_info=picture.picture_info, cover_source=True))
 
         with open(new_path, "wb") as f:
             self.ctx.console.print(f"Writing {new_path.name}")
@@ -177,7 +177,7 @@ class CheckCoverDimensions(Check):
 
     def _render_table(
         self,
-        album: AlbumEntity,
+        album: Album,
         cover: Picture,
         picture_source: Dict[Picture, List[str]],
         get_preview: Callable[[], Tuple[Picture, Image.Image, bytes]],

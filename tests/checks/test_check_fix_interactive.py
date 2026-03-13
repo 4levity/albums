@@ -8,11 +8,11 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.database import connection
 from albums.interactive.interact import OPTION_IGNORE_CHECK, interact
-from albums.types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from albums.types import Album, CheckResult, Fixer, Track
 
 
 class MockFixer(Fixer):
-    def __init__(self, ctx: Context, album: AlbumEntity, options=["A", "B"], option_free_text=True, option_automatic_index: int | None = 0):
+    def __init__(self, ctx: Context, album: Album, options=["A", "B"], option_free_text=True, option_automatic_index: int | None = 0):
         table: Tuple[Sequence[str], Sequence[Sequence[RenderableType]]] = (["track", "title"], [["1", "one"]])
         super(MockFixer, self).__init__(
             lambda option: self._fix(album, option), options, option_free_text, option_automatic_index, table, "which one"
@@ -24,7 +24,7 @@ class MockFixer(Fixer):
 
 class TestCheckFixInteractive:
     def test_fix_interactive(self, mocker):
-        album = AlbumEntity(path=os.sep, tracks=[TrackEntity(filename="1.flac")])
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
         fixer = MockFixer(ctx, album)
@@ -37,7 +37,7 @@ class TestCheckFixInteractive:
             assert mock_choice.call_count == 1
 
     def test_fix_ignore_check(self, mocker):
-        album = AlbumEntity(path=os.sep, tracks=[TrackEntity(filename="1.flac")])
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
         try:
@@ -62,7 +62,7 @@ class TestCheckFixInteractive:
             ctx.db.dispose()
 
     def test_fix_ignore_check_no_options(self, mocker):
-        album = AlbumEntity(path=os.sep, tracks=[TrackEntity(filename="1.flac")])
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
         try:

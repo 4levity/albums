@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer, TrackEntity
+from ...types import Album, CheckResult, Fixer, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
 
@@ -20,7 +20,7 @@ class CheckDiscInTrackNumber(Check):
     name = "disc-in-track-number"
     default_config = {"enabled": True}
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
 
@@ -38,7 +38,7 @@ class CheckDiscInTrackNumber(Check):
 
         return None
 
-    def _fix(self, album: AlbumEntity, option: str | None) -> bool:
+    def _fix(self, album: Album, option: str | None) -> bool:
         if option != OPTION_USE_PROPOSED:
             raise ValueError(f"invalid option {option}")
 
@@ -49,12 +49,12 @@ class CheckDiscInTrackNumber(Check):
             self.tagger.get(album.path).set_basic_tags(path, [(BasicTag.DISCNUMBER, discnumber), (BasicTag.TRACKNUMBER, tracknumber)])
         return True
 
-    def _proposed_disc_and_tracknumber(self, track: TrackEntity):
+    def _proposed_disc_and_tracknumber(self, track: Track):
         [discnumber, tracknumber] = track.get(BasicTag.TRACKNUMBER)[0].split("-")
         return (discnumber, tracknumber)
 
 
-def all_tracks_discnumber_in_tracknumber(tracks: Sequence[TrackEntity]):
+def all_tracks_discnumber_in_tracknumber(tracks: Sequence[Track]):
     any_discnumber = any(track.has(BasicTag.DISCNUMBER) for track in tracks)
     all_tracknumber_with_dashes = all(re.fullmatch("\\d+-\\d+", "|".join(track.get(BasicTag.TRACKNUMBER, default=[]))) for track in tracks)
     return not any_discnumber and all_tracknumber_with_dashes

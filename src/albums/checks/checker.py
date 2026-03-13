@@ -11,7 +11,7 @@ from ..app import Context
 from ..interactive.interact import interact
 from ..library import scanner
 from ..tagger.provider import AlbumTaggerProvider
-from ..types import AlbumEntity, CheckResult
+from ..types import Album, CheckResult
 from .all import ALL_CHECKS
 from .base_check import Check
 from .helpers import album_display_name
@@ -108,7 +108,7 @@ class Checker:
                         required_disabled[dep] = [check.name]
         return required_disabled
 
-    def _run_check(self, session: Session, check: Check, album: AlbumEntity) -> CheckDisposition:
+    def _run_check(self, session: Session, check: Check, album: Album) -> CheckDisposition:
         maybe_changed = False
         maybe_fixable = True
         passed = False
@@ -135,7 +135,7 @@ class Checker:
                 passed = True
         return CheckDisposition(passed, maybe_changed, quit, displayed, suppressed_failure_message)
 
-    def _handle_check_result(self, session: Session, check: Check, check_result: CheckResult, album: AlbumEntity) -> CheckDisposition:
+    def _handle_check_result(self, session: Session, check: Check, check_result: CheckResult, album: Album) -> CheckDisposition:
         fixer = check_result.fixer
         displayed_any = False
         maybe_changed = False

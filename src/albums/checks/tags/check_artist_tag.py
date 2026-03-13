@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import show_tag
 
@@ -31,7 +31,7 @@ class CheckArtistTag(Check):
             ignore_parent_folders = []
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 
-    def check(self, album: AlbumEntity):
+    def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
@@ -82,7 +82,7 @@ class CheckArtistTag(Check):
             ),
         )
 
-    def _fix(self, album: AlbumEntity, option: str, filenames: list[str]) -> bool:
+    def _fix(self, album: Album, option: str, filenames: list[str]) -> bool:
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {filename}")

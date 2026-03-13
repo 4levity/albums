@@ -6,7 +6,7 @@ from typing import Any
 from ...interactive.image_table import render_image_table
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
-from ...types import AlbumEntity, CheckResult, Fixer
+from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
 from ..helpers import delete_files_except
 
@@ -21,7 +21,7 @@ class CheckDuplicateImage(Check):
     def init(self, check_config: dict[str, Any]):
         self.cover_only = bool(check_config.get("cover_only", CheckDuplicateImage.default_config["cover_only"]))
 
-    def check(self, album: AlbumEntity) -> CheckResult | None:
+    def check(self, album: Album) -> CheckResult | None:
         album_art = [(track.filename, True, [p.to_picture() for p in track.pictures]) for track in album.tracks]
         album_art.extend([(file.filename, False, [file.to_picture()]) for file in album.picture_files])
 

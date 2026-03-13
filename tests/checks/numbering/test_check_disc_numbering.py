@@ -6,35 +6,29 @@ from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.tagger.folder import AlbumTagger, TaggerFile
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, Tag, Track
 
 
 class TestCheckDiscNumbering:
     def test_discnumbering_ok(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="2-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")]),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="2-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
         assert result is None
 
     def test_disc_numbering_ok_total(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="2-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="2-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -42,18 +36,14 @@ class TestCheckDiscNumbering:
 
     def test_check_disctotal_policy(self):
         # just make sure config works, policy helper has its own tests for fixer
-        album_with_all = AlbumEntity(
+        album_with_all = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1")]
-                ),
-                TrackEntity(
-                    filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1")]
-                ),
+                Track(filename="1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="1")]),
+                Track(filename="2.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="1")]),
             ],
         )
-        album_with_none = AlbumEntity(path="", tracks=[TrackEntity(filename="1.flac"), TrackEntity(filename="2.flac")])
+        album_with_none = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         ctx = Context()
         ctx.config.checks = {CheckDiscNumbering.name: {"disctotal_policy": "consistent"}}  # default
         check = CheckDiscNumbering(ctx)
@@ -77,21 +67,13 @@ class TestCheckDiscNumbering:
         assert "disctotal policy=NEVER but it appears on tracks" in result.message
 
     def test_check_disctotal_inconsistent_auto_fixable(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="2-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="3")]
-                ),
-                TrackEntity(
-                    filename="2-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="2-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2"), Tag(tag=BasicTag.DISCTOTAL, value="3")]),
+                Track(filename="2-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
             ],
         )
 
@@ -105,21 +87,13 @@ class TestCheckDiscNumbering:
         assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [(BasicTag.DISCTOTAL, "2")])]
 
     def test_check_disctotal_inconsistent(self):
-        album = AlbumEntity(
+        album = Album(
             path="",
             tracks=[
-                TrackEntity(
-                    filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="2-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="3"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="3")]
-                ),
-                TrackEntity(
-                    filename="2-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="3"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="3")]
-                ),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="2-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="3"), Tag(tag=BasicTag.DISCTOTAL, value="3")]),
+                Track(filename="2-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="3"), Tag(tag=BasicTag.DISCTOTAL, value="3")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -129,13 +103,13 @@ class TestCheckDiscNumbering:
         assert result.fixer.option_automatic_index is None
 
     def test_check_discnumber_inconsistent(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="1-2.flac"),
-                TrackEntity(filename="2-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")]),
-                TrackEntity(filename="2-2.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2")]),
+                Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="1-2.flac"),
+                Track(filename="2-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2")]),
+                Track(filename="2-2.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -143,13 +117,13 @@ class TestCheckDiscNumbering:
         assert result.fixer is None
 
     def test_check_discnumber_missing_disc(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="1-2.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="3-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="3")]),
-                TrackEntity(filename="3-2.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="3")]),
+                Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="1-2.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="3-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="3")]),
+                Track(filename="3-2.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="3")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -157,18 +131,12 @@ class TestCheckDiscNumbering:
         assert result.fixer is None
 
     def test_check_discnumber_unexpected_disc(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
-                    filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="2-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="2"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
-                TrackEntity(
-                    filename="3-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="3"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                ),
+                Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="2-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="2"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
+                Track(filename="3-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="3"), Tag(tag=BasicTag.DISCTOTAL, value="2")]),
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
@@ -176,25 +144,17 @@ class TestCheckDiscNumbering:
         assert result.fixer is None
 
     def test_check_missing_disc_with_discs_in_separate_folders_default_true(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
-            tracks=[
-                TrackEntity(
-                    filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                )
-            ],
+            tracks=[Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")])],
         )
         result = CheckDiscNumbering(Context()).check(album)
         assert result is None
 
     def test_check_missing_disc_with_discs_in_separate_folders_false(self):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
-            tracks=[
-                TrackEntity(
-                    filename="1-1.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="2")]
-                )
-            ],
+            tracks=[Track(filename="1-1.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="2")])],
         )
         ctx = Context()
         ctx.config.checks = {CheckDiscNumbering.name: {"discs_in_separate_folders": False}}
@@ -203,11 +163,11 @@ class TestCheckDiscNumbering:
         assert result.fixer is None
 
     def test_check_discnumbering_remove_redundant(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo",
             tracks=[
-                TrackEntity(filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
-                TrackEntity(filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1")]),
             ],
         )
         ctx = Context()
@@ -230,15 +190,11 @@ class TestCheckDiscNumbering:
         assert mock_set_tag.call_args_list == [call(BasicTag.DISCNUMBER, None), call(BasicTag.DISCNUMBER, None)]
 
     def test_check_discnumbering_remove_redundant_total(self, mocker):
-        album = AlbumEntity(
+        album = Album(
             path="foo" + os.sep,
             tracks=[
-                TrackEntity(
-                    filename="1-01.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1")]
-                ),
-                TrackEntity(
-                    filename="1-02.flac", tags=[TrackTagEntity(tag=BasicTag.DISCNUMBER, value="1"), TrackTagEntity(tag=BasicTag.DISCTOTAL, value="1")]
-                ),
+                Track(filename="1-01.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="1")]),
+                Track(filename="1-02.flac", tags=[Tag(tag=BasicTag.DISCNUMBER, value="1"), Tag(tag=BasicTag.DISCTOTAL, value="1")]),
             ],
         )
         ctx = Context()

@@ -7,22 +7,22 @@ import pytest
 
 from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicTag
-from albums.types import AlbumEntity, PictureFileEntity, TrackEntity, TrackTagEntity
+from albums.types import Album, PictureFile, Tag, Track
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path
 
 albums = [
-    AlbumEntity(
+    Album(
         path="foo" + os.sep,
-        tracks=[TrackEntity(filename="1.mp3", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")])],
-        picture_files=[PictureFileEntity(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
+        tracks=[Track(filename="1.mp3", tags=[Tag(tag=BasicTag.TITLE, value="1")])],
+        picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
-    AlbumEntity(
+    Album(
         path="bar" + os.sep,
         tracks=[
-            TrackEntity(filename="1.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="1")]),
-            TrackEntity(filename="2.flac", tags=[TrackTagEntity(tag=BasicTag.TITLE, value="2")]),
+            Track(filename="1.flac", tags=[Tag(tag=BasicTag.TITLE, value="1")]),
+            Track(filename="2.flac", tags=[Tag(tag=BasicTag.TITLE, value="2")]),
         ],
     ),
 ]
@@ -222,16 +222,16 @@ class TestCli:
         result = self.run(["list"])
         assert "baz" not in result.output
 
-        new_album = AlbumEntity(
+        new_album = Album(
             path="baz" + os.sep,
             tracks=[
-                TrackEntity(
+                Track(
                     filename="1.flac",
                     tags=[
-                        TrackTagEntity(tag=BasicTag.TITLE, value="1"),
-                        TrackTagEntity(tag=BasicTag.TRACKNUMBER, value="01"),
-                        TrackTagEntity(tag=BasicTag.ALBUM, value="baz"),
-                        TrackTagEntity(tag=BasicTag.ARTIST, value="baz"),
+                        Tag(tag=BasicTag.TITLE, value="1"),
+                        Tag(tag=BasicTag.TRACKNUMBER, value="01"),
+                        Tag(tag=BasicTag.ALBUM, value="baz"),
+                        Tag(tag=BasicTag.ARTIST, value="baz"),
                     ],
                 )
             ],
