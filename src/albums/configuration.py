@@ -9,8 +9,7 @@ from typing import Dict, Iterator, Mapping, Union
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from albums.database.orm import Base, SerializableValueAsJson
-
+from .database.orm import Base, SerializableValueAsJson
 from .tagger.base_id3 import ID3v1Policy
 from .types import CheckConfiguration, Sequence, Tuple
 

@@ -8,9 +8,9 @@ from sqlalchemy import REAL, Boolean, Enum, ForeignKey, Index, Integer, LargeBin
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
-from albums.database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType
-from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag, Picture, PictureType, StreamInfo
+from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType
+from .picture.info import PictureInfo
+from .tagger.types import BasicTag, Picture, PictureType, StreamInfo
 
 type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 

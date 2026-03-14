@@ -5,9 +5,8 @@ from typing import Mapping, Sequence
 from rich.markup import escape
 from sqlalchemy.orm import Session
 
-from albums.database import selector
-
 from ..app import Context
+from ..database import selector
 from ..interactive.interact import interact
 from ..library import scanner
 from ..tagger.provider import AlbumTaggerProvider
