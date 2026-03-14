@@ -1,6 +1,5 @@
 import logging
 import textwrap
-from enum import IntEnum
 from typing import Callable, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
@@ -10,6 +9,7 @@ from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TRCK
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
+from ..config import ID3v1Policy
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
 from .types import BasicTag, Picture, PictureType
@@ -26,15 +26,8 @@ BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
 )
 # TODO also pull other common values, like
 # "composer": "tcom",
-# "genre": "tcon",
 # "encoder": "tenc",
 # "date": "tdrc",  # recordingdate?
-
-
-class ID3v1Policy(IntEnum):
-    REMOVE = 0
-    UPDATE = 1
-    CREATE = 2
 
 
 class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):

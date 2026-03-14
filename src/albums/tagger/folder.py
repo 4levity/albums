@@ -5,9 +5,9 @@ from typing import Any, Callable, Collection, Generator, List, Tuple
 
 from mutagen._tags import PaddingInfo
 
+from ..config import ID3v1Policy
 from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ..picture.scan import PictureScanner, PictureScannerCache
-from .base_id3 import ID3v1Policy
 from .file_types.aiff import AiffTagger
 from .file_types.asf import AsfTagger
 from .file_types.flac import FlacTagger

@@ -8,9 +8,8 @@ from prompt_toolkit.shortcuts import checkboxlist_dialog, choice
 from rich.prompt import FloatPrompt, IntPrompt
 
 from ..app import Context
-from ..configuration import PathCompatibilityOption, RescanOption
+from ..config import ID3v1Policy, PathCompatibilityOption, RescanOption
 from ..database import db_config
-from ..tagger.base_id3 import ID3v1Policy
 
 
 def interactive_config(ctx: Context):

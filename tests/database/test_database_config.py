@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.tags.check_album_tag import CheckAlbumTag
-from albums.configuration import (
+from albums.config import (
     DEFAULT_IMPORT_PATH,
     DEFAULT_IMPORT_PATH_VARIOUS,
     DEFAULT_MORE_IMPORT_PATHS,

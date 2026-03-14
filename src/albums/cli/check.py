@@ -3,7 +3,7 @@ import rich_click as click
 from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import Checker
-from ..configuration import RescanOption, default_checks_config
+from ..config import RescanOption, default_checks_config
 from .cli_context import pass_context, require_library
 from .scan import scan
 

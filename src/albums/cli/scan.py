@@ -4,7 +4,7 @@ import rich_click as click
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..configuration import RescanOption
+from ..config import RescanOption
 from ..library import scanner
 from .cli_context import pass_context, require_library
 

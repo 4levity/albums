@@ -4,7 +4,7 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
-from ..configuration import Configuration, SettingEntity
+from ..config import Configuration, SettingEntity
 
 logger = logging.getLogger(__name__)
 

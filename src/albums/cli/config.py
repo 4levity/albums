@@ -5,7 +5,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from ..app import Context
-from ..configuration import RescanOption
+from ..config import RescanOption
 from ..database import db_config
 from ..interactive.configurator import interactive_config, set_library
 from .cli_context import pass_context, require_persistent_context

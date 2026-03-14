@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .base_id3 import ID3v1Policy
+from ..config import ID3v1Policy
 from .folder import AlbumTagger
 
 

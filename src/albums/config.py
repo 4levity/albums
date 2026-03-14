@@ -1,7 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass, field
-from enum import StrEnum, auto
+from enum import IntEnum, StrEnum, auto
 from pathlib import Path
 from string import Template
 from typing import Dict, Iterator, Mapping, Union
@@ -10,7 +10,6 @@ from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database.orm import Base, SerializableValueAsJson
-from .tagger.base_id3 import ID3v1Policy
 from .types import CheckConfiguration, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
@@ -49,6 +48,13 @@ def default_checks_config() -> Mapping[str, CheckConfiguration]:
     from .checks.all import ALL_CHECKS  # local import because .checks.all imports all checks which will import this module
 
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
+
+
+class ID3v1Policy(IntEnum):
+    # Do not change, these are the values used by mutagen MP3.save()
+    REMOVE = 0
+    UPDATE = 1
+    CREATE = 2
 
 
 @dataclass

@@ -7,7 +7,7 @@ from rich.console import Console
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from .configuration import Configuration
+from .config import Configuration
 from .types import Album
 
 logger = logging.getLogger(__name__)

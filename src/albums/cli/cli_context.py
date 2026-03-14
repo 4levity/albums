@@ -13,7 +13,7 @@ from prompt_toolkit.shortcuts import confirm
 from rich.logging import RichHandler
 
 from ..app import Context
-from ..configuration import RescanOption
+from ..config import RescanOption
 from ..database import connection, db_config, selector
 
 logger = logging.getLogger(__name__)
