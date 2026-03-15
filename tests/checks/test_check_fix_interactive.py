@@ -64,6 +64,7 @@ class TestCheckFixInteractive:
     def test_fix_ignore_check_no_options(self, mocker):
         album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
+        # only on Python 3.14.2, only when tests run with pytest-cov, this line causes ResourceWarning: unclosed database although it's closed below?
         ctx.db = connection.open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
