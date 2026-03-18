@@ -22,13 +22,13 @@ def init(ctx: Context, library_path: str | None):
     library = Path(library_path) if library_path else None
     if not library:
         if PLATFORM_DIRS.user_music_path.is_dir():
-            if confirm(f"LIBRARY-PATH not specified, use {str(PLATFORM_DIRS.user_music_path)} ?"):
+            if confirm(f"Library path not specified, do you want to use {str(PLATFORM_DIRS.user_music_path)} ?"):
                 library = PLATFORM_DIRS.user_music_path
         if not library:
-            ctx.console.print("Specify the correct LIBRARY-PATH when running albums init.")
+            ctx.console.print("Run [bold]albums init /path/to/library/[/bold] to specify the library location.")
             raise SystemExit(1)
     elif not library.is_dir():
-        ctx.console.print(f"The LIBRARY-PATH must be a directory: {escape(str(library_path))}", highlight=False)
+        ctx.console.print(f"The library path must be a directory: {escape(str(library_path))}", highlight=False)
         raise SystemExit(1)
 
     if ctx.console.is_interactive and not confirm(f"No database file found at {str(ctx.db_path)}. Create this file?"):
@@ -40,8 +40,7 @@ def init(ctx: Context, library_path: str | None):
         ctx.config = db_config.load(ctx.db)
         ctx.config.library = library
         db_config.save(ctx.db, ctx.config)
+        ctx.console.print(f"scanning library {escape(str(library))}", highlight=False)
+        scanner.scan(ctx)
     finally:
         ctx.db.dispose()
-
-    ctx.console.print(f"scanning library: {escape(str(library))}")
-    scanner.scan(ctx)

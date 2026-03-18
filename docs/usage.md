@@ -6,13 +6,13 @@ icon: lucide/user
 
 ## Configuration
 
-To work with a large music library and use custom configuration settings
-`albums` needs a database which it will create when you run `albums init`.
+To work with a large music library or use custom configuration settings `albums`
+needs a database which it will create when you run `albums init`.
 
 !!!tip
 
     To get started **without** specifying a library, use the `--dir` option
-    with the `check` command to work on one album instead of a library. When
+    with the `check` command to work on a folder instead of a library. When
     `-d`/`--dir` is specified, no information will be stored between runs. Try:
     `albums --dir /path/to/one/album check --fix`
 
