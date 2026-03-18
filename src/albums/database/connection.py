@@ -59,11 +59,6 @@ def open(filename: str | Path, echo: bool = False):
         raise ex
 
 
-def close(db: Engine):
-    db.dispose()
-    logger.debug("closed database")
-
-
 def _maintain(db: Engine):
     with Session(db) as session:
         (page_size, page_count, freelist_count) = session.execute(

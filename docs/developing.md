@@ -18,9 +18,9 @@ are installed, it needs to be running in an environment with Python 3.12+.
 ### Run
 
 Run the app with `poetry run albums [...]`. The first time you do, you may run
-`poetry run albums --db-file albums.db --library /path/to/test/library scan` in
-the project directory, which will create a "local" `albums.db` there for a test
-environment separate from the db used by a regular installation of `albums`.
+`poetry run albums --db-file albums.db init` in the project directory, which
+will create a "local" `albums.db` there for a test environment (separate from
+the db used by a regular installation of `albums`).
 
 ### Project Files and Folders
 

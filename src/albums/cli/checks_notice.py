@@ -13,7 +13,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("check_names", nargs=-1)
 @pass_context
 def checks_notice(ctx: Context, force: bool, check_names: list[str]):
-    require_persistent_context(ctx)
+    require_persistent_context(ctx, "notice")
     with Session(ctx.db) as session:
         for album in ctx.select_album_entities(session):
             changed = False

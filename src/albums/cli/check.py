@@ -4,8 +4,8 @@ from ..app import Context
 from ..checks.all import ALL_CHECK_NAMES
 from ..checks.checker import Checker
 from ..config import RescanOption, default_checks_config
+from ..library.scanner import scan
 from .cli_context import pass_context, require_library
-from .scan import scan
 
 
 @click.command(
@@ -20,9 +20,9 @@ from .scan import scan
 @click.argument("checks", nargs=-1)
 @pass_context
 def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
-    require_library(ctx)
-    if ctx.config.rescan == RescanOption.AUTO and ctx.click_ctx and ctx.is_persistent:
-        ctx.click_ctx.invoke(scan)
+    require_library(ctx, "check")
+    if ctx.config.rescan == RescanOption.AUTO and ctx.is_persistent:
+        scan(ctx)
 
     if default:
         ctx.console.print("using default check config")

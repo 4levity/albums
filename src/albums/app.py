@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Generator
+from pathlib import Path
 from typing import Any, Callable, Self
 
 import click
@@ -20,6 +21,7 @@ class Context(dict[Any, Any]):  # this is a dict because it's required to be by 
     console = Console()  # single shared Console
     click_ctx: click.Context | None
     db: Engine
+    db_path: Path
     select_album_entities: Callable[[Session], Generator[Album, None, None]]
     is_filtered: bool
     config: Configuration

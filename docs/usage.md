@@ -7,18 +7,14 @@ icon: lucide/user
 ## Configuration
 
 To work with a large music library and use custom configuration settings
-`albums` needs a database which it will create automatically after asking. When
-initializing, you will be asked if you want to use the operating-system defined
-user's music directory as your library. Or the `--library` option can specify
-another location.
+`albums` needs a database which it will create when you run `albums init`.
 
 !!!tip
 
     To get started **without** specifying a library, use the `--dir` option
-    with the `check` command (or `list` or `sql`) to work on one album instead
-    of a library. When `-d`/`--dir` is specified, no information will be stored
-    between runs, and `albums` will not ask for a library location or prompt to
-    create a database. Try: `albums --dir /path/to/one/album check --fix`
+    with the `check` command to work on one album instead of a library. When
+    `-d`/`--dir` is specified, no information will be stored between runs. Try:
+    `albums --dir /path/to/one/album check --fix`
 
 ## Basic commands
 
@@ -51,7 +47,8 @@ for example `albums -rp Freezepop add DAP`. Review the collection with
 
 You can scan a new album for tag/picture/filename/etc issues, fix them all
 interactively, then add the album to your library with one command. For example:
-`albums import "temp/new album 1"`.
+`albums import "temp/new album 1"`. Currently this only works with a single
+album at a time.
 
 To set up `albums` configuration options interactively, run `albums config`. See
 `albums config --help` for other ways to configure.

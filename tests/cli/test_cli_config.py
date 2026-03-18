@@ -12,7 +12,9 @@ class TestCliConfig:
         TestCliConfig.library = create_library("cli_cfg", [])
 
     def run(self, params: list[str], init=False):
-        return helpers.run(params, TestCliConfig.library, init)
+        if init:
+            helpers.init_db(TestCliConfig.library)
+        return helpers.run(params, TestCliConfig.library)
 
     def test_config(self):
         def assert_setting(output: str, name: str, value: str):

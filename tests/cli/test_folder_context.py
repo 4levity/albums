@@ -31,7 +31,8 @@ class TestFolderContext:
         library = TestFolderContext.library / album1.path
         other_dir = TestFolderContext.library / album2.path
 
-        result = helpers.run(["list"], library, True)
+        helpers.init_db(library)
+        result = helpers.run(["list"], library)
         assert "foo" in result.output
 
         result = helpers.run(["--dir", str(other_dir), "list", "--json"], library)

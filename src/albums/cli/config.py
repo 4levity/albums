@@ -17,7 +17,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("value", required=False)
 @pass_context
 def config(ctx: Context, show: bool, name: str, value: str):
-    require_persistent_context(ctx)
+    require_persistent_context(ctx, "config")
     if name and not value:
         ctx.console.print("error: must specify both name and value, or neither")
         raise SystemExit(1)

@@ -9,7 +9,6 @@ from typing import Sequence, Tuple
 
 import click
 from platformdirs import PlatformDirs
-from prompt_toolkit.shortcuts import confirm
 from rich.logging import RichHandler
 
 from ..app import Context
@@ -26,15 +25,21 @@ PLATFORM_DIRS = PlatformDirs("albums", "4levity")
 DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 
-def require_persistent_context(ctx: Context) -> None:
-    if not ctx.is_persistent or not ctx.db:
-        ctx.console.print("This operation acts on a persistent library and cannot be used with --dir / -d option.")
+def require_database(ctx: Context, command: str) -> None:
+    if not ctx.db_path.is_file():
+        ctx.console.print(f"[bold]{command}[/bold] requires a database")
         raise SystemExit(1)
 
 
-def require_library(ctx: Context) -> None:
+def require_library(ctx: Context, command: str) -> None:
     if not ctx.config.library.is_dir():
         logger.error(f"directory does not exist: {str(ctx.config.library)}")
+        raise SystemExit(1)
+
+
+def require_persistent_context(ctx: Context, command: str) -> None:
+    if not ctx.is_persistent:
+        ctx.console.print(f"[bold]{command}[/bold] requires a persistent library, and cannot be used with the [bold]--dir[/bold] option.")
         raise SystemExit(1)
 
 
@@ -45,7 +50,6 @@ def setup(
     matchers_list: Sequence[Tuple[str, str]],
     dir: str,
     regex: bool,
-    new_library: str | None,
     db_file: str | None,
 ):
     app_context.click_ctx = ctx
@@ -53,26 +57,14 @@ def setup(
     _setup_logging(app_context, verbose)
     logger.info("starting albums")
 
-    new_library_path: Path | None = None
-    album_db_path = _get_albums_db_path(db_file)
-    if album_db_path.is_file():
-        if new_library:
-            logger.error("the --library option may only be used when creating a database")
-            raise SystemExit(1)
-        db = _open_db_and_set_context_config(ctx, app_context, album_db_path)
-    elif new_library:
-        new_library_path = Path(new_library)
-        _ensure_library_dir(new_library_path)
-        db = _create_db_and_set_context_config(ctx, app_context, album_db_path, new_library_path)
-    elif not dir:
-        new_library_path: Path | None = None
-        if PLATFORM_DIRS.user_music_path.is_dir():
-            if confirm(f"No path specifed with --library, use {str(PLATFORM_DIRS.user_music_path)} ?"):
-                new_library_path = PLATFORM_DIRS.user_music_path
-        _ensure_library_dir(new_library_path)
-        db = _create_db_and_set_context_config(ctx, app_context, album_db_path, new_library_path)
+    app_context.db_path = _get_albums_db_path(db_file)
+    if app_context.db_path.is_file():
+        app_context.db = _open_db_and_set_context_config(ctx, app_context)
+        has_database = True
     else:
-        db = None
+        has_database = False
+        if not dir:
+            logger.info("the --dir option is not specified and albums database is not found")
 
     if app_context.config.tagger:
         if not shutil.which(app_context.config.tagger):
@@ -84,17 +76,20 @@ def setup(
     app_context.is_filtered = bool(matchers_list)
     matchers: defaultdict[str, list[str]] = defaultdict(list)
     matchers = reduce(lambda acc, kv: acc[kv[0]].append(kv[1]) or acc, matchers_list, matchers)
-    if db:
-        app_context.db = db
-        if dir and "path" in matchers:
-            del matchers["path"]
-        app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, **matchers)
-
     if dir:
+        if "path" in matchers:
+            del matchers["path"]
         enter_folder_context(app_context, dir)
-    # else there is definitely a db
-
-    return bool(dir) or new_library_path is not None or app_context.config.rescan == RescanOption.ALWAYS
+    elif not has_database:
+        # it's simpler to always give app_context a database than to allow it to be Engine | None
+        app_context.console.print(
+            "albums is not configured yet, and the [bold]--dir[/bold] was not specified. Run [bold]albums init[/bold] to remove this message."
+        )
+        app_context.is_persistent = False
+        app_context.db = connection.open(connection.MEMORY, echo=False)
+        ctx.call_on_close(lambda: app_context.db.dispose())
+    app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, **matchers)
+    return bool(dir) or app_context.config.rescan == RescanOption.ALWAYS
 
 
 def enter_folder_context(ctx: Context, folder: str):
@@ -104,14 +99,14 @@ def enter_folder_context(ctx: Context, folder: str):
     ctx.parent = parent
     ctx.config = copy(parent.config)
     ctx.config.library = Path(folder)
-    require_library(ctx)
+    if not ctx.config.library.is_dir():
+        logger.error(f"directory does not exist: {str(ctx.config.library)}")
+        raise SystemExit(1)
     logger.info(f"using in-memory context, library is {folder}")
 
-    db = connection.open(connection.MEMORY, echo=ctx.verbose > 1)
+    ctx.db = connection.open(connection.MEMORY, echo=ctx.verbose > 1)
     if ctx.click_ctx:
-        ctx.click_ctx.call_on_close(lambda: connection.close(db))
-    ctx.db = db
-    ctx.select_album_entities = lambda session: selector.load_album_entities(session)
+        ctx.click_ctx.call_on_close(lambda: ctx.db.dispose())
     ctx.is_filtered = False
     ctx.is_persistent = False
 
@@ -128,33 +123,12 @@ def _get_albums_db_path(db_file: str | None):
     return Path(album_db_file)
 
 
-def _open_db_and_set_context_config(ctx: click.Context, app_context: Context, album_db_path: Path):
-    logger.info(f"using database {str(album_db_path)}")
-    db = connection.open(album_db_path, echo=app_context.verbose > 1)
-    ctx.call_on_close(lambda: connection.close(db))
+def _open_db_and_set_context_config(ctx: click.Context, app_context: Context):
+    logger.info(f"using database {str(app_context.db_path)}")
+    db = connection.open(app_context.db_path, echo=app_context.verbose > 1)
+    ctx.call_on_close(lambda: db.dispose())
     app_context.config = db_config.load(db)
     return db
-
-
-def _create_db_and_set_context_config(ctx: click.Context, app_context: Context, album_db_path: Path, new_library_path: Path | None):
-    if app_context.console.is_interactive and not confirm(f"No database file found at {str(album_db_path)}. Create this file?"):
-        raise SystemExit(1)
-
-    os.makedirs(album_db_path.parent, exist_ok=True)
-    db = _open_db_and_set_context_config(ctx, app_context, album_db_path)
-    if new_library_path:
-        app_context.config.library = new_library_path
-        db_config.save(db, app_context.config)
-    return db
-
-
-def _ensure_library_dir(library_path: Path | None):
-    if library_path is None:
-        logger.error("No library path specified, use --library to initialize.")
-        raise SystemExit(1)
-    elif not library_path.is_dir():
-        logger.error(f"Library must be a directory: {str(library_path)}")
-        raise SystemExit(1)
 
 
 def _setup_logging(ctx: Context, verbose: int):

@@ -34,7 +34,9 @@ class TestCli:
         TestCli.library = create_library("cli", albums)
 
     def run(self, params: list[str], init=False):
-        return helpers.run(params, TestCli.library, init)
+        if init:
+            helpers.init_db(TestCli.library)
+        return helpers.run(params, TestCli.library)
 
     def test_help(self):
         result = self.run(["--help"])
@@ -42,9 +44,11 @@ class TestCli:
         assert "Usage: albums [OPTIONS] COMMAND [ARGS]" in result.output
 
     def test_scan(self):
-        result = self.run(["-v", "scan"], init=True)
+        result = helpers.init_db(TestCli.library)
         assert result.exit_code == 0
-        assert result.output.startswith("creating database")
+        assert "creating database" in result.output
+        result = self.run(["-v", "scan"])
+        assert result.exit_code == 0
         assert "scanned 3 folders" in result.output
 
         result = self.run(["scan"])
@@ -60,7 +64,6 @@ class TestCli:
     def test_scan_remove(self):
         result = self.run(["-v", "scan"], init=True)
         assert result.exit_code == 0
-        assert result.output.startswith("creating database")
         assert "scanned 3 folders" in result.output
 
         shutil.rmtree(TestCli.library / "foo")

@@ -5,8 +5,9 @@ from click.testing import CliRunner
 from albums.cli import entry_point
 
 
-def run(params: list[str], library: Path, init=False):
-    return CliRunner().invoke(
-        entry_point.albums_group,
-        ["--db-file", library / "albums.db"] + (["--library", library] if init else []) + params,
-    )
+def init_db(library: Path):
+    return CliRunner().invoke(entry_point.albums_group, ["--db-file", str(library / "albums.db"), "init", str(library)])
+
+
+def run(params: list[str], library: Path):
+    return CliRunner().invoke(entry_point.albums_group, ["--db-file", str(library / "albums.db")] + params)

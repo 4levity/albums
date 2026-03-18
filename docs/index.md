@@ -38,11 +38,11 @@ the end to see repair options or `--help` for more choices. Using the `--dir`
 (or `-d`) option, no data is stored between runs.
 
 Albums can store information about a library of music in its database. Run
-`albums scan` (without the `--dir` option) to get started. It will ask you to
-confirm whether your music library is in the default user home directory
-location (e.g. `~/Music`). It may take several minutes to index a large
-collection. Configuration settings are also stored in the database and can be
-customized by running `albums config`. See [Usage](./usage.md).
+`albums init` to get started. It will ask you to confirm whether your music
+library is in the default user home directory location (e.g. `~/Music`). It may
+take several minutes to index a large collection. Configuration settings are
+also stored in the database and can be customized by running `albums config`.
+See [Usage](./usage.md).
 
 ## Supported Formats
 

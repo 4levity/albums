@@ -10,7 +10,7 @@ from .cli_context import pass_context, require_persistent_context
 @click.argument("collection_names", nargs=-1)
 @pass_context
 def collections_remove(ctx: Context, collection_names: list[str]):
-    require_persistent_context(ctx)
+    require_persistent_context(ctx, "remove")
     with Session(ctx.db) as session:
         for album in ctx.select_album_entities(session):
             for target_collection in collection_names:

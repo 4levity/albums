@@ -10,7 +10,7 @@ from ..app import Context
 from ..checks.checker import Checker
 from ..library.import_album import import_album, make_library_paths
 from ..library.scanner import scan
-from .cli_context import enter_folder_context, pass_context, require_library, require_persistent_context
+from .cli_context import enter_folder_context, pass_context, require_database, require_library, require_persistent_context
 
 
 @click.command("import", help="check album in a folder, copy to library if it passes")
@@ -20,8 +20,9 @@ from .cli_context import enter_folder_context, pass_context, require_library, re
 @click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes + import to default location")
 @pass_context
 def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, scan_folder: str):
-    require_library(ctx)
-    require_persistent_context(ctx)
+    require_persistent_context(ctx, "import")
+    require_database(ctx, "import")
+    require_library(ctx, "import")
     library = ctx.config.library
     enter_folder_context(ctx, scan_folder)
     (albums_total, _) = scan(ctx)
