@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from string import Template
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union, overload
 
 from rich.console import RenderableType
@@ -10,7 +11,7 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
-from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType
+from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SerializableValueAsJson, TemplateAsString
 from .picture.info import PictureInfo
 from .tagger.types import BasicTag, Picture, PictureType, StreamInfo
 
@@ -284,6 +285,22 @@ class AlbumCollectionAssociation(Base):
     collection_name: AssociationProxy[str] = association_proxy("collection", "collection_name")
 
     album: Mapped[Album] = relationship(back_populates="collection_associations")
+
+
+class SyncDestination(Base):
+    __tablename__ = "album_collection"
+
+    destination_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    collection_id: Mapped[int] = mapped_column(Integer, ForeignKey("collection.collection_id"))
+
+    path_root: Mapped[str] = mapped_column(Text, nullable=False)
+    relpath_template_artist: Mapped[Template] = mapped_column(TemplateAsString, nullable=False)
+    relpath_template_compilation: Mapped[Template] = mapped_column(TemplateAsString, nullable=False)
+    allow_file_types: Mapped[List[str]] = mapped_column("allow_file_types_json", SerializableValueAsJson[List[str]], nullable=False)
+    convert_file_type: Mapped[str] = mapped_column(Text, nullable=False)
+    max_kbps: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    collection: Mapped[CollectionEntity] = relationship()
 
 
 class ScanHistoryEntity(Base):

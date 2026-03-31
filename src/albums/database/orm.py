@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from string import Template
 from typing import Any, override
 
 from sqlalchemy import Column, Dialect, Integer, Table, Text, TypeDecorator
@@ -46,9 +47,9 @@ class SerializableValueAsJson[_VT](TypeDecorator[_VT]):
     def process_result_value(self, value: str | None, dialect: Dialect) -> _VT | None:
         return None if value is None else json.loads(value)
 
-    @override
-    def copy(self, **kw: dict[str, Any]) -> TypeDecorator[_VT]:
-        return SerializableValueAsJson[_VT]()
+    # @override
+    # def copy(self, **kw: dict[str, Any]) -> TypeDecorator[_VT]:
+    #     return SerializableValueAsJson[_VT]()
 
 
 class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
@@ -68,6 +69,24 @@ class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
         kv = load_issue if isinstance(load_issue, list) else load_issue.items()  # old versions stored a dict instead of list of pairs, load either
         return tuple([(str(k), v) for [k, v] in kv])
 
+    # @override
+    # def copy(self, **kw: dict[str, Any]):
+    #     return LoadIssuesAsJson()
+
+
+class TemplateAsString(TypeDecorator[Template]):
+    impl = Text
+
+    cache_ok = True
+
     @override
-    def copy(self, **kw: dict[str, Any]):
-        return LoadIssuesAsJson()
+    def process_bind_param(self, value: Template | None, dialect: Dialect):
+        return value.template if value else ""
+
+    @override
+    def process_result_value(self, value: str | None, dialect: Dialect) -> Template | None:
+        return None if value is None else Template(value)
+
+    # @override
+    # def copy(self, **kw: dict[str, Any]) -> TypeDecorator[Template]:
+    #     return TemplateAsString()
