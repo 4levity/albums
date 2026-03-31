@@ -294,11 +294,13 @@ class SyncDestination(Base):
     collection_id: Mapped[int] = mapped_column(Integer, ForeignKey("collection.collection_id"))
 
     path_root: Mapped[str] = mapped_column(Text, nullable=False)
-    relpath_template_artist: Mapped[Template] = mapped_column(TemplateAsString, nullable=False)
-    relpath_template_compilation: Mapped[Template] = mapped_column(TemplateAsString, nullable=False)
-    allow_file_types: Mapped[List[str]] = mapped_column("allow_file_types_json", SerializableValueAsJson[List[str]], nullable=False)
-    convert_file_type: Mapped[str] = mapped_column(Text, nullable=False)
-    max_kbps: Mapped[int] = mapped_column(Integer, nullable=False)
+    relpath_template_artist: Mapped[Template] = mapped_column(TemplateAsString, nullable=False, default_factory=lambda: Template(""))
+    relpath_template_compilation: Mapped[Template] = mapped_column(TemplateAsString, nullable=False, default_factory=lambda: Template(""))
+    allow_file_types: Mapped[List[str]] = mapped_column(
+        "allow_file_types_json", SerializableValueAsJson[List[str]], nullable=False, default_factory=list
+    )
+    convert_file_type: Mapped[str] = mapped_column(Text, nullable=False, default="mp3")
+    max_kbps: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     collection: Mapped[CollectionEntity] = relationship()
 

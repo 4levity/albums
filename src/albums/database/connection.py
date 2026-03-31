@@ -20,7 +20,7 @@ SQL_INIT_CONNECTION = """
 PRAGMA foreign_keys = ON;
 """
 
-SQL_CLEANUP = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
+SQL_CLEANUP = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection) and collection_id NOT IN (SELECT collection_id FROM sync_destination);"
 
 
 @event.listens_for(Engine, "connect")

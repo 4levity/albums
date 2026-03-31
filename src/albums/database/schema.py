@@ -154,7 +154,7 @@ CREATE TABLE sync_destination (
     path_root TEXT NOT NULL,
     relpath_template_artist TEXT NOT NULL,
     relpath_template_compilation TEXT NOT NULL,
-    allow_file_types TEXT NOT NULL,
+    allow_file_types_json TEXT NOT NULL,
     convert_file_type TEXT NOT NULL,
     max_kbps INTEGER NOT NULL
 );
