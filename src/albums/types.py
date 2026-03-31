@@ -288,7 +288,7 @@ class AlbumCollectionAssociation(Base):
 
 
 class SyncDestination(Base):
-    __tablename__ = "album_collection"
+    __tablename__ = "sync_destination"
 
     destination_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     collection_id: Mapped[int] = mapped_column(Integer, ForeignKey("collection.collection_id"))

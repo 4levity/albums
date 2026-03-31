@@ -11,10 +11,12 @@ from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 from rich.table import Table
 
+from albums.interactive.setup_settings import set_library
+
 from ..app import Context
 from ..config import Configuration, ID3v1Policy, PathCompatibilityOption, RescanOption, SettingValueType
 from ..database import db_config
-from ..interactive.configurator import interactive_config, set_library
+from ..interactive.configurator import interactive_config
 from .cli_context import pass_context, require_configured, require_persistent_context
 
 logger = logging.getLogger(__name__)

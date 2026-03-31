@@ -147,6 +147,20 @@ CREATE TABLE album_other_file (
 );
 CREATE INDEX idx_album_other_file_album_id ON album_other_file(album_id);
 """,
+    13: """
+CREATE TABLE sync_destination (
+    destination_id INTEGER PRIMARY KEY,
+    collection_id REFERENCES collection(collection_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    path_root TEXT NOT NULL,
+    relpath_template_artist TEXT NOT NULL,
+    relpath_template_compilation TEXT NOT NULL,
+    allow_file_types TEXT NOT NULL,
+    convert_file_type TEXT NOT NULL,
+    max_kbps INTEGER NOT NULL
+);
+CREATE INDEX idx_sync_destination_collection_id ON sync_destination(collection_id);
+CREATE UNIQUE INDEX idx_unique_destination_collection_path ON sync_destination(collection_id, path_root);
+""",
 }
 
 CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())
