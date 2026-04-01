@@ -4,7 +4,7 @@ from pathlib import Path
 import rich_click as click
 
 from ..app import Context
-from ..config import RescanOption
+from ..config import RescanOption, SyncDestination
 from ..library import scanner, synchronizer
 from .cli_context import pass_context, require_configured, require_library, require_persistent_context
 
@@ -21,11 +21,11 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
     require_configured(ctx)
     require_persistent_context(ctx)
     require_library(ctx)
-    dest = Path(destination)
-    if dest.exists() and dest.is_dir():
+    path_root = Path(destination)
+    if path_root.exists() and path_root.is_dir():
         if ctx.config.rescan == RescanOption.AUTO:
             scanner.scan(ctx)
 
-        synchronizer.do_sync(ctx, dest, delete, force)
+        synchronizer.do_sync(ctx, SyncDestination("", path_root), delete, force)
     else:
         ctx.console.print("The sync destination must be a directory")

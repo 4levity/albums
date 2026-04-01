@@ -16,6 +16,10 @@ def show_template_path_help(ctx: Context):
     ctx.console.print("Available substitution variables: [bold]album[/bold], [bold]artist[/bold], [bold]A1[/bold], [bold]a1[/bold]")
 
 
+def make_template_path(ctx: Context, album: Album, t_artist: Template, t_various: Template) -> str:
+    return make_template_paths(ctx, album, t_artist, t_various)[0]
+
+
 def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_various: Template, t_more: Sequence[Template] = []) -> Sequence[str]:
     used_identifiers = set(t_artist.get_identifiers() + t_various.get_identifiers())
     used_identifiers.update(identifier for path_T in t_more for identifier in path_T.get_identifiers())

@@ -63,6 +63,8 @@ def config(ctx: Context, show: bool, import_file: str, export_file: str, reset: 
             [name, value] = kv.split("=", 1)
             if _set(ctx, name, value):
                 ctx.console.print(f"{name} = {_render_setting(name, ctx.config.to_values()[name])}", soft_wrap=True)
+            else:
+                raise SystemExit(1)
     elif import_file:
         _import(ctx, import_file)
     elif export_file:

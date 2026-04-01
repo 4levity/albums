@@ -145,5 +145,3 @@ class Importer:
 
         self.ctx.console.print(f"Imported album to {escape(destination_path_in_library)} (will be added to library on next scan)")
         # TODO add album to database immediately + include cover source mark or ignored checks from import process
-
-
