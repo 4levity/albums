@@ -9,6 +9,7 @@ from prompt_toolkit.shortcuts import choice
 from ..app import Context
 from ..config import ID3v1Policy, PathCompatibilityOption, RescanOption
 from ..database import db_config
+from ..library.paths import show_template_path_help
 
 
 def configure_settings(ctx: Context):
@@ -92,19 +93,19 @@ def _configure_setting(
             ctx.config.open_folder_command = prompt("Command to open a folder: ", default=ctx.config.open_folder_command)
             db_config.save(ctx.db, ctx.config)
         case "default_import_path":
-            _show_import_path_help(ctx)
+            show_template_path_help(ctx)
             ctx.config.default_import_path = Template(
                 prompt("Template for default (not compilation) import path: ", default=ctx.config.default_import_path.template)
             )
             db_config.save(ctx.db, ctx.config)
         case "default_import_path_various":
-            _show_import_path_help(ctx)
+            show_template_path_help(ctx)
             ctx.config.default_import_path_various = Template(
                 prompt("Template for compilation import path: ", default=ctx.config.default_import_path_various.template)
             )
             db_config.save(ctx.db, ctx.config)
         case "more_import_paths":
-            _show_import_path_help(ctx)
+            show_template_path_help(ctx)
             default_str = ",".join(t.template for t in ctx.config.more_import_paths)
             more_paths = prompt("Enter more import path templates separated by comma: ", default=default_str)
             ctx.config.more_import_paths = [Template(path.strip()) for path in more_paths.split(",")]
@@ -125,7 +126,3 @@ def _configure_setting(
             )
             ctx.config.id3v1 = ID3v1Policy(option)
             db_config.save(ctx.db, ctx.config)
-
-
-def _show_import_path_help(ctx: Context):
-    ctx.console.print("Available substitution variables: [bold]album[/bold], [bold]artist[/bold], [bold]A1[/bold], [bold]a1[/bold]")

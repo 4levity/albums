@@ -1,4 +1,6 @@
+import platform
 from pathlib import Path
+from string import Template
 
 from prompt_toolkit import choice, prompt
 from prompt_toolkit.completion import PathCompleter
@@ -8,21 +10,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..types import CollectionEntity, SyncDestination
+from ..config import SyncDestination
+from ..database import db_config
+from ..library.paths import show_template_path_help
+from ..tagger.folder import AUDIO_FILE_SUFFIXES
+from ..types import CollectionEntity
 
 
 def configure_destinations(ctx: Context):
     option = "_"
     while option and option != "back":
-        with Session(ctx.db) as session:
-            options: list[tuple[str, str]] = [
-                (str(d.destination_id), _describe(d))
-                for (d,) in session.execute(
-                    select(SyncDestination)
-                    .join(CollectionEntity, SyncDestination.collection_id == CollectionEntity.collection_id)
-                    .order_by(CollectionEntity.collection_name)
-                ).tuples()
-            ]
+        options: list[tuple[str, str]] = [(str(ix), _describe(dest)) for ix, dest in enumerate(ctx.config.sync_destinations)]
         options.extend(
             [
                 ("new", ">> Create a new sync destination"),
@@ -34,95 +32,112 @@ def configure_destinations(ctx: Context):
             path_root = _get_destination_root(ctx)
             if not path_root:
                 continue
-            with Session(ctx.db) as session:
-                collection_id = _get_collection_id(ctx, session)
-                dest = SyncDestination(collection_id=collection_id, path_root=path_root)
-                session.add(dest)
-                session.commit()
-                if dest.destination_id is None:
-                    raise RuntimeError("failed to save destination")
-                destination_id = dest.destination_id
-            _configure_destination(ctx, destination_id)
+            dest = SyncDestination(_get_collection(ctx), Path(path_root))
+
+            ix = len(ctx.config.sync_destinations)
+            ctx.config.sync_destinations.append(dest)
+            _configure_destination(ctx, ix)
         elif option != "back":
             _configure_destination(ctx, int(option))
 
 
-def _get_destination_root(ctx: Context, default: str = "") -> str | None:
+def _get_destination_root(ctx: Context, default: Path | None = None) -> Path | None:
     path_completer = PathCompleter()
-    dest_str = prompt("Path to the root of the sync destination: ", completer=path_completer, default=default)
+    dest_str = prompt("Path to the root of the sync destination: ", completer=path_completer, default=str(default) if default else "")
     dest_path = Path(dest_str)
+    if not dest_path.is_absolute():
+        ctx.console.print(f"[bold red]Error:[/bold red] must be an absolute path{' with drive letter' if platform.system() == 'Windows' else ''}")
+        return None
     if dest_path.exists() and not dest_path.is_dir():
         ctx.console.print("[bold red]Error:[/bold red] the destination cannot be a file")
         return None
     if not dest_path.is_dir() and ctx.console.is_interactive and not confirm("The directory doesn't exist. Are you sure you want to use it?"):
         ctx.console.print("Canceled.")
         return None
-    dest_str = str(dest_path)
-    if not dest_str or dest_str == ".":
-        return None
-    return dest_str
+    return dest_path
 
 
-def _get_collection_id(ctx: Context, session: Session, default_id: int | None = None) -> int:
-    options: list[tuple[int, str]] = [
-        (c.collection_id or 0, c.collection_name)
-        for (c,) in session.execute(select(CollectionEntity).order_by(CollectionEntity.collection_name)).tuples()
-    ]
-    options.append((0, ">> Create a new collection"))
-    option = choice(message="", options=options)
+def _get_collection(ctx: Context, default: str = "") -> str:
+    with Session(ctx.db) as session:
+        collection_names = [
+            c.collection_name for (c,) in session.execute(select(CollectionEntity).order_by(CollectionEntity.collection_name)).tuples()
+        ]
+    options = [(name, name) for name in collection_names] + [("", ">> Create a new collection")]
+    default_option = default if default else (collection_names[0] if len(collection_names) else "")
+    option = choice(message="Which albums collection to use for this sync destination?", options=options, default=default_option)
     if option:
         return option
-    while not (name := prompt("New collection name: ")):
+    while not (option := prompt("Collection name: ")):
         pass
-    new_collection = CollectionEntity(collection_name=name)
-    session.add(new_collection)
-    session.flush()
-    if new_collection.collection_id is None:
-        raise RuntimeError("failed to save new collection")  # shouldn't happen, just for type
-    ctx.console.print(f"Created new collection: {escape(name)}")
-    return new_collection.collection_id
+    match = next((name for name in collection_names if name.lower() == option.lower()), None)
+    if match:
+        option = match
+        ctx.console.print("Using existing collection")
+    ctx.console.print(f"To use this destination, add some albums to this collection: {option}")
+    return option
 
 
-def _configure_destination(ctx: Context, destination_id: int):
-    with Session(ctx.db) as session:
-        (dest,) = session.execute(select(SyncDestination).filter(SyncDestination.destination_id == destination_id)).tuples().one()
-        option = "_"
-        while option and option not in {"save", "delete", "cancel"}:
-            options: list[tuple[str, str]] = [
-                ("collection", f"Collection: {dest.collection.collection_name}"),
-                ("path_root", f"Destination path root: {escape(dest.path_root)}"),
-                ("relpath_template_artist", f"Album path template (albums with artist) or blank=same: {dest.relpath_template_artist}"),
-                ("relpath_template_compilation", f"Album path template (compilations) or blank=same: {dest.relpath_template_compilation}"),
-                ("allow_file_types", f"Music file types allowed, or blank=any: {','.join(dest.allow_file_types)}"),
-                ("convert_file_type", f"Music file type to convert to: {dest.convert_file_type}"),
-                ("max_kbps", f"Max audio kbps or 0 for none: {dest.max_kbps}"),
-                ("save", ">> Save"),
-                ("delete", ">> Delete this destination"),
-                ("cancel", ">> Cancel"),
-            ]
-            option = choice(message=f"Editing destination {_describe(dest)}", options=options)
-            if option == "collection":
-                dest.collection_id = _get_collection_id(ctx, session, dest.collection_id)
-            elif option == "path_root":
-                value = _get_destination_root(ctx, dest.path_root)
-                if value is not None:
-                    dest.path_root = value
-            elif option == "relpath_template_artist":
+def _configure_destination(ctx: Context, destination_ix: int):
+    dest = ctx.config.sync_destinations[destination_ix]
+    option = "_"
+    while option and option not in {"save", "delete", "cancel"}:
+        options: list[tuple[str, str]] = [
+            ("collection", f"Collection: {dest.collection}"),
+            ("path_root", f"Destination path root: {escape(str(dest.path_root))}"),
+            ("relpath_template_artist", f"Album path template (albums with artist) or blank=same: {dest.relpath_template_artist.template}"),
+            ("relpath_template_compilation", f"Album path template (compilations) or blank=same: {dest.relpath_template_compilation.template}"),
+            ("allow_file_types", f"Music file types allowed, or blank=any: {','.join(dest.allow_file_types)}"),
+            ("max_kbps", f"Max audio kbps or 0 for none: {dest.max_kbps}"),
+            ("convert_file_type", f"Wrong type or over max, convert to: {dest.convert_file_type}"),
+            ("save", ">> Save"),
+            ("delete", ">> Delete this destination"),
+            ("cancel", ">> Cancel"),
+        ]
+        option = choice(message=f"Editing destination {_describe(dest)}", options=options)
+        if option == "collection":
+            dest.collection = _get_collection(ctx, dest.collection)
+        elif option == "path_root":
+            value = _get_destination_root(ctx, dest.path_root)
+            if value is not None:
+                dest.path_root = value
+        elif option == "relpath_template_artist":
+            show_template_path_help(ctx)
+            dest.relpath_template_artist = Template(
+                prompt("Template for default (not compilation) destination path: ", default=dest.relpath_template_artist.template)
+            )
+        elif option == "relpath_template_compilation":
+            show_template_path_help(ctx)
+            dest.relpath_template_compilation = Template(
+                prompt("Template for compilation destination path: ", default=dest.relpath_template_compilation.template)
+            )
+        elif option == "allow_file_types":
+            ctx.console.print(f"Known audio file types: {', '.join(suffix[1:] for suffix in AUDIO_FILE_SUFFIXES)}")
+            file_types = prompt(
+                "Enter destination allowed audio types separated by commas or empty to allow all: ", default=",".join(dest.allow_file_types)
+            ).split(",")
+            if any(f".{str.lower(file_type)}" not in AUDIO_FILE_SUFFIXES for file_type in file_types):
+                ctx.console.print("Invalid file type")
+                continue
+            dest.allow_file_types = [str.lower(file_type) for file_type in file_types]
+        elif option == "max_kbps":
+            while not str.isdecimal(
+                max_kbps := prompt("Max average bitrate in kbps (kilobytes per second) or 0 to allow all: ", default=str(dest.max_kbps))
+            ):
                 pass
-            elif option == "relpath_template_compilation":
-                pass
-            elif option == "allow_file_types":
-                pass
-            elif option == "convert_file_type":
-                pass
-            elif option == "max_kbps":
-                pass
+            dest.max_kbps = int(max_kbps)
+        elif option == "convert_file_type":
+            ctx.console.print("mp3 = default mp3 conversion profile (no other options)")  # TODO options!
+            conversion_profile = prompt("Conversion profile: ", default="mp3")
+            if str.lower(conversion_profile) != "mp3":
+                ctx.console.print(f"Ignoring unknown profile {conversion_profile}")
+                continue
+            dest.convert_file_type = str.lower(conversion_profile)
 
-        if option == "save":
-            session.commit()
-        elif option == "delete":
-            pass
+    if option in {"save", "delete"}:
+        if option == "delete":
+            del ctx.config.sync_destinations[destination_ix]
+        db_config.save(ctx.db, ctx.config)
 
 
-def _describe(d: SyncDestination) -> str:
-    return f"{d.collection.collection_name} -> {d.path_root}"
+def _describe(dest: SyncDestination) -> str:
+    return f"{dest.collection} -> {dest.path_root}"

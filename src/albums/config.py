@@ -4,18 +4,19 @@ from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum, auto
 from pathlib import Path
 from string import Template
-from typing import Dict, Iterator, Mapping, Union
+from typing import Dict, Iterator, List, Mapping, Sequence, Tuple, Union
 
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database.orm import Base, SerializableValueAsJson
-from .types import CheckConfiguration, Sequence, Tuple
+from .types import CheckConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-type SettingValueType = Union[str, int, float, bool, Sequence[str]]
+type SerializedSyncDestination = dict[str, Union[str, int, float, bool, Sequence[str]]]
+type SettingValueType = Union[str, int, float, bool, Sequence[str], Sequence[SerializedSyncDestination]]
 
 
 class SettingEntity(Base):
@@ -59,6 +60,40 @@ class ID3v1Policy(IntEnum):
 
 
 @dataclass
+class SyncDestination:
+    collection: str
+    path_root: Path
+    relpath_template_artist: Template = Template("")
+    relpath_template_compilation: Template = Template("")
+    allow_file_types: List[str] = field(default_factory=list[str])
+    convert_file_type: str = "mp3"
+    max_kbps: int = 0
+
+    def to_dict(self) -> SerializedSyncDestination:
+        return {
+            "collection": self.collection,
+            "path_root": str(self.path_root),
+            "relpath_template_artist": self.relpath_template_artist.template,
+            "relpath_template_compilation": self.relpath_template_compilation.template,
+            "allow_file_types": self.allow_file_types,
+            "convert_file_type": self.convert_file_type,
+            "max_kbps": self.max_kbps,
+        }
+
+    @classmethod
+    def from_dict(cls, values: SerializedSyncDestination):
+        return SyncDestination(
+            str(values["collection"]),
+            Path(str(values["path_root"])),
+            Template(str(values["relpath_template_artist"])),
+            Template(str(values["relpath_template_compilation"])),
+            values["allow_file_types"] if isinstance(values["allow_file_types"], list) else [],
+            str(values["convert_file_type"]),
+            int(str(values["max_kbps"])),
+        )
+
+
+@dataclass
 class Configuration:
     checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
     default_import_path: Template = DEFAULT_IMPORT_PATH
@@ -73,9 +108,10 @@ class Configuration:
     rescan: RescanOption = RescanOption.AUTO
     tagger: str = ""
     id3v1: ID3v1Policy = ID3v1Policy.UPDATE
+    sync_destinations: List[SyncDestination] = field(default_factory=list[SyncDestination])
 
     def to_values(self) -> Mapping[str, SettingValueType]:
-        values: Dict[str, Union[str, int, float, bool, Sequence[str]]] = {
+        values: Dict[str, SettingValueType] = {
             "settings.default_import_path": self.default_import_path.template,
             "settings.default_import_path_various": self.default_import_path_various.template,
             "settings.more_import_paths": [path_T.template for path_T in self.more_import_paths],
@@ -88,6 +124,7 @@ class Configuration:
             "settings.rescan": str(self.rescan),
             "settings.tagger": self.tagger,
             "settings.id3v1": self.id3v1.value,
+            "settings.sync_destinations": [dest.to_dict() for dest in self.sync_destinations],
         }
         defaults = default_checks_config()
         for check_name, check_config in self.checks.items():
@@ -119,8 +156,8 @@ class Configuration:
                 elif name == "default_import_path_various":
                     config.default_import_path_various = Template(str(value))
                 elif name == "more_import_paths":
-                    if isinstance(value, list):
-                        config.more_import_paths = tuple(Template(v) for v in value)
+                    if isinstance(value, list) and all(isinstance(item, str) for item in value):
+                        config.more_import_paths = tuple(Template(v) for v in value)  # pyright: ignore[reportArgumentType]
                     else:
                         logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.more_import_paths)}")
                         ignored_values = True
@@ -130,6 +167,7 @@ class Configuration:
                         config.import_scan_max_paths = int(max_paths)
                     else:
                         logger.warning(f"ignoring {k}={max_paths}, not a number - using default {config.import_scan_max_paths}")
+                        ignored_values = True
                 elif name == "library":
                     config.library = Path(str(value))
                 elif name == "open_folder_command":
@@ -146,6 +184,12 @@ class Configuration:
                     config.tagger = str(value)
                 elif name == "id3v1":
                     config.id3v1 = ID3v1Policy(value)
+                elif name == "sync_destinations":
+                    if isinstance(value, list) and all(isinstance(item, dict) for item in value):
+                        config.sync_destinations = [SyncDestination.from_dict(dest) for dest in value]  # pyright: ignore[reportArgumentType]
+                    else:
+                        logger.warning(f"ignoring {k}={str(value)}, not a list of sync destination dictionaries")
+                        ignored_values = True
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
                     ignored_values = True
@@ -156,6 +200,6 @@ class Configuration:
                 elif type(value) is not type(config.checks[section][name]):
                     logger.warning(f"ignoring configuration item {k} with wrong type {type(value)} (expected {type(config.checks[section][name])})")
                     ignored_values = True
-                else:
-                    config.checks[section][name] = value
+                elif not isinstance(value, list) or all(isinstance(item, str) for item in value):
+                    config.checks[section][name] = value  # pyright: ignore[reportArgumentType]
         return (config, ignored_values)
