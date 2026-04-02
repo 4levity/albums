@@ -27,7 +27,6 @@ class TestCliConfig:
         result = self.run(["config", "--show"], init=True)
         assert_setting(result.output, "settings.library", str(TestCliConfig.library)[:16])
         assert_setting(result.output, "settings.rescan", "auto")
-        # assert_setting(result.output, "settings.tagger", "easytag")  # only if it is installed
         assert_setting(result.output, "settings.open_folder_command", " ")
         assert_setting(result.output, "cover-dimensions.min_pixels", "100")
         assert_setting(result.output, "cover-dimensions.squareness", "0.98")

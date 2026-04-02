@@ -26,6 +26,7 @@ def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool
     require_real_context(ctx)
     require_library(ctx)
     if ctx.config.rescan == RescanOption.AUTO and ctx.is_persistent:
+        ctx.console.print("Scanning library before check (see config settings.rescan to disable this)")
         scan(ctx)
 
     if default:

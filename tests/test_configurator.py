@@ -2,6 +2,7 @@ import os
 import platform
 
 from albums.app import Context, Path
+from albums.config import ID3v1Policy, PathCompatibilityOption, RescanOption
 from albums.database import connection, db_config
 from albums.interactive.configurator import interactive_config
 
@@ -14,6 +15,24 @@ class TestConfigurator:
             mock_choice = mocker.patch("albums.interactive.configurator.choice", return_value="exit")
             interactive_config(ctx)
             assert mock_choice.call_count == 1
+        finally:
+            ctx.db.dispose()
+
+    def test_settings(self, mocker):
+        ctx = Context()
+        ctx.db = connection.open(connection.MEMORY)
+        try:
+            mocker.patch("albums.interactive.configurator.choice").side_effect = ["settings", "exit"]
+            mock_choice = mocker.patch("albums.interactive.setup_settings.choice")
+            mock_choice.side_effect = ["path_compatibility", "Linux", "rescan", "always", "id3v1", ID3v1Policy.CREATE, "back"]
+
+            interactive_config(ctx)
+
+            assert mock_choice.call_count == 7
+            config = db_config.load(ctx.db)
+            assert config.path_compatibility == PathCompatibilityOption.LINUX
+            assert config.rescan == RescanOption.ALWAYS
+            assert config.id3v1 == ID3v1Policy.CREATE
         finally:
             ctx.db.dispose()
 
@@ -57,7 +76,7 @@ class TestConfigurator:
                 "relpath_template_compilation",
                 "save",
                 "back",
-            ]  # new destination, new collection, save destination, back to main menu
+            ]  # new destination, new collection, set template 1, set template 2, save destination, back to main menu
             mock_prompt = mocker.patch("albums.interactive.setup_destination.prompt")
             template1 = f"$artist{os.sep}$album"
             template2 = f"Various{os.sep}$album"

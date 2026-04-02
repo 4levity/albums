@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Collection, Sequence, Tuple
 
 import humanize
 from prompt_toolkit.shortcuts import confirm
@@ -21,12 +21,40 @@ logger = logging.getLogger(__name__)
 
 
 def do_sync(ctx: Context, dest: SyncDestination, delete: bool, force: bool):
-    if not ctx.db or str(ctx.config.library) in {"", "."}:
+    if str(ctx.config.library) in {"", "."}:
         raise ValueError("do_sync called without db connection + library")
 
+    (tracks, extraneous_paths) = _diff_src_dest(ctx, dest)
+
+    if delete and len(extraneous_paths) > 0:
+        ctx.console.print(f"[orange]will delete {plural(extraneous_paths, 'path')} from {escape(str(dest))}")
+        if force or confirm("are you sure you want to delete?"):
+            ctx.console.print("[bold red]deleting files from destination")
+            for delete_path in sorted(extraneous_paths, reverse=True):
+                if delete_path.is_dir():
+                    delete_path.rmdir()
+                else:
+                    delete_path.unlink()
+                logger.info(f"deleting {delete_path}")
+            ctx.console.print("done deleting files.")
+        else:
+            ctx.console.print("skipped deleting files from destination")
+
+    elif len(extraneous_paths) > 0:
+        ctx.console.print(
+            f"[bold green]not deleting {plural(extraneous_paths, 'path')} from {escape(str(dest))}, e.g. {str(next(iter(extraneous_paths)))}"
+        )
+
+    if len(tracks) > 0:
+        ctx.console.print(f"Destination: {escape(str(dest))}")
+        copy_files_with_progress(ctx, tracks)
+    else:
+        ctx.console.print("no tracks to copy")
+
+
+def _diff_src_dest(ctx: Context, dest: SyncDestination) -> Tuple[Sequence[Tuple[Path, Path, int]], Collection[Path]]:
     existing_dest_paths = set(dest.path_root.rglob("*"))
     skipped_tracks = 0
-    total_size = 0
     tracks: list[tuple[Path, Path, int]] = []  # list of (source, destination, size)
     with Session(ctx.db) as session:
         if dest.collection:
@@ -43,7 +71,7 @@ def do_sync(ctx: Context, dest: SyncDestination, delete: bool, force: bool):
                 while tmp_dest_path.relative_to(dest.path_root).name != "":
                     if tmp_dest_path.exists() and not tmp_dest_path.is_dir():
                         logger.error(f"destination {str(tmp_dest_path)} exists, but is not a directory. Aborting.")
-                        return
+                        return ([], ())
                     existing_dest_paths.discard(tmp_dest_path)
                     tmp_dest_path = tmp_dest_path.parent
 
@@ -51,7 +79,7 @@ def do_sync(ctx: Context, dest: SyncDestination, delete: bool, force: bool):
                 if dest_track_path.exists():
                     if not dest_track_path.is_file():
                         logger.error(f"destination {str(dest_track_path)} exists, but is not a file. Aborting.")
-                        return
+                        return ([], ())
                     existing_dest_paths.remove(dest_track_path)
                     stat = dest_track_path.stat()
                     # treat last-modified within one second as identical due to rounding errors and file system differences
@@ -61,35 +89,12 @@ def do_sync(ctx: Context, dest: SyncDestination, delete: bool, force: bool):
                 else:
                     copy_track = True
                 if copy_track:
-                    total_size += track.file_size
                     source_track_path = ctx.config.library / album.path / track.filename
                     tracks.append((source_track_path, dest_track_path, track.file_size))
+    if skipped_tracks > 0:
+        ctx.console.print(f"Skipping {plural(skipped_tracks, 'existing track')}")
 
-    if delete and len(existing_dest_paths) > 0:
-        ctx.console.print(f"[orange]will delete {len(existing_dest_paths)} paths from {escape(str(dest))}")
-        if force or confirm("are you sure you want to delete?"):
-            ctx.console.print("[bold red]deleting files from destination")
-            for delete_path in sorted(existing_dest_paths, reverse=True):
-                if delete_path.is_dir():
-                    delete_path.rmdir()
-                else:
-                    delete_path.unlink()
-                logger.info(f"deleting {delete_path}")
-            ctx.console.print("done deleting files.")
-        else:
-            ctx.console.print("skipped deleting files from destination")
-
-    elif len(existing_dest_paths) > 0:
-        ctx.console.print(
-            f"[bold green]not deleting {plural(existing_dest_paths, 'path')} from {escape(str(dest))}, e.g. {list(existing_dest_paths)[:2]}"
-        )
-
-    skipped = f" (skipped {skipped_tracks})" if skipped_tracks > 0 else ""
-    if len(tracks) > 0:
-        ctx.console.print(f"Destination: {escape(str(dest))} {skipped}")
-        copy_files_with_progress(ctx, tracks)
-    else:
-        ctx.console.print(f"no tracks to copy{skipped}")
+    return (tracks, existing_dest_paths)
 
 
 def copy_files_with_progress(ctx: Context, to_copy: Sequence[Tuple[Path, Path, int]]):

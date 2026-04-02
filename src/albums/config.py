@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass, field
@@ -59,6 +61,9 @@ class ID3v1Policy(IntEnum):
     CREATE = 2
 
 
+DEFAULT_FILE_CONVERT_PROFILE = "mp3"
+
+
 @dataclass
 class SyncDestination:
     collection: str
@@ -66,8 +71,14 @@ class SyncDestination:
     relpath_template_artist: Template = Template("")
     relpath_template_compilation: Template = Template("")
     allow_file_types: List[str] = field(default_factory=list[str])
-    convert_file_type: str = "mp3"
+    convert_file_type: str = DEFAULT_FILE_CONVERT_PROFILE
     max_kbps: int = 0
+
+    def __str__(self) -> str:
+        return f"{self.collection} -> {self.path_root}"
+
+    def __lt__(self, other: SyncDestination):
+        return self.collection < other.collection or (self.collection == other.collection and str(self.path_root) < str(other.path_root))
 
     def to_dict(self) -> SerializedSyncDestination:
         return {
@@ -85,11 +96,11 @@ class SyncDestination:
         return SyncDestination(
             str(values["collection"]),
             Path(str(values["path_root"])),
-            Template(str(values["relpath_template_artist"])),
-            Template(str(values["relpath_template_compilation"])),
-            values["allow_file_types"] if isinstance(values["allow_file_types"], list) else [],
-            str(values["convert_file_type"]),
-            int(str(values["max_kbps"])),
+            Template(str(values.get("relpath_template_artist", ""))),
+            Template(str(values.get("relpath_template_compilation", ""))),
+            values["allow_file_types"] if ("allow_file_types" in values and isinstance(values["allow_file_types"], list)) else [],
+            str(values.get("convert_file_type", DEFAULT_FILE_CONVERT_PROFILE)),
+            int(str(values.get("max_kbps", 0))),
         )
 
 

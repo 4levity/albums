@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from itertools import chain
 from pathlib import Path
 from string import Template
 from typing import Mapping
@@ -87,7 +88,8 @@ def _import(ctx: Context, import_file: str):
     except Exception as ex:
         logger.error(f'error parsing file "{import_file}": {repr(ex)}')
         raise SystemExit(1)
-    (new_config, ignored) = Configuration.from_values((k, v) for k, v in config_items)
+
+    (new_config, ignored) = Configuration.from_values(chain(ctx.config.to_values().items(), ((k, v) for k, v in config_items)))
     if (
         ignored
         and ctx.console.is_interactive

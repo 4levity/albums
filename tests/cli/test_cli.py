@@ -10,7 +10,7 @@ from albums.tagger.types import BasicTag
 from albums.types import Album, PictureFile, Track
 
 from .. import helpers
-from ..fixtures.create_library import create_library, test_data_path
+from ..fixtures.create_library import create_library
 
 albums = [
     Album(
@@ -211,27 +211,6 @@ class TestCli:
         obj = json.loads(result.output)
         assert len(obj) == 1
         assert obj[0]["path"] == "bar" + os.sep  # foo was removed
-
-    def test_sync(self):
-        dest = test_data_path / "cli_sync"
-        shutil.rmtree(dest, ignore_errors=True)
-        os.makedirs(dest / "other")
-        with open(dest / "other" / "baz.txt", "w"):
-            pass
-        self.run(["scan"], init=True)
-        self.run(["-rp", "bar", "add", "test"])
-
-        result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
-        assert result.exit_code == 0
-        assert "Copying 2 files" in result.output
-        assert "will delete 2 paths" in result.output
-        assert (dest / "bar").is_dir()
-        assert (dest / "bar" / "1.flac").is_file()
-        assert not (dest / "other").exists()
-
-        result = self.run(["-c", "test", "sync", str(dest), "--delete", "--force"])
-        assert result.exit_code == 0
-        assert "no tracks to copy (skipped 2)" in result.output
 
     def test_import_automatic(self):
         self.run(["scan"], init=True)

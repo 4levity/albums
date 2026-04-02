@@ -20,7 +20,7 @@ from ..types import CollectionEntity
 def configure_destinations(ctx: Context):
     option = "_"
     while option and option != "back":
-        options: list[tuple[str, str]] = [(str(ix), _describe(dest)) for ix, dest in enumerate(ctx.config.sync_destinations)]
+        options: list[tuple[str, str]] = [(str(ix), str(dest)) for ix, dest in enumerate(ctx.config.sync_destinations)]
         options.extend(
             [
                 ("new", ">> Create a new sync destination"),
@@ -93,7 +93,7 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ("delete", ">> Delete this destination"),
             ("cancel", ">> Cancel"),
         ]
-        option = choice(message=f"Editing destination {_describe(dest)}", options=options)
+        option = choice(message=f"Editing destination {str(dest)}", options=options)
         if option == "collection":
             dest.collection = _get_collection(ctx, dest.collection)
         elif option == "path_root":
@@ -137,7 +137,3 @@ def _configure_destination(ctx: Context, destination_ix: int):
         if option == "delete":
             del ctx.config.sync_destinations[destination_ix]
         db_config.save(ctx.db, ctx.config)
-
-
-def _describe(dest: SyncDestination) -> str:
-    return f"{dest.collection} -> {dest.path_root}"
