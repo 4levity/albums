@@ -8,6 +8,7 @@ from pathlib import Path
 from string import Template
 from typing import Dict, Iterator, List, Mapping, Sequence, Tuple, Union
 
+from platformdirs import PlatformDirs
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,6 +16,8 @@ from .database.orm import Base, SerializableValueAsJson
 from .types import CheckConfiguration
 
 logger = logging.getLogger(__name__)
+
+PLATFORM_DIRS = PlatformDirs("albums", "4levity")
 
 
 type SerializedSyncDestination = dict[str, Union[str, int, float, bool, Sequence[str]]]
@@ -112,6 +115,8 @@ class Configuration:
     more_import_paths: Sequence[Template] = DEFAULT_MORE_IMPORT_PATHS
     import_scan_max_paths: int = DEFAULT_IMPORT_SCAN_MAX_PATHS
     library: Path = Path(".")
+    transcoder_cache: Path = PLATFORM_DIRS.user_data_path / "albums_transcoder_cache"
+    transcoder_cache_mb: int = 1024
     open_folder_command: str = ""
     path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
     path_replace_slash = "-"
@@ -128,6 +133,8 @@ class Configuration:
             "settings.more_import_paths": [path_T.template for path_T in self.more_import_paths],
             "settings.import_scan_max_paths": self.import_scan_max_paths,
             "settings.library": str(self.library),
+            "settings.transcoder_cache": str(self.transcoder_cache),
+            "settings.transcoder_cache_mb": self.transcoder_cache_mb,
             "settings.open_folder_command": self.open_folder_command,
             "settings.path_compatibility": self.path_compatibility.value,
             "settings.path_replace_invalid": str(self.path_replace_invalid),
@@ -181,6 +188,10 @@ class Configuration:
                         ignored_values = True
                 elif name == "library":
                     config.library = Path(str(value))
+                elif name == "transcoder_cache":
+                    config.transcoder_cache = Path(str(value))
+                elif name == "transcoder_cache_mb":
+                    config.transcoder_cache_mb = int(str(value))
                 elif name == "open_folder_command":
                     config.open_folder_command = str(value)
                 elif name == "path_compatibility":

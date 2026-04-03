@@ -1,12 +1,16 @@
 import glob
 import logging
+import os
+import shutil
 from itertools import chain
 from pathlib import Path
 from typing import Sequence, Tuple
 
+import humanize
 from prompt_toolkit import choice
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
+from rich.progress import Progress, TransferSpeedColumn
 from sqlalchemy.orm import Session
 
 from ..app import Context
@@ -15,7 +19,7 @@ from ..library.duplicates import DuplicateFinder, album_in_library
 from ..library.paths import make_template_paths
 from ..library.scanner import scan
 from ..types import Album
-from .synchronizer import copy_files_with_progress
+from ..words.make import plural
 
 logger = logging.getLogger(__name__)
 
@@ -134,14 +138,26 @@ class Importer:
             filenames = chain((track.filename for track in sorted(album.tracks)), (file.filename for file in sorted(album.picture_files)))
 
         to_copy: list[tuple[Path, Path, int]] = []  # list of (source, destination, size)
+        total_size = 0
         for filename in filenames:
             src_path = src / filename
             if src_path.is_file():
-                to_copy.append((src_path, dest / filename, src_path.stat().st_size))
+                size = src_path.stat().st_size
+                total_size += size
+                to_copy.append((src_path, dest / filename, size))
         if not to_copy:
             raise RuntimeError("unexpected: no files to copy?")
 
-        copy_files_with_progress(self.ctx, to_copy)
+        self.ctx.console.print(f"Copying {plural(to_copy, 'file')} {humanize.naturalsize(total_size)}")
+        os.makedirs(dest, exist_ok=True)
+        with Progress(*Progress.get_default_columns(), TransferSpeedColumn()) as progress:
+            sync_task = progress.add_task("Progress", total=total_size)
+            for source_track_path, dest_track_path, size in sorted(to_copy, key=lambda t: t[1]):
+                if self._recursive:
+                    os.makedirs(os.path.dirname(dest_track_path), exist_ok=True)
+                logger.debug(f"copying to {dest_track_path}")
+                shutil.copy2(source_track_path, dest_track_path)
+                progress.update(sync_task, advance=size)
 
         self.ctx.console.print(f"Imported album to {escape(destination_path_in_library)} (will be added to library on next scan)")
         # TODO add album to database immediately + include cover source mark or ignored checks from import process

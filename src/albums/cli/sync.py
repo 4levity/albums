@@ -7,7 +7,8 @@ from prompt_toolkit import choice
 
 from ..app import Context
 from ..config import RescanOption, SyncDestination
-from ..library import scanner, synchronizer
+from ..library.scanner import scan
+from ..library.synchronizer import Synchronizer
 from .cli_context import pass_context, require_configured, require_library, require_persistent_context
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,6 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
 
     if ctx.config.rescan == RescanOption.AUTO:
         ctx.console.print("Scanning library before sync (see config settings.rescan to disable this)")
-        scanner.scan(ctx)
+        scan(ctx)
 
-    synchronizer.do_sync(ctx, dest, delete, force)
+    Synchronizer(ctx, dest).do_sync(delete, force)

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator, List, Tuple, override
+from typing import Generator, Sequence, Tuple, override
 
 from ...picture.scan import PictureScanner
 from ..types import BasicTag, Picture, PictureType, ScanResult, StreamInfo, TaggerFile
@@ -37,7 +37,7 @@ class ImageFileReader(TaggerFile):
         yield self._image
 
     @override
-    def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None:
+    def set_tag(self, tag: BasicTag, value: str | Sequence[str] | None) -> None:
         raise NotImplementedError("ImageFileReader")
 
     @override

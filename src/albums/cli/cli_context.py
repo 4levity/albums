@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import Sequence, Tuple
 
 import click
-from platformdirs import PlatformDirs
 from rich.logging import RichHandler
 
 from ..app import Context
-from ..config import RescanOption
+from ..config import PLATFORM_DIRS, RescanOption
 from ..database import connection, db_config, selector
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
-PLATFORM_DIRS = PlatformDirs("albums", "4levity")
 DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 

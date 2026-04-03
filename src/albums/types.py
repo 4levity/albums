@@ -149,7 +149,7 @@ class Track(Base):
             "tags": self.tag_dict(),
         }
 
-    def tag_dict(self) -> Mapping[BasicTag, Sequence[str]]:
+    def tag_dict(self) -> Mapping[BasicTag, List[str]]:
         tags: dict[BasicTag, List[str]] = {}
         for tag_entity in self.tags:
             tags.setdefault(tag_entity.tag, []).append(tag_entity.value)

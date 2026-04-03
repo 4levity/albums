@@ -6,9 +6,10 @@ from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 
 from ..app import Context
+from ..config import PLATFORM_DIRS
 from ..database import connection, db_config
 from ..library import scanner
-from .cli_context import PLATFORM_DIRS, pass_context
+from .cli_context import pass_context
 
 
 @click.command(help="initialize albums database", add_help_option=False)

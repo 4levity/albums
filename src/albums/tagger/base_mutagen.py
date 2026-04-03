@@ -58,14 +58,17 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         (_, image_data) = pic_info
         return image_data
 
+    @override
     def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None:
         self._set_tag(tag, value)
         self._changed = True
 
+    @override
     def add_picture(self, new_picture: Picture, image_data: bytes) -> None:
         self._add_picture(new_picture, image_data)
         self._changed = True
 
+    @override
     def remove_picture(self, remove_picture: Picture) -> None:
         self._remove_picture(remove_picture)
         self._changed = True

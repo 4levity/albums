@@ -64,9 +64,10 @@ class TestCliSync:
     def test_sync_filter_to_path(self):
         result = self.run(["-rp", "bar", "sync", str(TestCliSync.dest)])
         assert result.exit_code == 0
-        assert "Copying 2 files" in result.output
+        assert "Copying 1 album" in result.output
         assert (TestCliSync.dest / "bar").is_dir()
         assert (TestCliSync.dest / "bar" / "1.flac").is_file()
+        assert (TestCliSync.dest / "bar" / "2.flac").is_file()
 
     def test_sync_existing(self):
         dest = test_data_path / "cli_sync_existing_dest"
@@ -80,7 +81,7 @@ class TestCliSync:
         result = self.run(["-rp", "bar", "sync", str(dest)])
         assert result.exit_code == 0
         assert "Skipping 2 existing tracks" in result.output
-        assert "no tracks to copy" in result.output
+        assert "nothing to copy" in result.output
 
     def test_sync_delete_extraneous(self):
         os.makedirs(TestCliSync.dest / "other")
@@ -89,10 +90,11 @@ class TestCliSync:
 
         result = self.run(["-rp", "bar", "sync", str(TestCliSync.dest), "--delete", "--force"])
         assert result.exit_code == 0
-        assert "Copying 2 files" in result.output
+        assert "Copying 1 album" in result.output
         assert "will delete 2 paths" in result.output
         assert (TestCliSync.dest / "bar").is_dir()
         assert (TestCliSync.dest / "bar" / "1.flac").is_file()
+        assert (TestCliSync.dest / "bar" / "2.flac").is_file()
         assert not (TestCliSync.dest / "other").exists()
 
     def test_sync_defined_by_collection(self):
@@ -106,9 +108,10 @@ class TestCliSync:
 
         result = self.run(["sync", "test"])
         assert result.exit_code == 0
-        assert "Copying 2 files" in result.output
+        assert "Copying 1 album" in result.output
         assert (TestCliSync.dest / "foo" / "bar").is_dir()  # uses $album/$artist template from config set above
         assert (TestCliSync.dest / "foo" / "bar" / "1.flac").is_file()
+        assert (TestCliSync.dest / "foo" / "bar" / "2.flac").is_file()
 
     def test_sync_defined_by_path(self):
         result = self.run(["-rp", "bar", "add", "test"])

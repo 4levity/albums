@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Sequence, Tuple
 
 from mutagen._vorbis import VCommentDict
 from mutagen.flac import Picture as FlacPicture
@@ -16,7 +16,7 @@ def vorbis_comment_tags(file_tags: VCommentDict):
     return tuple(tags)
 
 
-def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag, value: str | List[str] | None):
+def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag, value: str | Sequence[str] | None):
     if value is None:
         if tag.value in file_tags:
             del file_tags[tag.value]
