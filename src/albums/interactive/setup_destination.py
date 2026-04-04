@@ -88,7 +88,7 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ("relpath_template_compilation", f"Album path template (compilations) or blank=same: {dest.relpath_template_compilation.template}"),
             ("allow_file_types", f"Music file types allowed, or blank=any: {','.join(dest.allow_file_types)}"),
             ("max_kbps", f"Max audio kbps or 0 for none: {dest.max_kbps}"),
-            ("convert_profile", f"Wrong type or over max, convert to: {dest.convert_profile}"),
+            ("convert_profile", f"If wrong type or over max kbps, use transcode options: {dest.convert_profile}"),
             ("save", ">> Save"),
             ("delete", ">> Delete this destination"),
             ("cancel", ">> Cancel"),
@@ -126,12 +126,15 @@ def _configure_destination(ctx: Context, destination_ix: int):
                 pass
             dest.max_kbps = int(max_kbps)
         elif option == "convert_profile":
-            ctx.console.print("mp3 = default mp3 conversion profile (no other options)")  # TODO options!
-            conversion_profile = prompt("Conversion profile: ", default="mp3")
-            if str.lower(conversion_profile) != "mp3":
-                ctx.console.print(f"Ignoring unknown profile {conversion_profile}")
-                continue
-            dest.convert_profile = str.lower(conversion_profile)
+            ctx.console.print()
+            ctx.console.print("Profile is formatted as: [bold]\\[FFMPEG_OUTPUT_OPTIONS] FILE_TYPE[/bold]")
+            ctx.console.print("Example (320kbps MP3): [bold]-b:a 320k mp3[/bold]", highlight=False)
+            conversion_profile = prompt("Conversion profile: ", default=dest.convert_profile)
+            file_type = conversion_profile.split(" ")[-1]
+            if f".{file_type}" in AUDIO_FILE_SUFFIXES:
+                dest.convert_profile = str.lower(conversion_profile)
+            else:
+                ctx.console.print(f"Error: unknown file type {file_type}")
 
     if option in {"save", "delete"}:
         if option == "delete":
