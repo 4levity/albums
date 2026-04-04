@@ -39,14 +39,15 @@ def create_track_file(path: Path, spec: Track):
             file.write(EMPTY_OGG_VORBIS_FILE_BYTES)
         elif filename.suffix == ".aiff":
             file.write(EMPTY_AIFF_FILE_BYTES)
-    tagger = AlbumTagger(path, padding=lambda _: 0)
-    with tagger.open(spec.filename) as tags:
-        for pic in spec.pictures:
-            image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, mime_type_to_format(pic.picture_info.mime_type))
-            picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
-            tags.add_picture(picture, image_data)
-        for tag_name, values in spec.tag_dict().items():
-            tags.set_tag(tag_name, list(values))
+    if spec.tags or spec.pictures:
+        tagger = AlbumTagger(path, padding=lambda _: 0)
+        with tagger.open(spec.filename) as tags:
+            for pic in spec.pictures:
+                image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, mime_type_to_format(pic.picture_info.mime_type))
+                picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
+                tags.add_picture(picture, image_data)
+            for tag_name, values in spec.tag_dict().items():
+                tags.set_tag(tag_name, list(values))
 
 
 def create_picture_file(path: Path, width: int = 400, height: int = 400, color: str = "blue"):

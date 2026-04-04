@@ -16,7 +16,7 @@ from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture, PictureType
 from albums.types import Album, OtherFile, PictureFile, Track, TrackPicture
 
-from .fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
+from ..fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 
 
 def context(db: Engine, library: Path):

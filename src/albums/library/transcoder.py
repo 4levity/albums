@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Sequence
 
+import xxhash
 from rich.markup import escape
 
 from ..app import Context
@@ -44,6 +45,7 @@ class Transcoder:
         if cache_path.exists():
             return cache_path
 
+        os.makedirs(self._this_cache / album.path, exist_ok=True)
         self._transcode(self.ctx.config.library / album.path, track, cache_path)
         return cache_path
 
@@ -51,16 +53,17 @@ class Transcoder:
         return (self._this_cache / album_path / source_filename).with_suffix(f".{self.file_type}")
 
     def _transcode(self, album_path: Path, track: Track, dest: Path):
-        run_ffmpeg(["-i", track.filename, *self._ffmpeg_options, str(dest)], cwd=album_path)
+        run_ffmpeg(["-i", track.filename, *self._ffmpeg_options, str(dest)], album_path)
         # TODO track cache size, remove files from other sets if needed
 
-        with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
-            for tag, value in track.tag_dict().items():
-                dest_tags.set_tag(tag, value)
-            if track.pictures:
-                with self._tagger.get(album_path).open(track.filename) as src_tags:
-                    for pic, image_data in src_tags.get_pictures():
-                        dest_tags.add_picture(pic, image_data)
+        if track.tags or track.pictures:
+            with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
+                for tag, value in track.tag_dict().items():
+                    dest_tags.set_tag(tag, value)
+                if track.pictures:
+                    with self._tagger.get(album_path).open(track.filename) as src_tags:
+                        for pic, image_data in src_tags.get_pictures():
+                            dest_tags.add_picture(pic, image_data)
 
     def _create_cache_dirs(self):
         cache = self.ctx.config.transcoder_cache
@@ -73,7 +76,8 @@ class Transcoder:
         # TODO measure cache but don't flush this option cache
 
         descriptor = f"{' '.join(self._ffmpeg_options)} {self.file_type}"
-        self._this_cache = self.ctx.config.transcoder_cache / f"{hash(descriptor):x}"
+        this_cache_folder = xxhash.xxh3_64_hexdigest(descriptor)
+        self._this_cache = self.ctx.config.transcoder_cache / this_cache_folder
         if self._this_cache.exists():
             if not self._this_cache.is_dir():
                 raise RuntimeError(f"exists but not a directory: {str(self._this_cache)}")
@@ -83,7 +87,7 @@ class Transcoder:
         index_file = self.ctx.config.transcoder_cache / "index.json"
         index: dict[str, str] = json.loads(index_file.read_text()) if index_file.exists() else {}
         index[descriptor] = self._this_cache.name
-        index_file.write_text(json.dumps(index))
+        index_file.write_text(json.dumps(index), encoding="utf-8")
 
 
 def ensure_ffmpeg() -> None:
