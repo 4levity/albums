@@ -34,9 +34,14 @@ class TestTranscoder:
         profile = "-b:a 192k mp3"
 
         transcoder = Transcoder(ctx, profile)
-        index: dict[str, str] = json.loads((TestTranscoder.transcoder_cache / "index.json").read_text(encoding="utf-8"))
-        dest_path = TestTranscoder.transcoder_cache / index[profile] / album.path
+        index_file = TestTranscoder.transcoder_cache / "index.json"
+
+        assert not index_file.exists()  # deferred initialization
         assert not transcoder.in_cache(album, album.tracks[0])
+        assert index_file.exists()  # initialized
+
+        index: dict[str, str] = json.loads((index_file).read_text(encoding="utf-8"))
+        dest_path = TestTranscoder.transcoder_cache / index[profile] / album.path
         mp3 = transcoder.get_transcoded(album, album.tracks[0])
         assert mp3 == dest_path / "1.mp3"
         mp3 = transcoder.get_transcoded(album, album.tracks[1])

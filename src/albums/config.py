@@ -116,7 +116,7 @@ class Configuration:
     import_scan_max_paths: int = DEFAULT_IMPORT_SCAN_MAX_PATHS
     library: Path = Path(".")
     transcoder_cache: Path = PLATFORM_DIRS.user_data_path / "albums_transcoder_cache"
-    transcoder_cache_mb: int = 1024
+    transcoder_cache_mb: int = 16384
     open_folder_command: str = ""
     path_compatibility: PathCompatibilityOption = PathCompatibilityOption.UNIVERSAL
     path_replace_slash = "-"
