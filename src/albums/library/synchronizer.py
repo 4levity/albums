@@ -196,7 +196,7 @@ class Synchronizer:
         return self._dest.path_root / (dest_relpath if dest_relpath else album.path)
 
     def _converted_track_filename(self, original_filename: str):
-        suffix = f".{self._dest.convert_file_type.split(' ')[-1]}"
+        suffix = f".{self._dest.convert_profile.split(' ')[-1]}"
         return str(Path(original_filename).with_suffix(suffix))
 
     def _use_transcoded_album(self, album: Album) -> bool:
@@ -210,5 +210,5 @@ class Synchronizer:
 
     def _get_transcoder(self) -> Transcoder:
         if self._transcoder is None:
-            self._transcoder = Transcoder(self._ctx, self._dest.convert_file_type)
+            self._transcoder = Transcoder(self._ctx, self._dest.convert_profile)
         return self._transcoder

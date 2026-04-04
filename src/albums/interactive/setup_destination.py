@@ -88,7 +88,7 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ("relpath_template_compilation", f"Album path template (compilations) or blank=same: {dest.relpath_template_compilation.template}"),
             ("allow_file_types", f"Music file types allowed, or blank=any: {','.join(dest.allow_file_types)}"),
             ("max_kbps", f"Max audio kbps or 0 for none: {dest.max_kbps}"),
-            ("convert_file_type", f"Wrong type or over max, convert to: {dest.convert_file_type}"),
+            ("convert_profile", f"Wrong type or over max, convert to: {dest.convert_profile}"),
             ("save", ">> Save"),
             ("delete", ">> Delete this destination"),
             ("cancel", ">> Cancel"),
@@ -125,13 +125,13 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ):
                 pass
             dest.max_kbps = int(max_kbps)
-        elif option == "convert_file_type":
+        elif option == "convert_profile":
             ctx.console.print("mp3 = default mp3 conversion profile (no other options)")  # TODO options!
             conversion_profile = prompt("Conversion profile: ", default="mp3")
             if str.lower(conversion_profile) != "mp3":
                 ctx.console.print(f"Ignoring unknown profile {conversion_profile}")
                 continue
-            dest.convert_file_type = str.lower(conversion_profile)
+            dest.convert_profile = str.lower(conversion_profile)
 
     if option in {"save", "delete"}:
         if option == "delete":

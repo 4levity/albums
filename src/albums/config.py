@@ -74,7 +74,7 @@ class SyncDestination:
     relpath_template_artist: Template = Template("")
     relpath_template_compilation: Template = Template("")
     allow_file_types: List[str] = field(default_factory=list[str])
-    convert_file_type: str = DEFAULT_FILE_CONVERT_PROFILE
+    convert_profile: str = DEFAULT_FILE_CONVERT_PROFILE
     max_kbps: int = 0
 
     def __str__(self) -> str:
@@ -90,7 +90,7 @@ class SyncDestination:
             "relpath_template_artist": self.relpath_template_artist.template,
             "relpath_template_compilation": self.relpath_template_compilation.template,
             "allow_file_types": self.allow_file_types,
-            "convert_file_type": self.convert_file_type,
+            "convert_profile": self.convert_profile,
             "max_kbps": self.max_kbps,
         }
 
@@ -102,7 +102,7 @@ class SyncDestination:
             Template(str(values.get("relpath_template_artist", ""))),
             Template(str(values.get("relpath_template_compilation", ""))),
             values["allow_file_types"] if ("allow_file_types" in values and isinstance(values["allow_file_types"], list)) else [],
-            str(values.get("convert_file_type", DEFAULT_FILE_CONVERT_PROFILE)),
+            str(values.get("convert_profile", DEFAULT_FILE_CONVERT_PROFILE)),
             int(str(values.get("max_kbps", 0))),
         )
 
