@@ -1,9 +1,7 @@
 import json
 import os
 import shutil
-from pathlib import Path
 from string import Template
-from typing import Sequence
 from unittest.mock import call
 
 import pytest
@@ -15,7 +13,8 @@ from albums.library.synchronizer import SyncDestination, Synchronizer
 from albums.tagger.folder import AlbumTagger
 from albums.types import Album, AlbumCollectionAssociation, BasicTag, CollectionEntity, Track
 
-from ..fixtures.create_library import create_library, create_track_file, test_data_path
+from ..fixtures.create_library import create_library, test_data_path
+from ..helpers import fake_ffmpeg
 
 
 class TestSynchronizer:
@@ -86,8 +85,3 @@ class TestSynchronizer:
             assert t2.get(BasicTag.TITLE) == ("two",)
         finally:
             ctx.db.dispose()
-
-
-def fake_ffmpeg(args: Sequence[str], cwd: Path) -> None:
-    file = Path(args[-1])
-    create_track_file(file.parent, Track(filename=file.name))

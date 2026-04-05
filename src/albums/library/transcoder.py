@@ -1,14 +1,19 @@
 import glob
 import json
 import logging
+import os
 import subprocess
+from itertools import chain
 from os import makedirs, mkdir, unlink
 from pathlib import Path
 from shutil import rmtree, which
 from typing import Sequence
 
+import humanize
 import xxhash
 from rich.markup import escape
+
+from albums.tagger.folder import AUDIO_FILE_SUFFIXES
 
 from ..app import Context
 from ..tagger.provider import AlbumTaggerProvider
@@ -28,8 +33,6 @@ class Transcoder:
     _ffmpeg_options: Sequence[str]
 
     def __init__(self, ctx: Context, profile: str):
-        ensure_ffmpeg()
-
         self.ctx = ctx
         parts = profile.split(" ")
         self.file_type = parts[-1]
@@ -75,10 +78,14 @@ class Transcoder:
         if self.initialized:
             return
 
+        ensure_ffmpeg()
         with self.ctx.console.status("Initializing transcoder cache", spinner="bouncingBar"):
             self._create_root_cache()
             self._create_this_cache()
-            self._scan_cache()
+            size = self._scan_cache()
+            if size * 1024 * 1024 > self.ctx.config.transcoder_cache_mb:
+                logger.warning(f"transcoder cache size exceeds configuration: {humanize.naturalsize(size, binary=True)}")
+                # TODO remove more files but not from _this_cache
 
         self.initialized = True
 
@@ -124,14 +131,39 @@ class Transcoder:
 
     def _scan_profile_cache(self, cache: Path) -> int:
         size_bytes = 0
-        for path in glob.iglob("**/", root_dir=cache, recursive=True):
+        for path in chain(iter(["."]), glob.iglob("**/", root_dir=cache, recursive=True)):
             library_path = self.ctx.config.library / path
             if library_path.is_dir():
-                ""
-                # TODO: invalidate tracks not in library or older than library copy
+                size_bytes += self._scan_cache_dir(cache, path, library_path)
             else:
                 logger.info(f"removing unknown folder, cache {cache.name}: {escape(path)}")
                 rmtree(cache / path)
+        return size_bytes
+
+    def _scan_cache_dir(self, cache: Path, path: str, library_path: Path) -> int:
+        size_bytes = 0
+        for entry in (cache / path).iterdir():
+            if entry.is_dir():
+                continue
+            library_match = next(
+                (
+                    library_track
+                    for library_track in library_path.glob(f"{entry.stem}.*")
+                    if (library_track.stem == entry.stem and library_track.suffix in AUDIO_FILE_SUFFIXES)
+                ),
+                None,
+            )
+            if library_match is not None:
+                stat = entry.stat()
+                if (library_match.stat().st_mtime - 1.0) < stat.st_mtime:
+                    size_bytes += stat.st_size  # keep for now
+                else:
+                    logger.debug(f"delete from cache, library file newer: {path}{os.sep}{entry.name}")
+                    unlink(entry)  # older than library file
+            else:
+                logger.debug(f"delete from cache, not in library: {path}{os.sep}{entry.name}")
+                unlink(entry)  # not in library any more
+
         return size_bytes
 
 
