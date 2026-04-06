@@ -76,6 +76,7 @@
         "pyyaml",
         "rbloom",
         "recordingdate",
+        "relpath",
         "Renderable",
         "rescan",
         "RGBX",

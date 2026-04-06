@@ -1,10 +1,12 @@
+import re
 from pathlib import Path
 from string import Template
 from typing import Literal
 
+import humanize
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
-from prompt_toolkit.shortcuts import choice
+from prompt_toolkit.shortcuts import choice, confirm
 
 from ..app import Context
 from ..config import ID3v1Policy, PathCompatibilityOption, RescanOption
@@ -33,6 +35,8 @@ def configure_settings(ctx: Context):
                 ("more_import_paths", f"more_import_paths ({','.join(t.template for t in ctx.config.more_import_paths)})"),
                 ("import_scan_max_paths", f"import_scan_max_paths ({ctx.config.import_scan_max_paths})"),
                 ("id3v1", f"id3v1 ({ctx.config.id3v1.name})"),
+                ("transcoder_cache", f"transcoder_cache ({str(ctx.config.transcoder_cache)}"),
+                ("transcoder_cache_size", f"transcoder_cache_size ({humanize.naturalsize(ctx.config.transcoder_cache_size, binary=True)}"),
                 ("back", "<< go back"),
             ],
         )
@@ -63,6 +67,8 @@ def _configure_setting(
         "more_import_paths",
         "import_scan_max_paths",
         "id3v1",
+        "transcoder_cache",
+        "transcoder_cache_size",
     ],
 ):
     match setting:
@@ -126,3 +132,23 @@ def _configure_setting(
             )
             ctx.config.id3v1 = ID3v1Policy(option)
             db_config.save(ctx.db, ctx.config)
+        case "transcoder_cache":
+            path_completer = PathCompleter()
+            cache = Path(prompt("Location/path for transcoder cache: ", completer=path_completer, default=str(ctx.config.transcoder_cache)))
+            if cache.exists():
+                if not cache.is_dir():
+                    ctx.console.print("[bold red]Error: the specified path exists and is not a directory[/bold red]")
+                    return
+                if not (cache / "index.json").exists():
+                    if not confirm("This destination already exists. Any files here may be deleted! Are you sure you want to use this path?"):
+                        return
+            elif not cache.parent.exists():
+                ctx.console.print("[bold red]Error: The parent directory of the transcoder cache does not exist.[/bold red]")
+                return
+            ctx.config.transcoder_cache = Path(cache)
+        case "transcoder_cache_size":
+            gb = prompt("Transcoder cache soft limit in gigabytes: ", default=f"{ctx.config.transcoder_cache_size / pow(2, 30):.1f}")
+            if not re.match("\\d+(\\.\\d+)?$", gb):
+                ctx.console.print("[bold red]Error: Enter a number of gigabytes.[/bold red]")
+                return
+            ctx.config.transcoder_cache_size = int(float(gb) * pow(2, 30))

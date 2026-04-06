@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import glob
 import json
 import logging
 import os
 import subprocess
+from dataclasses import dataclass
 from itertools import chain
 from os import makedirs, mkdir, unlink
 from pathlib import Path
@@ -13,13 +16,22 @@ import humanize
 import xxhash
 from rich.markup import escape
 
-from albums.tagger.folder import AUDIO_FILE_SUFFIXES
-
 from ..app import Context
+from ..tagger.folder import AUDIO_FILE_SUFFIXES
 from ..tagger.provider import AlbumTaggerProvider
 from ..types import Album, Track
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class CacheStat:
+    name: str
+    size: int
+    timestamp: int
+
+    def __lt__(self, other: CacheStat):
+        return self.timestamp < other.timestamp
 
 
 class Transcoder:
@@ -31,6 +43,7 @@ class Transcoder:
     _this_cache: Path
     _descriptor: str
     _ffmpeg_options: Sequence[str]
+    _cache_stats: dict[str, CacheStat] = {}
 
     def __init__(self, ctx: Context, profile: str):
         self.ctx = ctx
@@ -40,8 +53,6 @@ class Transcoder:
         self._ffmpeg_options = parts[:-1]
         self._tagger = AlbumTaggerProvider(ctx.config.library, id3v1=ctx.config.id3v1)
         self._this_cache = self.ctx.config.transcoder_cache / xxhash.xxh3_64_hexdigest(self._descriptor)
-
-    # TODO invalidate cached track when source library track is newer
 
     def in_cache(self, album: Album, track: Track) -> Path | None:
         self._initialize()
@@ -56,14 +67,30 @@ class Transcoder:
 
         makedirs(self._this_cache / album.path, exist_ok=True)
         self._transcode(self.ctx.config.library / album.path, track, cache_path)
+        self._cache_stats[self._this_cache.name].size += cache_path.stat().st_size if cache_path.exists() else 0
         return cache_path
+
+    def shrink_cache(self):
+        if sum(c.size for c in self._cache_stats.values()) == 0:
+            self._scan_cache()
+        cache_max = self.ctx.config.transcoder_cache_size
+        while len(self._cache_stats) > 1 and sum(c.size for c in self._cache_stats.values()) > cache_max:
+            oldest_other_cache = next((cache for cache in sorted(self._cache_stats.values()) if cache.name != self._this_cache.name))
+            logger.info(f"deleting {humanize.naturalsize(oldest_other_cache.size, binary=True)} transcoder cache {oldest_other_cache.name}")
+            rmtree(self.ctx.config.transcoder_cache / oldest_other_cache.name)
+            del self._cache_stats[oldest_other_cache.name]
+            index = dict((k, v) for k, v in self._load_cache_index().items() if v != oldest_other_cache.name)
+            self._update_cache_index(index)
+        if (total_cache_size := sum(c.size for c in self._cache_stats.values())) > cache_max:
+            logger.warning(
+                f"after deleting all but the most recently used profile, the transcoder cache size still exceeds configuration: {humanize.naturalsize(total_cache_size, binary=True)}"
+            )
 
     def _cache_path(self, album_path: str, source_filename: str) -> Path:
         return (self._this_cache / album_path / source_filename).with_suffix(f".{self.file_type}")
 
     def _transcode(self, album_path: Path, track: Track, dest: Path):
         run_ffmpeg(["-i", track.filename, *self._ffmpeg_options, str(dest)], album_path)
-        # TODO track cache size, remove files from other sets if needed
 
         if track.tags or track.pictures:
             with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
@@ -82,10 +109,8 @@ class Transcoder:
         with self.ctx.console.status("Initializing transcoder cache", spinner="bouncingBar"):
             self._create_root_cache()
             self._create_this_cache()
-            size = self._scan_cache()
-            if size * 1024 * 1024 > self.ctx.config.transcoder_cache_mb:
-                logger.warning(f"transcoder cache size exceeds configuration: {humanize.naturalsize(size, binary=True)}")
-                # TODO remove more files but not from _this_cache
+            self._scan_cache()
+            self.shrink_cache()
 
         self.initialized = True
 
@@ -100,13 +125,16 @@ class Transcoder:
     def _create_this_cache(self):
         if self._this_cache.exists() and not self._this_cache.is_dir():
             raise RuntimeError(f"exists but not a directory: {str(self._this_cache)}")
-        if not self._this_cache.exists():
+        if self._this_cache.exists():
+            self._this_cache.touch()
+        else:
             mkdir(self._this_cache)
             self._update_cache_index()
 
-    def _update_cache_index(self):
-        index = self._load_cache_index()
-        index[self._descriptor] = self._this_cache.name
+    def _update_cache_index(self, index: dict[str, str] | None = None):
+        if index is None:
+            index = self._load_cache_index()
+            index[self._descriptor] = self._this_cache.name
         (self.ctx.config.transcoder_cache / "index.json").write_text(json.dumps(index), encoding="utf-8")
 
     def _load_cache_index(self) -> dict[str, str]:
@@ -116,18 +144,17 @@ class Transcoder:
     def _scan_cache(self):
         index = self._load_cache_index()
         cache_dirs = set(index.values())
-        size_bytes = 0
         for entry in self.ctx.config.transcoder_cache.iterdir():
             if entry.is_dir():
                 if entry.name in cache_dirs:
-                    size_bytes += self._scan_profile_cache(entry)
+                    cache_size = self._scan_profile_cache(entry)
+                    self._cache_stats[entry.name] = CacheStat(entry.name, cache_size, int(entry.stat().st_mtime))
                 else:
                     self.ctx.console.print(f"removing unknown cache dir: {escape(entry.name)}")
                     rmtree(entry)
             elif entry.name != "index.json":
                 self.ctx.console.print(f"removing unknown file from cache root: {escape(entry.name)}")
                 unlink(entry)
-        return size_bytes
 
     def _scan_profile_cache(self, cache: Path) -> int:
         size_bytes = 0

@@ -37,13 +37,14 @@ class SyncOperations:
 class Synchronizer:
     _ctx: Context
     _dest: SyncDestination
-    _transcoder: Transcoder | None = None
+    _transcoder: Transcoder
 
     def __init__(self, ctx: Context, dest: SyncDestination):
         if str(ctx.config.library) in {"", "."}:
             raise RuntimeError("Synchronizer cannot be initialized without library path")
         self._ctx = ctx
         self._dest = dest
+        self._transcoder = Transcoder(self._ctx, self._dest.convert_profile)
 
     def do_sync(self, delete: bool, force: bool):
         with Session(self._ctx.db) as session:
@@ -62,6 +63,8 @@ class Synchronizer:
                 self._copy_albums(session, ops.copy_album_paths, ops.copy_bytes)
             else:
                 self._ctx.console.print("nothing to copy")
+        if self._transcoder.initialized:
+            self._transcoder.shrink_cache()
 
     def _analyze(self, session: Session) -> SyncOperations:
         existing_dest_paths = set(self._dest.path_root.rglob("*"))  # loads all paths in destination into a set in memory!
@@ -112,7 +115,7 @@ class Synchronizer:
                     # a track on this album is missing from destination
                     copy_album = True
                     if use_transcoded:
-                        cached_track = self._get_transcoder().in_cache(album, track)
+                        cached_track = self._transcoder.in_cache(album, track)
                         if cached_track:
                             copy_cached_tracks_size += cached_track.stat().st_size
                         else:
@@ -157,13 +160,12 @@ class Synchronizer:
     def _transcode_albums(self, session: Session, album_paths: Sequence[str], transcode_seconds: float) -> int:
         self._ctx.console.print(f"Transcoding {plural(album_paths, 'album')}, {humanize.naturaldelta(transcode_seconds)} of audio")
         total_bytes = 0
-        transcoder = self._get_transcoder()
         with Progress(console=self._ctx.console) as progress:
             transcode_task = progress.add_task("Transcoding", total=transcode_seconds)
             for path in album_paths:
                 (album,) = session.execute(select(Album).filter(Album.path == path)).tuples().one()
                 for track in album.tracks:
-                    converted = transcoder.get_transcoded(album, track)  # just putting it in the cache
+                    converted = self._transcoder.get_transcoded(album, track)  # just putting it in the cache
                     total_bytes += converted.stat().st_size
                     progress.update(transcode_task, advance=track.stream.length)
         return total_bytes
@@ -180,7 +182,7 @@ class Synchronizer:
                 for track in album.tracks:
                     if use_transcoded:
                         dest = dest_path / self._converted_track_filename(track.filename)
-                        src = self._get_transcoder().get_transcoded(album, track)  # should already be in cache
+                        src = self._transcoder.get_transcoded(album, track)  # should already be in cache
                         size = src.stat().st_size
                     else:
                         dest = dest_path / track.filename
@@ -207,8 +209,3 @@ class Synchronizer:
         if self._dest.max_kbps and sum(track.stream.bitrate / 1024.0 for track in album.tracks) / len(album.tracks) > self._dest.max_kbps:
             return True
         return False
-
-    def _get_transcoder(self) -> Transcoder:
-        if self._transcoder is None:
-            self._transcoder = Transcoder(self._ctx, self._dest.convert_profile)
-        return self._transcoder

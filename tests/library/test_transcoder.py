@@ -151,3 +151,34 @@ class TestTranscoder:
         assert (mp3_cache / "foo" / "1.mp3").exists()
         assert not (mp3_cache / "foo" / "2.mp3").exists()
         assert not (mp3_cache / "foo" / "3.mp3").exists()
+
+    def test_new_transcoder_deletes_older_cache(self, mocker):
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac")])
+        ctx = Context()
+        ctx.config.library = create_library("test_reuse_transcoder_cache", [album])  # Transcoder uses library to validate cache, easiest to create it
+        ctx.config.transcoder_cache = TestTranscoder.transcoder_cache
+        mocker.patch("albums.library.transcoder.ensure_ffmpeg")
+        mocker.patch("albums.library.transcoder.run_ffmpeg", side_effect=fake_ffmpeg)
+
+        transcoder = Transcoder(ctx, "mp3")
+        old_mp3 = transcoder.get_transcoded(album, album.tracks[0])
+        assert old_mp3.exists()
+        index: dict[str, str] = json.loads((TestTranscoder.transcoder_cache / "index.json").read_text())
+        assert "mp3" in index
+        assert len(index) == 1
+
+        transcoder = Transcoder(ctx, "-b:a 192k mp3")
+        new_mp3 = transcoder.get_transcoded(album, album.tracks[0])
+        assert new_mp3.exists()
+        assert old_mp3.exists()  # cache is not full yet
+        assert len(json.loads((TestTranscoder.transcoder_cache / "index.json").read_text())) == 2
+
+        ctx.config.transcoder_cache_size = 1  # now, cache is over soft limit of 1 byte
+        transcoder = Transcoder(ctx, "-b:a 192k mp3")
+        new_mp3 = transcoder.get_transcoded(album, album.tracks[0])
+        assert new_mp3.exists()  # cache is over limit but current profile cache is not deleted
+        assert not old_mp3.exists()  # older cache is deleted
+        index = json.loads((TestTranscoder.transcoder_cache / "index.json").read_text())
+        assert len(index) == 1
+        assert "mp3" not in index
+        assert "-b:a 192k mp3" in index
