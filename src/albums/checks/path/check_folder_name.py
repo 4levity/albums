@@ -71,7 +71,7 @@ class CheckFolderName(Check):
             rename(old_path, temp)
             old_path = temp
 
-        self.ctx.console.print(f"Renaming {escape(old_path.name)} to {escape(new_path_str)}", highlight=False)
+        self.ctx.console.print(f'Renaming folder "{escape(album.path)}" to "{escape(new_path_str)}"', highlight=False)
         rename(old_path, self.ctx.config.library / new_path_str)
         album.path = new_path_str
         return FixResult.CHANGED_ALBUM
