@@ -37,6 +37,7 @@ class Importer:
         if child_context.parent is None:
             raise RuntimeError("Importer must be created in child context")
 
+        child_context.importing = True
         self.ctx = child_context
         self._parent_context = child_context.parent
         self._library = child_context.config.library

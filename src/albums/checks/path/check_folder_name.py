@@ -35,6 +35,9 @@ class CheckFolderName(Check):
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
 
     def check(self, album: Album):
+        if self.ctx.importing:
+            return None  # don't rename folders while importing
+
         if Path(album.path).name in self.ignore_folders:
             return None
 

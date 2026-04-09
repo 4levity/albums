@@ -6,13 +6,11 @@ icon: lucide/flask-conical
 
 ## General features
 
+- When running import check/fix, don't change source files (configurable? 1. fix
+  in-place, 2. use temp dir 3. copy to library, then fix)
 - Select/filter albums based on stream info, recent access, etc
 - Support additional file formats
 - Dynamic collections e.g. by tag value or partial path
-- Sync to predefined destinations with configuration
-    - Check destination is correct
-    - Transcode files during sync for preferred format/max bitrate
-    - Destination library layout can be different than main library
 - Option to use ID3 2.3 instead of 2.4 (if people still do that?)
 - Improve Unicode support (if there are problems?)
 - Localize interface (per volunteer)
