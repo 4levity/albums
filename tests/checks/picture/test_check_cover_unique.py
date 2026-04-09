@@ -89,7 +89,9 @@ class TestCheckCoverUnique:
                 assert result.fixer.option_automatic_index == 0
                 table = result.fixer.get_table()
                 assert table
-                (headers, rows) = table
+                (h, r) = table
+                headers = list(h)
+                rows = list((list(row) for row in r))
                 assert len(headers) == 2
                 assert len(rows) == 2
                 assert len(rows[0]) == 2

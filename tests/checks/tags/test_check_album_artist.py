@@ -62,8 +62,11 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["B", "A", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.get_table()[1]) == 3  # tracks
-        assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
+        (hh, rr) = result.fixer.get_table() or ([], [])
+        headers = [h for h in hh]
+        rows = [[c for c in row] for row in rr]
+        assert len(rows) == 3  # tracks
+        assert len(headers) == len(rows[0])  # headers
 
         # we select "B" and it is fixed
         mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
@@ -109,8 +112,10 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["A", "B", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.get_table()[1]) == 3  # tracks
-        assert len(result.fixer.table[0]) == len(result.fixer.get_table()[1][0])  # headers
+        (hh, rr) = result.fixer.get_table() or ([], [])
+        rows = [[c for c in row] for row in rr]
+        assert len(rows) == 3  # tracks
+        assert len([h for h in hh]) == len(rows[0])  # headers
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist would be redundant, but it can be set to A" in result.message
@@ -161,8 +166,10 @@ class TestCheckAlbumArtist:
         assert result.fixer.options == ["A", "B", "Various Artists"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
-        assert len(result.fixer.get_table()[1]) == 3  # tracks
-        assert len(result.fixer.get_table()[0]) == len(result.fixer.get_table()[1][0])  # headers
+        (hh, rr) = result.fixer.get_table() or ([], [])
+        rows = [[c for c in row] for row in rr]
+        assert len(rows) == 3  # tracks
+        assert len([h for h in hh]) == len(rows[0])  # headers
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist is not needed: A" in result.message

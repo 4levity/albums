@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from itertools import chain
 from pathlib import Path
 from typing import Collection, Sequence
 
@@ -60,10 +61,18 @@ class CheckCoverUnique(Check):
                 if any(str.lower(Path(filename).suffix) not in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
             )
             cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in cover_embedded]
-            table = (
-                cover_image_filenames + cover_embedded_desc,
-                lambda: render_image_table(self.ctx, self.tagger.get(album.path), cover_image_files + cover_embedded, picture_sources),
-            )
+            headers = cover_image_filenames + cover_embedded_desc
+            preview_pictures = cover_image_files + cover_embedded
+            if len(headers) > 6:
+                table = (
+                    headers[:6],
+                    lambda: chain(
+                        render_image_table(self.ctx, self.tagger.get(album.path), preview_pictures[:6], picture_sources),
+                        iter([["Too many pictures to preview"] * 6]),
+                    ),
+                )
+            else:
+                table = (headers, lambda: render_image_table(self.ctx, self.tagger.get(album.path), preview_pictures, picture_sources))
             if cover_image_files and cover_source_filename is None:
                 # at this point every picture in cover_image_file should be associated with exactly one file
                 cover_source_candidate = self._source_image_file_candidate(cover_image_files, cover_embedded)
