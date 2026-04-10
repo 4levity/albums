@@ -129,6 +129,43 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicTag.ALBUMARTIST, "A")])
 
+    def test_check_albumartist_require_various_various(self, mocker):
+        album_complies = Album(
+            path="c/",
+            tracks=[
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ARTIST: "Various Artists", BasicTag.ALBUMARTIST: "Various Artists"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ARTIST: "Various Artists", BasicTag.ALBUMARTIST: "Various Artists"}),
+            ],
+        )
+        album_auto = Album(
+            path="a/",
+            tracks=[
+                Track(filename="1.mp3", tag={BasicTag.ARTIST: "Various Artists"}),
+                Track(filename="2.mp3", tag={BasicTag.ARTIST: "Various Artists"}),
+            ],
+        )
+
+        ctx = Context()
+        ctx.config.checks = {"album-artist": {"require_redundant": True}}
+
+        result = CheckAlbumArtist(ctx).check(album_complies)
+        assert result is None
+
+        result = CheckAlbumArtist(ctx).check(album_auto)
+        assert "album artist would be redundant, but it can be set to Various Artists" in result.message
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index is not None
+
+        # select automatic option and it is fixed
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert mock_set_basic_tags.call_count == 2
+        assert mock_set_basic_tags.call_args.args == (
+            Path(album_auto.path) / album_auto.tracks[1].filename,
+            [(BasicTag.ALBUMARTIST, "Various Artists")],
+        )
+
     def test_check_albumartist_remove(self, mocker):
         album_auto = Album(
             path="c/",

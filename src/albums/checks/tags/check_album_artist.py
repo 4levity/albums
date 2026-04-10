@@ -52,9 +52,7 @@ class CheckAlbumArtist(Check):
         candidates = sorted(
             filter(lambda k: k not in ["", VARIOUS_ARTISTS], candidates_scores.keys()), key=lambda a: candidates_scores[a], reverse=True
         )[:12]
-        nonblank_albumartists = sorted(
-            filter(lambda k: k not in ["", VARIOUS_ARTISTS], albumartists.keys()), key=lambda aa: albumartists[aa], reverse=True
-        )[:12]
+        nonblank_albumartists = sorted(filter(lambda k: k not in [""], albumartists.keys()), key=lambda aa: albumartists[aa], reverse=True)[:12]
         candidates_various = candidates + [VARIOUS_ARTISTS]
 
         redundant = len(artists) == 1 and list(artists.values())[0] == len(album.tracks)  # albumartist maybe not needed?
