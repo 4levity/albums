@@ -10,6 +10,8 @@ from albums.types import Album, OtherFile, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
+UUID0 = "00000000-0000-0000-0000-000000000000"
+UUID1 = "11111111-1111-1111-1111-111111111111"
 track1 = Track(
     filename="1.m4a",
     tag={
@@ -22,6 +24,8 @@ track1 = Track(
         BasicTag.DISCNUMBER: "2",
         BasicTag.DISCTOTAL: "2",
         BasicTag.GENRE: "Rock",
+        BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
+        BasicTag.MUSICBRAINZ_TRACKID: UUID1,
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
@@ -42,6 +46,8 @@ track2 = Track(
         BasicTag.DISCNUMBER: "2",
         BasicTag.DISCTOTAL: "2",
         BasicTag.GENRE: "Rock",
+        BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
+        BasicTag.MUSICBRAINZ_TRACKID: UUID1,
     },
 )
 video = OtherFile(filename="video.mp4")
@@ -73,6 +79,8 @@ class TestMp4:
         assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
         assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
         assert tags[BasicTag.TRACKNUMBER] == tuple(track_tags[BasicTag.TRACKNUMBER])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
+        assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
 
     def test_mp4_audio(self):
         with TestMp4.tagger.open(track2.filename) as file:
@@ -101,7 +109,15 @@ class TestMp4:
     def test_update_mp4_tags(self):
         TestMp4.tagger.set_basic_tags(
             TestMp4.library / album.path / track1.filename,
-            [(BasicTag.ARTIST, "a1"), (BasicTag.ALBUMARTIST, "a2"), (BasicTag.ALBUM, "a3"), (BasicTag.TITLE, "t"), (BasicTag.GENRE, "Country")],
+            [
+                (BasicTag.ARTIST, "a1"),
+                (BasicTag.ALBUMARTIST, "a2"),
+                (BasicTag.ALBUM, "a3"),
+                (BasicTag.TITLE, "t"),
+                (BasicTag.GENRE, "Country"),
+                (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
+                (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
+            ],
         )
         with TestMp4.tagger.open(track1.filename) as file:
             scan = file.scan()
@@ -111,6 +127,8 @@ class TestMp4:
         assert tags[BasicTag.ALBUM] == ("a3",)
         assert tags[BasicTag.TITLE] == ("t",)
         assert tags[BasicTag.GENRE] == ("Country",)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
+        assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
 
     def test_write_mp4_tracktotal(self):
         with TestMp4.tagger.open(track1.filename) as file:

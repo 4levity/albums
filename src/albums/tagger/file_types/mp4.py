@@ -5,7 +5,7 @@ from typing import Callable, Generator, List, Tuple, override
 
 import av
 from mutagen._tags import PaddingInfo
-from mutagen.mp4 import MP4, MP4Cover, MP4Tags
+from mutagen.mp4 import MP4, AtomDataType, MP4Cover, MP4FreeForm, MP4Tags
 
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
@@ -14,14 +14,31 @@ from ..types import BasicTag, Picture, PictureType
 logger = logging.getLogger(__name__)
 
 
-BASIC_M4A_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
+M4A_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ALBUM, "©alb"),
     (BasicTag.ALBUMARTIST, "aART"),
     (BasicTag.ARTIST, "©ART"),
     (BasicTag.TITLE, "©nam"),
     (BasicTag.GENRE, "©gen"),
-    # trkn and disk too but they are not text or 1:1
 )
+M4A_BYTES_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
+    (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "----:com.apple.iTunes:MusicBrainz Album Artist Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMID, "----:com.apple.iTunes:MusicBrainz Album Id"),
+    (BasicTag.MUSICBRAINZ_ARTISTID, "----:com.apple.iTunes:MusicBrainz Artist Id"),
+    (BasicTag.MUSICBRAINZ_COMPOSERID, "----:com.apple.iTunes:MusicBrainz Composer Id"),
+    (BasicTag.MUSICBRAINZ_DISCID, "----:com.apple.iTunes:MusicBrainz Disc Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "----:com.apple.iTunes:MusicBrainz Original Album Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "----:com.apple.iTunes:MusicBrainz Original Artist Id"),
+    (BasicTag.MUSICBRAINZ_TRACKID, "----:com.apple.iTunes:MusicBrainz Track Id"),
+    (BasicTag.MUSICBRAINZ_TRMID, "----:com.apple.iTunes:MusicBrainz TRM Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, " ----:com.apple.iTunes:MusicBrainz Release Group Id"),
+    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "----:com.apple.iTunes:MusicBrainz Release Track Id"),
+    (BasicTag.MUSICBRAINZ_WORKID, "----:com.apple.iTunes:MusicBrainz Work Id"),
+)
+# trkn and disk too but they are not text or 1:1
+
+TAG_TO_M4A_TEXT_FRAME = dict(M4A_TEXT_FRAMES)
+TAG_TO_M4A_BYTES_FRAME = dict(M4A_BYTES_FRAMES)
 
 
 class Mp4Tagger(AbstractMutagenTagger[MP4]):
@@ -92,7 +109,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
         basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             tags = self._ensure_tags()
-            basic_tags.extend((tag, tuple(tags[atom])) for tag, atom in BASIC_M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
+            basic_tags.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
+            basic_tags.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
 
             (track_number, track_total) = self._get_trkn()
             if track_number:
@@ -116,53 +134,42 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
 
         if value is None:
             match tag:
-                case BasicTag.ALBUM:
-                    del tags["©alb"]
-                case BasicTag.ALBUMARTIST:
-                    del tags["aART"]
-                case BasicTag.ARTIST:
-                    del tags["©ART"]
-                case BasicTag.GENRE:
-                    del tags["©gen"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(None, disc_total)
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, None)
-                case BasicTag.TITLE:
-                    del tags["©nam"]
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trkn()
                     self._set_trkn(track_number, None)
+                case _:
+                    del tags[(TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME)[tag]]
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
-                case BasicTag.ALBUM:
-                    tags["©alb"] = value_list
-                case BasicTag.ALBUMARTIST:
-                    tags["aART"] = value_list
-                case BasicTag.ARTIST:
-                    tags["©ART"] = value_list
-                case BasicTag.GENRE:
-                    tags["©gen"] = value_list
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(int(value_list[0]) if value_list[0] else None, disc_total)
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
-                case BasicTag.TITLE:
-                    tags["©nam"] = value_list
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(int(value_list[0]) if value_list[0] else None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trkn()
                     self._set_trkn(track_number, int(value_list[0]) if value_list[0] else None)
+                case _:
+                    if tag in TAG_TO_M4A_BYTES_FRAME:
+                        prop = TAG_TO_M4A_BYTES_FRAME[tag]  # type: ignore
+                        tags[prop] = [MP4FreeForm(v.encode("utf-8"), AtomDataType.UTF8) for v in value_list]
+                    else:
+                        prop = TAG_TO_M4A_TEXT_FRAME[tag]  # pyright: ignore[reportArgumentType]
+                        tags[prop] = value_list
 
     def _ensure_tags(self) -> MP4Tags:
         if self._file.tags is None:

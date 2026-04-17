@@ -5,7 +5,7 @@ from typing import Callable, Generator, List, Tuple, override
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TRCK
+from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TRCK, TXXX, UFID
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
@@ -21,13 +21,29 @@ BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ALBUMARTIST, "TPE2"),
     (BasicTag.ARTIST, "TPE1"),
     (BasicTag.TITLE, "TIT2"),
+    (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
+    (BasicTag.MUSICBRAINZ_ARTISTID, "TXXX:MusicBrainz Artist Id"),
+    (BasicTag.MUSICBRAINZ_COMPOSERID, "TXXX:MusicBrainz Composer Id"),
+    (BasicTag.MUSICBRAINZ_DISCID, "TXXX:MusicBrainz Disc Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "TXXX:MusicBrainz Original Album Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "TXXX:MusicBrainz Original Artist Id"),
+    # also UFID:http://musicbrainz.org is track id / musicbrainz_recordingid
+    (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "TXXX:MusicBrainz Original Artist Id"),
+    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "TXXX:MusicBrainz Release Track Id"),
+    (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
 )
+UFID_MUSICBRAINZ_OWNER = "http://musicbrainz.org"
+
 # TODO also pull other common values, like
 # "composer": "tcom",
 # "encoder": "tenc",
 # "date": "tdrc",  # recordingdate?
+
+TAG_TO_ID3_TEXT_FRAME = dict(BASIC_ID3_TEXT_FRAMES)
 
 
 class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
@@ -61,7 +77,6 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         id3 = self._ensure_id3()
         description = new_picture.description
         apic = APIC(mime=new_picture.picture_info.mime_type, type=new_picture.type, data=image_data, desc=description)
-
         # with future mutagen 1.48 or later, docs indicate we will be able to ensure distinct hash key like this:
         # while apic.HashKey in tags:
         #     apic.salt += "x"
@@ -91,6 +106,11 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
             if "TCON" in id3:
                 basic_tags.append((BasicTag.GENRE, tuple(id3["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
+            ufid_frame = f"UFID:{UFID_MUSICBRAINZ_OWNER}"
+            if ufid_frame in id3:
+                ufid_data = bytes(id3[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                basic_tags.append((BasicTag.MUSICBRAINZ_TRACKID, (ufid_data.decode("ascii"),)))
+
             (track_number, track_total) = self._get_trck()
             if track_number is not None:
                 basic_tags.append((BasicTag.TRACKNUMBER, (track_number,)))
@@ -110,12 +130,6 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         tags = self._ensure_id3()
         if value is None:
             match tag:
-                case BasicTag.ALBUM:
-                    del tags["TALB"]
-                case BasicTag.ALBUMARTIST:
-                    del tags["TPE2"]
-                case BasicTag.ARTIST:
-                    del tags["TPE1"]
                 case BasicTag.GENRE:
                     del tags["TCON"]
                 case BasicTag.DISCNUMBER:
@@ -124,14 +138,16 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_tpos()
                     self._set_tpos(disc_number, None)
-                case BasicTag.TITLE:
-                    del tags["TIT2"]
+                case BasicTag.MUSICBRAINZ_TRACKID:
+                    del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trck()
                     self._set_trck(None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trck()
                     self._set_trck(track_number, None)
+                case _:
+                    del tags[TAG_TO_ID3_TEXT_FRAME[tag]]
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
@@ -149,6 +165,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     self._set_tpos(disc_number, value_list[0] if value_list[0] else None)
                 case BasicTag.GENRE:
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
+                case BasicTag.MUSICBRAINZ_TRACKID:
+                    tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
                 case BasicTag.TITLE:
                     tags["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TRACKNUMBER:
@@ -157,6 +175,12 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trck()
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
+                case _:
+                    frame = TAG_TO_ID3_TEXT_FRAME[tag]
+                    if not frame.startswith("TXXX:"):
+                        raise RuntimeError(f"unexpected frame {frame}")
+                    [_, description] = frame.split(":", 1)
+                    tags[frame] = TXXX(encoding=Encoding.UTF8, desc=description, text=value_list)
 
     def _get_tpos(self) -> Tuple[str | None, str | None]:
         values = _get_text(self._get_file().tags, "TPOS")  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]

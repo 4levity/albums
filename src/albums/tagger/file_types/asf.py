@@ -21,8 +21,22 @@ BASIC_ASF_PROPERTIES: Tuple[Tuple[BasicTag, str], ...] = (
     (BasicTag.ARTIST, "Author"),
     (BasicTag.TITLE, "Title"),
     (BasicTag.GENRE, "WM/Genre"),
+    (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),
+    (BasicTag.MUSICBRAINZ_ARTISTID, "MusicBrainz/Artist Id"),
+    (BasicTag.MUSICBRAINZ_COMPOSERID, "MusicBrainz/Composer Id"),
+    (BasicTag.MUSICBRAINZ_DISCID, "MusicBrainz/Disc Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "MusicBrainz/Original Album Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "MusicBrainz/Original Artist Id"),
+    (BasicTag.MUSICBRAINZ_TRACKID, "MusicBrainz/Track Id"),
+    (BasicTag.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "MusicBrainz/Release Group Id"),
+    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "MusicBrainz/Release Track Id"),
+    (BasicTag.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
+
+TAG_TO_ASF_PROPERTY = dict(BASIC_ASF_PROPERTIES)
 
 
 @dataclass(frozen=True)
@@ -128,53 +142,37 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         tags = self._ensure_tags()
         if value is None:
             match tag:
-                case BasicTag.ALBUM:
-                    del tags["WM/AlbumTitle"]
-                case BasicTag.ALBUMARTIST:
-                    del tags["WM/AlbumArtist"]
-                case BasicTag.ARTIST:
-                    del tags["Author"]
-                case BasicTag.GENRE:
-                    del tags["WM/Genre"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(None, disc_total)
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
-                case BasicTag.TITLE:
-                    del tags["Title"]
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, None)
+                case _:
+                    del tags[TAG_TO_ASF_PROPERTY[tag]]
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
-                case BasicTag.ALBUM:
-                    tags["WM/AlbumTitle"] = value_list
-                case BasicTag.ALBUMARTIST:
-                    tags["WM/AlbumArtist"] = value_list
-                case BasicTag.ARTIST:
-                    tags["Author"] = value_list
-                case BasicTag.GENRE:
-                    tags["WM/Genre"] = value_list
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(value_list[0] if value_list[0] else None, disc_total)
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
-                case BasicTag.TITLE:
-                    tags["Title"] = value_list
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, value_list[0] if value_list[0] else None)
+                case _:
+                    tags[TAG_TO_ASF_PROPERTY[tag]] = value_list
 
     def _ensure_tags(self) -> ASFTags:
         if self._file.tags is None:
