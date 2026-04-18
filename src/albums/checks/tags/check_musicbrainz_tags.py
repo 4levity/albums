@@ -60,13 +60,30 @@ class CheckMusicBrainzTags(Check):
                 Fixer(lambda _: self._remove_tags(album, DEPRECATED_MBID_TAGS), options, False, option_automatic_index),
             )
 
-        # TODO: ensure album and album artist tags are consistent
+        return self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMID) or (
+            self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMARTISTID)
+        )
 
-    def _remove_tags(self, album: Album, remove_tags: Collection[BasicTag]):
+    def _check_consistent_tag(self, album: Album, check_tag: BasicTag) -> CheckResult | None:
+        values = set(v for track in album.tracks for v in track.get(check_tag, ["none"]))
+        if len(values) > 1:
+            options = [f">> Remove {check_tag.name} tags", ">> Remove all MusicBrainz tags"]
+            option_automatic_index = 0  # automatic/default: only remove the conflicting MBID
+            return CheckResult(
+                f"{check_tag.name} is not the same on all tracks (values = {', '.join(sorted(values))})",
+                Fixer(lambda option: self._remove_tags(album, ALL_MBID_TAGS, option, check_tag), options, False, option_automatic_index),
+            )
+
+    def _remove_tags(self, album: Album, default_remove_tags: Collection[BasicTag], option: str = "", option_match_tag: BasicTag | None = None):
         tagger = self.tagger.get(album.path)
         changed = False
+        if option and option_match_tag and option_match_tag.name in option:
+            remove_tags = [option_match_tag]
+        else:
+            remove_tags = sorted(default_remove_tags)
+
         for track in album.tracks:
-            remove = sorted(tag for tag in remove_tags if track.has(tag))
+            remove = [tag for tag in remove_tags if track.has(tag)]
             if remove:
                 self.ctx.console.print(f"Removing MusicBrainz tags ({', '.join(remove)}) from {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tags:
