@@ -9,6 +9,8 @@ from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library
 
+UUID0 = "00000000-0000-0000-0000-000000000000"
+UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.wma",
     tag={
@@ -21,6 +23,8 @@ track = Track(
         BasicTag.DISCNUMBER: "2",
         BasicTag.DISCTOTAL: "2",
         BasicTag.GENRE: "Rock",
+        BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
+        BasicTag.MUSICBRAINZ_TRACKID: UUID1,
     },
 )
 album = Album(path="baz" + os.sep, tracks=[track])
@@ -43,11 +47,21 @@ class TestAsf:
         assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
         assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
         assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
+        assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
 
     def test_update_asf_tags(self):
         TestAsf.tagger.set_basic_tags(
             TestAsf.library / album.path / track.filename,
-            [(BasicTag.ARTIST, "a1"), (BasicTag.ALBUMARTIST, "a2"), (BasicTag.ALBUM, "a3"), (BasicTag.TITLE, "t"), (BasicTag.GENRE, "Country")],
+            [
+                (BasicTag.ARTIST, "a1"),
+                (BasicTag.ALBUMARTIST, "a2"),
+                (BasicTag.ALBUM, "a3"),
+                (BasicTag.TITLE, "t"),
+                (BasicTag.GENRE, "Country"),
+                (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
+                (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
+            ],
         )
         with TestAsf.tagger.open(track.filename) as file:
             scan = file.scan()
@@ -57,6 +71,8 @@ class TestAsf:
         assert tags[BasicTag.ALBUM] == ("a3",)
         assert tags[BasicTag.TITLE] == ("t",)
         assert tags[BasicTag.GENRE] == ("Country",)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
+        assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
 
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:

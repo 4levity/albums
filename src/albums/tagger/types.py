@@ -33,6 +33,8 @@ from ..picture.info import PictureInfo
 
 
 class BasicTag(StrEnum):
+    # BasicTag names must be the same as the corresponding Vorbis Comment names
+
     ALBUM = auto()
     ALBUMARTIST = auto()
     ARTIST = auto()
@@ -42,6 +44,42 @@ class BasicTag(StrEnum):
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()
     GENRE = auto()
+
+    # TXXX:MusicBrainz Album Artist Id, ----:com.apple.iTunes:MusicBrainz Album Artist Id, MusicBrainz/Album Artist Id
+    MUSICBRAINZ_ALBUMARTISTID = auto()
+
+    # TXXX:MusicBrainz Album Id, ----:com.apple.iTunes:MusicBrainz Album Id, MusicBrainz/Album Id
+    MUSICBRAINZ_ALBUMID = auto()
+
+    # TXXX:MusicBrainz Artist Id, ----:com.apple.iTunes:MusicBrainz Artist Id, MusicBrainz/Artist Id
+    MUSICBRAINZ_ARTISTID = auto()
+
+    # TXXX:MusicBrainz Composer Id, ----:com.apple.iTunes:MusicBrainz Composer Id, MusicBrainz/Composer Id
+    MUSICBRAINZ_COMPOSERID = auto()
+
+    # TXXX:MusicBrainz Disc Id, ----:com.apple.iTunes:MusicBrainz Disc Id, MusicBrainz/Disc Id
+    MUSICBRAINZ_DISCID = auto()
+
+    # TXXX:MusicBrainz Original Album Id, ----:com.apple.iTunes:MusicBrainz Original Album Id, MusicBrainz/Original Album Id
+    MUSICBRAINZ_ORIGINALALBUMID = auto()
+
+    # TXXX:MusicBrainz Original Artist Id, ----:com.apple.iTunes:MusicBrainz Original Artist Id, MusicBrainz/Original Artist Id
+    MUSICBRAINZ_ORIGINALARTISTID = auto()
+
+    # (aka musicbrainz_recordingid) UFID:http://musicbrainz.org, ----:com.apple.iTunes:MusicBrainz Track Id, MusicBrainz/Track Id
+    MUSICBRAINZ_TRACKID = auto()
+
+    # (deprecated) TXXX:MusicBrainz TRM Id, ----:com.apple.iTunes:MusicBrainz TRM Id, MusicBrainz/TRM Id
+    MUSICBRAINZ_TRMID = auto()
+
+    # TXXX:MusicBrainz Release Group Id, ----:com.apple.iTunes:MusicBrainz Release Group Id, MusicBrainz/Release Group Id
+    MUSICBRAINZ_RELEASEGROUPID = auto()
+
+    # (aka musicbrainz_trackid) TXXX:MusicBrainz Release Track Id, ----:com.apple.iTunes:MusicBrainz Release Track Id, MusicBrainz/Release Track Id
+    MUSICBRAINZ_RELEASETRACKID = auto()
+
+    # TXXX:MusicBrainz Work Id, ----:com.apple.iTunes:MusicBrainz Work Id, MusicBrainz/Work Id
+    MUSICBRAINZ_WORKID = auto()
 
 
 BASIC_TAGS = frozenset(tag.value for tag in BasicTag)

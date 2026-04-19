@@ -462,6 +462,45 @@ The presence policy options are:
 
 <!-- pyml enable line-length -->
 
+### musicbrainz-tags
+
+!!!note
+
+    Albums reads MusicBrainz tags and checks for consistency, but it doesn't
+    use the MusicBrainz API or check whether IDs are correct. Use a tool like
+    [MusicBrainz Picard](https://picard.musicbrainz.org/) or
+    [beets](https://beets.io/) to create and update MusicBrainz tags.
+
+Whether or not you use MusicBrainz, inconsistencies in MusicBrainz tags within
+an album can cause problems for some players. When the `MusicBrainz Album Id` or
+`MusicBrainz Album Artist Id` is not the same on all tracks in an album (or not
+set on every track), some music players interpret this as two separate albums
+even if other tags are all the same. This check reports when those tags are not
+set consistently across the album.
+
+Other behaviors of this check are controlled by the options. If you don't use
+MusicBrainz, you might want to remove all MusicBrainz tags to avoid conflicts
+between them and the standard tags. If you do use MusicBrains, you may want to
+remove deprecated MusicBrainz tags (`MusicBrainz TRM Id`).
+
+**Automatic fix**: If `MusicBrainz Album Id` or `MusicBrainz Album Artist Id` is
+not the same on all tracks (or not set on every track), remove that tag from
+every track.
+
+**Automatic fix**: If `remove_all` is enabled, remove all MusicBrainz tags.
+
+**Automatic fix**: If `remove_deprecated` is enabled, remove deprecated
+MusicBrainz tags.
+
+<!-- pyml disable line-length -->
+
+| Option = default               | Description                                                           |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `remove_all` = **false**       | if enabled, remove all MusicBrainz tags                               |
+| `remove_deprecated` = **true** | if enabled, remove deprecated MusicBrainz tags (`MusicBrainz TRM Id`) |
+
+<!-- pyml enable line-length -->
+
 ## Pictures
 
 These checks operate on embedded pictures and image files in the album folder.
