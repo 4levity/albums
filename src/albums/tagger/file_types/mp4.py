@@ -1,7 +1,7 @@
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Callable, Generator, List, Tuple, override
+from typing import Callable, Final, Generator, List, Tuple, override
 
 import av
 from mutagen._tags import PaddingInfo
@@ -11,7 +11,7 @@ from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..types import BasicTag, Picture, PictureType
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 M4A_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (

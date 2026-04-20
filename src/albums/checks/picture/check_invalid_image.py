@@ -1,7 +1,7 @@
 import logging
 from os import unlink
 from pathlib import Path
-from typing import Sequence
+from typing import Final, Sequence
 
 from rich.console import RenderableType
 from rich.markup import escape
@@ -12,7 +12,7 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import pluralize
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckInvalidImage(Check):

@@ -1,5 +1,5 @@
 import logging
-from typing import Collection, Mapping, Sequence
+from typing import Collection, Final, Mapping, Sequence
 
 from rich.markup import escape
 
@@ -9,10 +9,10 @@ from ...types import Album, CheckResult, Fixer, FixResult, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-OPTION_AUTOMATIC_REPAIR = ">> Automatically remove zero, non-numeric and multiple values"
-SINGLE_POSITIVE_NUMBER_TAGS = [BasicTag.TRACKNUMBER, BasicTag.TRACKTOTAL, BasicTag.DISCNUMBER, BasicTag.DISCTOTAL]
+OPTION_AUTOMATIC_REPAIR: Final = ">> Automatically remove zero, non-numeric and multiple values"
+SINGLE_POSITIVE_NUMBER_TAGS: Final = [BasicTag.TRACKNUMBER, BasicTag.TRACKTOTAL, BasicTag.DISCNUMBER, BasicTag.DISCTOTAL]
 
 
 class CheckInvalidTrackOrDiscNumber(Check):

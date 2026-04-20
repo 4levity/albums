@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Callable, Collection, Generator, List, Tuple
+from typing import Any, Callable, Collection, Final, Generator, List, Mapping, Set, Tuple
 
 from mutagen._tags import PaddingInfo
 
@@ -27,7 +27,7 @@ class Cap(Enum):
     PICTURE_TYPE = auto()
 
 
-SUFFIX_SUPPORT = {
+_SUFFIX_SUPPORT = {
     ".flac": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
     ".m4a": {Cap.BASIC_TAGS, Cap.PICTURES},
     ".m4b": {Cap.BASIC_TAGS, Cap.PICTURES},
@@ -39,8 +39,10 @@ SUFFIX_SUPPORT = {
     ".aif": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
     ".aiff": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
 }
-AUDIO_FILE_SUFFIXES = frozenset(SUFFIX_SUPPORT.keys())
-SUFFIX_SUPPORT.update((suffix, {Cap.PICTURES}) for suffix in SUPPORTED_IMAGE_SUFFIXES)
+AUDIO_FILE_SUFFIXES: Final = frozenset(_SUFFIX_SUPPORT.keys())
+
+_SUFFIX_SUPPORT.update((suffix, {Cap.PICTURES}) for suffix in SUPPORTED_IMAGE_SUFFIXES)
+SUFFIX_SUPPORT: Final[Mapping[str, Set[Cap]]] = _SUFFIX_SUPPORT
 
 
 class AlbumTagger:

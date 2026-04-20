@@ -2,7 +2,7 @@ import logging
 from itertools import chain
 from os import rename
 from pathlib import Path
-from typing import Sequence, Tuple, override
+from typing import Final, Sequence, Tuple, override
 
 from rich.markup import escape
 
@@ -11,7 +11,7 @@ from ...types import Album, CheckConfiguration, CheckResult, Fixer, FixResult
 from ...words.make import pluralize
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckFileExtension(Check):

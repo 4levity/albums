@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Callable, Iterator, Self
+from typing import Any, Callable, Final, Iterator, Self
 
 import click
 from rich.console import Console
@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from .config import Configuration
 from .types import Album
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-SCANNER_VERSION = 2
+SCANNER_VERSION: Final = 2
 
 
 class Context(dict[Any, Any]):  # this is a dict because it's required to be by click

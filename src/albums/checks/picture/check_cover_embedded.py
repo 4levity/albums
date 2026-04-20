@@ -1,7 +1,7 @@
 import io
 import logging
 import mimetypes
-from typing import Any, Sequence, Tuple
+from typing import Any, Final, Sequence, Tuple
 
 from PIL import Image
 from rich.console import RenderableType
@@ -18,7 +18,7 @@ from ...words.make import is_plural, plural, pluralize
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckCoverEmbedded(Check):

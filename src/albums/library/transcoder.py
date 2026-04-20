@@ -10,7 +10,7 @@ from itertools import chain
 from os import makedirs, mkdir, unlink
 from pathlib import Path
 from shutil import rmtree, which
-from typing import Sequence
+from typing import Final, Sequence
 
 import humanize
 import xxhash
@@ -21,7 +21,7 @@ from ..tagger.folder import AUDIO_FILE_SUFFIXES
 from ..tagger.provider import AlbumTaggerProvider
 from ..types import Album, Track
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @dataclass

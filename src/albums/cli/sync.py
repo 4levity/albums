@@ -1,6 +1,7 @@
 import logging
 import platform
 from pathlib import Path
+from typing import Final
 
 import rich_click as click
 from prompt_toolkit import choice
@@ -11,7 +12,7 @@ from ..library.scanner import scan
 from ..library.synchronizer import Synchronizer
 from .cli_context import pass_context, require_configured, require_library, require_persistent_context
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @click.command(

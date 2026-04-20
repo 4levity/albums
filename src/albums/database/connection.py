@@ -2,7 +2,7 @@ import logging
 import sys
 from pathlib import Path
 from sqlite3 import Connection as SQLite3Connection
-from typing import Any
+from typing import Any, Final
 
 import humanize
 from sqlalchemy import create_engine, event, text
@@ -12,15 +12,15 @@ from sqlalchemy.orm import Session
 # don't put any relative imports here, will make this file not runnable
 from albums.database.schema import SQL_INIT_SCHEMA, migrate
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-MEMORY = ":memory:"
+MEMORY: Final = ":memory:"
 
-SQL_INIT_CONNECTION = """
+SQL_INIT_CONNECTION: Final = """
 PRAGMA foreign_keys = ON;
 """
 
-SQL_CLEANUP = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
+SQL_CLEANUP: Final = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
 
 
 @event.listens_for(Engine, "connect")

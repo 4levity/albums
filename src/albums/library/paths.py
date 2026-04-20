@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from string import Template
-from typing import Sequence
+from typing import Final, Sequence
 
 from pathvalidate import sanitize_filename, sanitize_filepath
 
@@ -9,7 +9,7 @@ from ..app import Context
 from ..tagger.types import BasicTag
 from ..types import Album
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 def show_template_path_help(ctx: Context):

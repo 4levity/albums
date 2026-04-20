@@ -1,7 +1,7 @@
 import logging
 import mimetypes
 from collections import defaultdict
-from typing import Any, Mapping
+from typing import Any, Final, Mapping
 
 import humanize
 from rich.markup import escape
@@ -12,7 +12,7 @@ from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckAlbumArt(Check):

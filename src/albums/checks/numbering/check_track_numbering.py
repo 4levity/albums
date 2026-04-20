@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from rich.markup import escape
 
@@ -14,13 +14,13 @@ from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
 from ..tag_policy import Policy, check_policy
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
+
+OPTION_USE_TRACK_COUNT: Final = ">> Set tracktotal to number of tracks"
+OPTION_USE_MAX: Final = ">> Set tracktotal to maximum value seen"
 
 
 class TrackTotalFixer(Fixer):
-    OPTION_USE_TRACK_COUNT = ">> Set tracktotal to number of tracks"
-    OPTION_USE_MAX = ">> Set tracktotal to maximum value seen"
-
     def __init__(self, ctx: Context, tagger: AlbumTagger, album: Album, discnumber: int | None):
         self.tracks: list[Track] = []
         for track in ordered_tracks(album):
@@ -39,10 +39,10 @@ class TrackTotalFixer(Fixer):
             default=None,
         )
         discnumber_notice = {f" on disc {discnumber}"} if discnumber is not None else ""
-        options = [f"{TrackTotalFixer.OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
+        options = [f"{OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
         option_automatic_index = None
         if self.max_tracktotal and len(self.tracks) != self.max_tracktotal:
-            options.append(f"{TrackTotalFixer.OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
+            options.append(f"{OPTION_USE_MAX}: {self.max_tracktotal}{discnumber_notice}")
         elif not self.max_tracktotal or len(self.tracks) == self.max_tracktotal:
             option_automatic_index = 0
 
@@ -62,9 +62,9 @@ class TrackTotalFixer(Fixer):
     def _fix(self, ctx: Context, tagger: AlbumTagger, album: Album, option: str | None):
         if option is None:
             new_tracktotal = None
-        elif option.startswith(TrackTotalFixer.OPTION_USE_TRACK_COUNT):
+        elif option.startswith(OPTION_USE_TRACK_COUNT):
             new_tracktotal = len(self.tracks)
-        elif option.startswith(TrackTotalFixer.OPTION_USE_MAX):
+        elif option.startswith(OPTION_USE_MAX):
             new_tracktotal = self.max_tracktotal
         else:
             logger.error(f"invalid option for fix_interactive: {option}")

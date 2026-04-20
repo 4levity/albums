@@ -3,7 +3,7 @@ import mimetypes
 from collections import defaultdict
 from os import rename
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Sequence
+from typing import Any, Dict, Final, List, Mapping, Sequence
 
 from rich.markup import escape
 
@@ -15,7 +15,7 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 from ..helpers import FRONT_COVER_FILENAME
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckCoverAvailable(Check):

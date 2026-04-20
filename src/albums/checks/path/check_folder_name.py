@@ -3,7 +3,7 @@ import os
 from os import rename, sep
 from pathlib import Path
 from string import Template
-from typing import Any
+from typing import Any, Final
 
 from pathvalidate import sanitize_filename
 from rich.markup import escape
@@ -13,7 +13,7 @@ from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckFolderName(Check):

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
-from typing import Generator, List, Tuple
+from typing import Final, Generator, List, Tuple
 
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
@@ -82,7 +82,7 @@ class BasicTag(StrEnum):
     MUSICBRAINZ_WORKID = auto()
 
 
-BASIC_TAGS = frozenset(tag.value for tag in BasicTag)
+BASIC_TAGS: Final = frozenset(tag.value for tag in BasicTag)
 
 type MutagenFileType = (
     AAC

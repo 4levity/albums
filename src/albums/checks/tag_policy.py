@@ -1,5 +1,6 @@
 from collections import defaultdict
 from enum import Enum, auto
+from typing import Final
 
 from rich.markup import escape
 
@@ -9,7 +10,7 @@ from ..tagger.types import BasicTag
 from ..types import Album, CheckResult, Fixer, FixResult
 from .helpers import describe_track_number, ordered_tracks
 
-OPTION_REMOVE_TAG = ">> Remove tag"
+OPTION_REMOVE_TAG: Final = ">> Remove tag"
 
 
 class Policy(Enum):

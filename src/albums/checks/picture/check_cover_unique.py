@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import Collection, Sequence
+from typing import Collection, Final, Sequence
 
 from rich.markup import escape
 
@@ -13,10 +13,10 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 from ..helpers import delete_files_except
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-OPTION_DELETE_ALL_COVER_IMAGES = ">> Delete all cover image files: "
-OPTION_SELECT_COVER_IMAGE = ">> Mark as front cover source: "
+OPTION_DELETE_ALL_COVER_IMAGES: Final = ">> Delete all cover image files: "
+OPTION_SELECT_COVER_IMAGE: Final = ">> Mark as front cover source: "
 
 
 class CheckCoverUnique(Check):

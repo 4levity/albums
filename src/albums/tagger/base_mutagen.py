@@ -1,14 +1,14 @@
 import logging
-from typing import Any, Callable, Generator, List, Tuple, override
+from typing import Any, Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 
 from .types import BasicTag, MutagenFileType, Picture, ScanResult, StreamInfo, TaggerFile
 
-ALL_BASIC_TAGS = frozenset(tag.value for tag in BasicTag)
-MAX_BASIC_TAG_VALUE_LENGTH = 4096
+logger: Final = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+ALL_BASIC_TAGS: Final = frozenset(tag.value for tag in BasicTag)
+MAX_BASIC_TAG_VALUE_LENGTH: Final = 4096
 
 
 class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):

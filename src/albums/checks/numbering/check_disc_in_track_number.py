@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Sequence
+from typing import Final, Sequence
 
 from rich.markup import escape
 
@@ -10,10 +10,10 @@ from ...types import Album, CheckResult, Fixer, FixResult, Track
 from ..base_check import Check
 from .check_track_numbering import describe_track_number, ordered_tracks
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-OPTION_USE_PROPOSED = ">> Split track number into disc number and track number"
+OPTION_USE_PROPOSED: Final = ">> Split track number into disc number and track number"
 
 
 class CheckDiscInTrackNumber(Check):

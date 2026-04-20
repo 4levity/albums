@@ -1,5 +1,6 @@
 import logging
 from os import rename
+from typing import Final
 
 from rich.markup import escape
 
@@ -7,10 +8,10 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import plural
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-OPTION_RENAME_UNREADABLE = ">> Rename unreadable tracks to <filename>.unreadable"
+OPTION_RENAME_UNREADABLE: Final = ">> Rename unreadable tracks to <filename>.unreadable"
 
 
 class CheckUnreadableTrack(Check):

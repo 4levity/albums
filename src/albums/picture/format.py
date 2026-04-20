@@ -1,6 +1,7 @@
 import mimetypes
+from typing import Final, Mapping
 
-_IMAGE_MODE_BPP = {
+IMAGE_MODE_BPP: Final[Mapping[str, int]] = {
     "1": 1,
     "L": 8,
     "P": 8,
@@ -23,12 +24,12 @@ _IMAGE_MODE_BPP = {
 
 
 def get_depth_bpp(pillow_mode: str, guess: int = 24):
-    if pillow_mode in _IMAGE_MODE_BPP:
-        return _IMAGE_MODE_BPP[pillow_mode]
+    if pillow_mode in IMAGE_MODE_BPP:
+        return IMAGE_MODE_BPP[pillow_mode]
     return guess
 
 
-_MIME_PILLOW_FORMAT = {
+MIME_PILLOW_FORMAT: Final[Mapping[str, str]] = {
     "image/bmp": "BMP",
     "image/gif": "GIF",
     "image/jpeg": "JPEG",
@@ -37,17 +38,17 @@ _MIME_PILLOW_FORMAT = {
     "image/vnd.zbrush.pcx": "PCX",
     "image/webp": "WEBP",
 }
-_PILLOW_FORMAT_MIME = dict((pillow, mime) for mime, pillow in _MIME_PILLOW_FORMAT.items())
+PILLOW_FORMAT_MIME: Final[Mapping[str, str]] = dict((pillow, mime) for mime, pillow in MIME_PILLOW_FORMAT.items())
 
 # Can add any extension if format is autodetected by Pillow and ".<FORMAT>" is a file extension supported by mimetypes.guess_type
-SUPPORTED_IMAGE_SUFFIXES = frozenset({".bmp", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".tif", ".tiff", ".webp"})
-SUPPORTED_IMAGE_MIME_TYPES = frozenset(_MIME_PILLOW_FORMAT.keys())
+SUPPORTED_IMAGE_SUFFIXES: Final = frozenset({".bmp", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".tif", ".tiff", ".webp"})
+SUPPORTED_IMAGE_MIME_TYPES: Final = frozenset(MIME_PILLOW_FORMAT.keys())
 
 
 def mime_type_to_format(mime_type: str) -> str:
-    return _MIME_PILLOW_FORMAT[mime_type]
+    return MIME_PILLOW_FORMAT[mime_type]
 
 
 def format_to_mime_type(image_format: str) -> str:
     mime_type, _ = mimetypes.guess_type(f"_.{image_format}")
-    return mime_type or _PILLOW_FORMAT_MIME[str.upper(image_format)]
+    return mime_type or PILLOW_FORMAT_MIME[str.upper(image_format)]

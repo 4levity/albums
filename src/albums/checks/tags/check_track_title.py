@@ -1,4 +1,5 @@
 import logging
+from typing import Final
 
 from rich.markup import escape
 
@@ -9,9 +10,9 @@ from ...words.make import plural
 from ..base_check import Check
 from ..helpers import parse_filename, show_tag
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-OPTION_USE_PROPOSED = ">> Use proposed track titles"
+OPTION_USE_PROPOSED: Final = ">> Use proposed track titles"
 
 
 class CheckTrackTitle(Check):

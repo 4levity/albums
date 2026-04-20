@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from rich.markup import escape
 
@@ -12,7 +12,7 @@ from ...words.make import plural, pluralize
 from ..base_check import Check
 from ..helpers import show_tag
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckAlbumTag(Check):

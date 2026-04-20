@@ -4,7 +4,7 @@ import platform
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Final, Sequence, Tuple
 
 from prompt_toolkit.shortcuts import choice, confirm
 from rich.markup import escape
@@ -15,15 +15,15 @@ from sqlalchemy.orm import Session
 from ..app import Context
 from ..types import Album, CheckResult, FixResult
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-OPTION_FREE_TEXT = ">> Enter Text"
-OPTION_DO_NOTHING = ">> Do nothing"
-OPTION_MORE_OPTIONS = ">> More options..."
+OPTION_FREE_TEXT: Final = ">> Enter Text"
+OPTION_DO_NOTHING: Final = ">> Do nothing"
+OPTION_MORE_OPTIONS: Final = ">> More options..."
 
-OPTION_SCAN_AGAIN = ">> Scan again / go back"
-OPTION_OPEN_FOLDER = ">> Open folder and see all files"
-OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
+OPTION_SCAN_AGAIN: Final = ">> Scan again / go back"
+OPTION_OPEN_FOLDER: Final = ">> Open folder and see all files"
+OPTION_IGNORE_CHECK: Final = ">> Ignore this check for this album"
 
 
 def interact(

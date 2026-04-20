@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Collection
+from typing import Any, Collection, Final
 
 from rich.markup import escape
 
@@ -7,10 +7,10 @@ from ...tagger.folder import AlbumTagger, Cap
 from ...types import Album, BasicTag, CheckResult, Fixer, FixResult
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-ALL_MBID_TAGS = frozenset(
+ALL_MBID_TAGS: Final = frozenset(
     (
         BasicTag.MUSICBRAINZ_ALBUMARTISTID,
         BasicTag.MUSICBRAINZ_ALBUMID,
@@ -27,7 +27,7 @@ ALL_MBID_TAGS = frozenset(
     )
 )
 
-DEPRECATED_MBID_TAGS = frozenset((BasicTag.MUSICBRAINZ_TRMID,))
+DEPRECATED_MBID_TAGS: Final = frozenset((BasicTag.MUSICBRAINZ_TRMID,))
 
 
 class CheckMusicBrainzTags(Check):

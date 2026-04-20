@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Callable, override
+from typing import Callable, Final, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.id3 import ID3
@@ -10,7 +10,7 @@ from ...config import ID3v1Policy
 from ...picture.scan import PictureScanner
 from ..base_id3 import AbstractId3Tagger
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class Mp3Tagger(AbstractId3Tagger[MP3]):

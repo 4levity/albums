@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Callable, Generator, List, Tuple, override
+from typing import Callable, Final, Generator, List, Tuple, override
 
 import mutagen
 from mutagen._tags import PaddingInfo
@@ -9,7 +9,7 @@ from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import vorbis_comment_set_tag, vorbis_comment_tags
 from ..types import BasicTag, MutagenFileType, Picture
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):

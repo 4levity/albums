@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from os import unlink
-from typing import Collection, List, Mapping, Sequence, Tuple
+from typing import Collection, Final, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
@@ -9,7 +9,7 @@ from ..app import Context
 from ..tagger.types import BasicTag
 from ..types import Album, FixResult, Track
 
-FRONT_COVER_FILENAME = "cover"
+FRONT_COVER_FILENAME: Final = "cover"
 
 
 def album_display_name(ctx: Context, album: Album) -> str:

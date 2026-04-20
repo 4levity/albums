@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Final
 
 from rich.markup import escape
 
@@ -11,11 +11,11 @@ from ..base_check import Check
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
 from ..tag_policy import Policy, check_policy
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-OPTION_REMOVE_DISC_TOTAL = ">> Remove disc total tag"
-OPTION_SET_DISC_TOTAL = ">> Set disc total"
+OPTION_REMOVE_DISC_TOTAL: Final = ">> Remove disc total tag"
+OPTION_SET_DISC_TOTAL: Final = ">> Set disc total"
 
 
 class CheckDiscNumbering(Check):

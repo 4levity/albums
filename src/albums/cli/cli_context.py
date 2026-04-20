@@ -4,7 +4,7 @@ from collections import defaultdict
 from copy import copy
 from functools import reduce
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Final, Sequence, Tuple
 
 import click
 from rich.logging import RichHandler
@@ -13,13 +13,13 @@ from ..app import Context
 from ..config import PLATFORM_DIRS, RescanOption
 from ..database import connection, db_config, selector
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-pass_context = click.make_pass_decorator(Context, ensure=True)
+pass_context: Final = click.make_pass_decorator(Context, ensure=True)
 
 
-DEFAULT_DB_LOCATION = str(PLATFORM_DIRS.user_config_path / "albums.db")
+DEFAULT_DB_LOCATION: Final = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 
 def require_configured(ctx: Context) -> None:

@@ -3,7 +3,7 @@ import logging
 import mimetypes
 from itertools import chain
 from os import unlink
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, Final, List, Tuple
 
 from PIL import Image
 from rich.markup import escape
@@ -15,7 +15,7 @@ from ...tagger.types import Picture, PictureType
 from ...types import Album, CheckResult, Fixer, FixResult, PictureFile
 from ..base_check import Check
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckCoverDimensions(Check):

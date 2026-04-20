@@ -1,5 +1,5 @@
 import logging
-from typing import Generator, Sequence, TypedDict, Unpack
+from typing import Final, Generator, Sequence, TypedDict, Unpack
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, aliased
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, aliased
 from ..tagger.types import BasicTag
 from ..types import Album, AlbumCollectionAssociation, CollectionEntity, IgnoreCheckEntity, TagV, Track
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class LoadEntityOptions(TypedDict, total=False):

@@ -2,7 +2,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Generator, List, Tuple, override
+from typing import Any, Callable, Final, Generator, List, Mapping, Tuple, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.asf import ASF, ASFTags
@@ -12,10 +12,10 @@ from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..types import BasicTag, Picture, PictureType
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-BASIC_ASF_PROPERTIES: Tuple[Tuple[BasicTag, str], ...] = (
+BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "WM/AlbumTitle"),
     (BasicTag.ALBUMARTIST, "WM/AlbumArtist"),
     (BasicTag.ARTIST, "Author"),
@@ -36,7 +36,7 @@ BASIC_ASF_PROPERTIES: Tuple[Tuple[BasicTag, str], ...] = (
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
-TAG_TO_ASF_PROPERTY = dict(BASIC_ASF_PROPERTIES)
+TAG_TO_ASF_PROPERTY: Final[Mapping[BasicTag, str]] = dict(BASIC_ASF_PROPERTIES)
 
 
 @dataclass(frozen=True)

@@ -1,3 +1,5 @@
+from typing import Final
+
 from .base_check import Check
 from .numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from .numbering.check_disc_numbering import CheckDiscNumbering
@@ -32,7 +34,7 @@ from .tags.check_track_title import CheckTrackTitle
 from .tags.check_unreadable_track import CheckUnreadableTrack
 
 # enabled checks will run on an album in this order:
-ALL_CHECKS: tuple[type[Check], ...] = (
+ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     # path checks 1
     CheckDuplicatePathname,
     CheckIllegalPathname,
@@ -72,4 +74,4 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     CheckAlbumUnderAlbum,
 )
 
-ALL_CHECK_NAMES = {check.name for check in ALL_CHECKS}
+ALL_CHECK_NAMES: Final = frozenset({check.name for check in ALL_CHECKS})

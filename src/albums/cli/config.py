@@ -5,7 +5,7 @@ import re
 from itertools import chain
 from pathlib import Path
 from string import Template
-from typing import Mapping
+from typing import Final, Mapping
 
 import rich_click as click
 from prompt_toolkit.shortcuts import confirm
@@ -19,7 +19,7 @@ from ..interactive.configurator import interactive_config
 from ..interactive.setup_settings import set_library
 from .cli_context import pass_context, require_configured, require_persistent_context
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @click.command(

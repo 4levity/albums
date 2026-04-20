@@ -1,7 +1,7 @@
 import io
 import logging
 from math import sqrt
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, Final, List, Sequence, Tuple
 
 import humanize
 import numpy
@@ -14,7 +14,7 @@ from ..app import Context
 from ..tagger.folder import AlbumTagger
 from ..tagger.types import Picture
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 def render_image_table(

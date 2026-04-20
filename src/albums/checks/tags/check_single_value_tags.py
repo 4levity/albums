@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Sequence
+from typing import Any, Final, Sequence
 
 import yaml
 from rich.markup import escape
@@ -10,8 +10,8 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 from ..helpers import describe_track_number, ordered_tracks
 
-OPTION_CONCATENATE_WITH = ">> Concatenate unique values into one with "
-OPTION_REMOVE_DUPLICATES_ONLY = ">> Remove duplicate values (preserve unique multiple values)"
+OPTION_CONCATENATE_WITH: Final = ">> Concatenate unique values into one with "
+OPTION_REMOVE_DUPLICATES_ONLY: Final = ">> Remove duplicate values (preserve unique multiple values)"
 
 
 class CheckSingleValueTags(Check):

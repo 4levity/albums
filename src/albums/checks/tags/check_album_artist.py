@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any
+from typing import Any, Final
 
 from rich.markup import escape
 
@@ -10,11 +10,11 @@ from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
 from ..helpers import show_tag
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-VARIOUS_ARTISTS = "Various Artists"
-OPTION_REMOVE_ALBUM_ARTIST = ">> Remove album artist from all tracks"
-OPTION_COPY_ALBUM_ARTIST_TO_ARTIST = ">> Copy album artist -> artist"
+VARIOUS_ARTISTS: Final = "Various Artists"
+OPTION_REMOVE_ALBUM_ARTIST: Final = ">> Remove album artist from all tracks"
+OPTION_COPY_ALBUM_ARTIST_TO_ARTIST: Final = ">> Copy album artist -> artist"
 
 
 class CheckAlbumArtist(Check):

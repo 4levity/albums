@@ -1,6 +1,6 @@
 from itertools import chain
 from shutil import rmtree
-from typing import Sequence, override
+from typing import Final, Sequence, override
 
 import humanize
 from prompt_toolkit.shortcuts import confirm
@@ -16,8 +16,8 @@ from albums.tagger.provider import AlbumTaggerProvider
 from ...types import Album, CheckResult, Fixer, FixResult, OtherFile, PictureFile, Track
 from ..base_check import Check
 
-OPTION_DELETE_OTHER = ">> KEEP left (THIS album) and DELETE right (other): "
-OPTION_KEEP_OTHER = ">> DELETE left (THIS album) and KEEP right (other): "
+OPTION_DELETE_OTHER: Final = ">> KEEP left (THIS album) and DELETE right (other): "
+OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): "
 
 
 class CheckDuplicateAlbum(Check):

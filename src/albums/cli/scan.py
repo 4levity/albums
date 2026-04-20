@@ -1,4 +1,5 @@
 import logging
+from typing import Final
 
 import rich_click as click
 from sqlalchemy.orm import Session
@@ -7,7 +8,7 @@ from ..app import Context
 from ..library import scanner
 from .cli_context import pass_context, require_configured, require_library
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @click.command(help="scan and update database", add_help_option=False)

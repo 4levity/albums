@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Final
 
 from rich.markup import escape
 
@@ -8,7 +8,7 @@ from ...types import Album, BasicTag, CheckResult, Fixer, FixResult
 from ..base_check import Check
 from ..tag_policy import Policy, check_policy
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckGenrePresent(Check):

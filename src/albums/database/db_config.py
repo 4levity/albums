@@ -1,4 +1,5 @@
 import logging
+from typing import Final
 
 from sqlalchemy import Engine, delete, select
 from sqlalchemy.dialects.sqlite import insert
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..config import Configuration, SettingEntity
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 def load(db: Engine) -> Configuration:

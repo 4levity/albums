@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum, auto
 from pathlib import Path
 from string import Template
-from typing import Dict, Iterator, List, Mapping, Sequence, Tuple, Union
+from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
 
 from platformdirs import PlatformDirs
 from sqlalchemy import Text
@@ -15,9 +15,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .database.orm import Base, SerializableValueAsJson
 from .types import CheckConfiguration
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-PLATFORM_DIRS = PlatformDirs("albums", "4levity")
+PLATFORM_DIRS: Final = PlatformDirs("albums", "4levity")
 
 
 type SerializedSyncDestination = dict[str, Union[str, int, float, bool, Sequence[str]]]
@@ -45,10 +45,10 @@ class RescanOption(StrEnum):
     AUTO = auto()
 
 
-DEFAULT_IMPORT_PATH = Template("$artist/$album")
-DEFAULT_IMPORT_PATH_VARIOUS = Template("Compilations/$album")
-DEFAULT_MORE_IMPORT_PATHS = (Template("$A1/$artist/$album"), Template("Soundtracks/$album"))
-DEFAULT_IMPORT_SCAN_MAX_PATHS = 250
+DEFAULT_IMPORT_PATH: Final = Template("$artist/$album")
+DEFAULT_IMPORT_PATH_VARIOUS: Final = Template("Compilations/$album")
+DEFAULT_MORE_IMPORT_PATHS: Final = (Template("$A1/$artist/$album"), Template("Soundtracks/$album"))
+DEFAULT_IMPORT_SCAN_MAX_PATHS: Final = 250
 
 
 def default_checks_config() -> Mapping[str, CheckConfiguration]:
@@ -64,7 +64,7 @@ class ID3v1Policy(IntEnum):
     CREATE = 2
 
 
-DEFAULT_FILE_CONVERT_PROFILE = "mp3"
+DEFAULT_FILE_CONVERT_PROFILE: Final = "mp3"
 
 
 @dataclass

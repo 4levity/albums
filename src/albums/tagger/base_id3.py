@@ -1,6 +1,6 @@
 import logging
 import textwrap
-from typing import Callable, Generator, List, Tuple, override
+from typing import Callable, Final, Generator, List, Mapping, Tuple, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
@@ -14,9 +14,9 @@ from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
 from .types import BasicTag, Picture, PictureType
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
+BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "TALB"),
     (BasicTag.ALBUMARTIST, "TPE2"),
     (BasicTag.ARTIST, "TPE1"),
@@ -36,14 +36,14 @@ BASIC_ID3_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
 )
-UFID_MUSICBRAINZ_OWNER = "http://musicbrainz.org"
+UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
 
 # TODO also pull other common values, like
 # "composer": "tcom",
 # "encoder": "tenc",
 # "date": "tdrc",  # recordingdate?
 
-TAG_TO_ID3_TEXT_FRAME = dict(BASIC_ID3_TEXT_FRAMES)
+TAG_TO_ID3_TEXT_FRAME: Final[Mapping[BasicTag, str]] = dict(BASIC_ID3_TEXT_FRAMES)
 
 
 class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):

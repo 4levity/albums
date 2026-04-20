@@ -1,13 +1,14 @@
 import logging
+from typing import Final, Mapping
 
 from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
 from .orm import schema_table
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
-SQL_INIT_SCHEMA = """
+SQL_INIT_SCHEMA: Final = """
 CREATE TABLE _schema (
     version INTEGER UNIQUE NOT NULL
 );
@@ -64,7 +65,7 @@ CREATE TABLE track_tag (
 CREATE INDEX idx_track_tag_track_id ON track_tag(track_id);
 """
 
-MIGRATIONS = {  # key is target schema version
+MIGRATIONS: Final[Mapping[int, str]] = {  # key is target schema version
     2: """
 CREATE TABLE scan_history (
     scan_history_id INTEGER PRIMARY KEY,
@@ -149,7 +150,7 @@ CREATE INDEX idx_album_other_file_album_id ON album_other_file(album_id);
 """,
 }
 
-CURRENT_SCHEMA_VERSION = max(MIGRATIONS.keys())
+CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())
 
 
 def migrate(db: Engine, quiet: bool):

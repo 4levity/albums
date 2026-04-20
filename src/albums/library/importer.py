@@ -4,7 +4,7 @@ import os
 import shutil
 from itertools import chain
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Final, Sequence, Tuple
 
 import humanize
 from prompt_toolkit import choice
@@ -21,7 +21,7 @@ from ..library.scanner import scan
 from ..types import Album
 from ..words.make import plural
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 class Importer:

@@ -1,6 +1,6 @@
 import logging
 from enum import Enum, auto
-from typing import Any, Mapping, Sequence
+from typing import Any, Final, Mapping, Sequence
 
 from rich.console import RenderableType
 from rich.markup import escape
@@ -12,10 +12,10 @@ from ..base_check import Check
 from ..helpers import get_tracks_by_disc
 from .check_track_numbering import describe_track_number
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
-OPTION_APPLY_POLICY = ">> Apply policy"
+OPTION_APPLY_POLICY: Final = ">> Apply policy"
 
 
 class ZeroPadPolicy(Enum):

@@ -5,7 +5,7 @@ import time
 from collections import defaultdict
 from enum import Enum, auto
 from pathlib import Path
-from typing import Callable, Iterator, List, Mapping, Tuple
+from typing import Callable, Final, Iterator, List, Mapping, Tuple
 
 import humanize
 from rbloom import Bloom
@@ -22,7 +22,7 @@ from ..types import Album, OtherFile, PictureFile, ScanHistoryEntity, TagV, Trac
 from ..words.make import plural
 from .folder import MiniStat, read_binary_file, stat_dir
 
-MAX_IMAGE_SIZE = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
+MAX_IMAGE_SIZE: Final = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
 
 
 class AlbumScanResult(Enum):

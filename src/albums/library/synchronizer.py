@@ -5,7 +5,7 @@ import os
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Collection, List, Sequence
+from typing import Collection, Final, List, Sequence
 
 import humanize
 from prompt_toolkit.shortcuts import confirm
@@ -22,7 +22,7 @@ from ..library.transcoder import Transcoder
 from ..types import Album
 from ..words.make import plural
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @dataclass

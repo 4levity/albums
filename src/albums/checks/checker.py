@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Final, Mapping, Sequence
 
 from rich.markup import escape
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ from .all import ALL_CHECKS
 from .base_check import Check
 from .helpers import album_display_name
 
-logger = logging.getLogger(__name__)
+logger: Final = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
