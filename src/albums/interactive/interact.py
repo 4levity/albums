@@ -18,24 +18,17 @@ from ..types import Album, CheckResult, FixResult
 logger = logging.getLogger(__name__)
 
 OPTION_FREE_TEXT = ">> Enter Text"
-OPTION_OPEN_FOLDER = ">> Open folder and see all files"
 OPTION_DO_NOTHING = ">> Do nothing"
+OPTION_MORE_OPTIONS = ">> More options..."
+
+OPTION_SCAN_AGAIN = ">> Scan again / go back"
+OPTION_OPEN_FOLDER = ">> Open folder and see all files"
 OPTION_IGNORE_CHECK = ">> Ignore this check for this album"
 
 
 def interact(
     ctx: Context, session: Session, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool
 ) -> Tuple[bool, bool, bool]:
-    # if there is a fixer, offer the options it specifies
-    #
-    # always offer these options:
-    #  - do nothing
-    #  - open new window to browse album folder
-    # if a tagger is configured: option to run tagger
-    # if show_ignore_option: option to ignore this check for this album
-    #
-    # if there is an automatic fix option, it is the default, otherwise do nothing is the default
-
     fixer = check_result.fixer
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
@@ -45,17 +38,22 @@ def interact(
     OPTION_RUN_TAGGER = f">> Edit tags with {ctx.config.tagger or 'external tagger'}"
 
     options: list[str] = []
+    more_options: list[str] = []
+
     if fixer:
-        options.extend([opt for opt in fixer.options if opt not in [OPTION_FREE_TEXT, OPTION_RUN_TAGGER, OPTION_DO_NOTHING]])
+        # if there is a fixer, offer the options it specifies
+        options.extend(fixer.options)
     if fixer and fixer.option_free_text:
         options.append(OPTION_FREE_TEXT)
     if show_ignore_option:
-        options.append(OPTION_IGNORE_CHECK)
+        more_options.append(OPTION_IGNORE_CHECK)
     do_nothing_index = len(options)
     options.append(OPTION_DO_NOTHING)
     if ctx.config.tagger or _in_gui():  # all default taggers require windowing session, don't assume user option does
-        options.append(OPTION_RUN_TAGGER)
-    options.append(OPTION_OPEN_FOLDER)  # works without GUI if nnn or mc installed
+        more_options.append(OPTION_RUN_TAGGER)
+    more_options.append(OPTION_OPEN_FOLDER)  # works without GUI if nnn or mc installed
+    more_options.append(OPTION_SCAN_AGAIN)
+    options.append(OPTION_MORE_OPTIONS)
 
     album_path = ctx.config.library / album.path
 
@@ -71,34 +69,40 @@ def interact(
         ctx.console.print(f"[bold]{check_name}[/bold]: [bold yellow]{escape(check_result.message)}[/bold yellow]", highlight=False)
 
         prompt_text = fixer.prompt if fixer else "select an option"
+        # if there is an automatic fix option, it is the default, otherwise do nothing is the default
         default_option_index = fixer.option_automatic_index if fixer and (fixer.option_automatic_index is not None) else do_nothing_index
         option_index = _choose_from_menu(prompt_text, options, default_option_index)
         ctx.console.print()
 
-        if option_index is None or options[option_index] in [OPTION_IGNORE_CHECK, OPTION_DO_NOTHING, OPTION_RUN_TAGGER, OPTION_OPEN_FOLDER]:
+        if option_index is None or options[option_index] in [OPTION_MORE_OPTIONS, OPTION_DO_NOTHING]:
             # these options do not use the fixer (if one was provided)
-            choice = options[option_index] if option_index is not None else None
-            if choice == OPTION_RUN_TAGGER:
-                _run_tagger(ctx, album_path)
-                while not confirm("Done making changes in external program?"):
-                    pass
-                maybe_changed |= True
-                done = True
-            elif choice == OPTION_DO_NOTHING:
+            selection = options[option_index] if option_index is not None else None
+            if selection == OPTION_DO_NOTHING:
                 done = True
                 user_quit = True
-            elif choice == OPTION_IGNORE_CHECK:
-                done = prompt_ignore_checks(session, album.album_id, check_name) if album.album_id is not None else False
-                maybe_changed |= done
-                user_quit = done
-            elif choice == OPTION_OPEN_FOLDER:
-                _open_folder(ctx, album_path)
+            elif selection == OPTION_MORE_OPTIONS:
+                option_index = _choose_from_menu("select an option", more_options, 0)
+                selection = more_options[option_index] if option_index is not None else None
+                if selection == OPTION_RUN_TAGGER:
+                    _run_tagger(ctx, album_path)
+                    maybe_changed = True
+                    done = True
+                elif selection == OPTION_IGNORE_CHECK:
+                    done = prompt_ignore_checks(session, album.album_id, check_name) if album.album_id is not None else False
+                    maybe_changed |= done
+                    user_quit = done
+                elif selection == OPTION_OPEN_FOLDER:
+                    _open_folder(ctx, album_path)
+                    # opening GUI file explorer via OS will return immediately
+                    while _in_gui() and not confirm("Done making changes in external program?"):
+                        pass
+                    maybe_changed = True
+                    done = True
+                elif selection == OPTION_SCAN_AGAIN:
+                    maybe_changed = True
+                    done = True
                 ctx.console.print()
-                while not confirm("Done making changes in external program?"):
-                    pass
-                maybe_changed |= True
-                done = True
-            elif choice is None:  # if user pressed esc, confirm
+            elif selection is None:  # if user pressed esc, confirm
                 done = confirm("Do you want to move on to the next check?")
                 user_quit = done
 

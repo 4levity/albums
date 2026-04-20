@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.database import connection
-from albums.interactive.interact import OPTION_IGNORE_CHECK, interact
+from albums.interactive.interact import OPTION_IGNORE_CHECK, OPTION_MORE_OPTIONS, interact
 from albums.types import Album, CheckResult, Fixer, FixResult, Track
 
 
@@ -47,13 +47,12 @@ class TestCheckFixInteractive:
                 session.flush()
 
                 fixer = MockFixer(ctx, album)
-                mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_IGNORE_CHECK)
+                mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
                 (changed, deleted, quit) = interact(ctx, session, "album-tag", CheckResult("hello", fixer), album, True)
                 assert changed
                 assert quit
-                assert mock_choice.call_count == 1
                 assert mock_confirm.call_count == 1
                 assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-tag" for this album?')
 
@@ -72,7 +71,7 @@ class TestCheckFixInteractive:
                 session.add(album)
                 session.flush()
                 fixer = MockFixer(ctx, album, [], False, None)
-                mocker.patch("albums.interactive.interact.choice", return_value=OPTION_IGNORE_CHECK)
+                mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
                 (changed, deleted, quit) = interact(ctx, session, "album-tag", CheckResult("hello", fixer), album, True)
