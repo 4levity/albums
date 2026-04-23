@@ -22,6 +22,7 @@ track = Track(
         BasicTag.DISCNUMBER: "2",
         BasicTag.DISCTOTAL: "2",
         BasicTag.GENRE: "Rock",
+        BasicTag.ORGANIZATION: "ABC",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
@@ -59,11 +60,19 @@ class TestAiff:
         assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
         assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
         assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
+        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
 
     def test_update_aiff_tags(self):
         TestAiff.tagger.set_basic_tags(
             TestAiff.library / album.path / track.filename,
-            [(BasicTag.ARTIST, "a1"), (BasicTag.ALBUMARTIST, "a2"), (BasicTag.ALBUM, "a3"), (BasicTag.TITLE, "t"), (BasicTag.GENRE, "Country")],
+            [
+                (BasicTag.ARTIST, "a1"),
+                (BasicTag.ALBUMARTIST, "a2"),
+                (BasicTag.ALBUM, "a3"),
+                (BasicTag.TITLE, "t"),
+                (BasicTag.GENRE, "Country"),
+                (BasicTag.ORGANIZATION, "Q"),
+            ],
         )
         with TestAiff.tagger.open(track.filename) as file:
             scan = file.scan()
@@ -73,6 +82,7 @@ class TestAiff:
         assert tags[BasicTag.ALBUM] == ("a3",)
         assert tags[BasicTag.TITLE] == ("t",)
         assert tags[BasicTag.GENRE] == ("Country",)
+        assert tags[BasicTag.ORGANIZATION] == ("Q",)
 
     def test_write_aiff_tracktotal(self):
         with TestAiff.tagger.open(track.filename) as file:

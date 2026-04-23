@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, FixResult
+from ...types import Album, CheckResult, Fixer, FixResult, Track
 from ..base_check import Check
 from ..helpers import show_tag
 
@@ -14,6 +14,8 @@ logger: Final = logging.getLogger(__name__)
 
 VARIOUS_ARTISTS: Final = "Various Artists"
 OPTION_REMOVE_ALBUM_ARTIST: Final = ">> Remove album artist from all tracks"
+OPTION_REMOVE_OLD_ALBUM_ARTIST: Final = ">> Remove legacy album artist tag (new tag is present)"
+OPTION_CONVERT_OLD_ALBUM_ARTIST: Final = ">> Convert legacy album artist tag (new tag is not present)"
 OPTION_COPY_ALBUM_ARTIST_TO_ARTIST: Final = ">> Copy album artist -> artist"
 
 
@@ -33,6 +35,19 @@ class CheckAlbumArtist(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
+        if any(track.has(BasicTag.OLD_ALBUM_ARTIST) for track in album.tracks):
+            if any(track.has(BasicTag.ALBUMARTIST) for track in album.tracks):
+                return CheckResult(
+                    "legacy 'album artist' tag found, and the standard tag is also present",
+                    self._make_fixer(album, [OPTION_REMOVE_OLD_ALBUM_ARTIST], show_free_text_option=False, option_automatic_index=0, legacy=True),
+                )
+            else:
+                options = [OPTION_CONVERT_OLD_ALBUM_ARTIST, OPTION_REMOVE_OLD_ALBUM_ARTIST]
+                return CheckResult(
+                    "legacy 'album artist' tag found, and the standard tag is not present",
+                    self._make_fixer(album, options, show_free_text_option=False, option_automatic_index=0, legacy=True),
+                )
+
         albumartists: defaultdict[str, int] = defaultdict(int)
         artists: defaultdict[str, int] = defaultdict(int)
 
@@ -41,8 +56,10 @@ class CheckAlbumArtist(Check):
                 for artist in track.get(BasicTag.ARTIST):
                     artists[artist] += 1
 
-            if track.has(BasicTag.ALBUMARTIST):
-                for albumartist in track.get(BasicTag.ALBUMARTIST):
+            if track.has(BasicTag.ALBUMARTIST) or track.has(BasicTag.OLD_ALBUM_ARTIST):
+                for albumartist in track.get(BasicTag.ALBUMARTIST, default=[]):
+                    albumartists[albumartist] += 1
+                for albumartist in track.get(BasicTag.OLD_ALBUM_ARTIST, default=[]):
                     albumartists[albumartist] += 1
             else:
                 albumartists[""] += 1
@@ -94,15 +111,22 @@ class CheckAlbumArtist(Check):
                 self._make_fixer(album, candidates_various, show_free_text_option=True),
             )
 
-    def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
+    def _make_fixer(
+        self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None, legacy: bool = False
+    ):
+        def render_album_artist(track: Track):
+            aa = show_tag(track.get(BasicTag.ALBUMARTIST, default=None))
+            show_old = legacy and track.has(BasicTag.OLD_ALBUM_ARTIST)
+            return f"{aa}{f' ({show_tag(track.get(BasicTag.OLD_ALBUM_ARTIST))})' if show_old else ''}"
+
         table = (
-            ["filename", "album tag", "artist", "album artist"],
+            ["filename", "album tag", "artist", f"album artist{' (legacy)' if legacy else ''}"],
             [
                 [
                     escape(track.filename),
                     show_tag(track.get(BasicTag.ALBUM, default=None)),
                     show_tag(track.get(BasicTag.ARTIST, default=None)),
-                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
+                    render_album_artist(track),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -131,6 +155,17 @@ class CheckAlbumArtist(Check):
                     self.ctx.console.print(f"copying albumartist to artist in {escape(track.filename)}", highlight=False)
                     albumartist = track.get(BasicTag.ALBUMARTIST)[0]
                     self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ARTIST, albumartist)])
+                    changed = True
+            elif album_artist_value == OPTION_CONVERT_OLD_ALBUM_ARTIST:
+                if track.has(BasicTag.OLD_ALBUM_ARTIST):
+                    self.ctx.console.print(f"converting legacy album artist tag in {escape(track.filename)}", highlight=False)
+                    albumartist = track.get(BasicTag.OLD_ALBUM_ARTIST)[0]
+                    self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUMARTIST, albumartist), (BasicTag.OLD_ALBUM_ARTIST, None)])
+                    changed = True
+            elif album_artist_value == OPTION_REMOVE_OLD_ALBUM_ARTIST:
+                if track.has(BasicTag.OLD_ALBUM_ARTIST):
+                    self.ctx.console.print(f"removing legacy album artist tag in {escape(track.filename)}", highlight=False)
+                    self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.OLD_ALBUM_ARTIST, None)])
                     changed = True
             elif track.get(BasicTag.ALBUMARTIST, default=[]) != [album_artist_value]:
                 self.ctx.console.print(f"setting albumartist on {escape(track.filename)}", highlight=False)

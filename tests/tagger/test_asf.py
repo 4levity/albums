@@ -25,6 +25,7 @@ track = Track(
         BasicTag.GENRE: "Rock",
         BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
         BasicTag.MUSICBRAINZ_TRACKID: UUID1,
+        BasicTag.ORGANIZATION: "ABC",
     },
 )
 album = Album(path="baz" + os.sep, tracks=[track])
@@ -49,6 +50,7 @@ class TestAsf:
         assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
+        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
 
     def test_update_asf_tags(self):
         TestAsf.tagger.set_basic_tags(
@@ -61,6 +63,7 @@ class TestAsf:
                 (BasicTag.GENRE, "Country"),
                 (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
                 (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
+                (BasicTag.ORGANIZATION, "Q"),
             ],
         )
         with TestAsf.tagger.open(track.filename) as file:
@@ -73,6 +76,7 @@ class TestAsf:
         assert tags[BasicTag.GENRE] == ("Country",)
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
+        assert tags[BasicTag.ORGANIZATION] == ("Q",)
 
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:

@@ -354,12 +354,20 @@ Rules:
 - If any tracks have different artists, all tracks should have the same album
   artist.
 - If any track has album artist, all tracks should have the same album artist.
+- For FLAC and other Vorbis Comment files only: the tag `album artist` should
+  not be present (standard is `albumartist`).
 
 The fix offers candidates found in the tags plus the option "Various Artists".
-It can also apply a policy from the options below.
+It can also remove or convert legacy tags or apply a policy from options below.
 
 **Automatic fix**: If the album artist is or would be redundant, and one of the
 optional policies below is enabled, apply the policy.
+
+**Automatic fix**: If legacy album artist tag is present and standard album
+artist tag is not present, convert the tag to the standard.
+
+**Automatic fix**: If both legacy album artist tag and standard album artist tag
+are present, remove the legacy album artist tag. (Value is not checked.)
 
 <!-- pyml disable line-length -->
 
@@ -452,6 +460,10 @@ The presence policy options are:
 - **"always"**: all tracks should have genre
 - **"never"**: genre should be removed
 
+**Automatic fix** If the policy is "never", always remove the genre. If the
+policy is "always", and a consistent genre is set on some tracks, set the same
+genre on the others.
+
 <!-- pyml disable line-length -->
 
 | Option = default                   | Description                                                  |
@@ -459,6 +471,33 @@ The presence policy options are:
 | `presence` = `"consistent"`        | Set the tag presence policy for genre                        |
 | `per_track` = **false**            | If **true** genre may be different on each track in an album |
 | `select_genres` = `["Blues", ...]` | List of genre options to display - edit to suit preferences  |
+
+<!-- pyml enable line-length -->
+
+### publisher-tag
+
+If the **organization** (Vorbis Comment) or **publisher** (common name) tag is
+not set consistently on all tracks in an album, some players will treat this as
+distinct albums.
+
+This check applies a user-defined policy for organization/publisher tags. The
+presence policy options are:
+
+- **"consistent"**: either all tracks have organization/publisher, or none do
+- **"always"**: all tracks should have organization/publisher
+- **"never"**: organization/publisher should be removed
+
+If any track has an organization value, then all values must be the same.
+
+**Automatic fix** If the policy is "never", always remove the organization. If
+the policy is "always", and a consistent organization is set on some tracks, set
+the same organization on the others.
+
+<!-- pyml disable line-length -->
+
+| Option = default            | Description                                            |
+| --------------------------- | ------------------------------------------------------ |
+| `presence` = `"consistent"` | Set the tag presence policy for organization/publisher |
 
 <!-- pyml enable line-length -->
 

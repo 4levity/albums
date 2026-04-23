@@ -22,6 +22,7 @@ track = Track(
         BasicTag.DISCNUMBER: "3",
         BasicTag.DISCTOTAL: "4",
         BasicTag.GENRE: "Rock",
+        BasicTag.ORGANIZATION: "ABC",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
@@ -50,15 +51,17 @@ class TestOggVorbis:
         assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 300
 
         tags = dict(scan.tags)
-        assert tags[BasicTag.ARTIST] == ("C",)
-        assert tags[BasicTag.TITLE] == ("one",)
-        assert tags[BasicTag.ALBUM] == ("foobar",)
-        assert tags[BasicTag.ALBUMARTIST] == ("foo",)
-        assert tags[BasicTag.TRACKNUMBER] == ("1",)
-        assert tags[BasicTag.TRACKTOTAL] == ("2",)
-        assert tags[BasicTag.DISCNUMBER] == ("3",)
-        assert tags[BasicTag.DISCTOTAL] == ("4",)
-        assert tags[BasicTag.GENRE] == ("Rock",)
+        track_tags = track.tag_dict()
+        assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
+        assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
+        assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
+        assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
+        assert tags[BasicTag.TRACKNUMBER] == tuple(track_tags[BasicTag.TRACKNUMBER])
+        assert tags[BasicTag.TRACKTOTAL] == tuple(track_tags[BasicTag.TRACKTOTAL])
+        assert tags[BasicTag.DISCNUMBER] == tuple(track_tags[BasicTag.DISCNUMBER])
+        assert tags[BasicTag.DISCTOTAL] == tuple(track_tags[BasicTag.DISCTOTAL])
+        assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
+        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
 
     def test_update_ogg_vorbis_tags(self):
         TestOggVorbis.tagger.set_basic_tags(
@@ -73,6 +76,7 @@ class TestOggVorbis:
                 (BasicTag.DISCNUMBER, "7"),
                 (BasicTag.DISCTOTAL, "8"),
                 (BasicTag.GENRE, "Country"),
+                (BasicTag.ORGANIZATION, "Q"),
             ],
         )
         with TestOggVorbis.tagger.open(track.filename) as file:
@@ -87,6 +91,7 @@ class TestOggVorbis:
         assert tags[BasicTag.DISCNUMBER] == ("7",)
         assert tags[BasicTag.DISCTOTAL] == ("8",)
         assert tags[BasicTag.GENRE] == ("Country",)
+        assert tags[BasicTag.ORGANIZATION] == ("Q",)
 
     def test_remove_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:

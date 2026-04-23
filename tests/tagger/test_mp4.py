@@ -26,6 +26,7 @@ track1 = Track(
         BasicTag.GENRE: "Rock",
         BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
         BasicTag.MUSICBRAINZ_TRACKID: UUID1,
+        BasicTag.ORGANIZATION: "ABC",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
@@ -48,6 +49,7 @@ track2 = Track(
         BasicTag.GENRE: "Rock",
         BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
         BasicTag.MUSICBRAINZ_TRACKID: UUID1,
+        BasicTag.ORGANIZATION: "ABC",
     },
 )
 video = OtherFile(filename="video.mp4")
@@ -81,6 +83,7 @@ class TestMp4:
         assert tags[BasicTag.TRACKNUMBER] == tuple(track_tags[BasicTag.TRACKNUMBER])
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
+        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
 
     def test_mp4_audio(self):
         with TestMp4.tagger.open(track2.filename) as file:
@@ -117,6 +120,7 @@ class TestMp4:
                 (BasicTag.GENRE, "Country"),
                 (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
                 (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
+                (BasicTag.ORGANIZATION, "Q"),
             ],
         )
         with TestMp4.tagger.open(track1.filename) as file:
@@ -129,6 +133,7 @@ class TestMp4:
         assert tags[BasicTag.GENRE] == ("Country",)
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
+        assert tags[BasicTag.ORGANIZATION] == ("Q",)
 
     def test_write_mp4_tracktotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
