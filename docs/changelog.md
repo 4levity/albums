@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.18 - check publisher/organization tag presence, legacy album artist tag
+
 v0.9.17 - MusicBrainz tag policy, menu changes for check UX, bug fixes
 
 v0.9.16 - fix check run getting stuck if album-artist require_redundant=True
