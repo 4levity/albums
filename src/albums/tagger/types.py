@@ -40,10 +40,12 @@ class BasicTag(StrEnum):
     ARTIST = auto()
     DISCNUMBER = auto()
     DISCTOTAL = auto()
+    GENRE = auto()
+    OLD_ALBUM_ARTIST = "album artist"  # incorrect tag "album artist" - correct is "albumartist"
+    ORGANIZATION = auto()
     TITLE = auto()
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()
-    GENRE = auto()
 
     # TXXX:MusicBrainz Album Artist Id, ----:com.apple.iTunes:MusicBrainz Album Artist Id, MusicBrainz/Album Artist Id
     MUSICBRAINZ_ALBUMARTISTID = auto()

@@ -1,11 +1,11 @@
 import logging
 import textwrap
-from typing import Callable, Final, Generator, List, Mapping, Tuple, override
+from typing import Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TRCK, TXXX, UFID
+from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TXXX, UFID
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
@@ -33,6 +33,7 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "TXXX:MusicBrainz Original Artist Id"),
     (BasicTag.MUSICBRAINZ_RELEASETRACKID, "TXXX:MusicBrainz Release Track Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
+    (BasicTag.ORGANIZATION, "TPUB"),
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
 )
@@ -43,7 +44,7 @@ UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
 # "encoder": "tenc",
 # "date": "tdrc",  # recordingdate?
 
-TAG_TO_ID3_TEXT_FRAME: Final[Mapping[BasicTag, str]] = dict(BASIC_ID3_TEXT_FRAMES)
+TAG_TO_ID3_TEXT_FRAME: Final = dict(BASIC_ID3_TEXT_FRAMES)
 
 
 class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
@@ -140,6 +141,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     self._set_tpos(disc_number, None)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    logger.warning(f"don't know how to remove 'legacy album artist' from ID3 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trck()
                     self._set_trck(None, track_total)
@@ -167,6 +170,10 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    raise ValueError(f"cannot set 'legacy album artist' in ID3 tag on {self._get_file().filename}")
+                case BasicTag.ORGANIZATION:
+                    tags["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TITLE:
                     tags["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TRACKNUMBER:

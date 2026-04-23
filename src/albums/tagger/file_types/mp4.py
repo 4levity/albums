@@ -14,14 +14,15 @@ from ..types import BasicTag, Picture, PictureType
 logger: Final = logging.getLogger(__name__)
 
 
-M4A_TEXT_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
+M4A_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "©alb"),
     (BasicTag.ALBUMARTIST, "aART"),
     (BasicTag.ARTIST, "©ART"),
     (BasicTag.TITLE, "©nam"),
     (BasicTag.GENRE, "©gen"),
+    (BasicTag.ORGANIZATION, "©pub"),
 )
-M4A_BYTES_FRAMES: Tuple[Tuple[BasicTag, str], ...] = (
+M4A_BYTES_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "----:com.apple.iTunes:MusicBrainz Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "----:com.apple.iTunes:MusicBrainz Album Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "----:com.apple.iTunes:MusicBrainz Artist Id"),
@@ -140,6 +141,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, None)
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    logger.warning(f"don't know how to remove 'legacy album artist' from MP4 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(None, track_total)
@@ -157,6 +160,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    raise ValueError(f"cannot set 'legacy album artist' in MP4 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(int(value_list[0]) if value_list[0] else None, track_total)

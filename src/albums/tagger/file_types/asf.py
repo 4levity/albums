@@ -2,7 +2,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Final, Generator, List, Mapping, Tuple, override
+from typing import Any, Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 from mutagen.asf import ASF, ASFTags
@@ -33,10 +33,11 @@ BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "MusicBrainz/Release Group Id"),
     (BasicTag.MUSICBRAINZ_RELEASETRACKID, "MusicBrainz/Release Track Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
+    (BasicTag.ORGANIZATION, "Publisher"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
-TAG_TO_ASF_PROPERTY: Final[Mapping[BasicTag, str]] = dict(BASIC_ASF_PROPERTIES)
+TAG_TO_ASF_PROPERTY: Final = dict(BASIC_ASF_PROPERTIES)
 
 
 @dataclass(frozen=True)
@@ -148,6 +149,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    logger.warning(f"don't know how to remove 'legacy album artist' from ASF tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(None, track_total)
@@ -165,6 +168,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
+                case BasicTag.OLD_ALBUM_ARTIST:
+                    raise ValueError(f"cannot set 'legacy album artist' in ID3 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)
