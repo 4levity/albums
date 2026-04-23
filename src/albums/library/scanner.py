@@ -286,12 +286,5 @@ def _scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = 
     return AlbumScanResult.UPDATED if updated else AlbumScanResult.UNCHANGED
 
 
-def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> bool:
-    if scanner < 2 and not isinstance(file, OtherFile):
-        if isinstance(file, PictureFile):
-            pics = [file.picture_info]
-        else:
-            pics = [p.picture_info for p in file.pictures]
-        return any(p.depth_bpp == 0 for p in pics)
-
-    return False
+def _needs_rescan(scanner: int, _file: Track | PictureFile | OtherFile) -> bool:
+    return scanner < SCANNER_VERSION
