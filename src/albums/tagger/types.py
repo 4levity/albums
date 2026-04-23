@@ -42,7 +42,7 @@ class BasicTag(StrEnum):
     DISCTOTAL = auto()
     GENRE = auto()
     OLD_ALBUM_ARTIST = "album artist"  # incorrect tag "album artist" - correct is "albumartist"
-    ORGANIZATION = auto()
+    ORGANIZATION = auto()  # Publisher, record label
     TITLE = auto()
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()

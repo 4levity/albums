@@ -72,7 +72,6 @@ def check_policy(
             single_value_for_album and can_set_tag_on_all_tracks,
             option_automatic_index,
             table,
-            "select a genre or other option",
         )
     else:
         fixer = None
