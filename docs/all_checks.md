@@ -354,12 +354,20 @@ Rules:
 - If any tracks have different artists, all tracks should have the same album
   artist.
 - If any track has album artist, all tracks should have the same album artist.
+- For FLAC and other Vorbis Comment files only: the tag `album artist` should
+  not be present (standard is `albumartist`).
 
 The fix offers candidates found in the tags plus the option "Various Artists".
-It can also apply a policy from the options below.
+It can also remove or convert legacy tags or apply a policy from options below.
 
 **Automatic fix**: If the album artist is or would be redundant, and one of the
 optional policies below is enabled, apply the policy.
+
+**Automatic fix**: If legacy album artist tag is present and standard album
+artist tag is not present, convert the tag to the standard.
+
+**Automatic fix**: If both legacy album artist tag and standard album artist tag
+are present, remove the legacy album artist tag. (Value is not checked.)
 
 <!-- pyml disable line-length -->
 

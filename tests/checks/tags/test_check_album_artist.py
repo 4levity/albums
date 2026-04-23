@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_album_artist import CheckAlbumArtist
@@ -302,3 +303,52 @@ class TestCheckAlbumArtist:
         album.tracks[1].tags = [TagV(tag=BasicTag.ARTIST, value="A"), TagV(tag=BasicTag.ALBUMARTIST, value="A")]
         result = checker.check(album)
         assert result is None
+
+    def test_convert_old_album_artist(self, mocker):
+        album = Album(
+            path="",
+            tracks=[
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.OLD_ALBUM_ARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.OLD_ALBUM_ARTIST: "Foo"}),
+            ],
+        )
+        result = CheckAlbumArtist(Context()).check(album)
+        assert "legacy 'album artist' tag found, and the standard tag is not present" in result.message
+        assert result.fixer
+        assert result.fixer.options == [
+            ">> Convert legacy album artist tag (new tag is not present)",
+            ">> Remove legacy album artist tag (new tag is present)",
+        ]
+        assert result.fixer.option_automatic_index == 0
+        assert not result.fixer.option_free_text
+        assert result.fixer.table
+
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_tags.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicTag.ALBUMARTIST, "Foo"), (BasicTag.OLD_ALBUM_ARTIST, None)]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicTag.ALBUMARTIST, "Foo"), (BasicTag.OLD_ALBUM_ARTIST, None)]),
+        ]
+
+    def test_remove_old_album_artist(self, mocker):
+        album = Album(
+            path="",
+            tracks=[
+                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo", BasicTag.OLD_ALBUM_ARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo", BasicTag.OLD_ALBUM_ARTIST: "Foo"}),
+            ],
+        )
+        result = CheckAlbumArtist(Context()).check(album)
+        assert "legacy 'album artist' tag found, and the standard tag is also present" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Remove legacy album artist tag (new tag is present)"]
+        assert result.fixer.option_automatic_index == 0
+        assert not result.fixer.option_free_text
+        assert result.fixer.table
+
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_tags.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicTag.OLD_ALBUM_ARTIST, None)]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicTag.OLD_ALBUM_ARTIST, None)]),
+        ]
