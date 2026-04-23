@@ -57,11 +57,12 @@ def check_policy(
         options = [v for v, _ct in sorted(value_count.items(), key=lambda vc: vc[1], reverse=True)]
     else:
         options = []
+    value_options_count = len(options)
     if policy != Policy.ALWAYS:
         options.append(f"{OPTION_REMOVE_TAG} {tag}")
 
     if options:
-        option_automatic_index = 0 if len(options) == 1 else None
+        option_automatic_index = 0 if (value_options_count == 1 or len(options) == 1) else None
         table = (
             ["track", "filename", tag.value],
             [[describe_track_number(track), escape(track.filename), "/".join(track.get(tag, [""]))] for track in ordered_tracks(album)],

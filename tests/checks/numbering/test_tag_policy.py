@@ -73,6 +73,29 @@ class TestTotalTags:
         album = Album(
             path="",
             tracks=[
+                Track(filename="1.flac", tag={BasicTag.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
+            ],
+        )
+
+        result = self.check(album, Policy.CONSISTENT)
+        assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
+        assert result.fixer
+        assert result.fixer.options == ["1", ">> Remove tag tracktotal"]
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.table
+
+        # automatically fixed
+        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert mock_set_basic_tags.call_count == 1
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicTag.TRACKTOTAL, "1")])
+
+    def test_check_tag_policy_consistent_no_other(self, mocker):
+        album = Album(
+            path="",
+            tracks=[
                 Track(filename="1.flac"),
                 Track(filename="2.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "1"}),
             ],
