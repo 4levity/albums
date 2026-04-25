@@ -474,32 +474,29 @@ genre on the others.
 
 <!-- pyml enable line-length -->
 
-### publisher-tag
+### publisher-tag, album-sort, album-artist-sort, barcode-tag, compilation-tag
 
-If the **organization** (Vorbis Comment) or **publisher** (common name) tag is
-not set consistently on all tracks in an album, some players will treat this as
-distinct albums.
+These checks each check a different tag corresponding to the name of the check,
+but (for now) they share a purpose: if one of these tags is set inconsistently
+on tracks in an album, some players treat this as distinct albums. So each of
+these tags should either be set to the same value, or not be set at all.
 
-This check applies a user-defined policy for organization/publisher tags. The
+These checks apply a user-defined policy for the corresponding tags. The
 presence policy options are:
 
-- **"consistent"**: either all tracks have organization/publisher, or none do
-- **"always"**: all tracks should have organization/publisher
-- **"never"**: organization/publisher should be removed
+- **"consistent"**: either all tracks have the tag, or none do
+- **"always"**: all tracks should have the tag
+- **"never"**: the tag should be removed
 
-If any track has an organization value, then all values must be the same.
+If any track has a value, then all values must be the same.
 
-**Automatic fix** If the policy is "never", always remove the organization. If
-the policy is "always", and a consistent organization is set on some tracks, set
-the same organization on the others.
+**Automatic fix** If the policy is "never", always remove the tag. If the policy
+is "always", and a consistent value is set but only on some tracks, set the same
+value on the tracks which have no value.
 
-<!-- pyml disable line-length -->
-
-| Option = default            | Description                                            |
-| --------------------------- | ------------------------------------------------------ |
-| `presence` = `"consistent"` | Set the tag presence policy for organization/publisher |
-
-<!-- pyml enable line-length -->
+| Option = default            | Description                 |
+| --------------------------- | --------------------------- |
+| `presence` = `"consistent"` | Set the tag presence policy |
 
 ### musicbrainz-tags
 
@@ -512,10 +509,10 @@ the same organization on the others.
 
 Whether or not you use MusicBrainz, inconsistencies in MusicBrainz tags within
 an album can cause problems for some players. When the `MusicBrainz Album Id` or
-`MusicBrainz Album Artist Id` is not the same on all tracks in an album (or not
-set on every track), some music players interpret this as two separate albums
-even if other tags are all the same. This check reports when those tags are not
-set consistently across the album.
+`MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
+same on all tracks in an album (or not set on every track), some music players
+interpret this as two separate albums even if other tags are all the same. This
+check reports when those tags are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
 MusicBrainz, you might want to remove all MusicBrainz tags to avoid conflicts
