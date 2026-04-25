@@ -13,7 +13,6 @@ class Check:
     # subclass must override to define static check_name and default_config
     name: str
     default_config: dict[str, Any]
-    tagger: AlbumTaggerProvider
 
     # subclass may override to define static dependencies on other checks passing first
     must_pass_checks: set[str] = set()
@@ -21,6 +20,7 @@ class Check:
     # subclass may use these instance values
     ctx: Context
     session: Session
+    tagger: AlbumTaggerProvider
 
     # subclass must override check()
     def check(self, album: Album) -> CheckResult | None:

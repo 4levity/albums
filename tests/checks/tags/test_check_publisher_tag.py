@@ -1,7 +1,8 @@
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.tags.check_publisher_tag import AlbumTagger, CheckPublisherTag
+from albums.checks.base_check_tag_per_album import AlbumTagger
+from albums.checks.tags.check_publisher_tag import CheckPublisherTag
 from albums.tagger.types import BasicTag, TaggerFile
 from albums.types import Album, Track
 
@@ -41,9 +42,9 @@ class TestCheckPublisherTag:
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is not None
-        assert "multiple values for publisher (organization): ABC, XYZ" in result.message
+        assert "multiple values for publisher/organization: ABC, XYZ" in result.message
         assert result.fixer is not None
-        assert result.fixer.options == ["ABC", "XYZ", ">> Remove organization (publisher) from all tracks"]
+        assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
         assert result.fixer.option_automatic_index is None
 
         tagger = TaggerFile()
@@ -61,9 +62,9 @@ class TestCheckPublisherTag:
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is not None
-        assert "multiple values for publisher (organization): ABC, XYZ" in result.message
+        assert "multiple values for publisher/organization: ABC, XYZ" in result.message
         assert result.fixer is not None
-        assert result.fixer.options == ["ABC", "XYZ", ">> Remove organization (publisher) from all tracks"]
+        assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
         assert result.fixer.option_automatic_index is None
 
         tagger = TaggerFile()
