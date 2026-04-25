@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.19 - check more per-album consistent tags, add MusicBrain tags, bug fixes
+
 v0.9.18 - check publisher/organization tag presence, legacy album artist tag
 
 v0.9.17 - MusicBrainz tag policy, menu changes for check UX, bug fixes
