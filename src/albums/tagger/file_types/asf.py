@@ -17,21 +17,36 @@ logger: Final = logging.getLogger(__name__)
 
 BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "WM/AlbumTitle"),
+    (BasicTag.ALBUMSORT, "WM/AlbumSortOrder"),
     (BasicTag.ALBUMARTIST, "WM/AlbumArtist"),
+    (BasicTag.ALBUMARTISTSORT, "WM/AlbumArtistSortOrder"),
     (BasicTag.ARTIST, "Author"),
+    (BasicTag.ARTISTSORT, "WM/ArtistSortOrder"),
+    (BasicTag.BARCODE, "WM/Barcode"),
+    (BasicTag.COMPILATION, "WM/IsCompilation"),
     (BasicTag.TITLE, "Title"),
     (BasicTag.GENRE, "WM/Genre"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "MusicBrainz/Album Release Country"),
+    (BasicTag.MUSICBRAINZ_ARRANGERID, "MusicBrainz/Arranger Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "MusicBrainz/Artist Id"),
     (BasicTag.MUSICBRAINZ_COMPOSERID, "MusicBrainz/Composer Id"),
+    (BasicTag.MUSICBRAINZ_CONDUCTORID, "MusicBrainz/Conductor Id"),
+    (BasicTag.MUSICBRAINZ_DIRECTORID, "MusicBrainz/Director Id"),
     (BasicTag.MUSICBRAINZ_DISCID, "MusicBrainz/Disc Id"),
+    (BasicTag.MUSICBRAINZ_LYRICISTID, "MusicBrainz/Lyricist Id"),
+    (BasicTag.MUSICBRAINZ_MIXERID, "MusicBrainz/Mixer Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "MusicBrainz/Original Album Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "MusicBrainz/Original Artist Id"),
-    (BasicTag.MUSICBRAINZ_TRACKID, "MusicBrainz/Track Id"),
-    (BasicTag.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALRELEASEID, "MusicBrainz/Original Release Id"),
+    (BasicTag.MUSICBRAINZ_PRODUCERID, "MusicBrainz/Producer Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEARTISTID, "MusicBrainz/Release Artist Id"),
     (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "MusicBrainz/Release Group Id"),
     (BasicTag.MUSICBRAINZ_RELEASETRACKID, "MusicBrainz/Release Track Id"),
+    (BasicTag.MUSICBRAINZ_REMIXERID, "MusicBrainz/Remixer Id"),
+    (BasicTag.MUSICBRAINZ_TRACKID, "MusicBrainz/Track Id"),
+    (BasicTag.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
     (BasicTag.ORGANIZATION, "Publisher"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
@@ -162,6 +177,11 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
+                case BasicTag.COMPILATION:
+                    if value_list and value_list[0]:
+                        tags[TAG_TO_ASF_PROPERTY[tag]] = ["1"]
+                    elif TAG_TO_ASF_PROPERTY[tag] in tags:
+                        del tags[TAG_TO_ASF_PROPERTY[tag]]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(value_list[0] if value_list[0] else None, disc_total)

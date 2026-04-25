@@ -16,30 +16,45 @@ logger: Final = logging.getLogger(__name__)
 
 M4A_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "©alb"),
+    (BasicTag.ALBUMSORT, "soal"),
     (BasicTag.ALBUMARTIST, "aART"),
+    (BasicTag.ALBUMARTISTSORT, "soaa"),
     (BasicTag.ARTIST, "©ART"),
+    (BasicTag.ARTISTSORT, "soar"),
     (BasicTag.TITLE, "©nam"),
     (BasicTag.GENRE, "©gen"),
     (BasicTag.ORGANIZATION, "©pub"),
 )
 M4A_BYTES_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
+    (BasicTag.BARCODE, "----:com.apple.iTunes:BARCODE"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "----:com.apple.iTunes:MusicBrainz Album Artist Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "----:com.apple.iTunes:MusicBrainz Album Release Country"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "----:com.apple.iTunes:MusicBrainz Album Id"),
+    (BasicTag.MUSICBRAINZ_ARRANGERID, "----:com.apple.iTunes:MusicBrainz Arranger Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "----:com.apple.iTunes:MusicBrainz Artist Id"),
     (BasicTag.MUSICBRAINZ_COMPOSERID, "----:com.apple.iTunes:MusicBrainz Composer Id"),
+    (BasicTag.MUSICBRAINZ_CONDUCTORID, "----:com.apple.iTunes:MusicBrainz Conductor Id"),
+    (BasicTag.MUSICBRAINZ_DIRECTORID, "----:com.apple.iTunes:MusicBrainz Director Id"),
     (BasicTag.MUSICBRAINZ_DISCID, "----:com.apple.iTunes:MusicBrainz Disc Id"),
+    (BasicTag.MUSICBRAINZ_LYRICISTID, "----:com.apple.iTunes:MusicBrainz Lyricist Id"),
+    (BasicTag.MUSICBRAINZ_MIXERID, "----:com.apple.iTunes:MusicBrainz Mixer Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "----:com.apple.iTunes:MusicBrainz Original Album Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "----:com.apple.iTunes:MusicBrainz Original Artist Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALRELEASEID, "----:com.apple.iTunes:MusicBrainz Original Release Id"),
+    (BasicTag.MUSICBRAINZ_PRODUCERID, "----:com.apple.iTunes:MusicBrainz Producer Id"),
     (BasicTag.MUSICBRAINZ_TRACKID, "----:com.apple.iTunes:MusicBrainz Track Id"),
     (BasicTag.MUSICBRAINZ_TRMID, "----:com.apple.iTunes:MusicBrainz TRM Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEARTISTID, " ----:com.apple.iTunes:MusicBrainz Release Artist Id"),
     (BasicTag.MUSICBRAINZ_RELEASEGROUPID, " ----:com.apple.iTunes:MusicBrainz Release Group Id"),
     (BasicTag.MUSICBRAINZ_RELEASETRACKID, "----:com.apple.iTunes:MusicBrainz Release Track Id"),
+    (BasicTag.MUSICBRAINZ_REMIXERID, "----:com.apple.iTunes:MusicBrainz Remixer Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "----:com.apple.iTunes:MusicBrainz Work Id"),
 )
-# trkn and disk too but they are not text or 1:1
+# cpil, disk and trkn too but they are not text or text-as-bytes
 
 TAG_TO_M4A_TEXT_FRAME = dict(M4A_TEXT_FRAMES)
 TAG_TO_M4A_BYTES_FRAME = dict(M4A_BYTES_FRAMES)
+TAG_TO_M4A_FRAME = TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME | {BasicTag.COMPILATION: "cpil"}  # trkn and disk are not 1:1
 
 
 class Mp4Tagger(AbstractMutagenTagger[MP4]):
@@ -112,6 +127,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             tags = self._ensure_tags()
             basic_tags.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
             basic_tags.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
+            if "cpil" in tags and tags["cpil"]:
+                basic_tags.append((BasicTag.COMPILATION, ("1",)))
 
             (track_number, track_total) = self._get_trkn()
             if track_number:
@@ -150,10 +167,15 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                     (track_number, _) = self._get_trkn()
                     self._set_trkn(track_number, None)
                 case _:
-                    del tags[(TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME)[tag]]
+                    del tags[TAG_TO_M4A_FRAME[tag]]
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
+                case BasicTag.COMPILATION:
+                    if value_list and value_list[0]:
+                        tags["cpil"] = ["1"]
+                    elif "cpil" in tags:
+                        del tags["cpil"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(int(value_list[0]) if value_list[0] else None, disc_total)

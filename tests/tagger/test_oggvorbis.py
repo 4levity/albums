@@ -10,6 +10,8 @@ from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 
+UUID0 = "00000000-0000-0000-0000-000000000000"
+UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.ogg",
     tag={
@@ -23,6 +25,9 @@ track = Track(
         BasicTag.DISCTOTAL: "4",
         BasicTag.GENRE: "Rock",
         BasicTag.ORGANIZATION: "ABC",
+        BasicTag.BARCODE: "0123",
+        BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
+        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
@@ -62,6 +67,9 @@ class TestOggVorbis:
         assert tags[BasicTag.DISCTOTAL] == tuple(track_tags[BasicTag.DISCTOTAL])
         assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
         assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
+        assert tags[BasicTag.BARCODE] == tuple(track_tags[BasicTag.BARCODE])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
 
     def test_update_ogg_vorbis_tags(self):
         TestOggVorbis.tagger.set_basic_tags(
@@ -77,6 +85,9 @@ class TestOggVorbis:
                 (BasicTag.DISCTOTAL, "8"),
                 (BasicTag.GENRE, "Country"),
                 (BasicTag.ORGANIZATION, "Q"),
+                (BasicTag.BARCODE, "0000"),
+                (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
+                (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
             ],
         )
         with TestOggVorbis.tagger.open(track.filename) as file:
@@ -92,6 +103,28 @@ class TestOggVorbis:
         assert tags[BasicTag.DISCTOTAL] == ("8",)
         assert tags[BasicTag.GENRE] == ("Country",)
         assert tags[BasicTag.ORGANIZATION] == ("Q",)
+        assert tags[BasicTag.BARCODE] == ("0000",)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+
+    def test_update_ogg_vorbis_compilation(self):
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+            file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)
+
+            file.set_tag(BasicTag.COMPILATION, None)  # normal disable
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+
+            file.set_tag(BasicTag.COMPILATION, "anything")
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_remove_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:

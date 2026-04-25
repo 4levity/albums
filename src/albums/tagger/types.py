@@ -36,8 +36,13 @@ class BasicTag(StrEnum):
     # BasicTag names must be the same as the corresponding Vorbis Comment names
 
     ALBUM = auto()
+    ALBUMSORT = auto()
     ALBUMARTIST = auto()
+    ALBUMARTISTSORT = auto()
     ARTIST = auto()
+    ARTISTSORT = auto()
+    BARCODE = auto()
+    COMPILATION = auto()
     DISCNUMBER = auto()
     DISCTOTAL = auto()
     GENRE = auto()
@@ -53,14 +58,32 @@ class BasicTag(StrEnum):
     # TXXX:MusicBrainz Album Id, ----:com.apple.iTunes:MusicBrainz Album Id, MusicBrainz/Album Id
     MUSICBRAINZ_ALBUMID = auto()
 
+    # TXXX:MusicBrainz Album Release Country, ----:com.apple.iTunes:MusicBrainz Album Release Country, MusicBrainz/Album Release Country
+    MUSICBRAINZ_ALBUMRELEASECOUNTRY = auto()
+
+    # TXXX:MusicBrainz Arranger Id, ----:com.apple.iTunes:MusicBrainz Arranger Id, MusicBrainz/Arranger Id
+    MUSICBRAINZ_ARRANGERID = auto()
+
     # TXXX:MusicBrainz Artist Id, ----:com.apple.iTunes:MusicBrainz Artist Id, MusicBrainz/Artist Id
     MUSICBRAINZ_ARTISTID = auto()
 
     # TXXX:MusicBrainz Composer Id, ----:com.apple.iTunes:MusicBrainz Composer Id, MusicBrainz/Composer Id
     MUSICBRAINZ_COMPOSERID = auto()
 
+    # TXXX:MusicBrainz Conductor Id, ----:com.apple.iTunes:MusicBrainz Conductor Id, MusicBrainz/Conductor Id
+    MUSICBRAINZ_CONDUCTORID = auto()
+
+    # TXXX:MusicBrainz Director Id, ----:com.apple.iTunes:MusicBrainz Director Id, MusicBrainz/Director Id
+    MUSICBRAINZ_DIRECTORID = auto()
+
     # TXXX:MusicBrainz Disc Id, ----:com.apple.iTunes:MusicBrainz Disc Id, MusicBrainz/Disc Id
     MUSICBRAINZ_DISCID = auto()
+
+    # TXXX:MusicBrainz Lyricist Id, ----:com.apple.iTunes:MusicBrainz Lyricist Id, MusicBrainz/Lyricist Id
+    MUSICBRAINZ_LYRICISTID = auto()
+
+    # TXXX:MusicBrainz Mixer Id, ----:com.apple.iTunes:MusicBrainz Mixer Id, MusicBrainz/Mixer Id
+    MUSICBRAINZ_MIXERID = auto()
 
     # TXXX:MusicBrainz Original Album Id, ----:com.apple.iTunes:MusicBrainz Original Album Id, MusicBrainz/Original Album Id
     MUSICBRAINZ_ORIGINALALBUMID = auto()
@@ -68,17 +91,29 @@ class BasicTag(StrEnum):
     # TXXX:MusicBrainz Original Artist Id, ----:com.apple.iTunes:MusicBrainz Original Artist Id, MusicBrainz/Original Artist Id
     MUSICBRAINZ_ORIGINALARTISTID = auto()
 
+    # TXXX:MusicBrainz Original Release Id, ----:com.apple.iTunes:MusicBrainz Original Release Id, MusicBrainz/Original Release Id
+    MUSICBRAINZ_ORIGINALRELEASEID = auto()
+
+    # TXXX:MusicBrainz Producer Id, ----:com.apple.iTunes:MusicBrainz Producer Id, MusicBrainz/Producer Id
+    MUSICBRAINZ_PRODUCERID = auto()
+
     # (aka musicbrainz_recordingid) UFID:http://musicbrainz.org, ----:com.apple.iTunes:MusicBrainz Track Id, MusicBrainz/Track Id
     MUSICBRAINZ_TRACKID = auto()
 
     # (deprecated) TXXX:MusicBrainz TRM Id, ----:com.apple.iTunes:MusicBrainz TRM Id, MusicBrainz/TRM Id
     MUSICBRAINZ_TRMID = auto()
 
+    # TXXX:MusicBrainz Release Artist Id, ----:com.apple.iTunes:MusicBrainz Release Artist Id, MusicBrainz/Release Artist Id
+    MUSICBRAINZ_RELEASEARTISTID = auto()
+
     # TXXX:MusicBrainz Release Group Id, ----:com.apple.iTunes:MusicBrainz Release Group Id, MusicBrainz/Release Group Id
     MUSICBRAINZ_RELEASEGROUPID = auto()
 
     # (aka musicbrainz_trackid) TXXX:MusicBrainz Release Track Id, ----:com.apple.iTunes:MusicBrainz Release Track Id, MusicBrainz/Release Track Id
     MUSICBRAINZ_RELEASETRACKID = auto()
+
+    # TXXX:MusicBrainz Remixer Id, ----:com.apple.iTunes:MusicBrainz Remixer Id, MusicBrainz/Remixer Id
+    MUSICBRAINZ_REMIXERID = auto()
 
     # TXXX:MusicBrainz Work Id, ----:com.apple.iTunes:MusicBrainz Work Id, MusicBrainz/Work Id
     MUSICBRAINZ_WORKID = auto()

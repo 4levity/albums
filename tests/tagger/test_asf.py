@@ -26,6 +26,8 @@ track = Track(
         BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
         BasicTag.MUSICBRAINZ_TRACKID: UUID1,
         BasicTag.ORGANIZATION: "ABC",
+        BasicTag.BARCODE: "0123",
+        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
     },
 )
 album = Album(path="baz" + os.sep, tracks=[track])
@@ -51,6 +53,8 @@ class TestAsf:
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
         assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
+        assert tags[BasicTag.BARCODE] == tuple(track_tags[BasicTag.BARCODE])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
 
     def test_update_asf_tags(self):
         TestAsf.tagger.set_basic_tags(
@@ -64,6 +68,8 @@ class TestAsf:
                 (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
                 (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
                 (BasicTag.ORGANIZATION, "Q"),
+                (BasicTag.BARCODE, "0000"),
+                (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
             ],
         )
         with TestAsf.tagger.open(track.filename) as file:
@@ -77,6 +83,27 @@ class TestAsf:
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
         assert tags[BasicTag.ORGANIZATION] == ("Q",)
+        assert tags[BasicTag.BARCODE] == ("0000",)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+
+    def test_update_asf_compilation(self):
+        with TestAsf.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+            file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
+        with TestAsf.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)
+
+            file.set_tag(BasicTag.COMPILATION, None)  # normal disable
+        with TestAsf.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+
+            file.set_tag(BasicTag.COMPILATION, "anything")
+        with TestAsf.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:

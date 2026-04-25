@@ -27,6 +27,8 @@ track = Track(
         BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
         BasicTag.MUSICBRAINZ_TRACKID: UUID1,
         BasicTag.ORGANIZATION: "ABC",
+        BasicTag.BARCODE: "0123",
+        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
@@ -67,6 +69,8 @@ class TestMp3:
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicTag.MUSICBRAINZ_TRACKID])
         assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
+        assert tags[BasicTag.BARCODE] == tuple(track_tags[BasicTag.BARCODE])
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
 
     def test_update_id3_tags(self):
         TestMp3.tagger.set_basic_tags(
@@ -80,6 +84,8 @@ class TestMp3:
                 (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
                 (BasicTag.MUSICBRAINZ_TRACKID, UUID0),
                 (BasicTag.ORGANIZATION, "Q"),
+                (BasicTag.BARCODE, "0000"),
+                (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
             ],
         )
         with TestMp3.tagger.open(track.filename) as file:
@@ -93,6 +99,27 @@ class TestMp3:
         assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
         assert tags[BasicTag.MUSICBRAINZ_TRACKID] == (UUID0,)
         assert tags[BasicTag.ORGANIZATION] == ("Q",)
+        assert tags[BasicTag.BARCODE] == ("0000",)
+        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+
+    def test_update_id3_compilation(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+            file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
+        with TestMp3.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)
+
+            file.set_tag(BasicTag.COMPILATION, None)  # normal disable
+        with TestMp3.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert BasicTag.COMPILATION not in tags
+
+            file.set_tag(BasicTag.COMPILATION, "anything")
+        with TestMp3.tagger.open(track.filename) as file:
+            tags = dict(file.scan().tags)
+            assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_write_id3_tracktotal(self):
         with TestMp3.tagger.open(track.filename) as file:

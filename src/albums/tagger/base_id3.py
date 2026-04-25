@@ -5,7 +5,7 @@ from typing import Callable, Final, Generator, List, Tuple, override
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TCON, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TXXX, UFID
+from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSOA, TSOP, TXXX, UFID
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
@@ -18,20 +18,35 @@ logger: Final = logging.getLogger(__name__)
 
 BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ALBUM, "TALB"),
+    (BasicTag.ALBUMSORT, "TSOA"),
     (BasicTag.ALBUMARTIST, "TPE2"),
+    (BasicTag.ALBUMARTISTSORT, "TSO2"),
     (BasicTag.ARTIST, "TPE1"),
+    (BasicTag.ARTISTSORT, "TSOP"),
+    (BasicTag.BARCODE, "TXXX:BARCODE"),
+    (BasicTag.COMPILATION, "TCMP"),
     (BasicTag.TITLE, "TIT2"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
+    (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
+    (BasicTag.MUSICBRAINZ_ARRANGERID, "TXXX:MusicBrainz Arranger Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "TXXX:MusicBrainz Artist Id"),
     (BasicTag.MUSICBRAINZ_COMPOSERID, "TXXX:MusicBrainz Composer Id"),
+    (BasicTag.MUSICBRAINZ_CONDUCTORID, "TXXX:MusicBrainz Conductor Id"),
+    (BasicTag.MUSICBRAINZ_DIRECTORID, "TXXX:MusicBrainz Director Id"),
     (BasicTag.MUSICBRAINZ_DISCID, "TXXX:MusicBrainz Disc Id"),
+    (BasicTag.MUSICBRAINZ_LYRICISTID, "TXXX:MusicBrainz Lyricist Id"),
+    (BasicTag.MUSICBRAINZ_MIXERID, "TXXX:MusicBrainz Mixer Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "TXXX:MusicBrainz Original Album Id"),
     (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "TXXX:MusicBrainz Original Artist Id"),
+    (BasicTag.MUSICBRAINZ_ORIGINALRELEASEID, "TXXX:MusicBrainz Original Release Id"),
+    (BasicTag.MUSICBRAINZ_PRODUCERID, "TXXX:MusicBrainz Producer Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEARTISTID, "TXXX:MusicBrainz Release Artist Id"),
+    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "TXXX:MusicBrainz Release Group Id"),
+    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "TXXX:MusicBrainz Release Track Id"),
+    (BasicTag.MUSICBRAINZ_REMIXERID, "TXXX:MusicBrainz Remixer Id"),
     # also UFID:http://musicbrainz.org is track id / musicbrainz_recordingid
     (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
-    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "TXXX:MusicBrainz Original Artist Id"),
-    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "TXXX:MusicBrainz Release Track Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     (BasicTag.ORGANIZATION, "TPUB"),
     # TCON too but we use .genres instead of .text
@@ -156,10 +171,21 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
             match tag:
                 case BasicTag.ALBUM:
                     tags["TALB"] = TALB(encoding=Encoding.UTF8, text=value_list)
+                case BasicTag.ALBUMSORT:
+                    tags["TSOA"] = TSOA(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.ALBUMARTIST:
                     tags["TPE2"] = TPE2(encoding=Encoding.UTF8, text=value_list)
+                case BasicTag.ALBUMARTISTSORT:
+                    tags["TSO2"] = TSO2(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.ARTIST:
                     tags["TPE1"] = TPE1(encoding=Encoding.UTF8, text=value_list)
+                case BasicTag.ARTISTSORT:
+                    tags["TSOP"] = TSOP(encoding=Encoding.UTF8, text=value_list)
+                case BasicTag.COMPILATION:
+                    if value_list and value_list[0]:
+                        tags["TCMP"] = TCMP(encoding=Encoding.UTF8, text=["1"])
+                    elif "TCMP" in tags:
+                        del tags["TCMP"]
                 case BasicTag.DISCNUMBER:
                     (_, disc_total) = self._get_tpos()
                     self._set_tpos(value_list[0] if value_list[0] else None, disc_total)

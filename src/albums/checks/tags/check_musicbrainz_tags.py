@@ -14,15 +14,25 @@ ALL_MBID_TAGS: Final = frozenset(
     (
         BasicTag.MUSICBRAINZ_ALBUMARTISTID,
         BasicTag.MUSICBRAINZ_ALBUMID,
+        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY,
+        BasicTag.MUSICBRAINZ_ARRANGERID,
         BasicTag.MUSICBRAINZ_ARTISTID,
         BasicTag.MUSICBRAINZ_COMPOSERID,
+        BasicTag.MUSICBRAINZ_CONDUCTORID,
+        BasicTag.MUSICBRAINZ_DIRECTORID,
         BasicTag.MUSICBRAINZ_DISCID,
+        BasicTag.MUSICBRAINZ_LYRICISTID,
+        BasicTag.MUSICBRAINZ_MIXERID,
         BasicTag.MUSICBRAINZ_ORIGINALALBUMID,
         BasicTag.MUSICBRAINZ_ORIGINALARTISTID,
+        BasicTag.MUSICBRAINZ_ORIGINALRELEASEID,
+        BasicTag.MUSICBRAINZ_PRODUCERID,
         BasicTag.MUSICBRAINZ_TRACKID,
         BasicTag.MUSICBRAINZ_TRMID,
+        BasicTag.MUSICBRAINZ_RELEASEARTISTID,
         BasicTag.MUSICBRAINZ_RELEASEGROUPID,
         BasicTag.MUSICBRAINZ_RELEASETRACKID,
+        BasicTag.MUSICBRAINZ_REMIXERID,
         BasicTag.MUSICBRAINZ_WORKID,
     )
 )
@@ -62,8 +72,10 @@ class CheckMusicBrainzTags(Check):
                 Fixer(lambda _: self._remove_tags(album, DEPRECATED_MBID_TAGS), options, False, option_automatic_index),
             )
 
-        return self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMID) or (
-            self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMARTISTID)
+        return (
+            self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMID)
+            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMARTISTID)
+            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
         )
 
     def _check_consistent_tag(self, album: Album, check_tag: BasicTag) -> CheckResult | None:
