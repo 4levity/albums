@@ -28,6 +28,7 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
     (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
+    (BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE, "TXXX:MusicBrainz Album Release Type"),
     (BasicTag.MUSICBRAINZ_ARRANGERID, "TXXX:MusicBrainz Arranger Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "TXXX:MusicBrainz Artist Id"),
     (BasicTag.MUSICBRAINZ_COMPOSERID, "TXXX:MusicBrainz Composer Id"),
@@ -48,7 +49,10 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     (BasicTag.ORGANIZATION, "TPUB"),
-    (BasicTag.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),
+    # nonstandard: this tagger will read and remove it but will not set it (OTOH, maybe should be treated same as e.g. OLD_LABEL)
+    (BasicTag.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),  # nonstandard
+    (BasicTag.RELEASETYPE, "TXXX:RELEASETYPE"),  # nonstandard
+    #
     (BasicTag.TITLE, "TIT2"),
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
@@ -197,7 +201,14 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                case (
+                    BasicTag.OLD_ALBUM_ARTIST
+                    | BasicTag.OLD_LABEL
+                    | BasicTag.OLD_PUBLISHER
+                    | BasicTag.OLD_TOTAL_DISCS
+                    | BasicTag.RELEASECOUNTRY
+                    | BasicTag.RELEASETYPE
+                ):
                     raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
                 case BasicTag.ORGANIZATION:
                     tags["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)

@@ -46,12 +46,15 @@ class BasicTag(StrEnum):
     DISCNUMBER = auto()
     DISCTOTAL = auto()
     GENRE = auto()
-    OLD_ALBUM_ARTIST = "album artist"  # correct is "albumartist"
-    OLD_LABEL = "label"  # correct is "organization"
-    OLD_PUBLISHER = "publisher"  # correct is "organization"
-    OLD_TOTAL_DISCS = "totaldiscs"  # correct is "disctotal"
+
+    OLD_ALBUM_ARTIST = "album artist"  # vorbis comment only; correct is "albumartist"
+    OLD_LABEL = "label"  # vorbis comment only; correct is "organization"
+    OLD_PUBLISHER = "publisher"  # vorbis comment only; correct is "organization"
+    OLD_TOTAL_DISCS = "totaldiscs"  # vorbis comment only; correct is "disctotal"
+
     ORGANIZATION = auto()  # Publisher, record label
-    RELEASECOUNTRY = auto()
+    RELEASECOUNTRY = auto()  # vorbis comment only (MUSICBRAINZ_ALBUMRELEASECOUNTRY is probably preferred)
+    RELEASETYPE = auto()  # vorbis comment only (MUSICBRAINZ_ALBUMRELEASETYPE is probably preferred)
     TITLE = auto()
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()
@@ -64,6 +67,9 @@ class BasicTag(StrEnum):
 
     # TXXX:MusicBrainz Album Release Country, ----:com.apple.iTunes:MusicBrainz Album Release Country, MusicBrainz/Album Release Country
     MUSICBRAINZ_ALBUMRELEASECOUNTRY = auto()
+
+    # TXXX:MusicBrainz Album Release Type, ----:com.apple.iTunes:MusicBrainz Album Release Type, MusicBrainz/Album Release Type
+    MUSICBRAINZ_ALBUMRELEASETYPE = auto()
 
     # TXXX:MusicBrainz Arranger Id, ----:com.apple.iTunes:MusicBrainz Arranger Id, MusicBrainz/Arranger Id
     MUSICBRAINZ_ARRANGERID = auto()

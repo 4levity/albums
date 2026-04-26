@@ -29,6 +29,7 @@ M4A_BYTES_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.BARCODE, "----:com.apple.iTunes:BARCODE"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "----:com.apple.iTunes:MusicBrainz Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "----:com.apple.iTunes:MusicBrainz Album Release Country"),
+    (BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE, "----:com.apple.iTunes:MusicBrainz Album Release Type"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "----:com.apple.iTunes:MusicBrainz Album Id"),
     (BasicTag.MUSICBRAINZ_ARRANGERID, "----:com.apple.iTunes:MusicBrainz Arranger Id"),
     (BasicTag.MUSICBRAINZ_ARTISTID, "----:com.apple.iTunes:MusicBrainz Artist Id"),
@@ -54,7 +55,8 @@ M4A_BYTES_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
 
 TAG_TO_M4A_TEXT_FRAME = dict(M4A_TEXT_FRAMES)
 TAG_TO_M4A_BYTES_FRAME = dict(M4A_BYTES_FRAMES)
-TAG_TO_M4A_FRAME = TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME | {BasicTag.COMPILATION: "cpil"}  # trkn and disk are not 1:1
+_TAG_CPIL = dict(((BasicTag.COMPILATION, "cpil"),))  # so that type of TAG_TO_M4A_FRAME will be dict[Literal[...] ...]
+TAG_TO_M4A_FRAME = TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME | _TAG_CPIL  # trkn and disk are not 1:1
 
 
 class Mp4Tagger(AbstractMutagenTagger[MP4]):
@@ -158,7 +160,14 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
+                case (
+                    BasicTag.OLD_ALBUM_ARTIST
+                    | BasicTag.OLD_LABEL
+                    | BasicTag.OLD_PUBLISHER
+                    | BasicTag.OLD_TOTAL_DISCS
+                    | BasicTag.RELEASECOUNTRY
+                    | BasicTag.RELEASETYPE
+                ):
                     logger.warning(f"don't know how to remove {tag.name} from MP4 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
@@ -182,7 +191,14 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
+                case (
+                    BasicTag.OLD_ALBUM_ARTIST
+                    | BasicTag.OLD_LABEL
+                    | BasicTag.OLD_PUBLISHER
+                    | BasicTag.OLD_TOTAL_DISCS
+                    | BasicTag.RELEASECOUNTRY
+                    | BasicTag.RELEASETYPE
+                ):
                     raise ValueError(f"cannot set {tag.name} in MP4 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()

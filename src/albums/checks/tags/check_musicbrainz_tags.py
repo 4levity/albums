@@ -76,6 +76,7 @@ class CheckMusicBrainzTags(Check):
             self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMID)
             or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMARTISTID)
             or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
+            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE)
         )
 
     def _check_consistent_tag(self, album: Album, check_tag: BasicTag) -> CheckResult | None:
