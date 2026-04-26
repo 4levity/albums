@@ -16,6 +16,9 @@ class BaseCheckTagPerAlbum(Check):
     name: str
     tag: BasicTag
 
+    # subclass may override to force presence to NEVER when album is a mix of vorbis-comment and non-vorbis-comment tracks
+    vorbis_only: bool = False
+
     # subclass may define additional config items, as well as description to use instead of tag.value
     default_config = {"enabled": True, "presence": "consistent"}
     tag_description: str = ""
@@ -27,11 +30,19 @@ class BaseCheckTagPerAlbum(Check):
         self.option_remove_tag = f">> Remove {self.tag_description} from all tracks"
 
     def check(self, album: Album):
-        return self.do_check(album, self.presence)
-
-    def do_check(self, album: Album, presence: Policy):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
+
+        if (
+            self.vorbis_only
+            and self.presence != Policy.NEVER
+            and not all(AlbumTagger.supports(track.filename, Cap.VORBIS_COMMENT) for track in album.tracks)
+        ):
+            # this tag is only supported for vorbis comments, so if any track is not vorbis comment, the only reasonable policy is NEVER
+            # (only makes a difference if the album is a mix of vorbis and non-vorbis tracks)
+            presence = Policy.NEVER
+        else:
+            presence = self.presence
 
         single_value_for_album = presence != Policy.NEVER
         presence_issue = check_policy(self.ctx, self.tagger.get(album.path), album, presence, self.tag, None, single_value_for_album)

@@ -553,7 +553,7 @@ splitting albums.
 
 **Automatic fix**: If `label` or `publisher` are present, remove them.
 
-### album-sort, album-artist-sort, barcode-tag, compilation-tag
+### album-sort-tag, album-artist-sort-tag, barcode-tag, compilation-tag, release-type-tag
 
 See "Other Tags: Per Album" above for details on these per-album tag checks.
 

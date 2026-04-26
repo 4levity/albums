@@ -35,6 +35,7 @@ from .tags.check_genre_present import CheckGenrePresent
 from .tags.check_musicbrainz_tags import CheckMusicBrainzTags
 from .tags.check_publisher_tag import CheckPublisherTag
 from .tags.check_releasecountry_tag import CheckReleaseCountryTag
+from .tags.check_releasetype_tag import CheckReleaseTypeTag
 from .tags.check_single_value_tags import CheckSingleValueTags
 from .tags.check_track_title import CheckTrackTitle
 from .tags.check_unreadable_track import CheckUnreadableTrack
@@ -68,6 +69,7 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckAlbumArtistSort,
     CheckBarcodeTag,
     CheckCompilationTag,
+    CheckReleaseTypeTag,
     CheckReleaseCountryTag,
     # picture checks
     CheckInvalidImage,
