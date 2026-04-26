@@ -76,3 +76,26 @@ class TestCheckPublisherTag:
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
         assert mock_set_tag.call_args_list == [call(BasicTag.ORGANIZATION, "ABC")]
+
+    def test_publisher_legacy_tags(self, mocker):
+        tracks = [
+            Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "ABC", BasicTag.OLD_LABEL: "ABC"}),
+            Track(filename="2.flac", tag={BasicTag.ORGANIZATION: "ABC", BasicTag.OLD_PUBLISHER: "ABC"}),
+        ]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherTag(Context()).check(album)
+        assert result is not None
+        assert "legacy tags 'label' or 'publisher' are present" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == [">> Remove legacy label/publisher tags"]
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+
+        assert mock_tagger_open.call_args_list == [call(tracks[0].filename), call(tracks[1].filename)]
+        assert mock_set_tag.call_args_list == [call(BasicTag.OLD_LABEL, None), call(BasicTag.OLD_PUBLISHER, None)]

@@ -164,10 +164,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
-                case BasicTag.OLD_ALBUM_ARTIST:
-                    logger.warning(f"don't know how to remove 'legacy album artist' from ASF tag in {self._get_file().filename}")
-                case BasicTag.OLD_TOTAL_DISCS:
-                    logger.warning(f"don't know how to remove 'legacy totaldiscs' from ASF tag in {self._get_file().filename}")
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                    logger.warning(f"don't know how to remove {tag.name} from ASF tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(None, track_total)
@@ -190,10 +188,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
-                case BasicTag.OLD_ALBUM_ARTIST:
-                    raise ValueError(f"cannot set 'legacy album artist' in ID3 tag on {self._get_file().filename}")
-                case BasicTag.OLD_TOTAL_DISCS:
-                    raise ValueError(f"cannot set 'legacy totaldiscs' in ID3 tag on {self._get_file().filename}")
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                    raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)

@@ -478,12 +478,12 @@ genre on the others.
 
 <!-- pyml enable line-length -->
 
-### publisher-tag, album-sort, album-artist-sort, barcode-tag, compilation-tag
+## Other Tags: Per Album
 
-These checks each check a different tag corresponding to the name of the check,
-but (for now) they share a purpose: if one of these tags is set inconsistently
-on tracks in an album, some players treat this as distinct albums. So each of
-these tags should either be set to the same value, or not be set at all.
+The checks in this section each check a different tag corresponding to the name
+of the check, but they also share a purpose: if one of these tags is set
+inconsistently on tracks in an album, some players treat this as distinct
+albums. So each of these tags should be set to the same value, or not set.
 
 These checks apply a user-defined policy for the corresponding tags. The
 presence policy options are:
@@ -501,6 +501,21 @@ value on the tracks which have no value.
 | Option = default            | Description                 |
 | --------------------------- | --------------------------- |
 | `presence` = `"consistent"` | Set the tag presence policy |
+
+### publisher-tag
+
+See "Other Tags: Per Album" above for common behavior of this check.
+
+In addition, for Vorbis Comment tags (FLAC, etc) the label/publisher should be
+stored only as `organization`. If the legacy Vorbis Comment tags `label` or
+`publisher` are set, they should be removed to avoid confusion and players
+splitting albums.
+
+**Automatic fix**: If `label` or `publisher` are present, remove them.
+
+### album-sort, album-artist-sort, barcode-tag, compilation-tag
+
+See "Other Tags: Per Album" above for details on these per-album tag checks.
 
 ### musicbrainz-tags
 

@@ -47,6 +47,8 @@ class BasicTag(StrEnum):
     DISCTOTAL = auto()
     GENRE = auto()
     OLD_ALBUM_ARTIST = "album artist"  # correct is "albumartist"
+    OLD_LABEL = "label"  # correct is "organization"
+    OLD_PUBLISHER = "publisher"  # correct is "organization"
     OLD_TOTAL_DISCS = "totaldiscs"  # correct is "disctotal"
     ORGANIZATION = auto()  # Publisher, record label
     TITLE = auto()

@@ -156,10 +156,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     self._set_tpos(disc_number, None)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
-                case BasicTag.OLD_ALBUM_ARTIST:
-                    logger.warning(f"don't know how to remove 'legacy album artist' from ID3 tag in {self._get_file().filename}")
-                case BasicTag.OLD_TOTAL_DISCS:
-                    logger.warning(f"don't know how to remove 'legacy totaldiscs' from ID3 tag in {self._get_file().filename}")
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                    logger.warning(f"don't know how to remove {tag.name} from ID3 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trck()
                     self._set_trck(None, track_total)
@@ -198,10 +196,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
-                case BasicTag.OLD_ALBUM_ARTIST:
-                    raise ValueError(f"cannot set 'legacy album artist' in ID3 tag on {self._get_file().filename}")
-                case BasicTag.OLD_TOTAL_DISCS:
-                    raise ValueError(f"cannot set 'legacy totaldiscs' in ID3 tag on {self._get_file().filename}")
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                    raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
                 case BasicTag.ORGANIZATION:
                     tags["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TITLE:
