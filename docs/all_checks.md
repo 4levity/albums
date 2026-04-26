@@ -191,6 +191,7 @@ Otherwise, delete the tag.
 Reports on issues with disc number and disc total (`TPOS` in ID3). Optionally,
 removes redundant disc number tag for sets of one. See configuration to control
 whether multiple disc sets should be required to have all tracks in one folder.
+Mismatching disc total values are one reason players incorrectly split albums.
 
 Rules:
 
@@ -199,6 +200,7 @@ Rules:
 - If present, the disc total should be the number of distinct disc number values
   which should be the same as the highest disc number
 - All tracks with disc total should also have disc number
+- The legacy tag "totaldiscs" should be removed if it is present
 - The selected disc total presence policy should apply
     - **"consistent"**: either all tracks have disc total, or none do
     - **"always"**: all tracks should have disc total
@@ -207,6 +209,8 @@ Rules:
 !!!success "Dependency"
 
     Requires the `invalid-track-or-disc-number` check to pass first.
+
+**Automatic fix** if any track has "totaldiscs" tag, remove it.
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
 the tag. If the policy is "always", and a consistent total is set on some

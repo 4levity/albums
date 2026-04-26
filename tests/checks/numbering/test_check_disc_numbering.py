@@ -220,3 +220,29 @@ class TestCheckDiscNumbering:
             call(BasicTag.DISCNUMBER, None),
             call(BasicTag.DISCTOTAL, None),
         ]
+
+    def test_check_discnumbering_old_totaldiscs(self, mocker):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicTag.DISCNUMBER: "1", BasicTag.DISCTOTAL: "2", BasicTag.OLD_TOTAL_DISCS: "2"}),
+                Track(filename="2-01.flac", tag={BasicTag.DISCNUMBER: "2", BasicTag.DISCTOTAL: "2", BasicTag.OLD_TOTAL_DISCS: "2"}),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "legacy tag 'totaldiscs' is present" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Remove old totaldiscs tag"]
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+
+        assert mock_set_tag.call_args_list == [
+            call(BasicTag.OLD_TOTAL_DISCS, None),
+            call(BasicTag.OLD_TOTAL_DISCS, None),
+        ]

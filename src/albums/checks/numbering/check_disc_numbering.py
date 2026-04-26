@@ -8,7 +8,7 @@ from ...tagger.types import BasicTag
 from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import pluralize
 from ..base_check import Check
-from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
+from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, show_tag
 from ..tag_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ logger: Final = logging.getLogger(__name__)
 
 OPTION_REMOVE_DISC_TOTAL: Final = ">> Remove disc total tag"
 OPTION_SET_DISC_TOTAL: Final = ">> Set disc total"
+OPTION_REMOVE_OLD_TOTALDISCS: Final = ">> Remove old totaldiscs tag"
 
 
 class CheckDiscNumbering(Check):
@@ -33,6 +34,25 @@ class CheckDiscNumbering(Check):
     def check(self, album: Album) -> CheckResult | None:
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):
             return None  # not valid if track number is not supported or is stored as an integer
+
+        if any(track.has(BasicTag.OLD_TOTAL_DISCS) for track in album.tracks):
+            option_automatic_index = 0
+            return CheckResult(
+                "legacy tag 'totaldiscs' is present",
+                Fixer(
+                    lambda _: self._remove_old_total(album),
+                    [OPTION_REMOVE_OLD_TOTALDISCS],
+                    False,
+                    option_automatic_index,
+                    (
+                        ["track", "filename", "old totaldiscs"],
+                        [
+                            [describe_track_number(track), escape(track.filename), show_tag(track.get(BasicTag.OLD_TOTAL_DISCS, default=None))]
+                            for track in ordered_tracks(album)
+                        ],
+                    ),
+                ),
+            )
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
@@ -163,5 +183,15 @@ class CheckDiscNumbering(Check):
             with tagger.open(track.filename) as tags:
                 for remove_tag in remove_tags:
                     tags.set_tag(remove_tag, None)
+            changed = True
+        return FixResult.of(changed)
+
+    def _remove_old_total(self, album: Album):
+        changed = False
+        tagger = self.tagger.get(album.path)
+        for track in (track for track in album.tracks if track.has(BasicTag.OLD_TOTAL_DISCS)):
+            self.ctx.console.print(f"removing {BasicTag.OLD_TOTAL_DISCS.value} from {escape(track.filename)}")
+            with tagger.open(track.filename) as tags:
+                tags.set_tag(BasicTag.OLD_TOTAL_DISCS, None)
             changed = True
         return FixResult.of(changed)

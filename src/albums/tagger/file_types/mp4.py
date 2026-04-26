@@ -160,6 +160,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                     self._set_disk(disc_number, None)
                 case BasicTag.OLD_ALBUM_ARTIST:
                     logger.warning(f"don't know how to remove 'legacy album artist' from MP4 tag in {self._get_file().filename}")
+                case BasicTag.OLD_TOTAL_DISCS:
+                    logger.warning(f"don't know how to remove 'legacy totaldiscs' from MP4 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(None, track_total)
@@ -184,6 +186,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
                 case BasicTag.OLD_ALBUM_ARTIST:
                     raise ValueError(f"cannot set 'legacy album artist' in MP4 tag on {self._get_file().filename}")
+                case BasicTag.OLD_TOTAL_DISCS:
+                    raise ValueError(f"cannot set 'legacy totaldiscs' in MP4 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(int(value_list[0]) if value_list[0] else None, track_total)
