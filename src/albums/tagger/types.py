@@ -51,6 +51,7 @@ class BasicTag(StrEnum):
     OLD_PUBLISHER = "publisher"  # correct is "organization"
     OLD_TOTAL_DISCS = "totaldiscs"  # correct is "disctotal"
     ORGANIZATION = auto()  # Publisher, record label
+    RELEASECOUNTRY = auto()
     TITLE = auto()
     TRACKNUMBER = auto()
     TRACKTOTAL = auto()

@@ -99,6 +99,7 @@
         "recordingdate",
         "RECORDINGID",
         "RELEASEARTISTID",
+        "RELEASECOUNTRY",
         "RELEASEGROUPID",
         "RELEASETRACKID",
         "relpath",

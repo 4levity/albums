@@ -24,7 +24,6 @@ BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ARTISTSORT, "WM/ArtistSortOrder"),
     (BasicTag.BARCODE, "WM/Barcode"),
     (BasicTag.COMPILATION, "WM/IsCompilation"),
-    (BasicTag.TITLE, "Title"),
     (BasicTag.GENRE, "WM/Genre"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),
@@ -49,6 +48,7 @@ BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
     (BasicTag.ORGANIZATION, "Publisher"),
+    (BasicTag.TITLE, "Title"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
@@ -164,7 +164,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
                     logger.warning(f"don't know how to remove {tag.name} from ASF tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
@@ -188,7 +188,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
                     raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()

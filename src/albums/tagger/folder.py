@@ -25,15 +25,16 @@ class Cap(Enum):
     FORMATTED_TRACK_NUMBER = auto()
     PICTURES = auto()
     PICTURE_TYPE = auto()
+    VORBIS_COMMENT = auto()
 
 
 _SUFFIX_SUPPORT = {
-    ".flac": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
+    ".flac": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
     ".m4a": {Cap.BASIC_TAGS, Cap.PICTURES},
     ".m4b": {Cap.BASIC_TAGS, Cap.PICTURES},
     ".mp4": {Cap.BASIC_TAGS, Cap.PICTURES},
     ".mp3": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
-    ".ogg": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
+    ".ogg": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
     ".wma": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER},  # ASF / WMA reading pictures is implemented but so far untested (so no writing)
     ".asf": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER},
     ".aif": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},

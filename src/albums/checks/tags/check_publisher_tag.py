@@ -34,6 +34,7 @@ class CheckPublisherTag(BaseCheckTagPerAlbum):
                 "legacy tags 'label' or 'publisher' are present",
                 Fixer(lambda _: self._fix_remove_legacy_tags(album), options, False, option_automatic_index, table),
             )
+
         return super().check(album)
 
     def _fix_remove_legacy_tags(self, album: Album):

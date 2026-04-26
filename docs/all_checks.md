@@ -478,45 +478,6 @@ genre on the others.
 
 <!-- pyml enable line-length -->
 
-## Other Tags: Per Album
-
-The checks in this section each check a different tag corresponding to the name
-of the check, but they also share a purpose: if one of these tags is set
-inconsistently on tracks in an album, some players treat this as distinct
-albums. So each of these tags should be set to the same value, or not set.
-
-These checks apply a user-defined policy for the corresponding tags. The
-presence policy options are:
-
-- **"consistent"**: either all tracks have the tag, or none do
-- **"always"**: all tracks should have the tag
-- **"never"**: the tag should be removed
-
-If any track has a value, then all values must be the same.
-
-**Automatic fix** If the policy is "never", always remove the tag. If the policy
-is "always", and a consistent value is set but only on some tracks, set the same
-value on the tracks which have no value.
-
-| Option = default            | Description                 |
-| --------------------------- | --------------------------- |
-| `presence` = `"consistent"` | Set the tag presence policy |
-
-### publisher-tag
-
-See "Other Tags: Per Album" above for common behavior of this check.
-
-In addition, for Vorbis Comment tags (FLAC, etc) the label/publisher should be
-stored only as `organization`. If the legacy Vorbis Comment tags `label` or
-`publisher` are set, they should be removed to avoid confusion and players
-splitting albums.
-
-**Automatic fix**: If `label` or `publisher` are present, remove them.
-
-### album-sort, album-artist-sort, barcode-tag, compilation-tag
-
-See "Other Tags: Per Album" above for details on these per-album tag checks.
-
 ### musicbrainz-tags
 
 !!!note
@@ -555,6 +516,57 @@ MusicBrainz tags.
 | `remove_deprecated` = **true** | if enabled, remove deprecated MusicBrainz tags (`MusicBrainz TRM Id`) |
 
 <!-- pyml enable line-length -->
+
+## Other Tags: Per Album
+
+The checks in this section each check a different tag corresponding to the name
+of the check, but they also share a purpose: if one of these tags is set
+inconsistently on tracks in an album, some players treat this as distinct
+albums. So each of these tags should be set to the same value, or not set.
+
+These checks apply a user-defined policy for the corresponding tags. The
+presence policy options are:
+
+- **"consistent"**: either all tracks have the tag, or none do
+- **"always"**: all tracks should have the tag
+- **"never"**: the tag should be removed
+
+If any track has a value, then all values must be the same.
+
+**Automatic fix** If the policy is "never", always remove the tag. If the policy
+is "consistent" or "always", and a consistent value is set but only on some
+tracks, set that value on the tracks which have no value. And if the policy is
+"consistent" but no single value is identified, remove the tag from all tracks.
+
+| Option = default            | Description                 |
+| --------------------------- | --------------------------- |
+| `presence` = `"consistent"` | Set the tag presence policy |
+
+### publisher-tag
+
+See "Other Tags: Per Album" above for common behavior of this check.
+
+In addition, for Vorbis Comment tags (FLAC, etc) the label/publisher should be
+stored only as `organization`. If the legacy Vorbis Comment tags `label` or
+`publisher` are set, they should be removed to avoid confusion and players
+splitting albums.
+
+**Automatic fix**: If `label` or `publisher` are present, remove them.
+
+### album-sort, album-artist-sort, barcode-tag, compilation-tag
+
+See "Other Tags: Per Album" above for details on these per-album tag checks.
+
+### release-country-tag
+
+See "Other Tags: Per Album" above for common behavior of this check.
+
+!!!warning
+
+    The `releasecountry` value is only mapped for files that use Vorbis Comment
+    tags (e.g. FLAC, Ogg). So if one album has a mix of track types where some
+    use Vorbis Comment and others don't, the `presence` setting will be ignored
+    for that album and `releasecountry` will be removed if present.
 
 ## Pictures
 

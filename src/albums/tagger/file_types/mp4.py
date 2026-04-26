@@ -158,7 +158,7 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
                     logger.warning(f"don't know how to remove {tag.name} from MP4 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
@@ -182,7 +182,7 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.DISCTOTAL:
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
+                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS | BasicTag.RELEASECOUNTRY:
                     raise ValueError(f"cannot set {tag.name} in MP4 tag on {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()

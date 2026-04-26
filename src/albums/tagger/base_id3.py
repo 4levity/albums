@@ -25,7 +25,6 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.ARTISTSORT, "TSOP"),
     (BasicTag.BARCODE, "TXXX:BARCODE"),
     (BasicTag.COMPILATION, "TCMP"),
-    (BasicTag.TITLE, "TIT2"),
     (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
     (BasicTag.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
     (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
@@ -49,6 +48,8 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     (BasicTag.ORGANIZATION, "TPUB"),
+    (BasicTag.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),
+    (BasicTag.TITLE, "TIT2"),
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1
 )

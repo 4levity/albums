@@ -27,11 +27,14 @@ class BaseCheckTagPerAlbum(Check):
         self.option_remove_tag = f">> Remove {self.tag_description} from all tracks"
 
     def check(self, album: Album):
+        return self.do_check(album, self.presence)
+
+    def do_check(self, album: Album, presence: Policy):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
-        single_value_for_album = self.presence != Policy.NEVER
-        presence_issue = check_policy(self.ctx, self.tagger.get(album.path), album, self.presence, self.tag, None, single_value_for_album)
+        single_value_for_album = presence != Policy.NEVER
+        presence_issue = check_policy(self.ctx, self.tagger.get(album.path), album, presence, self.tag, None, single_value_for_album)
         if presence_issue is not None:
             return presence_issue
 
