@@ -18,8 +18,9 @@ library to digital audio players or portable storage
 
 `albums` works with media files and tags, but primarily acts on "albums" rather
 than individual files. Everything is done locally and an Internet connection is
-not required. It's a command-line app but it is designed to be user friendly,
-with interactive menus, rich text formatting, tables and even blocky graphics.
+not required (although it can be configured to use an external tool to download
+cover art). It's a command-line app but it is designed to be user friendly, with
+interactive menus, rich text formatting, tables and even blocky graphics.
 
 It can work with a single folder or scan a whole media library into its database
 to make subsequent operations fast. It has

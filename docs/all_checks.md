@@ -680,8 +680,9 @@ with a standard name.
 Rules:
 
 - If there are any embedded images or image files, one or more of them should be
-  in a file `cover.jpg` (or similar) to be recognized as the front cover image
-- When "cover_required" setting is true, a front cover image **must** be present
+  in a file `cover.jpg` (or similar) to be recognized as the front cover image.
+- When "cover_required" setting is true, a front cover image **must** be
+  present. If a download tool is available, it can be tried (see below).
 
 !!!success "Dependency"
 
@@ -692,11 +693,40 @@ unique image (embedded and/or image file), make that image the cover art by
 renaming the image file to `cover.jpg`/`.png`/etc. **or** by extracting the
 embedded image from one of the tracks to `cover.jpg` or `.png`.
 
+**Automatic fix**: If the album has no front cover art, and there is no other
+art embedded or in the folder that can be used as cover art, and if
+`get_cover_command` is configured or the default tool
+[SACAD](https://github.com/desbma/sacad) is found: try to download cover art.
+
+!!!warning
+
+    If you use the automatic fix with `cover_required` enabled, and a tool is
+    available but the tool fails to download an image, the fix will keep trying
+    every time you run the check again.
+
+The `get_cover_command` option is a template. The template substitutions are:
+
+| Substitution    | Example             | Description                 |
+| --------------- | ------------------- | --------------------------- |
+| **`$album`**    | `Album Name`        | Album name                  |
+| **`$artist`**   | `The Artist`        | Album artist                |
+| **`$filename`** | `cover.jpg`         | The cover filename to use\* |
+| **`$path`**     | `/library/foo/bar/` | Path to album               |
+
+\* - Cover filename is taken from \*_cover-filename_ configuration
+
+If [SACAD](https://github.com/desbma/sacad) is installed (assumed if the command
+`sacad` and `sacad_r` are both found on the path), the default
+`get_cover_command` will be set to:
+
+    sacad --preserve-format --size-tolerance 60 $artist $album 1200 $filename
+
 <!-- pyml disable line-length -->
 
 | Option = default             | Description                                                 |
 | ---------------------------- | ----------------------------------------------------------- |
 | `cover_required` = **false** | if **true** every album should have correct front cover art |
+| `get_cover_command`          | template for command/script that retrieves cover art        |
 
 <!-- pyml enable line-length -->
 

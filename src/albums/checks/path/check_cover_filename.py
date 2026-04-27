@@ -1,7 +1,7 @@
 import io
 from os import rename, unlink
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 from PIL import Image
 from rich.markup import escape
@@ -18,20 +18,7 @@ class CheckCoverFilename(Check):
 
     def init(self, check_config: dict[str, Any]):
         filename = str(check_config.get("filename", CheckCoverFilename.default_config["filename"]))
-        parts = filename.split(".")
-        if len(parts) != 2:
-            raise ValueError('cover-filename.filename must be in the form "filename.suffix"')
-        self.stem = parts[0]
-        suffix = parts[1]
-        if str.lower(suffix) not in {"*", "png", "jpg"}:
-            raise ValueError('cover-filename.filename suffix must be "*" or "jpg" or "png"')
-        match suffix:
-            case "jpg":
-                self.suffix = f".{suffix}"
-            case "png":
-                self.suffix = f".{suffix}"
-            case _:
-                self.suffix = None
+        (self.stem, self.suffix) = parse_config_cover_filename(filename)
         self.jpeg_quality = int(check_config.get("jpeg_quality", CheckCoverFilename.default_config["jpeg_quality"]))
         if self.jpeg_quality < 1 or self.jpeg_quality > 95:
             raise ValueError("cover-filename.jpeg_quality must be between 1 and 95")
@@ -113,3 +100,16 @@ class CheckCoverFilename(Check):
             target = f"{self.stem}{self.suffix}"
             return (case_sensitive and path.name == target) or (not case_sensitive and str.lower(path.name) == str.lower(target))
         return (case_sensitive and path.stem == self.stem) or (not case_sensitive and str.lower(path.stem) == str.lower(self.stem))
+
+
+def parse_config_cover_filename(filename: str) -> Tuple[str, str | None]:
+    parts = filename.split(".")
+    if len(parts) != 2:
+        raise ValueError('cover-filename.filename must be in the form "filename.suffix"')
+    stem = parts[0]
+    suffix = parts[1]
+    if str.lower(suffix) not in {"*", "png", "jpg"}:
+        raise ValueError('cover-filename.filename suffix must be "*" or "jpg" or "png"')
+    if suffix in {"jpg", "png"}:
+        return (stem, f".{suffix}")
+    return (stem, None)
