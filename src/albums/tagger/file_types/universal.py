@@ -39,7 +39,7 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
         raise NotImplementedError(f"unsupported file: cannot remove {remove_picture.type.name} picture from {self._file.filename}")
 
     @override
-    def _scan_tags(self):
+    def get_tags(self):
         try:
             return vorbis_comment_tags(self._file)  # pyright: ignore[reportArgumentType]
         except Exception as ex:

@@ -1,6 +1,6 @@
 from typing import Generator, List, Tuple, override
 
-from .types import BasicTag, Picture, ScanResult, StreamInfo, TaggerFile
+from .types import BasicTag, Picture, StreamInfo, TaggerFile
 
 
 class UnreadableTagger(TaggerFile):
@@ -12,8 +12,12 @@ class UnreadableTagger(TaggerFile):
         self._error = error
 
     @override
-    def scan(self) -> ScanResult:
-        return ScanResult((), (), StreamInfo(0, 0, 0, "unknown", 0, self._error))
+    def get_tags(self):
+        return ()
+
+    @override
+    def get_stream_info(self):
+        return StreamInfo(0, 0, 0, "unknown", 0, self._error)
 
     @override
     def get_image_data(self, picture: Picture) -> bytes:

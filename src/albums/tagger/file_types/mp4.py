@@ -123,7 +123,7 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             self._add_picture(pic, data)
 
     @override
-    def _scan_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
+    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
         basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             tags = self._ensure_tags()

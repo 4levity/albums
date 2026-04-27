@@ -106,11 +106,12 @@ class TestTranscoder:
 
         transcoder = Transcoder(ctx, "mp3")
         mp3 = transcoder.get_transcoded(album, album.tracks[0])
-        with AlbumTagger(mp3.parent).open(mp3.name) as tag:
-            s = tag.scan()
-            assert s.tags == ((BasicTag.TITLE, ("one",)),)
-            assert len(s.pictures) == 1
-            pic = s.pictures[0]
+        with AlbumTagger(mp3.parent).open(mp3.name) as file:
+            pictures = [pic for (pic, _) in file.get_pictures()]
+
+            assert file.get_tags() == ((BasicTag.TITLE, ("one",)),)
+            assert len(pictures) == 1
+            pic = pictures[0]
             assert pic.type == PictureType.COVER_FRONT
             assert pic.picture_info.mime_type == "image/jpeg"
             assert pic.picture_info.height == pic.picture_info.width == 400

@@ -68,16 +68,16 @@ class TestMp4:
 
     def test_read_write_m4a_tags(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            tags = dict(file.get_tags())
             assert not file.has_video()
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-        assert scan.pictures[1].type == PictureType.COVER_FRONT  # always
-        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 401
-        tags = dict(scan.tags)
+        assert len(pictures) == 2
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
+        assert pictures[1].type == PictureType.COVER_FRONT  # always
+        assert pictures[1].picture_info.mime_type == "image/jpeg"
+        assert pictures[1].picture_info.width == pictures[1].picture_info.height == 401
         track_tags = track1.tag_dict()
         assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
         assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
@@ -93,27 +93,27 @@ class TestMp4:
 
     def test_mp4_audio(self):
         with TestMp4.tagger.open(track2.filename) as file:
-            scan = file.scan()
+            tags = dict(file.get_tags())
             assert not file.has_video()
-        tags = dict(scan.tags)
         track_tags = track2.tag_dict()
         assert tags[BasicTag.TRACKNUMBER] == tuple(track_tags[BasicTag.TRACKNUMBER])
 
     def test_mp4_video(self):
         with TestMp4.tagger.open(video.filename) as file:
             assert file.has_video()
-            scan = file.scan()
-            assert len(scan.pictures) == 0
-            assert len(scan.tags) == 0
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            tags = dict(file.get_tags())
+            assert len(pictures) == 0
+            assert len(tags) == 0
             file.set_tag(BasicTag.TRACKNUMBER, "3")
             image_data = make_image_data(600, 600, "JPEG")
             pic = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.COVER_FRONT, "")
             file.add_picture(pic, image_data)
 
         with TestMp4.tagger.open(video.filename) as file:
-            scan = file.scan()
-            assert scan.pictures == (pic,)
-            assert scan.tags == ((BasicTag.TRACKNUMBER, ("3",)),)
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            assert pictures == [pic]
+            assert file.get_tags() == ((BasicTag.TRACKNUMBER, ("3",)),)
 
     def test_update_mp4_tags(self):
         TestMp4.tagger.set_basic_tags(
@@ -132,8 +132,7 @@ class TestMp4:
             ],
         )
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        tags = dict(scan.tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.ARTIST] == ("a1",)
         assert tags[BasicTag.ALBUMARTIST] == ("a2",)
         assert tags[BasicTag.ALBUM] == ("a3",)
@@ -147,38 +146,38 @@ class TestMp4:
 
     def test_update_mp4_compilation(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
             file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)
 
             file.set_tag(BasicTag.COMPILATION, None)  # normal disable
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
 
             file.set_tag(BasicTag.COMPILATION, "anything")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_write_mp4_tracktotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("1",)
         assert tags[BasicTag.TRACKTOTAL] == ("3",)
 
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.TRACKTOTAL, "02")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("1",)
         assert tags[BasicTag.TRACKTOTAL] == ("2",)  # tag cannot store leading 0
 
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.TRACKNUMBER, "3")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("3",)
         assert tags[BasicTag.TRACKTOTAL] == ("2",)
 
@@ -187,32 +186,32 @@ class TestMp4:
             file.set_tag(BasicTag.TRACKNUMBER, "2")
             file.set_tag(BasicTag.TRACKTOTAL, "3")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("2",)
         assert tags[BasicTag.TRACKTOTAL] == ("3",)
 
         # remove total
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.TRACKTOTAL, None)
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("2",)
         assert BasicTag.TRACKTOTAL not in tags
 
     def test_write_mp4_disctotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("2",)
 
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.DISCTOTAL, "1")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("1",)
 
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.DISCNUMBER, "1")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("1",)
         assert tags[BasicTag.DISCTOTAL] == ("1",)
 
@@ -221,43 +220,43 @@ class TestMp4:
             file.set_tag(BasicTag.DISCNUMBER, "2")
             file.set_tag(BasicTag.DISCTOTAL, "2")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("2",)
 
         # remove total
         with TestMp4.tagger.open(track1.filename) as file:
             file.set_tag(BasicTag.DISCTOTAL, None)
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert BasicTag.DISCTOTAL not in tags
 
     def test_remove_one_m4a_pic(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
+        assert len(pictures) == 2
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[1].picture_info.mime_type == "image/jpeg"
 
         with TestMp4.tagger.open(track1.filename) as file:
-            file.remove_picture(scan.pictures[0])
+            file.remove_picture(pictures[0])
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert len(scan.pictures) == 1
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 401
-        assert scan.pictures[0].picture_info.mime_type == "image/jpeg"
+        assert len(pictures) == 1
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 401
+        assert pictures[0].picture_info.mime_type == "image/jpeg"
 
     def test_replace_one_m4a_pic(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        first = scan.pictures[0]
-        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
-        second = scan.pictures[1]
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert len(pictures) == 2
+        assert pictures[0].picture_info.mime_type == "image/png"
+        first = pictures[0]
+        assert pictures[1].picture_info.mime_type == "image/jpeg"
+        second = pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")
         replacement = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.COVER_FRONT, "")
@@ -267,5 +266,4 @@ class TestMp4:
             file.add_picture(replacement, image_data)
 
         with TestMp4.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        assert set(scan.pictures) == {replacement, second}
+            assert set(pic for (pic, _) in file.get_pictures()) == {replacement, second}

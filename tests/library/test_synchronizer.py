@@ -76,9 +76,9 @@ class TestSynchronizer:
             assert (TestSynchronizer.destination / "baz" / "bar" / "1.mp3").is_file()
             tagger = AlbumTagger(TestSynchronizer.destination / "baz" / "foo")
             with tagger.open("1.mp3") as file:
-                t1 = dict(file.scan().tags)
+                t1 = dict(file.get_tags())
             with tagger.open("2.mp3") as file:
-                t2 = dict(file.scan().tags)
+                t2 = dict(file.get_tags())
             assert t1.get(BasicTag.TITLE) == ("one",)
             assert t1.get(BasicTag.ALBUM) == ("foo",)
             assert t1.get(BasicTag.ARTIST) == ("baz",)

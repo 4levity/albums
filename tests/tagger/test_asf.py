@@ -41,9 +41,9 @@ class TestAsf:
 
     def test_read_write_asf_tags(self):
         with TestAsf.tagger.open(track.filename) as file:
-            scan = file.scan()
-        assert len(scan.pictures) == 0  # not supported yet
-        tags = dict(scan.tags)
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            tags = dict(file.get_tags())
+        assert len(pictures) == 0  # not supported yet
         track_tags = track.tag_dict()
         assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
         assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
@@ -73,8 +73,7 @@ class TestAsf:
             ],
         )
         with TestAsf.tagger.open(track.filename) as file:
-            scan = file.scan()
-        tags = dict(scan.tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.ARTIST] == ("a1",)
         assert tags[BasicTag.ALBUMARTIST] == ("a2",)
         assert tags[BasicTag.ALBUM] == ("a3",)
@@ -103,38 +102,38 @@ class TestAsf:
 
     def test_update_asf_compilation(self):
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
             file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)
 
             file.set_tag(BasicTag.COMPILATION, None)  # normal disable
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
 
             file.set_tag(BasicTag.COMPILATION, "anything")
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("1",)
         assert tags[BasicTag.TRACKTOTAL] == ("3",)
 
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.TRACKTOTAL, "02")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("1",)
         assert tags[BasicTag.TRACKTOTAL] == ("02",)
 
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.TRACKNUMBER, "3")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("3",)
         assert tags[BasicTag.TRACKTOTAL] == ("02",)
 
@@ -143,32 +142,32 @@ class TestAsf:
             file.set_tag(BasicTag.TRACKNUMBER, "2")
             file.set_tag(BasicTag.TRACKTOTAL, "3")
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("2",)
         assert tags[BasicTag.TRACKTOTAL] == ("3",)
 
         # remove total
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.TRACKTOTAL, None)
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.TRACKNUMBER] == ("2",)
         assert BasicTag.TRACKTOTAL not in tags
 
     def test_write_asf_disctotal(self):
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("2",)
 
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.DISCTOTAL, "1")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("1",)
 
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.DISCNUMBER, "1")
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("1",)
         assert tags[BasicTag.DISCTOTAL] == ("1",)
 
@@ -177,14 +176,14 @@ class TestAsf:
             file.set_tag(BasicTag.DISCNUMBER, "2")
             file.set_tag(BasicTag.DISCTOTAL, "2")
         with TestAsf.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert tags[BasicTag.DISCTOTAL] == ("2",)
 
         # remove total
         with TestAsf.tagger.open(track.filename) as file:
             file.set_tag(BasicTag.DISCTOTAL, None)
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.DISCNUMBER] == ("2",)
         assert BasicTag.DISCTOTAL not in tags
 

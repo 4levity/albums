@@ -28,13 +28,14 @@ class TestAlbumTagger:
         mock_mp3_save = mocker.spy(MP3, "save")
 
         with tagger.open(mp3track.filename) as file:
-            scan = file.scan()
-            assert dict(scan.tags)[BasicTag.TRACKNUMBER] == ("1",)
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            tags = dict(file.get_tags())
+            assert tags[BasicTag.TRACKNUMBER] == ("1",)
         assert mock_mp3_save.call_count == 0
 
         with tagger.open(mp3track.filename) as file:
-            assert len(scan.pictures) == 1
-            file.get_image_data(scan.pictures[0])
+            assert len(pictures) == 1
+            file.get_image_data(pictures[0])
         assert mock_mp3_save.call_count == 0
 
         with tagger.open(mp3track.filename) as file:
@@ -42,12 +43,12 @@ class TestAlbumTagger:
         assert mock_mp3_save.call_count == 1
 
         with tagger.open(mp3track.filename) as file:
-            assert dict(file.scan().tags)[BasicTag.ALBUM] == ("baz",)
+            assert dict(file.get_tags())[BasicTag.ALBUM] == ("baz",)
             (picture, image_data) = next(file.get_pictures())
             file.remove_picture(picture)
         assert mock_mp3_save.call_count == 2
 
         with tagger.open(mp3track.filename) as file:
-            assert len(file.scan().pictures) == 0
+            assert len(list(file.get_pictures())) == 0
             file.add_picture(picture, image_data)
         assert mock_mp3_save.call_count == 3

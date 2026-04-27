@@ -50,7 +50,7 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
         self._file.tags["metadata_block_picture"] = new_picture_blocks  # pyright: ignore[reportOptionalSubscript]
 
     @override
-    def _scan_tags(self):
+    def get_tags(self):
         return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
 
     @override

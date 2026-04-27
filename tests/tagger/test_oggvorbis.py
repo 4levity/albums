@@ -45,17 +45,17 @@ class TestOggVorbis:
 
     def test_read_oggvorbis(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
+            tags = dict(file.get_tags())
 
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
 
-        assert scan.pictures[1].type == PictureType.COVER_BACK
-        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 300
+        assert pictures[1].type == PictureType.COVER_BACK
+        assert pictures[1].picture_info.mime_type == "image/jpeg"
+        assert pictures[1].picture_info.width == pictures[1].picture_info.height == 300
 
-        tags = dict(scan.tags)
         track_tags = track.tag_dict()
         assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
         assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
@@ -91,8 +91,7 @@ class TestOggVorbis:
             ],
         )
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
-        tags = dict(scan.tags)
+            tags = dict(file.get_tags())
         assert tags[BasicTag.ARTIST] == ("a1",)
         assert tags[BasicTag.TITLE] == ("t",)
         assert tags[BasicTag.ALBUM] == ("a3",)
@@ -109,52 +108,50 @@ class TestOggVorbis:
 
     def test_update_ogg_vorbis_compilation(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
             file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
         with TestOggVorbis.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)
 
             file.set_tag(BasicTag.COMPILATION, None)  # normal disable
         with TestOggVorbis.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert BasicTag.COMPILATION not in tags
 
             file.set_tag(BasicTag.COMPILATION, "anything")
         with TestOggVorbis.tagger.open(track.filename) as file:
-            tags = dict(file.scan().tags)
+            tags = dict(file.get_tags())
             assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_remove_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-        front = scan.pictures[0]
-        assert scan.pictures[1].type == PictureType.COVER_BACK
-        back = scan.pictures[1]
+        assert len(pictures) == 2
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
+        front = pictures[0]
+        assert pictures[1].type == PictureType.COVER_BACK
+        back = pictures[1]
 
         with TestOggVorbis.tagger.open(track.filename) as file:
             file.remove_picture(front)
 
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
-
-        assert scan.pictures == (back,)
+            assert [pic for (pic, _) in file.get_pictures()] == [back]
 
     def test_replace_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        front = scan.pictures[0]
-        assert scan.pictures[1].type == PictureType.COVER_BACK
-        back = scan.pictures[1]
+        assert len(pictures) == 2
+        assert pictures[0].type == PictureType.COVER_FRONT
+        front = pictures[0]
+        assert pictures[1].type == PictureType.COVER_BACK
+        back = pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")
         pic_info = PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data))
@@ -165,6 +162,4 @@ class TestOggVorbis:
             file.add_picture(replacement, image_data)
 
         with TestOggVorbis.tagger.open(track.filename) as file:
-            scan = file.scan()
-
-        assert set(scan.pictures) == {replacement, back}
+            assert set(pic for (pic, _) in file.get_pictures()) == {replacement, back}

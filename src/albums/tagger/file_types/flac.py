@@ -48,7 +48,7 @@ class FlacTagger(AbstractMutagenTagger[FLAC]):
             self._add_picture(pic, data)
 
     @override
-    def _scan_tags(self):
+    def get_tags(self):
         return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
 
     @override

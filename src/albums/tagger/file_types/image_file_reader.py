@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Generator, Sequence, Tuple, override
 
 from ...picture.scan import PictureScanner
-from ..types import BasicTag, Picture, PictureType, ScanResult, StreamInfo, TaggerFile
+from ..types import BasicTag, Picture, PictureType, StreamInfo, TaggerFile
 
 
 class ImageFileReader(TaggerFile):
@@ -19,8 +19,12 @@ class ImageFileReader(TaggerFile):
         return False
 
     @override
-    def scan(self) -> ScanResult:
-        return ScanResult((), tuple(pic for pic, _ in self.get_pictures()), StreamInfo())
+    def get_tags(self):
+        return ()
+
+    @override
+    def get_stream_info(self):
+        return StreamInfo()
 
     @override
     def get_image_data(self, picture: Picture) -> bytes:

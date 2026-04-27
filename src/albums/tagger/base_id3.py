@@ -118,7 +118,7 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
             self._add_picture(pic, data)
 
     @override
-    def _scan_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
+    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
         basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
         if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
             id3 = self._ensure_id3()

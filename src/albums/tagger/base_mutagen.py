@@ -3,7 +3,7 @@ from typing import Any, Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 
-from .types import BasicTag, MutagenFileType, Picture, ScanResult, StreamInfo, TaggerFile
+from .types import BasicTag, MutagenFileType, Picture, StreamInfo, TaggerFile
 
 logger: Final = logging.getLogger(__name__)
 
@@ -19,9 +19,10 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         self._padding = padding
 
     # subclass must implement
+    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
     def _get_file(self) -> _FT: ...
-    def _scan_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
     def _set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None: ...
+
     # subclass must implement if advertising Cap.PICTURES
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None: ...
@@ -45,10 +46,9 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         return False
 
     @override
-    def scan(self) -> ScanResult:
+    def get_stream_info(self):
         file = self._get_file()
-        stream_info = _get_stream_info(file.filename, file.info, self._get_codec())  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
-        return ScanResult(self._scan_tags(), tuple(pic for pic, _data in self.get_pictures()), stream_info)
+        return _get_stream_info(file.filename, file.info, self._get_codec())  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
 
     @override
     def get_image_data(self, picture: Picture) -> bytes:

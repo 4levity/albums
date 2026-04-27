@@ -193,22 +193,20 @@ def _picture_cache(album: Album | None) -> PictureScannerCache:
 
 
 def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat) -> Track | None:
-    with tagger.open(filename) as tags:
-        if tags.has_video():
+    with tagger.open(filename) as file:
+        if file.has_video():
             return None
 
-        scan_result = tags.scan()
-
-        tags = [TagV(tag=tag, value=value) for tag, values in scan_result.tags for value in values]
+        tags = [TagV(tag=tag, value=value) for tag, values in file.get_tags() for value in values]
         pictures = [
             TrackPicture(picture_type=picture.type, picture_info=picture.picture_info, description=picture.description, embed_ix=embed_ix)
-            for embed_ix, picture in enumerate(scan_result.pictures)
+            for embed_ix, picture in enumerate(picture for (picture, _data) in file.get_pictures())
         ]
         return Track(
             filename=filename,
             file_size=stat.file_size,
             modify_timestamp=stat.modify_timestamp,
-            stream=scan_result.stream,
+            stream=file.get_stream_info(),
             pictures=pictures,
             tags=tags,
         )

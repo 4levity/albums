@@ -36,25 +36,25 @@ class TestFlac:
 
     def test_read_flac_picture(self):
         with TestFlac.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        assert len(scan.pictures) == 1
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert len(pictures) == 1
 
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-        assert scan.pictures[0].picture_info.load_issue == ()
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
+        assert pictures[0].picture_info.load_issue == ()
 
     def test_read_flac_two_pictures(self):
         with TestFlac.tagger.open(track2.filename) as file:
-            scan = file.scan()
-        assert len(scan.pictures) == 2
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert len(pictures) == 2
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
 
-        assert scan.pictures[1].type == PictureType.COVER_BACK
-        assert scan.pictures[1].picture_info.mime_type == "image/jpeg"
-        assert scan.pictures[1].picture_info.width == scan.pictures[1].picture_info.height == 300
+        assert pictures[1].type == PictureType.COVER_BACK
+        assert pictures[1].picture_info.mime_type == "image/jpeg"
+        assert pictures[1].picture_info.width == pictures[1].picture_info.height == 300
 
     def test_read_flac_picture_mismatch(self):
         file = TestFlac.library / album.path / track1.filename
@@ -71,66 +71,65 @@ class TestFlac:
         mut.save()
 
         with TestFlac.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        assert len(scan.pictures) == 1
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-        assert scan.pictures[0].picture_info.load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert len(pictures) == 1
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
+        assert pictures[0].picture_info.load_issue == (("format", "image/jpeg"), ("width", 401), ("height", 401))
 
     def test_remove_only_flac_pic(self):
         with TestFlac.tagger.open(track1.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert scan.pictures[0].type == PictureType.COVER_FRONT
-        assert scan.pictures[0].picture_info.mime_type == "image/png"
-        assert scan.pictures[0].picture_info.width == scan.pictures[0].picture_info.height == 400
-
-        with TestFlac.tagger.open(track1.filename) as file:
-            file.remove_picture(scan.pictures[0])
+        assert pictures[0].type == PictureType.COVER_FRONT
+        assert pictures[0].picture_info.mime_type == "image/png"
+        assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
 
         with TestFlac.tagger.open(track1.filename) as file:
-            scan = file.scan()
-        assert scan.pictures == ()
+            file.remove_picture(pictures[0])
+
+        with TestFlac.tagger.open(track1.filename) as file:
+            assert list(file.get_pictures()) == []
 
     def test_remove_one_flac_pic(self):
         with TestFlac.tagger.open(track2.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert scan.pictures[0].type == track2.pictures[0].picture_type
-        assert scan.pictures[0].picture_info.mime_type == track2.pictures[0].picture_info.mime_type
+        assert pictures[0].type == track2.pictures[0].picture_type
+        assert pictures[0].picture_info.mime_type == track2.pictures[0].picture_info.mime_type
         assert (
-            scan.pictures[0].picture_info.width
-            == scan.pictures[0].picture_info.height
+            pictures[0].picture_info.width
+            == pictures[0].picture_info.height
             == track2.pictures[0].picture_info.height
             == track2.pictures[0].picture_info.width
         )
-        front = scan.pictures[0]
+        front = pictures[0]
 
-        assert scan.pictures[1].type == track2.pictures[1].picture_type
-        assert scan.pictures[1].picture_info.mime_type == track2.pictures[1].picture_info.mime_type
+        assert pictures[1].type == track2.pictures[1].picture_type
+        assert pictures[1].picture_info.mime_type == track2.pictures[1].picture_info.mime_type
         assert (
-            scan.pictures[1].picture_info.width
-            == scan.pictures[1].picture_info.height
+            pictures[1].picture_info.width
+            == pictures[1].picture_info.height
             == track2.pictures[1].picture_info.height
             == track2.pictures[1].picture_info.width
         )
-        back = scan.pictures[1]
+        back = pictures[1]
 
         with TestFlac.tagger.open(track2.filename) as file:
             file.remove_picture(front)
 
         with TestFlac.tagger.open(track2.filename) as file:
-            scan = file.scan()
+            pictures = [pic for (pic, _) in file.get_pictures()]
 
-        assert scan.pictures == (back,)
+        assert pictures == [back]
 
     def test_replace_one_flac_pic(self):
         with TestFlac.tagger.open(track2.filename) as file:
-            scan = file.scan()
-        assert scan.pictures[0].type == track2.pictures[0].picture_type
-        front = scan.pictures[0]
-        assert scan.pictures[1].type == track2.pictures[1].picture_type
-        back = scan.pictures[1]
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert pictures[0].type == track2.pictures[0].picture_type
+        front = pictures[0]
+        assert pictures[1].type == track2.pictures[1].picture_type
+        back = pictures[1]
 
         image_data = make_image_data(600, 600, "JPEG")
         pic_info = PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data))
@@ -140,5 +139,5 @@ class TestFlac:
             file.add_picture(replacement, image_data)
 
         with TestFlac.tagger.open(track2.filename) as file:
-            scan = file.scan()
-        assert set(scan.pictures) == {back, replacement}
+            pictures = [pic for (pic, _) in file.get_pictures()]
+        assert set(pictures) == {back, replacement}
