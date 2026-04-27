@@ -18,14 +18,27 @@ class TestCheckCoverAvailable:
         album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         assert not CheckCoverAvailable(Context()).check(album)
 
-    def test_cover_missing_required(self, mocker):
-        mocker.patch("albums.checks.picture.check_cover_available.which", return_value=None)  # test behavior doesn't change if sacad is installed
+    def test_cover_missing_required_not(self, mocker):
         album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         ctx = Context()
         ctx.config.checks[CheckCoverAvailable.name]["cover_required"] = True
+
+        mocker.patch("albums.checks.picture.check_cover_available.which", return_value=None)  # test behavior doesn't change if sacad is installed
         result = CheckCoverAvailable(ctx).check(album)
         assert result is not None
         assert "album does not have any pictures to use as cover art, and cannot search" in result.message
+        assert result.fixer is None
+
+    def test_cover_missing_required_identified(self, mocker):
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={"artist": "Foo", "album": "Bar"})])
+        ctx = Context()
+        ctx.config.checks[CheckCoverAvailable.name]["cover_required"] = True
+
+        mocker.patch("albums.checks.picture.check_cover_available.which", return_value=None)
+        result = CheckCoverAvailable(ctx).check(album)
+        assert result is not None
+        assert "album does not have any pictures to use as cover art, and cannot search" in result.message
+        assert result.fixer is None
 
     def test_album_pictures_but_no_front_cover(self, mocker):
         album = Album(

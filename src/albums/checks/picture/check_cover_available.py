@@ -44,7 +44,7 @@ class CheckCoverAvailable(Check):
             target_size = min(1200, int(str(max_size)))
             cmd_str = f"sacad --preserve-format --size-tolerance 60 $artist $album {target_size} $filename"
 
-        self.get_cover_command = [Template(part) for part in cmd_str.split(" ")]
+        self.get_cover_command = [Template(part) for part in cmd_str.split(" ")] if cmd_str else []
         for id in (id for part in self.get_cover_command for id in part.get_identifiers() if id not in {"artist", "album", "filename", "path"}):
             raise ValueError(f"invalid substitution '{id}' in cover-available.get_cover_command")
 
