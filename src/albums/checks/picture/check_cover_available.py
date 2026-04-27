@@ -137,7 +137,7 @@ class CheckCoverAvailable(Check):
             logger.error(f"_fix_get_cover was called but there is already a file at {expect_pattern}")
             return FixResult.NO_CHANGE
 
-        self.ctx.console.print(f"Trying to retrieve album cover with: {escape(' '.join(command))}")
+        self.ctx.console.print(f"Trying to retrieve album cover with: {self._preview_get_cover_command(album, artist_name, album_name)}")
         result = run(command, cwd=(self.ctx.config.library / album.path))
         if not any(iglob(expect_pattern)):
             if result.returncode == 0:
@@ -150,6 +150,7 @@ class CheckCoverAvailable(Check):
                 f"external program returned nonzero exit code {result.returncode} indicating failure, but file {expect_pattern} does exist"
             )
         self.ctx.console.print("album cover successfully downloaded")
+        # TODO: if interactive, show preview of downloaded image + maybe confirm if not in automatic mode
         return FixResult.CHANGED_ALBUM
 
     def _preview_get_cover_command(self, album: Album, artist_name: str, album_name: str) -> str:
