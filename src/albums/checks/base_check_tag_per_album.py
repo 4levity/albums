@@ -16,8 +16,11 @@ class BaseCheckTagPerAlbum(Check):
     name: str
     tag: BasicTag
 
-    # subclass may override to force presence to NEVER when album is a mix of vorbis-comment and non-vorbis-comment tracks
+    # subclass may override
+    # force presence to NEVER when album is a mix of vorbis-comment and non-vorbis-comment tracks
     vorbis_only: bool = False
+    # the value for the album can be a multi-value (still needs to be the same on all tracks)
+    tuple_value: bool = False
 
     # subclass may define additional config items, as well as description to use instead of tag.value
     default_config = {"enabled": True, "presence": "consistent"}
@@ -49,9 +52,14 @@ class BaseCheckTagPerAlbum(Check):
         if presence_issue is not None:
             return presence_issue
 
-        values = set(value for track in album.tracks for value in track.get(self.tag, default=[""]))
-        if len(values) > 1:
+        if self.tuple_value:
+            values = set(track.get(self.tag, default=()) for track in album.tracks)
+            options = sorted(", ".join(v) for v in values) + [self.option_remove_tag]
+        else:
+            values = set(value for track in album.tracks for value in track.get(self.tag, default=[""]))
             options = sorted(filter(None, values)) + [self.option_remove_tag]
+
+        if len(values) > 1:
             option_automatic_index = None
             option_free_text = True
             table = (
@@ -65,7 +73,7 @@ class BaseCheckTagPerAlbum(Check):
                 ],
             )
             return CheckResult(
-                f"multiple values for {self.tag_description}: {', '.join(sorted((v or 'none') for v in values))}",
+                f"multiple values for {self.tag_description}: {', '.join(sorted((str(v) or 'none') for v in values))}",
                 Fixer(
                     lambda option: self._fix_set_tag(album, None if option == self.option_remove_tag else option),
                     options,
@@ -86,9 +94,17 @@ class BaseCheckTagPerAlbum(Check):
                 with tagger.open(track.filename) as tags:
                     tags.set_tag(self.tag, None)
                 changed = True
-            elif option and (len(current_values) != 1 or current_values[0] != option):
-                self.ctx.console.print(f"Setting {self.tag_description} on {escape(track.filename)}", highlight=False)
-                with tagger.open(track.filename) as tags:
-                    tags.set_tag(self.tag, option)
-                changed = True
+            elif option:
+                set_value = None
+                if self.tuple_value:
+                    option_value = list(option.split(", ")) if (option and self.tuple_value) else option
+                    if list(current_values) != option_value:
+                        set_value = option_value
+                elif len(current_values) != 1 or current_values[0] != option:
+                    set_value = option
+                if set_value is not None:
+                    self.ctx.console.print(f"Setting {self.tag_description} on {escape(track.filename)}", highlight=False)
+                    with tagger.open(track.filename) as tags:
+                        tags.set_tag(self.tag, set_value)
+                    changed = True
         return FixResult.of(changed)

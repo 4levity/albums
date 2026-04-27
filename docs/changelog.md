@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.22 - fix: release-type-tag should allow multiple types per album
+
 v0.9.21 - publisher-tag check can convert legacy vorbis comment values
 
 v0.9.20 - check even more per-album consistent tags, clean more legacy tags

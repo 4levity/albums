@@ -6,3 +6,4 @@ class CheckReleaseTypeTag(BaseCheckTagPerAlbum):
     name = "release-type-tag"
     tag = BasicTag.RELEASETYPE
     vorbis_only = True
+    tuple_value = True
