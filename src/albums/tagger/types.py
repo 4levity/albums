@@ -211,6 +211,7 @@ class StreamInfo:
     channels: int = 0
     codec: str = "unknown"
     sample_rate: int = 0
+    bits_per_sample: int = 0
     error: str = ""
 
     def to_dict(self):

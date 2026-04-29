@@ -19,7 +19,7 @@ class TestSelector:
                 Track(
                     filename="1.flac",
                     tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Bar", BasicTag.ALBUMARTIST: "Various Artists", BasicTag.ALBUM: "=:="},
-                    stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100),
+                    stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100, 16),
                     pictures=[
                         TrackPicture(
                             picture_info=PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234", (("format", "image/png"),)),

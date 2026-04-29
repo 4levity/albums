@@ -105,7 +105,12 @@ def _get_stream_info(filename: str, mutagen_file_info: Any, codec: str) -> Strea
         sample_rate = 0
         logger.warning(f"couldn't determine stream sample rate in {filename}")
 
-    return StreamInfo(length, bitrate, channels, codec, sample_rate)
+    if hasattr(mutagen_file_info, "bits_per_sample"):
+        bits_per_sample = int(mutagen_file_info.bits_per_sample)
+    else:
+        bits_per_sample = 0  # expected, some formats like MP3 don't have this concept
+
+    return StreamInfo(length, bitrate, channels, codec, sample_rate, bits_per_sample)
 
 
 def _find_codec(mutagen_file_info: Any):

@@ -133,8 +133,11 @@ class Track(Base):
     _stream_channels: Mapped[int] = mapped_column("stream_channels", Integer, nullable=False, default=0)
     _stream_codec: Mapped[str] = mapped_column("stream_codec", Text, nullable=False, default="")
     _stream_sample_rate: Mapped[int] = mapped_column("stream_sample_rate", Integer, nullable=False, default=0)
+    _stream_bits_per_sample: Mapped[int] = mapped_column("stream_bits_per_sample", Integer, nullable=False, default=0)
     _stream_error: Mapped[str] = mapped_column("stream_error", Text, nullable=False, default="")
-    stream = composite(StreamInfo, _stream_length, _stream_bitrate, _stream_channels, _stream_codec, _stream_sample_rate, _stream_error)
+    stream = composite(
+        StreamInfo, _stream_length, _stream_bitrate, _stream_channels, _stream_codec, _stream_sample_rate, _stream_bits_per_sample, _stream_error
+    )
 
     pictures: Mapped[List[TrackPicture]] = relationship("TrackPicture", back_populates="track", cascade="all, delete-orphan")
     tags: Mapped[List[TagV]] = relationship("TagV", back_populates="track", cascade="all, delete-orphan")

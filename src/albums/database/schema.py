@@ -53,6 +53,7 @@ CREATE TABLE track (
     stream_length REAL NOT NULL,
     stream_sample_rate INTEGER NOT NULL
     -- v12 add stream_error
+    -- v13 add stream_bits_per_sample
 );
 CREATE INDEX idx_track_album_id ON track(album_id);
 
@@ -148,6 +149,7 @@ CREATE TABLE album_other_file (
 );
 CREATE INDEX idx_album_other_file_album_id ON album_other_file(album_id);
 """,
+    13: "ALTER TABLE track ADD COLUMN stream_bits_per_sample INTEGER NOT NULL DEFAULT 0;",
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

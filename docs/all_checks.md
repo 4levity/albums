@@ -693,10 +693,11 @@ unique image (embedded and/or image file), make that image the cover art by
 renaming the image file to `cover.jpg`/`.png`/etc. **or** by extracting the
 embedded image from one of the tracks to `cover.jpg` or `.png`.
 
-**Automatic fix**: If the album has no front cover art, and there is no other
-art embedded or in the folder that can be used as cover art, and if
-`get_cover_command` is configured or the default tool
-[SACAD](https://github.com/desbma/sacad) is found: try to download cover art.
+**Automatic fix**: If the album has no front cover art, **and** there is no
+other art embedded or in the folder that can be used as cover art, **and**
+`cover_required` is enabled, **and** `get_cover_command` is set or the default
+tool [SACAD](https://github.com/desbma/sacad) is found: run the external tool to
+try to download cover art.
 
 !!!warning
 

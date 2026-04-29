@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection
-from albums.library.scanner import MAX_IMAGE_SIZE, scan
+from albums.library.scanner import MAX_IMAGE_SIZE, TargetRescan, scan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture, PictureType
@@ -526,5 +526,36 @@ class TestScanner:
                 spy_image_open.reset_mock()
                 scan(ctx, session)
                 assert spy_image_open.call_count == 2  # 1 embedded image and 1 file were edited, cache was used for others
+        finally:
+            db.dispose()
+
+    def test_partial_rescan(self, mocker):
+        db = connection.open(connection.MEMORY)
+        try:
+            library = create_library("test_partial_rescan", [self.sample_library[3]])
+            ctx = context(db, library)
+            scan_streams = False
+
+            def rescan_only_streams(scanner, file):
+                return TargetRescan(file, tags=False, images=True, streams=scan_streams)
+
+            mock_needs_rescan = mocker.patch("albums.library.scanner._needs_rescan", side_effect=rescan_only_streams)
+            mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")
+
+            scan(ctx)
+
+            assert mock_needs_rescan.call_count == 0
+            assert mock_find_codec.call_count == 2
+
+            scan(ctx)  # rescan target images only
+
+            assert mock_needs_rescan.call_count == 2
+            assert mock_find_codec.call_count == 2  # streams not scanned
+
+            scan_streams = True
+            scan(ctx)
+
+            assert mock_needs_rescan.call_count == 4
+            assert mock_find_codec.call_count == 4  # streams re-scanned
         finally:
             db.dispose()

@@ -17,7 +17,7 @@ class UnreadableTagger(TaggerFile):
 
     @override
     def get_stream_info(self):
-        return StreamInfo(0, 0, 0, "unknown", 0, self._error)
+        return StreamInfo(0, 0, 0, "unknown", 0, 0, self._error)
 
     @override
     def get_image_data(self, picture: Picture) -> bytes:
