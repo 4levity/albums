@@ -177,15 +177,15 @@ class TestCli:
         assert result.exit_code == 0
         assert result.output.startswith(f"added album foo{os.sep} to collection test")
 
-    def test_filter_collection(self):
+    def test_filter_collection_invert(self):
         self.run(["scan"], init=True)
         result = self.run(["-rp", "foo", "add", "test"])
 
-        result = self.run(["-c", "test", "list", "--json"])
+        result = self.run(["-c", "test", "--invert", "list", "--json"])
         assert result.exit_code == 0
         obj = json.loads(result.output)
         assert len(obj) == 1
-        assert obj[0]["path"] == "foo" + os.sep
+        assert obj[0]["path"] == "bar" + os.sep
 
     def test_filter_collection_match(self):
         self.run(["scan"], init=True)

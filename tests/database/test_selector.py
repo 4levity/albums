@@ -103,8 +103,6 @@ class TestSelector:
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
-                TestSelector.album2.path = "baz" + os.sep
-                TestSelector.album2.collections = []
                 session.add(TestSelector.album2)
                 result = list(selector.load_album_entities(session, collection=[".est"], regex=True))
                 assert len(result) == 1
@@ -114,6 +112,23 @@ class TestSelector:
                 result = list(selector.load_album_entities(session, collection=["test", "anything"]))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
+        finally:
+            db.dispose()
+
+    def test_select_by_collection_invert(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                result = list(selector.load_album_entities(session, collection=[".est"], regex=True, invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
+                result = list(selector.load_album_entities(session, collection=[".est"], invert=True))
+                assert len(result) == 2
+                result = list(selector.load_album_entities(session, collection=["test", "anything"], invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
         finally:
             db.dispose()
 
@@ -134,6 +149,23 @@ class TestSelector:
         finally:
             db.dispose()
 
+    def test_select_by_ignore_check_invert(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                result = list(selector.load_album_entities(session, ignore_check=["artist-t"], regex=True, invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
+                result = list(selector.load_album_entities(session, ignore_check=["artist-t"], invert=True))
+                assert len(result) == 2
+                result = list(selector.load_album_entities(session, ignore_check=["artist-tag"], invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
+        finally:
+            db.dispose()
+
     def test_select_multiple_ignore_check(self):
         db = connection.open(connection.MEMORY)
         try:
@@ -146,6 +178,13 @@ class TestSelector:
                 result = list(selector.load_album_entities(session, ignore_check=["artist-t", "anything"], regex=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
+
+                result = list(selector.load_album_entities(session, ignore_check=["artist-tag", "anything"], invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
+                result = list(selector.load_album_entities(session, ignore_check=["artist-t", "anything"], regex=True, invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("baz")
 
         finally:
             db.dispose()
@@ -160,11 +199,21 @@ class TestSelector:
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
 
+                result = list(selector.load_album_entities(session, tag=["artist:Baz"], invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
+
                 result = list(selector.load_album_entities(session, tag=["title:F(o)o"]))
                 assert len(result) == 0
 
+                result = list(selector.load_album_entities(session, tag=["title:F(o)o"], invert=True))
+                assert len(result) == 2
+
                 result = list(selector.load_album_entities(session, tag=["title:F(o)o"], regex=True))
                 assert len(result) == 2
+
+                result = list(selector.load_album_entities(session, tag=["title:F(o)o"], regex=True, invert=True))
+                assert len(result) == 0
 
                 result = list(selector.load_album_entities(session, tag=["title:Foo"]))
                 assert len(result) == 2
@@ -172,6 +221,10 @@ class TestSelector:
                 result = list(selector.load_album_entities(session, tag=["title:Foo", "artist:Baz"]))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
+
+                result = list(selector.load_album_entities(session, tag=["title:Foo", "artist:Baz"], invert=True))
+                assert len(result) == 1
+                assert result[0].path.startswith("foo")
 
                 result = list(selector.load_album_entities(session, tag=["albumartist"]))
                 assert len(result) == 1

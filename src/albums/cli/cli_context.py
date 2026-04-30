@@ -53,6 +53,7 @@ def setup(
     matchers_list: Sequence[Tuple[str, str]],
     dir: str,
     regex: bool,
+    invert: bool,
     db_file: str | None,
 ):
     app_context.click_ctx = ctx
@@ -72,7 +73,7 @@ def setup(
     app_context.is_filtered = bool(matchers_list)
     matchers: defaultdict[str, list[str]] = defaultdict(list)
     matchers = reduce(lambda acc, kv: acc[kv[0]].append(kv[1]) or acc, matchers_list, matchers)
-    app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, **matchers)
+    app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, invert=invert, **matchers)
     if dir:
         if "path" in matchers:
             del matchers["path"]

@@ -26,6 +26,7 @@ rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_lengt
 @click.group(epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
 @click.option("--match", "-m", "matchers", metavar="K=V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m tag=artist:Foo")
 @click.option("--regex", "-r", is_flag=True, help="enable regex and partial matches")
+@click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")
 @click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")
 @click.option("--path", "-p", "paths", metavar="PATH", multiple=True, help="match album path (same as -m path=...)")
 @click.option("--dir", "-d", metavar="PATH", help="operate on a directory outside of the library")
@@ -43,6 +44,7 @@ def albums_group(
     matchers: list[str],
     dir: str,
     regex: bool,
+    invert: bool,
     db_file: str,
     verbose: int,
 ):
@@ -54,7 +56,7 @@ def albums_group(
         + [("path", p) for p in (paths or [])]
         + [(kv[0], kv[1]) for kv in (matcher.split("=", 1) for matcher in matchers)]
     )
-    initial_scan = setup(ctx, app_context, verbose, matchers_list, dir, regex, db_file)
+    initial_scan = setup(ctx, app_context, verbose, matchers_list, dir, regex, invert, db_file)
 
     if initial_scan:
         scanner.scan(app_context)
