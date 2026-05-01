@@ -30,25 +30,6 @@ class Match:
 
 def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}, invert: bool = False) -> Generator[Album, None, None]:
     stmt = select(Album)
-
-    collection_names = filter.get("collection", [])
-    if collection_names:
-        # TODO: make this consistent, maybe everything should be "and" instead of some being "or"
-        clause = or_(
-            *(Album.collection_associations.any(_compare(CollectionEntity.collection_name, c.comparator, c.value)) for c in collection_names)
-        )
-        stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
-
-    ignore_check_names = filter.get("ignore_check", [])
-    if ignore_check_names:
-        clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, c.comparator, c.value)) for c in ignore_check_names))
-        stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
-
-    match_paths = filter.get("path", [])
-    if match_paths:
-        clause = or_(*(_compare(Album.path, c.comparator, c.value) for c in match_paths))
-        stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
-
     tags: list[Tuple[str, List[Match]]] = [(k.partition(":")[2], matches) for k, matches in filter.items() if k.startswith("tag:")]
     if tags:
         track_match = select(Track.track_id).where(Album.album_id == Track.album_id)
@@ -57,6 +38,18 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
             clauses = [or_(*(_compare(entity.value, m.comparator, m.value) for m in matches))] if matches else []  # empty = tag exists, any value
             track_match = track_match.join(entity, and_(Track.track_id == entity.track_id, entity.tag == BasicTag(tag), *clauses))
         stmt = stmt.where(not_(exists(track_match))) if invert else stmt.where(exists(track_match))
+
+    for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("tag:")):
+        if key == "collection":
+            # TODO: make this consistent, maybe everything should be "and" instead of some being "or"
+            clause = or_(*(Album.collection_associations.any(_compare(CollectionEntity.collection_name, m.comparator, m.value)) for m in matches))
+        elif key == "ignore_check":
+            clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value)) for m in matches))
+        elif key == "path":
+            clause = or_(*(_compare(Album.path, m.comparator, m.value) for m in matches))
+        else:
+            raise ValueError(f"invalid filter key {key}")
+        stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
 
     yield from (album[0] for album in session.execute(stmt.order_by(Album.path)))
 
