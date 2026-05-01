@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from ..app import Context
 from ..config import SyncDestination
-from ..database import selector
+from ..database.selector import Match, load_album_entities
 from ..library.paths import make_template_path
 from ..library.transcoder import Transcoder
 from ..types import Album
@@ -69,7 +69,7 @@ class Synchronizer:
     def _analyze(self, session: Session) -> SyncOperations:
         existing_dest_paths = set(self._dest.path_root.rglob("*"))  # loads all paths in destination into a set in memory!
         if self._dest.collection:
-            source_albums = selector.load_album_entities(session, regex=False, collection=[self._dest.collection])
+            source_albums = load_album_entities(session, regex=False, collection=[Match(self._dest.collection)])
         else:
             source_albums = self._ctx.select_album_entities(session)
 

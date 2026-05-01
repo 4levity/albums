@@ -2,13 +2,14 @@ import rich.traceback
 import rich_click as click
 
 import albums
+from albums.database.selector import Comparator
 
 from .. import app
 from ..library import scanner
 from .check import check
 from .checks_ignore import checks_ignore
 from .checks_notice import checks_notice
-from .cli_context import DEFAULT_DB_LOCATION, pass_context, setup
+from .cli_context import DEFAULT_DB_LOCATION, FilterCriteria, pass_context, setup
 from .click_custom import InvisibleCountParam
 from .collections_add import collections_add
 from .collections_remove import collections_remove
@@ -51,12 +52,13 @@ def albums_group(
     if any(str.count(matcher, "=") < 1 for matcher in matchers):
         app_context.console.print('--match/-m options must be in the format "key=value"')
 
-    matchers_list = (
-        [("collection", c) for c in (collections or [])]
-        + [("path", p) for p in (paths or [])]
-        + [(kv[0], kv[1]) for kv in (matcher.split("=", 1) for matcher in matchers)]
+    default_cmp = Comparator.MATCH_REGEX if regex else Comparator.EQ
+    filter_criteria = (
+        [FilterCriteria("collection", c, default_cmp) for c in (collections or [])]
+        + [FilterCriteria("path", p, default_cmp) for p in (paths or [])]
+        + [FilterCriteria(kv[0], kv[1], default_cmp) for kv in (matcher.split("=", 1) for matcher in matchers)]
     )
-    initial_scan = setup(ctx, app_context, verbose, matchers_list, dir, regex, invert, db_file)
+    initial_scan = setup(ctx, app_context, verbose, filter_criteria, dir, regex, invert, db_file)
 
     if initial_scan:
         scanner.scan(app_context)

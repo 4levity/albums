@@ -6,7 +6,7 @@ from rich.markup import escape
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..database import selector
+from ..database.selector import Match, load_album_entities
 from ..interactive.interact import interact, prompt_ignore_checks
 from ..library import scanner
 from ..tagger.provider import AlbumTaggerProvider
@@ -149,7 +149,7 @@ class Checker:
                 if not deleted and disposition.maybe_changed:
                     session.flush()
                     path = album.path
-                    (_, any_changes) = scanner.scan(self.ctx, session, selector.load_album_entities(session, path=[path]), reread=True)
+                    (_, any_changes) = scanner.scan(self.ctx, session, load_album_entities(session, path=[Match(path)]), reread=True)
                     maybe_fixable = any_changes
                 elif deleted:
                     scanner.scan(self.ctx, session, iter([album]))  # delete immediately

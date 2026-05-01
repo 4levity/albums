@@ -2,16 +2,18 @@ import logging
 import os
 from collections import defaultdict
 from copy import copy
+from dataclasses import dataclass
 from functools import reduce
 from pathlib import Path
-from typing import Final, Sequence, Tuple
+from typing import Final, List, Sequence
 
 import click
 from rich.logging import RichHandler
 
 from ..app import Context
 from ..config import PLATFORM_DIRS, RescanOption
-from ..database import connection, db_config, selector
+from ..database import connection, db_config
+from ..database.selector import Comparator, Match, load_album_entities
 
 logger: Final = logging.getLogger(__name__)
 
@@ -20,6 +22,13 @@ pass_context: Final = click.make_pass_decorator(Context, ensure=True)
 
 
 DEFAULT_DB_LOCATION: Final = str(PLATFORM_DIRS.user_config_path / "albums.db")
+
+
+@dataclass(frozen=True)
+class FilterCriteria:
+    field: str
+    value: str
+    comparator: Comparator = Comparator.EQ
 
 
 def require_configured(ctx: Context) -> None:
@@ -50,7 +59,7 @@ def setup(
     ctx: click.Context,
     app_context: Context,
     verbose: int,
-    matchers_list: Sequence[Tuple[str, str]],
+    filter_criteria: Sequence[FilterCriteria],
     dir: str,
     regex: bool,
     invert: bool,
@@ -70,16 +79,16 @@ def setup(
         if not dir:
             logger.info("the --dir option is not specified and albums database is not found")
 
-    app_context.is_filtered = bool(matchers_list)
-    matchers: defaultdict[str, list[str]] = defaultdict(list)
-    matchers = reduce(lambda acc, kv: acc[kv[0]].append(kv[1]) or acc, matchers_list, matchers)
-    app_context.select_album_entities = lambda session: selector.load_album_entities(session, regex=regex, invert=invert, **matchers)
+    app_context.is_filtered = bool(filter_criteria)
+    filter: defaultdict[str, List[Match]] = defaultdict(list)
+    filter = reduce(lambda acc, kv: acc[kv.field].append(Match(kv.value, kv.comparator)) or acc, filter_criteria, filter)
+    app_context.select_album_entities = lambda session: load_album_entities(session, invert=invert, regex=regex, **filter)
     if dir:
-        if "path" in matchers:
-            del matchers["path"]
+        if "path" in filter:
+            del filter["path"]
         enter_folder_context(app_context, dir)
         # create selector for folder context
-        app_context.select_album_entities = lambda session: selector.load_album_entities(session)
+        app_context.select_album_entities = lambda session: load_album_entities(session)
     elif not has_database:
         # it's simpler to always give app_context a database than to allow it to be Engine | None
         app_context.is_persistent = False
