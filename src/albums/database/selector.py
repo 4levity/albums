@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Generator, List, Mapping, Tuple
 
-from sqlalchemy import and_, exists, not_, or_, select
+from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
 from ..tagger.types import BasicTag
@@ -47,6 +47,9 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
             clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value)) for m in matches))
         elif key == "path":
             clause = or_(*(_compare(Album.path, m.comparator, m.value) for m in matches))
+        elif key == "bitrate":
+            track_matchers = (_compare(Track.stream_bitrate, m.comparator, int(m.value)) for m in matches)
+            clause = exists(Track.track_id).where(and_(Track.album_id == Album.album_id, *track_matchers))
         else:
             raise ValueError(f"invalid filter key {key}")
         stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
@@ -54,14 +57,16 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
     yield from (album[0] for album in session.execute(stmt.order_by(Album.path)))
 
 
-def _compare(value: InstrumentedAttribute[str], comparator: Comparator, target: str):
+def _compare(
+    value: InstrumentedAttribute[str] | InstrumentedAttribute[int] | ScalarSelect[str] | ScalarSelect[int], comparator: Comparator, target: str | int
+):
     match comparator:
         case Comparator.EQ:
             return value == target
         case Comparator.NEQ:
             return value != target
         case Comparator.MATCH_REGEX:
-            return value.regexp_match(target)
+            return value.regexp_match(str(target))
         case Comparator.LT:
             return value < target
         case Comparator.LTE:

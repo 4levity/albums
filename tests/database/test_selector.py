@@ -41,8 +41,16 @@ class TestSelector:
         TestSelector.album2 = Album(
             path="baz" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.TITLE: "A", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"}),
-                Track(filename="2.flac", tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"}),
+                Track(
+                    filename="1.flac",
+                    stream=StreamInfo(1.0, 64000, 2, "FLAC", 44100, 16),
+                    tag={BasicTag.TITLE: "A", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
+                ),
+                Track(
+                    filename="2.flac",
+                    stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100, 16),
+                    tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
+                ),
             ],
         )
 
@@ -275,5 +283,41 @@ class TestSelector:
                 result = list(load_album_entities(session, {"tag:album": [Match("=:=")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
+        finally:
+            db.dispose()
+
+    def test_compare_any_track_bitrate(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                session.flush()
+
+                result = list(load_album_entities(session, {"bitrate": [Match("64000")]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"bitrate": [Match("128000", Comparator.GTE)]}))
+                assert len(result) == 2
+
+                result = list(load_album_entities(session, {"bitrate": [Match("128000", Comparator.GT)]}))
+                assert len(result) == 0
+
+                result = list(load_album_entities(session, {"bitrate": [Match("64000")]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"bitrate": [Match("60000", Comparator.GT), Match("70000", Comparator.LT)]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"bitrate": [Match("128000", Comparator.LT)]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"bitrate": [Match("64000", Comparator.LTE)]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
         finally:
             db.dispose()
