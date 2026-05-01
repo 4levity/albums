@@ -149,7 +149,7 @@ class Checker:
                 if not deleted and disposition.maybe_changed:
                     session.flush()
                     path = album.path
-                    (_, any_changes) = scanner.scan(self.ctx, session, load_album_entities(session, path=[Match(path)]), reread=True)
+                    (_, any_changes) = scanner.scan(self.ctx, session, load_album_entities(session, {"path": [Match(path)]}), reread=True)
                     maybe_fixable = any_changes
                 elif deleted:
                     scanner.scan(self.ctx, session, iter([album]))  # delete immediately

@@ -166,7 +166,7 @@ class TestCli:
 
     def test_filter_path_regex_match(self):
         self.run(["scan"], init=True)
-        result = self.run(["-rm", "path=.oo", "list", "--json"])
+        result = self.run(["-m", "path~.oo", "list", "--json"])
         obj = json.loads(result.output)
         assert len(obj) == 1
         assert obj[0]["path"] == "foo" + os.sep

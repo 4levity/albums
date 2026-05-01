@@ -54,19 +54,32 @@ could run `albums --regex --path Nirvana list`. See help for options.
 ### --match
 
 The `--match` / `-m` option provides several ways to filter albums. The same key
-may be specified more than once. If `--regex` / `-r` is specified, the values
-are regular expression partial matches.
+may be specified more than once. The parameter to `-m` may be one of these
+comparisons:
+
+- `key=value`
+- `key!=value` (not equals)
+- `key~regex` (matches regular expression)
+- `key<value`
+- `key<=value`
+- `key>value`
+- `key>=value`
 
 <!-- pyml disable line-length -->
 
-| Key              | Description                                       | Example                        |
-| ---------------- | ------------------------------------------------- | ------------------------------ |
-| **path**         | match _any_ of the given paths within the library | `-rm path=Soundtracks`         |
-| **tag**          | have _all_ specified tags, in _any_ tracks        | `-m tag=artist:Queen`          |
-| **collection**   | be in _any_ of the specified "collections"        | `-m collection=favorites`      |
-| **ignore_check** | ignore _any_ of the given checks                  | `-m ignore_check=cover-unique` |
+| Key              | Description                                                     | Example                        |
+| ---------------- | --------------------------------------------------------------- | ------------------------------ |
+| **path**         | match _any_ of the given paths within the library               | `-m path~Soundtracks`          |
+| **tag:XXX**      | _any_ track in the album matches _all_ specified tag conditions | `-m tag:artist=Queen`          |
+| **collection**   | be in _any_ of the specified "collections"                      | `-m collection=favorites`      |
+| **ignore_check** | ignore _any_ of the given checks                                | `-m ignore_check=cover-unique` |
 
 <!-- pyml enable line-length -->
+
+### --invert
+
+This option inverts the sense of the filter. All albums that **do not** match
+the specified conditions will be included.
 
 ## More Commands
 

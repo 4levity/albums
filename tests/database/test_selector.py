@@ -62,8 +62,8 @@ class TestSelector:
                 session.add(TestSelector.album)
                 session.flush()
                 assert len(list(load_album_entities(session))) == 1
-                assert len(list(load_album_entities(session, path=[Match("foo")]))) == 0  # no partial match
-                result = list(load_album_entities(session, path=[Match("foo" + os.sep)]))  # exact match
+                assert len(list(load_album_entities(session, {"path": [Match("foo")]}))) == 0  # no partial match
+                result = list(load_album_entities(session, {"path": [Match("foo" + os.sep)]}))  # exact match
                 assert len(result) == 1
                 assert result[0].path == "foo" + os.sep
                 assert result[0].scanner == 3
@@ -85,6 +85,39 @@ class TestSelector:
         finally:
             db.dispose()
 
+    def test_operators_strings(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                session.flush()
+                assert len(list(load_album_entities(session))) == 2
+
+                result = list(load_album_entities(session, {"path": [Match("f.o", Comparator.MATCH_REGEX)]}))
+                assert len(result) == 1
+                assert "foo" in result[0].path
+
+                result = list(load_album_entities(session, {"path": [Match("foo" + os.sep, Comparator.NEQ)]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"path": [Match("baz" + os.sep, Comparator.GT)]}))
+                assert len(result) == 1
+                assert "foo" in result[0].path
+
+                result = list(load_album_entities(session, {"path": [Match("baz" + os.sep, Comparator.GTE)]}))
+                assert len(result) == 2
+
+                result = list(load_album_entities(session, {"path": [Match("baz" + os.sep, Comparator.LT)]}))
+                assert len(result) == 0
+
+                result = list(load_album_entities(session, {"path": [Match("baz" + os.sep, Comparator.LTE)]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+        finally:
+            db.dispose()
+
     def test_select_multiple_and_regex(self):
         db = connection.open(connection.MEMORY)
         try:
@@ -93,9 +126,9 @@ class TestSelector:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
                 assert len(list(load_album_entities(session))) == 2
-                assert len(list(load_album_entities(session, path=[Match("o." + re_sep, Comparator.MATCH_REGEX)]))) == 1  # regex match
-                assert len(list(load_album_entities(session, path=[Match("x." + re_sep, Comparator.MATCH_REGEX)]))) == 0  # no regex match
-                assert len(list(load_album_entities(session, path=[Match("(foo|baz)", Comparator.MATCH_REGEX)]))) == 2
+                assert len(list(load_album_entities(session, {"path": [Match("o." + re_sep, Comparator.MATCH_REGEX)]}))) == 1  # regex match
+                assert len(list(load_album_entities(session, {"path": [Match("x." + re_sep, Comparator.MATCH_REGEX)]}))) == 0  # no regex match
+                assert len(list(load_album_entities(session, {"path": [Match("(foo|baz)", Comparator.MATCH_REGEX)]}))) == 2
         finally:
             db.dispose()
 
@@ -105,12 +138,12 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, collection=[Match(".est", Comparator.MATCH_REGEX)]))
+                result = list(load_album_entities(session, {"collection": [Match(".est", Comparator.MATCH_REGEX)]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
-                result = list(load_album_entities(session, collection=[Match(".est")]))
+                result = list(load_album_entities(session, {"collection": [Match(".est")]}))
                 assert len(result) == 0
-                result = list(load_album_entities(session, collection=[Match("test"), Match("anything")]))
+                result = list(load_album_entities(session, {"collection": [Match("test"), Match("anything")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
         finally:
@@ -122,12 +155,12 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, collection=[Match(".est", Comparator.MATCH_REGEX)], invert=True))
+                result = list(load_album_entities(session, {"collection": [Match(".est", Comparator.MATCH_REGEX)]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
-                result = list(load_album_entities(session, collection=[Match(".est")], invert=True))
+                result = list(load_album_entities(session, {"collection": [Match(".est")]}, invert=True))
                 assert len(result) == 2
-                result = list(load_album_entities(session, collection=[Match("test"), Match("anything")], invert=True))
+                result = list(load_album_entities(session, {"collection": [Match("test"), Match("anything")]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
         finally:
@@ -139,12 +172,12 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, ignore_check=[Match("artist-t", Comparator.MATCH_REGEX)]))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-t", Comparator.MATCH_REGEX)]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
-                result = list(load_album_entities(session, ignore_check=[Match("artist-t")]))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-t")]}))
                 assert len(result) == 0
-                result = list(load_album_entities(session, ignore_check=[Match("artist-tag")]))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-tag")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
         finally:
@@ -156,12 +189,12 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, ignore_check=[Match("artist-t", Comparator.MATCH_REGEX)], invert=True))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-t", Comparator.MATCH_REGEX)]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
-                result = list(load_album_entities(session, ignore_check=[Match("artist-t")], invert=True))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-t")]}, invert=True))
                 assert len(result) == 2
-                result = list(load_album_entities(session, ignore_check=[Match("artist-tag")], invert=True))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-tag")]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
         finally:
@@ -173,21 +206,23 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, ignore_check=[Match("artist-tag"), Match("anything")]))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-tag"), Match("anything")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
                 result = list(
-                    load_album_entities(session, ignore_check=[Match("artist-t", Comparator.MATCH_REGEX), Match("anything", Comparator.MATCH_REGEX)])
+                    load_album_entities(
+                        session, {"ignore_check": [Match("artist-t", Comparator.MATCH_REGEX), Match("anything", Comparator.MATCH_REGEX)]}
+                    )
                 )
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
 
-                result = list(load_album_entities(session, ignore_check=[Match("artist-tag"), Match("anything")], invert=True))
+                result = list(load_album_entities(session, {"ignore_check": [Match("artist-tag"), Match("anything")]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
                 result = list(
                     load_album_entities(
-                        session, ignore_check=[Match("artist-t", Comparator.MATCH_REGEX), Match("anything", Comparator.MATCH_REGEX)], invert=True
+                        session, {"ignore_check": [Match("artist-t", Comparator.MATCH_REGEX), Match("anything", Comparator.MATCH_REGEX)]}, invert=True
                     )
                 )
                 assert len(result) == 1
@@ -202,42 +237,42 @@ class TestSelector:
             with Session(db) as session:
                 session.add(TestSelector.album)
                 session.add(TestSelector.album2)
-                result = list(load_album_entities(session, tag=[Match("artist:Baz")]))
+                result = list(load_album_entities(session, {"tag:artist": [Match("Baz")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
 
-                result = list(load_album_entities(session, tag=[Match("artist:Baz")], invert=True))
+                result = list(load_album_entities(session, {"tag:artist": [Match("Baz")]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
 
-                result = list(load_album_entities(session, tag=[Match("title:F(o)o")]))
+                result = list(load_album_entities(session, {"tag:title": [Match("F(o)o")]}))
                 assert len(result) == 0
 
-                result = list(load_album_entities(session, tag=[Match("title:F(o)o")], invert=True))
+                result = list(load_album_entities(session, {"tag:title": [Match("F(o)o")]}, invert=True))
                 assert len(result) == 2
 
-                result = list(load_album_entities(session, tag=[Match("title:F(o)o")], regex=True))
+                result = list(load_album_entities(session, {"tag:title": [Match("F(o)o", Comparator.MATCH_REGEX)]}))
                 assert len(result) == 2
 
-                result = list(load_album_entities(session, tag=[Match("title:F(o)o")], regex=True, invert=True))
+                result = list(load_album_entities(session, {"tag:title": [Match("F(o)o", Comparator.MATCH_REGEX)]}, invert=True))
                 assert len(result) == 0
 
-                result = list(load_album_entities(session, tag=[Match("title:Foo")]))
+                result = list(load_album_entities(session, {"tag:title": [Match("Foo")]}))
                 assert len(result) == 2
 
-                result = list(load_album_entities(session, tag=[Match("title:Foo"), Match("artist:Baz")]))
+                result = list(load_album_entities(session, {"tag:title": [Match("Foo")], "tag:artist": [Match("Baz")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("baz")
 
-                result = list(load_album_entities(session, tag=[Match("title:Foo"), Match("artist:Baz")], invert=True))
+                result = list(load_album_entities(session, {"tag:title": [Match("Foo")], "tag:artist": [Match("Baz")]}, invert=True))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
 
-                result = list(load_album_entities(session, tag=[Match("albumartist")]))
+                result = list(load_album_entities(session, {"tag:albumartist": []}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
 
-                result = list(load_album_entities(session, tag=[Match("album:=:=")]))
+                result = list(load_album_entities(session, {"tag:album": [Match("=:=")]}))
                 assert len(result) == 1
                 assert result[0].path.startswith("foo")
         finally:

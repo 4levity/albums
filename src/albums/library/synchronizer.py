@@ -69,7 +69,7 @@ class Synchronizer:
     def _analyze(self, session: Session) -> SyncOperations:
         existing_dest_paths = set(self._dest.path_root.rglob("*"))  # loads all paths in destination into a set in memory!
         if self._dest.collection:
-            source_albums = load_album_entities(session, regex=False, collection=[Match(self._dest.collection)])
+            source_albums = load_album_entities(session, {"collection": [Match(self._dest.collection)]})
         else:
             source_albums = self._ctx.select_album_entities(session)
 

@@ -30,6 +30,12 @@ class FilterCriteria:
     value: str
     comparator: Comparator = Comparator.EQ
 
+    @classmethod
+    def from_expr(cls, expr: str):
+        comparator = next((comparator for comparator in Comparator if comparator.value in expr), None)
+        (field, _, value) = expr.partition(comparator.value) if comparator else (expr, "", "")
+        return cls(field, value, comparator or Comparator.EQ)
+
 
 def require_configured(ctx: Context) -> None:
     if not ctx.db_path.is_file():
@@ -61,7 +67,6 @@ def setup(
     verbose: int,
     filter_criteria: Sequence[FilterCriteria],
     dir: str,
-    regex: bool,
     invert: bool,
     db_file: str | None,
 ):
@@ -82,7 +87,7 @@ def setup(
     app_context.is_filtered = bool(filter_criteria)
     filter: defaultdict[str, List[Match]] = defaultdict(list)
     filter = reduce(lambda acc, kv: acc[kv.field].append(Match(kv.value, kv.comparator)) or acc, filter_criteria, filter)
-    app_context.select_album_entities = lambda session: load_album_entities(session, invert=invert, regex=regex, **filter)
+    app_context.select_album_entities = lambda session: load_album_entities(session, filter, invert=invert)
     if dir:
         if "path" in filter:
             del filter["path"]
