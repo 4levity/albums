@@ -20,7 +20,7 @@ class TestSelector:
                 Track(
                     filename="1.flac",
                     tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Bar", BasicTag.ALBUMARTIST: "Various Artists", BasicTag.ALBUM: "=:="},
-                    stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100, 16),
+                    stream=StreamInfo(1.0, 128000, 6, "FLAC", 48000, 24),
                     pictures=[
                         TrackPicture(
                             picture_info=PictureInfo("image/jpeg", 200, 200, 24, 1024, b"1234", (("format", "image/png"),)),
@@ -48,7 +48,7 @@ class TestSelector:
                 ),
                 Track(
                     filename="2.flac",
-                    stream=StreamInfo(1.0, 128000, 2, "FLAC", 44100, 16),
+                    stream=StreamInfo(1.0, 128000, 2, "MP3", 44100, 0),
                     tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
                 ),
             ],
@@ -319,5 +319,33 @@ class TestSelector:
                 result = list(load_album_entities(session, {"bitrate": [Match("64000", Comparator.LTE)]}))
                 assert len(result) == 1
                 assert "baz" in result[0].path
+        finally:
+            db.dispose()
+
+    def test_compare_any_track_stream_props(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                session.flush()
+
+                result = list(load_album_entities(session, {"bits_per_sample": [Match("16")]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"channels": [Match("6")]}))
+                assert len(result) == 1
+                assert "foo" in result[0].path
+
+                result = list(load_album_entities(session, {"codec": [Match("opus")]}))
+                assert len(result) == 0
+                result = list(load_album_entities(session, {"codec": [Match("MP3")]}))
+                assert len(result) == 1
+                assert "baz" in result[0].path
+
+                result = list(load_album_entities(session, {"sample_rate": [Match("48000")]}))
+                assert len(result) == 1
+                assert "foo" in result[0].path
         finally:
             db.dispose()

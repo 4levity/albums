@@ -28,6 +28,15 @@ class Match:
     comparator: Comparator = Comparator.EQ
 
 
+_TRACK_COLUMNS: Final = {
+    "bitrate": (Track.stream_bitrate, int),
+    "bits_per_sample": (Track.stream_bits_per_sample, int),
+    "channels": (Track.stream_channels, int),
+    "codec": (Track.stream_codec, str),
+    "sample_rate": (Track.stream_sample_rate, int),
+}
+
+
 def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}, invert: bool = False) -> Generator[Album, None, None]:
     stmt = select(Album)
     tags: list[Tuple[str, List[Match]]] = [(k.partition(":")[2], matches) for k, matches in filter.items() if k.startswith("tag:")]
@@ -47,8 +56,9 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
             clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value)) for m in matches))
         elif key == "path":
             clause = or_(*(_compare(Album.path, m.comparator, m.value) for m in matches))
-        elif key == "bitrate":
-            track_matchers = (_compare(Track.stream_bitrate, m.comparator, int(m.value)) for m in matches)
+        elif key in _TRACK_COLUMNS:
+            (column, cls) = _TRACK_COLUMNS[key]
+            track_matchers = (_compare(column, m.comparator, cls(m.value)) for m in matches)
             clause = exists(Track.track_id).where(and_(Track.album_id == Album.album_id, *track_matchers))
         else:
             raise ValueError(f"invalid filter key {key}")
