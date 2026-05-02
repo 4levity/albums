@@ -65,6 +65,7 @@ class ID3v1Policy(IntEnum):
 
 
 DEFAULT_FILE_CONVERT_PROFILE: Final = "mp3"
+ALL_ALBUMS = "< use all albums >"
 
 
 @dataclass
@@ -76,9 +77,11 @@ class SyncDestination:
     allow_file_types: List[str] = field(default_factory=list[str])
     convert_profile: str = DEFAULT_FILE_CONVERT_PROFILE
     max_kbps: int = 0
+    max_sample_rate: int = 0
+    max_bits_per_sample: int = 0
 
     def __str__(self) -> str:
-        return f"{self.collection} -> {self.path_root}"
+        return f"sync {self.collection or 'all albums'} -> {self.path_root}"
 
     def __lt__(self, other: SyncDestination):
         return self.collection < other.collection or (self.collection == other.collection and str(self.path_root) < str(other.path_root))
@@ -92,6 +95,8 @@ class SyncDestination:
             "allow_file_types": self.allow_file_types,
             "convert_profile": self.convert_profile,
             "max_kbps": self.max_kbps,
+            "max_sample_rate": self.max_sample_rate,
+            "max_bits_per_sample": self.max_bits_per_sample,
         }
 
     @classmethod
@@ -104,6 +109,8 @@ class SyncDestination:
             values["allow_file_types"] if ("allow_file_types" in values and isinstance(values["allow_file_types"], list)) else [],
             str(values.get("convert_profile", DEFAULT_FILE_CONVERT_PROFILE)),
             int(str(values.get("max_kbps", 0))),
+            int(str(values.get("max_sample_rate", 0))),
+            int(str(values.get("max_bits_per_sample", 0))),
         )
 
 

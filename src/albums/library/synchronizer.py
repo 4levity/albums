@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..config import SyncDestination
+from ..config import ALL_ALBUMS, SyncDestination
 from ..database.selector import Match, load_album_entities
 from ..library.paths import make_template_path
 from ..library.transcoder import Transcoder
@@ -68,7 +68,9 @@ class Synchronizer:
 
     def _analyze(self, session: Session) -> SyncOperations:
         existing_dest_paths = set(self._dest.path_root.rglob("*"))  # loads all paths in destination into a set in memory!
-        if self._dest.collection:
+        if self._dest.collection == ALL_ALBUMS:
+            source_albums = load_album_entities(session)
+        elif self._dest.collection:
             source_albums = load_album_entities(session, {"collection": [Match(self._dest.collection)]})
         else:
             source_albums = self._ctx.select_album_entities(session)
@@ -207,5 +209,9 @@ class Synchronizer:
         ):
             return True
         if self._dest.max_kbps and sum(track.stream.bitrate / 1024.0 for track in album.tracks) / len(album.tracks) > self._dest.max_kbps:
+            return True
+        if self._dest.max_sample_rate and any(track.stream.sample_rate > self._dest.max_sample_rate for track in album.tracks):
+            return True
+        if self._dest.max_bits_per_sample and any(track.stream.bits_per_sample > self._dest.max_bits_per_sample for track in album.tracks):
             return True
         return False

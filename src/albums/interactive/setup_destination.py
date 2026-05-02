@@ -10,11 +10,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..config import SyncDestination
+from ..config import ALL_ALBUMS, SyncDestination
 from ..database import db_config
 from ..library.paths import show_template_path_help
 from ..tagger.folder import AUDIO_FILE_SUFFIXES
 from ..types import CollectionEntity
+
+_USE_ALL_ALBUMS = ">> Use all albums"
 
 
 def configure_destinations(ctx: Context):
@@ -62,9 +64,9 @@ def _get_collection(ctx: Context, default: str = "") -> str:
         collection_names = [
             c.collection_name for (c,) in session.execute(select(CollectionEntity).order_by(CollectionEntity.collection_name)).tuples()
         ]
-    options = [(name, name) for name in collection_names] + [("", ">> Create a new collection")]
-    default_option = default if default else (collection_names[0] if len(collection_names) else "")
-    option = choice(message="Which albums collection to use for this sync destination?", options=options, default=default_option)
+    options = [(name, name) for name in collection_names] + [(ALL_ALBUMS, _USE_ALL_ALBUMS), ("", ">> Create a new collection")]
+    default_option = default if default else (collection_names[0] if len(collection_names) else "__all__")
+    option = choice(message="Which albums/collection to use for this sync destination?", options=options, default=default_option)
     if option:
         return option
     while not (option := prompt("Collection name: ")):
@@ -82,12 +84,14 @@ def _configure_destination(ctx: Context, destination_ix: int):
     option = "_"
     while option and option not in {"save", "delete", "cancel"}:
         options: list[tuple[str, str]] = [
-            ("collection", f"Collection: {dest.collection}"),
+            ("collection", f"Collection: {dest.collection or '[no collection, use all albums]'}"),
             ("path_root", f"Destination path root: {escape(str(dest.path_root))}"),
             ("relpath_template_artist", f"Album path template (albums with artist) or blank=same: {dest.relpath_template_artist.template}"),
             ("relpath_template_compilation", f"Album path template (compilations) or blank=same: {dest.relpath_template_compilation.template}"),
             ("allow_file_types", f"Music file types allowed, or blank=any: {','.join(dest.allow_file_types)}"),
-            ("max_kbps", f"Max audio kbps or 0 for none: {dest.max_kbps}"),
+            ("max_kbps", f"Max audio bitrate in kbps or 0 for none: {dest.max_kbps}"),
+            ("max_sample_rate", f"Max sample rate in Hz or 0 for none: {dest.max_sample_rate}"),
+            ("max_bits_per_sample", f"Max bits per sample (if applicable) or 0 for none: {dest.max_bits_per_sample}"),
             ("convert_profile", f"If wrong type or over max kbps, use transcode options: {dest.convert_profile}"),
             ("save", ">> Save"),
             ("delete", ">> Delete this destination"),
@@ -125,6 +129,18 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ):
                 pass
             dest.max_kbps = int(max_kbps)
+        elif option == "max_sample_rate":
+            while not str.isdecimal(max_sample_rate := prompt("Max sample rate in Hz or 0 to allow all: ", default=str(dest.max_kbps))):
+                pass
+            dest.max_sample_rate = int(max_sample_rate)
+        elif option == "max_bits_per_sample":
+            while not str.isdecimal(
+                max_bits_per_sample := prompt(
+                    "Max bits per sample (for formats that have bits per sample) or 0 to allow all: ", default=str(dest.max_kbps)
+                )
+            ):
+                pass
+            dest.max_bits_per_sample = int(max_bits_per_sample)
         elif option == "convert_profile":
             ctx.console.print()
             ctx.console.print("Profile is formatted as: [bold]\\[FFMPEG_OUTPUT_OPTIONS] FILE_TYPE[/bold]")
