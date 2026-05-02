@@ -67,14 +67,22 @@ comparisons:
 
 <!-- pyml disable line-length -->
 
-| Key              | Description                                                     | Example                        |
-| ---------------- | --------------------------------------------------------------- | ------------------------------ |
-| **path**         | match _any_ of the given paths within the library               | `-m path~Soundtracks`          |
-| **tag:XXX**      | _any_ track in the album matches _all_ specified tag conditions | `-m tag:artist=Queen`          |
-| **collection**   | be in _any_ of the specified "collections"                      | `-m collection=favorites`      |
-| **ignore_check** | ignore _any_ of the given checks                                | `-m ignore_check=cover-unique` |
+| Key                 | Description                                         | Example                        |
+| ------------------- | --------------------------------------------------- | ------------------------------ |
+| **collection**      | matches _any_ of the specified "collections"        | `-m collection=favorites`      |
+| **ignore_check**    | is ignoring _any_ of the matching checks            | `-m ignore_check=cover-unique` |
+| **path**            | matches _any_ of the specified paths in the library | `-m path~Soundtracks`          |
+| **tag:XXX**         | _any_ track matches _all_ specified tag conditions  | `-m tag:artist=Queen`          |
+| **bitrate**         | _any_ track has matching bitrate                    | `-m bitrate>=128000`           |
+| **bits_per_sample** | _any_ track has matching bits per sample\*          | `-m bits_per_sample>16`        |
+| **channels**        | _any_ track has matching channel count              | `-m channels=1`                |
+| **codec**           | _any_ track has matching codec                      | `-m codec!=FLAC`               |
+| **sample_rate**     | _any_ track has matching sample rate                | `-m sample_rate>=44100`        |
 
 <!-- pyml enable line-length -->
+
+\* - MP3, Ogg Vorbis and some other lossy formats do not have fixed bit depth
+and bits_per_sample is always 0.
 
 ### --invert
 

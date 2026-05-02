@@ -17,7 +17,7 @@ accessed by the operating system like a regular storage device.
 `albums` can associate specific albums with "collection" tags (see
 [Usage](./usage.md)). A collection could define a subset of the library to copy
 to a digital audio player, phone or memory card. The command
-`albums --collection top100 sync <destination>` would copy all albums in the
+`albums -m collection=top100 sync <destination>` would copy all albums in the
 "top100" collection to the destination.
 
 ## Sync and delete
@@ -71,11 +71,13 @@ Transcoded files will be tagged with basic tags and pictures as supported by
 
 <!-- pyml disable line-length -->
 
-| Transcoder Option  | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| `allow_file_types` | List of allowed audio file types - if other, transcode album |
-| `max_kbps`         | Maximum bitrate (album average) - if higher, transcode album |
-| `convert_profile`  | Conversion profile including _ffmpeg_ options and file type  |
+| Transcoder Option     | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| `allow_file_types`    | List of allowed audio file types - if other, transcode album       |
+| `max_kbps`            | Maximum bitrate, kbps - if higher (album average), transcode album |
+| `max_sample_rate`     | Maximum sample rate, Hz - if higher (any track), transcode album   |
+| `max_bits_per_sample` | Maximum bits per sample - if higher (any track), transcode album   |
+| `convert_profile`     | Conversion profile including _ffmpeg_ options and file type        |
 
 <!-- pyml enable line-length -->
 

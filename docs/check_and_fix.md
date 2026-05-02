@@ -46,18 +46,19 @@ look for and/or fix issues.
 
 <!-- pyml disable line-length -->
 
-| Task                                                   | Example Command                                   |
-| ------------------------------------------------------ | ------------------------------------------------- |
-| Run all enabled checks on the library (no fixing)      | `albums check`                                    |
-| Run all enabled checks on any folder                   | `albums --dir /path/to/an/album check`            |
-| Run enabled checks in matching folders                 | `albums -regex --path "Foo" check`                |
-| Run a specific check (and checks it requires)          | `albums check duplicate-image`                    |
-| When there is a quick fix, stop and ask what to do     | `albums check --fix`                              |
-| Check for fully automatic fixes but don't run them     | `albums check --preview`                          |
-| Run automatic fixes on one album                       | `albums --path "Artist/Album/" check --automatic` |
-| Run automatic fixes, ask what to do for manual fixes   | `albums check --automatic --fix`                  |
-| For every issue, ask what to do (even if no quick fix) | `albums check --interactive`                      |
+| Task                                                   | Example Command                                    |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| Run all enabled checks on the library (no fixing)      | `albums check`                                     |
+| Run all enabled checks on any folder                   | `albums --dir /path/to/an/album check`             |
+| Run enabled checks in matching folders                 | `albums -m path~Foo check`                         |
+| Run a specific check (and checks it requires)          | `albums check duplicate-image`                     |
+| When there is a quick fix, stop and ask what to do     | `albums check --fix`                               |
+| Check for fully automatic fixes but don't run them     | `albums check --preview`                           |
+| Run automatic fixes on one album (exact path)          | `albums -m path="Artist/Album/" check --automatic` |
+| Run automatic fixes, ask what to do for manual fixes   | `albums check --automatic --fix`                   |
+| For every issue, ask what to do (even if no quick fix) | `albums check --interactive`                       |
 
 <!-- pyml enable line-length -->
 
-_Parameters have abbreviated versions._ `-rp` _is the same as_ `--regex --path`.
+_Most parameters have abbreviations._ `-ia` _is the same as_
+`--interactive --automatic`.
