@@ -4,6 +4,7 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import Callable, Final, Iterator, List, Mapping, Tuple
@@ -144,8 +145,9 @@ def scan_library(
                 if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                     if result == AlbumScanResult.REMOVED:
                         session.delete(album)
-                    else:
-                        album.scanner = SCANNER_VERSION
+                    elif result != AlbumScanResult.UNCHANGED:
+                        album.modified_at = int(datetime.now(UTC).timestamp())
+                    album.scanner = SCANNER_VERSION
                     path_scan_transaction.commit()
             else:
                 album = Album(path=path, scanner=SCANNER_VERSION)

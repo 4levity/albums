@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from functools import reduce
 from json import dumps
 
@@ -19,7 +20,7 @@ def list_albums(ctx: Context, json: bool):
     require_real_context(ctx)
     total_size = 0
     total_length = 0
-    table = Table("path in library", "tracks", "length", "size")
+    table = Table("path in library", "tracks", "length", "size", "added", "changed")
     with Session(ctx.db) as session:
         for album in ctx.select_album_entities(session):
             tracks_size = reduce(lambda sum, track: sum + track.file_size, album.tracks, 0)
@@ -38,6 +39,8 @@ def list_albums(ctx: Context, json: bool):
                     str(len(album.tracks)),
                     "{:02}:{:02}".format(*divmod(int(tracks_length) // 60, 60)),
                     humanize.naturalsize(tracks_size, binary=True),
+                    datetime.fromtimestamp(album.created_at, UTC).astimezone().strftime("%x") if album.created_at else "[italic]not set[/italic]",
+                    datetime.fromtimestamp(album.modified_at, UTC).astimezone().strftime("%x") if album.modified_at else "[italic]not set[/italic]",
                 )
             total_size += tracks_size
             total_length += tracks_length

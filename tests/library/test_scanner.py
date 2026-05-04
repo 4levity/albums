@@ -559,3 +559,27 @@ class TestScanner:
             assert mock_find_codec.call_count == 4  # streams re-scanned
         finally:
             db.dispose()
+
+    def test_scanner_modified_at(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            library = create_library("test_scanner_modified_at", self.sample_library[:2])
+            ctx = context(db, library)
+            scan(ctx)
+            with Session(db) as session:
+                result = session.execute(select(Album)).tuples().all()
+                assert all(album.modified_at > 1_000_000_000 for [album] in result)
+                session.execute(update(Album).values(modified_at=0))
+                session.commit()
+
+            (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # album changed
+
+            scan(ctx)
+            with Session(db) as session:
+                (album,) = session.execute(select(Album).where(Album.path != self.sample_library[1].path)).tuples().one()
+                assert album.modified_at == 0  # not updated during scan, modified_at unchanged
+
+                (album,) = session.execute(select(Album).where(Album.path == self.sample_library[1].path)).tuples().one()
+                assert album.modified_at > 1_000_000_000
+        finally:
+            db.dispose()

@@ -18,6 +18,8 @@ CREATE TABLE album (
     album_id INTEGER PRIMARY KEY,
     path TEXT UNIQUE NOT NULL
     -- v7 add column scanner
+    -- v14 add column created_at
+    -- v14 add column modified_at
 );
 -- v7 add album.path index
 
@@ -150,6 +152,10 @@ CREATE TABLE album_other_file (
 CREATE INDEX idx_album_other_file_album_id ON album_other_file(album_id);
 """,
     13: "ALTER TABLE track ADD COLUMN stream_bits_per_sample INTEGER NOT NULL DEFAULT 0;",
+    14: """
+ALTER TABLE album ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE album ADD COLUMN modified_at INTEGER NOT NULL DEFAULT 0;
+""",
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

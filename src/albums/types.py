@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum, auto
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union, overload
 
 from rich.console import RenderableType
-from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text
+from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text, event
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
@@ -242,6 +243,20 @@ class OtherFile(Base):
         return self.filename < other.filename
 
 
+@event.listens_for(Track, "after_update")
+@event.listens_for(Track, "after_insert")
+@event.listens_for(Track, "after_delete")
+@event.listens_for(PictureFile, "after_update")
+@event.listens_for(PictureFile, "after_insert")
+@event.listens_for(PictureFile, "after_delete")
+@event.listens_for(OtherFile, "after_update")
+@event.listens_for(OtherFile, "after_insert")
+@event.listens_for(OtherFile, "after_delete")
+def update_album_timestamp(_mapper: Any, _connection: Any, target: Track | PictureFile | OtherFile):
+    if target.album:
+        target.album.modified_at = int(datetime.now(UTC).timestamp())
+
+
 class Album(Base):
     __tablename__ = "album"
     __table_args__ = (Index("album_path", "path", unique=True),)
@@ -263,6 +278,9 @@ class Album(Base):
     picture_files: Mapped[List[PictureFile]] = relationship("PictureFile", back_populates="album", cascade="all, delete-orphan")
     tracks: Mapped[List[Track]] = relationship("Track", back_populates="album", cascade="all, delete-orphan")
 
+    created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=lambda: int(datetime.now(UTC).timestamp()))
+    modified_at: Mapped[int] = mapped_column(Integer, nullable=False, default=lambda: int(datetime.now(UTC).timestamp()))
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "album_id": self.album_id,
@@ -273,6 +291,8 @@ class Album(Base):
             "tracks": [track.to_dict() for track in self.tracks],
             "picture_files": [picture_file.to_dict() for picture_file in self.picture_files],
             "other_files": [other_file.to_dict() for other_file in self.other_files],
+            "created_at": datetime.fromtimestamp(self.created_at, UTC).isoformat() if self.created_at else None,
+            "modified_at": datetime.fromtimestamp(self.created_at, UTC).isoformat() if self.modified_at else None,
         }
 
 

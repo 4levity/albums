@@ -2,10 +2,11 @@ import os
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from albums.database import connection, schema
+from albums.types import Album, OtherFile, PictureFile, Track
 
 
 class TestDatabase:
@@ -43,5 +44,66 @@ class TestDatabase:
             with pytest.raises(RuntimeError):
                 connection.open(db_file)
                 assert False  # shouldn't get this far
+        finally:
+            db.dispose()
+
+    def test_album_created_at(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                album = Album(path="foo" + os.sep)
+                session.add(album)
+                session.flush()
+                assert album.created_at > 1_000_000_000
+                session.commit()
+        finally:
+            db.dispose()
+
+    def test_album_modified_at(self):
+        track = Track(filename="1.flac", file_size=2, modify_timestamp=2)
+        picture_file = PictureFile(filename="cover.jpg", file_size=3, modify_timestamp=3)
+        other_file = OtherFile(filename="video.mp4", file_size=4, modify_timestamp=4)
+        album = Album(path="foo" + os.sep, modified_at=1)
+
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(album)
+                session.flush()
+
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at == 1
+                album.tracks.append(track)
+                session.flush()
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at > 1
+                album.modified_at = 1  # reset
+                session.flush()
+
+                (album,) = session.execute(select(Album)).tuples().one()
+                session.delete(album.tracks[0])
+                session.flush()
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at > 1
+                album.modified_at = 1  # reset
+                session.flush()
+
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at == 1
+                album.picture_files.append(picture_file)
+                session.flush()
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at > 1
+                album.modified_at = 1  # reset
+                session.flush()
+
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at == 1
+                album.other_files.append(other_file)
+                session.flush()
+                (album,) = session.execute(select(Album)).tuples().one()
+                assert album.modified_at > 1
+                album.modified_at = 1  # reset
+                session.flush()
         finally:
             db.dispose()
