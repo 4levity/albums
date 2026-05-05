@@ -63,7 +63,16 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
                 .exists()
             )
         elif key == "ignore_check":
-            clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value)) for m in matches))
+            clause = (
+                select(1)
+                .where(
+                    and_(
+                        IgnoreCheckEntity.album_id == Album.album_id,
+                        or_(*(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value) for m in matches)),
+                    )
+                )
+                .exists()
+            )
         elif key == "path":
             clause = or_(*(_compare(Album.path, m.comparator, m.value) for m in matches))
         elif key in _TRACK_COLUMNS:
