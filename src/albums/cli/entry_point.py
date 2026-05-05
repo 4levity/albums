@@ -2,6 +2,7 @@ import rich.traceback
 import rich_click as click
 
 import albums
+from albums.cli.ordered_group import OrderedGroup
 from albums.database.selector import Comparator
 
 from .. import app
@@ -24,7 +25,7 @@ from .sync import sync
 rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_length=10)
 
 
-@click.group(epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
+@click.group(cls=OrderedGroup, epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
 @click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m tag=artist:Foo")
 @click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")
 @click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")
@@ -62,15 +63,18 @@ def albums_group(
         app_context.prescanned = True
 
 
+albums_group.add_command(scan)
+albums_group.add_command(list_albums)
+albums_group.add_command(import_command)
 albums_group.add_command(check)
+
 albums_group.add_command(collections_add)
 albums_group.add_command(collections_remove)
+albums_group.add_command(sync)
+
 albums_group.add_command(checks_ignore)
 albums_group.add_command(checks_notice)
-albums_group.add_command(config)
-albums_group.add_command(import_command)
+
 albums_group.add_command(init)
-albums_group.add_command(list_albums)
-albums_group.add_command(scan)
+albums_group.add_command(config)
 albums_group.add_command(sql)
-albums_group.add_command(sync)
