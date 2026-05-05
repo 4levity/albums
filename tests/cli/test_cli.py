@@ -57,9 +57,9 @@ class TestCli:
 
     def test_list(self):
         self.run(["scan"], init=True)
-        result = self.run(["list"])
+        result = self.run(["list", "--order", "tracks", "--reverse"])
         assert result.exit_code == 0
-        assert re.search("bar.+00:00.+\\d+ Bytes.+total: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
+        assert re.search("bar.+00:00.+\\d+ Bytes.+foo.+00:00.+\\d+ Bytes.+total: \\d+.*", result.output, re.MULTILINE | re.DOTALL)
 
     def test_scan_remove(self):
         result = self.run(["-v", "scan"], init=True)

@@ -35,7 +35,7 @@ class TestChecker:
         )
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
-        ctx.select_album_entities = lambda session: selector.load_album_entities(session)
+        ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
         try:
             with Session(ctx.db) as session:
                 session.add(album)
@@ -62,7 +62,7 @@ class TestChecker:
         ctx.db = connection.open(connection.MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda s: selector.load_album_entities(s)
+                ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
                 scanner.scan(ctx, session)
                 session.commit()
 
@@ -91,7 +91,7 @@ class TestChecker:
         )
         ctx = Context()
         ctx.db = connection.open(connection.MEMORY)
-        ctx.select_album_entities = lambda session: selector.load_album_entities(session)
+        ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
         ctx.config.library = create_library("dependent_check_failures", [album])
         try:
             with Session(ctx.db) as session:
@@ -143,7 +143,7 @@ class TestChecker:
         ctx.db = connection.open(connection.MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda s: selector.load_album_entities(s)
+                ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
                 scanner.scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
