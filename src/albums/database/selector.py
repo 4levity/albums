@@ -7,7 +7,7 @@ from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
 from ..tagger.types import BasicTag
-from ..types import Album, CollectionEntity, IgnoreCheckEntity, TagV, Track
+from ..types import Album, AlbumCollectionAssociation, CollectionEntity, IgnoreCheckEntity, TagV, Track
 
 logger: Final = logging.getLogger(__name__)
 
@@ -51,7 +51,17 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
     for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("tag:")):
         if key == "collection":
             # TODO: make this consistent, maybe everything should be "and" instead of some being "or"
-            clause = or_(*(Album.collection_associations.any(_compare(CollectionEntity.collection_name, m.comparator, m.value)) for m in matches))
+            clause = (
+                select(AlbumCollectionAssociation)
+                .join(CollectionEntity, AlbumCollectionAssociation.collection_id == CollectionEntity.collection_id)
+                .where(
+                    and_(
+                        AlbumCollectionAssociation.album_id == Album.album_id,
+                        or_(*(_compare(CollectionEntity.collection_name, m.comparator, m.value) for m in matches)),
+                    )
+                )
+                .exists()
+            )
         elif key == "ignore_check":
             clause = or_(*(Album.ignore_check_entities.any(_compare(IgnoreCheckEntity.check_name, m.comparator, m.value)) for m in matches))
         elif key == "path":

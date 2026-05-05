@@ -29,8 +29,8 @@ class TestSelector:
                     ],
                 )
             ],
-            collections=["test"],
-            ignore_checks=["artist-tag"],
+            collections=["foo", "test"],
+            ignore_checks=["artist-tag", "album-tag"],
             picture_files=[
                 PictureFile(
                     filename="folder.jpg", picture_info=PictureInfo("test", 100, 100, 24, 4096, b"1234"), modify_timestamp=999, cover_source=True
@@ -52,6 +52,8 @@ class TestSelector:
                     tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
                 ),
             ],
+            collections=["bar"],
+            ignore_checks=["album-tag"],
         )
 
     def test_select_empty(self):
