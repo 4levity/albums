@@ -36,7 +36,7 @@ def configure_settings(ctx: Context):
                 ("import_scan_max_paths", f"import_scan_max_paths ({ctx.config.import_scan_max_paths})"),
                 ("id3v1", f"id3v1 ({ctx.config.id3v1.name})"),
                 ("transcoder_cache", f"transcoder_cache ({str(ctx.config.transcoder_cache)}"),
-                ("transcoder_cache_size", f"transcoder_cache_size ({humanize.naturalsize(ctx.config.transcoder_cache_size, binary=True)}"),
+                ("transcoder_cache_size", f"transcoder_cache_size ({humanize.naturalsize(ctx.config.transcoder_cache_size, binary=True)})"),
                 ("back", "<< go back"),
             ],
         )
