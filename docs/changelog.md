@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.25 - filter on stream info, create/update new select feature, bug fixes
+
 v0.9.24 - fix: cover-available detect whether get_cover_command is set
 
 v0.9.23 - cover-available configuration to use external cover art downloader

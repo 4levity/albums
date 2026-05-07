@@ -93,7 +93,7 @@ the specified conditions will be included.
 
 `add` and `remove` - These commands add or remove associations between the
 selected albums and arbitrary named "collections," which can be used to filter
-future operations.
+future operations. Or use `select` to interactively add/remove from a list.
 
 `ignore` and `notice` - These commands cause the selected albums to ignore or
 stop ignoring certain checks.
