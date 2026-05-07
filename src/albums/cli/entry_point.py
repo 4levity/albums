@@ -2,10 +2,9 @@ import rich.traceback
 import rich_click as click
 
 import albums
-from albums.cli.ordered_group import OrderedGroup
-from albums.database.selector import Comparator
 
 from .. import app
+from ..database.selector import Comparator
 from ..library import scanner
 from .check import check
 from .checks_ignore import checks_ignore
@@ -14,10 +13,12 @@ from .cli_context import DEFAULT_DB_LOCATION, FilterCriteria, pass_context, setu
 from .click_custom import InvisibleCountParam
 from .collections_add import collections_add
 from .collections_remove import collections_remove
+from .collections_select import collections_select
 from .config import config
 from .import_command import import_command
 from .init import init
 from .list_albums import list_albums
+from .ordered_group import OrderedGroup
 from .scan import scan
 from .sql import sql
 from .sync import sync
@@ -70,6 +71,7 @@ albums_group.add_command(check)
 
 albums_group.add_command(collections_add)
 albums_group.add_command(collections_remove)
+albums_group.add_command(collections_select)
 albums_group.add_command(sync)
 
 albums_group.add_command(checks_ignore)
