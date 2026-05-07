@@ -175,6 +175,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trkn()
                     self._set_trkn(track_number, None)
+                case BasicTag.UNKNOWN:
+                    pass
                 case _:
                     del tags[TAG_TO_M4A_FRAME[tag]]
         else:
@@ -206,6 +208,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trkn()
                     self._set_trkn(track_number, int(value_list[0]) if value_list[0] else None)
+                case BasicTag.UNKNOWN:
+                    raise ValueError("cannot set tag value UNKNOWN")
                 case _:
                     if tag in TAG_TO_M4A_BYTES_FRAME:
                         prop = TAG_TO_M4A_BYTES_FRAME[tag]  # type: ignore

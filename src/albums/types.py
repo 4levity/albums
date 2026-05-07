@@ -7,11 +7,10 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Seque
 
 from rich.console import RenderableType
 from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text, event
-from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
-from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType
+from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
 from .picture.info import PictureInfo
 from .tagger.types import BasicTag, Picture, PictureType, StreamInfo
 
@@ -114,7 +113,7 @@ class TagV(Base):
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
     track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
 
-    tag: Mapped[BasicTag] = mapped_column("name", SqlEnum(BasicTag, native_enum=False, values_callable=lambda e: [x.value for x in e]))  # pyright: ignore[reportUnknownVariableType, reportUnknownLambdaType, reportUnknownMemberType]
+    tag: Mapped[BasicTag] = mapped_column("name", SafeStringEnum[BasicTag](BasicTag, BasicTag.UNKNOWN), nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)
 
 

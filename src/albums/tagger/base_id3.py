@@ -169,6 +169,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trck()
                     self._set_trck(track_number, None)
+                case BasicTag.UNKNOWN:
+                    pass
                 case _:
                     del tags[TAG_TO_ID3_TEXT_FRAME[tag]]
         else:
@@ -220,6 +222,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_trck()
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
+                case BasicTag.UNKNOWN:
+                    raise ValueError("cannot set tag value UNKNOWN")
                 case _:
                     frame = TAG_TO_ID3_TEXT_FRAME[tag]
                     if not frame.startswith("TXXX:"):

@@ -180,6 +180,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, None)
+                case BasicTag.UNKNOWN:
+                    pass
                 case _:
                     del tags[TAG_TO_ASF_PROPERTY[tag]]
         else:
@@ -211,6 +213,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicTag.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, value_list[0] if value_list[0] else None)
+                case BasicTag.UNKNOWN:
+                    raise ValueError("cannot set tag value UNKNOWN")
                 case _:
                     tags[TAG_TO_ASF_PROPERTY[tag]] = value_list
 

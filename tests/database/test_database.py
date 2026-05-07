@@ -6,7 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from albums.database import connection, schema
-from albums.types import Album, OtherFile, PictureFile, Track
+from albums.types import Album, BasicTag, OtherFile, PictureFile, Track
 
 
 class TestDatabase:
@@ -105,5 +105,26 @@ class TestDatabase:
                 assert album.modified_at > 1
                 album.modified_at = 1  # reset
                 session.flush()
+        finally:
+            db.dispose()
+
+    def test_unknown_tag_in_db(self):
+        db = connection.open(connection.MEMORY)
+        try:
+            with Session(db) as session:
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "foo"})])
+                session.add(album)
+                session.flush()
+                track_id = album.tracks[0].track_id
+                session.commit()
+            with db.begin() as conn:
+                conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'invalid1', 'bar');"))
+                conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'invalid2', 'baz');"))
+            with Session(db) as session:
+                (album,) = session.execute(select(Album)).tuples().one()
+                tag = album.tracks[0].tag_dict()
+                assert len(tag) == 2
+                assert tag[BasicTag.ALBUM] == ["foo"]
+                assert sorted(tag[BasicTag.UNKNOWN]) == ["bar", "baz"]
         finally:
             db.dispose()

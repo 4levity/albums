@@ -128,6 +128,9 @@ class BasicTag(StrEnum):
     # TXXX:MusicBrainz Work Id, ----:com.apple.iTunes:MusicBrainz Work Id, MusicBrainz/Work Id
     MUSICBRAINZ_WORKID = auto()
 
+    # This special value is never produced by reading a tag and cannot be set on any tag
+    UNKNOWN = auto()
+
 
 BASIC_TAGS: Final = frozenset(tag.value for tag in BasicTag)
 

@@ -4,7 +4,7 @@ import json
 from string import Template
 from typing import Any, Final, override
 
-from sqlalchemy import Column, Dialect, Integer, Table, Text, TypeDecorator
+from sqlalchemy import Column, Dialect, Integer, String, Table, Text, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase
 
 from ..picture.info import LoadIssuesType
@@ -23,6 +23,7 @@ NO_DEFAULT_VALUE_LIST_STR: Final = [
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):
     impl = Integer
 
+    @override
     def __init__(self, enum_type: type, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._enum_type = enum_type
@@ -80,3 +81,24 @@ class TemplateAsString(TypeDecorator[Template]):
     @override
     def process_result_value(self, value: str | None, dialect: Dialect) -> Template | None:
         return None if value is None else Template(value)
+
+
+class SafeStringEnum[EnumType](TypeDecorator[EnumType]):
+    impl = String
+
+    @override
+    def __init__(self, enum_type: type, unknown_value: EnumType, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self._enum_type = enum_type
+        self._unknown_value = unknown_value
+
+    @override
+    def process_bind_param(self, value: EnumType | None, dialect: Dialect):  # pyright: ignore[reportUnknownParameterType]
+        return None if value is None else value.value  # type: ignore
+
+    @override
+    def process_result_value(self, value: int | None, dialect: Dialect) -> EnumType:
+        try:
+            return self._enum_type(value)
+        except ValueError:
+            return self._unknown_value
