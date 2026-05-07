@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.26 - fix: don't crash if unknown tag left in db from old version
+
 v0.9.25 - filter on stream info, create/update new select feature, bug fixes
 
 v0.9.24 - fix: cover-available detect whether get_cover_command is set
