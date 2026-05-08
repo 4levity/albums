@@ -291,7 +291,7 @@ class Album(Base):
             "picture_files": [picture_file.to_dict() for picture_file in self.picture_files],
             "other_files": [other_file.to_dict() for other_file in self.other_files],
             "created_at": datetime.fromtimestamp(self.created_at, UTC).isoformat() if self.created_at else None,
-            "modified_at": datetime.fromtimestamp(self.created_at, UTC).isoformat() if self.modified_at else None,
+            "modified_at": datetime.fromtimestamp(self.modified_at, UTC).isoformat() if self.modified_at else None,
         }
 
 
