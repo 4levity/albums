@@ -207,7 +207,8 @@ def _picture_cache(album: Album | None) -> PictureScannerCache:
 
 def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan: TargetRescan | None) -> Track | None:
     with tagger.open(filename) as file:
-        if (target_scan is None or target_scan.streams) and file.has_video():
+        check_streams = target_scan is None or target_scan.streams
+        if (check_streams and file.has_video()) or (not check_streams and isinstance(target_scan.source, OtherFile)):
             return None
 
         if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
@@ -322,7 +323,9 @@ def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> Target
     if scanner < 6:
         return TargetRescan(file, tags=True, images=True, streams=True)
     if scanner < 7:
-        return TargetRescan(file, tags=False, images=False, streams=True)  # added more stream info
-    if scanner == 7:
-        return TargetRescan(file, tags=True, images=False, streams=False)  # scanner version 7 tags are sus due to orm issues
+        return TargetRescan(file, tags=False, images=False, streams=True)  # v7 added more stream info
+    if scanner < 8:
+        return TargetRescan(file, tags=True, images=False, streams=False)  # v7 tags are sus due to orm issues
+    if scanner == 8:
+        return TargetRescan(file, tags=False, images=False, streams=True)  # v8 could incorrectly treat video as track after rescan
     return None
