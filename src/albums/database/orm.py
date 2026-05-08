@@ -86,6 +86,8 @@ class TemplateAsString(TypeDecorator[Template]):
 class SafeStringEnum[EnumType](TypeDecorator[EnumType]):
     impl = String
 
+    cache_ok = True
+
     @override
     def __init__(self, enum_type: type, unknown_value: EnumType, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
