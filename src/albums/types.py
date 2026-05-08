@@ -6,7 +6,7 @@ from enum import Enum, auto
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union, overload
 
 from rich.console import RenderableType
-from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text, event
+from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
@@ -240,20 +240,6 @@ class OtherFile(Base):
 
     def __lt__(self, other: Track | PictureFile | OtherFile):
         return self.filename < other.filename
-
-
-@event.listens_for(Track, "after_update")
-@event.listens_for(Track, "after_insert")
-@event.listens_for(Track, "after_delete")
-@event.listens_for(PictureFile, "after_update")
-@event.listens_for(PictureFile, "after_insert")
-@event.listens_for(PictureFile, "after_delete")
-@event.listens_for(OtherFile, "after_update")
-@event.listens_for(OtherFile, "after_insert")
-@event.listens_for(OtherFile, "after_delete")
-def update_album_timestamp(_mapper: Any, _connection: Any, target: Track | PictureFile | OtherFile):
-    if target.album:
-        target.album.modified_at = int(datetime.now(UTC).timestamp())
 
 
 class Album(Base):

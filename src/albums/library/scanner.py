@@ -181,7 +181,9 @@ def rescan_albums(
             scan_results[result] += 1
             if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                 if result == AlbumScanResult.REMOVED:
-                    session.execute(delete(Album).where(Album.album_id == album.album_id))
+                    session.delete(album)
+                elif result != AlbumScanResult.UNCHANGED:
+                    album.modified_at = int(datetime.now(UTC).timestamp())
                 album.scanner = SCANNER_VERSION
                 album_scan_transaction.commit()
         update_progress()
