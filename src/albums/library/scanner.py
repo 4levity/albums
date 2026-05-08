@@ -322,5 +322,7 @@ def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> Target
     if scanner < 6:
         return TargetRescan(file, tags=True, images=True, streams=True)
     if scanner < 7:
-        return TargetRescan(file, tags=False, images=False, streams=True)
+        return TargetRescan(file, tags=False, images=False, streams=True)  # added more stream info
+    if scanner == 7:
+        return TargetRescan(file, tags=True, images=False, streams=False)  # scanner version 7 tags are sus due to orm issues
     return None
