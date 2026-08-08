@@ -55,7 +55,11 @@ def open(filename: str | Path, echo: bool = False):
                 session.execute(text(SQL_CLEANUP))
         return db
     except Exception as ex:
-        db.dispose()
+        # Ensure all connections are disposed on error to prevent resource warnings
+        try:
+            db.dispose()
+        except Exception as ex1:
+            logger.warning(repr(ex1))
         raise ex
 
 

@@ -55,10 +55,17 @@ def scan(
 ) -> tuple[int, bool]:
     if session is None:
         with Session(ctx.db) as session:
-            (albums_total, any_changes) = scan(ctx, session, scan_albums, reread)
-            if any_changes:
-                session.commit()
-            return (albums_total, any_changes)
+            try:
+                (albums_total, any_changes) = scan(ctx, session, scan_albums, reread)
+                if any_changes:
+                    session.commit()
+                return (albums_total, any_changes)
+            finally:
+                # Ensure session is always closed
+                try:
+                    session.close()
+                except Exception as ex:
+                    logger.warning(repr(ex))
 
     start_time = time.perf_counter()
     expected_path_count = 0
