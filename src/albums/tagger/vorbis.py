@@ -5,7 +5,7 @@ from mutagen._vorbis import VCommentDict
 from .types import BasicTag
 
 
-def vorbis_comment_tags(file_tags: VCommentDict):
+def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
     tags: list[tuple[BasicTag, tuple[str, ...]]] = []
     for tag in BasicTag:
         if tag != BasicTag.UNKNOWN and tag.value in file_tags:
