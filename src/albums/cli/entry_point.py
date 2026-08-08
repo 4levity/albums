@@ -27,16 +27,16 @@ rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_lengt
 
 
 @click.group(cls=OrderedGroup, epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
-@click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m tag=artist:Foo")
-@click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")
-@click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")
-@click.option("--path", "-p", "paths", metavar="PATH", multiple=True, help="match album path (same as -m path=...)")
-@click.option("--regex", "-r", is_flag=True, help="enable regex/partial match for -c and -p")
-@click.option("--dir", "-d", metavar="PATH", help="operate on a directory outside of the library")
-@click.option("--db-file", metavar="PATH", help="specify path to albums.db (advanced)")
-@click.option("--verbose", "-v", type=InvisibleCountParam(), count=True, help="enable verbose logging (-vv for more)")
-@click.help_option("--help", "-h", help="show this message and exit")
-@click.version_option(version=albums.__version__, message="%(prog)s version %(version)s", help="show the version number and exit")
+@click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m tag=artist:Foo")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--path", "-p", "paths", metavar="PATH", multiple=True, help="match album path (same as -m path=...)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--regex", "-r", is_flag=True, help="enable regex/partial match for -c and -p")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--dir", "-d", metavar="PATH", help="operate on a directory outside of the library")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--db-file", metavar="PATH", help="specify path to albums.db (advanced)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--verbose", "-v", type=InvisibleCountParam(), count=True, help="enable verbose logging (-vv for more)")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
+@click.version_option(version=albums.__version__, message="%(prog)s version %(version)s", help="show the version number and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context  # order of these decorators matters
 @click.pass_context
 def albums_group(

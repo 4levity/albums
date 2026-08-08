@@ -27,12 +27,12 @@ logger: Final = logging.getLogger(__name__)
     epilog="use `albums config` with no options for interactive configuration",
     add_help_option=False,
 )
-@click.option("--show", "-s", is_flag=True, help="show the current configuration")
-@click.option("--import", "-i", "import_file", metavar="FILE", help="import configuration from JSON file")
-@click.option("--export", "-e", "export_file", metavar="FILE", help="export configuration to JSON file")
-@click.option("--reset", is_flag=True, help="reset the configuration to defaults")
-@click.argument("kv", metavar="[NAME=VALUE] [NAME]", required=False)
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.option("--show", "-s", is_flag=True, help="show the current configuration")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--import", "-i", "import_file", metavar="FILE", help="import configuration from JSON file")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--export", "-e", "export_file", metavar="FILE", help="export configuration to JSON file")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--reset", is_flag=True, help="reset the configuration to defaults")  # pyright: ignore[reportUnknownMemberType]
+@click.argument("kv", metavar="[NAME=VALUE] [NAME]", required=False)  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def config(ctx: Context, show: bool, import_file: str, export_file: str, reset: bool, kv: str):
     require_configured(ctx)

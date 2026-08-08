@@ -14,10 +14,10 @@ from .cli_context import pass_context, require_real_context
 
 
 @click.command("list", help="print matching albums", add_help_option=False)
-@click.option("--json", "-j", is_flag=True, help="output all stored details in JSON")
-@click.option("--order", "-o", metavar="COLUMN", help="order by specified column name (not with --json)")
-@click.option("--reverse", "-r", is_flag=True, help="reverse sort order")
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.option("--json", "-j", is_flag=True, help="output all stored details in JSON")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--order", "-o", metavar="COLUMN", help="order by specified column name (not with --json)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--reverse", "-r", is_flag=True, help="reverse sort order")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def list_albums(ctx: Context, json: bool, order: str, reverse: bool):
     require_real_context(ctx)

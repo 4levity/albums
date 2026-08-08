@@ -14,13 +14,13 @@ from .cli_context import pass_context, require_library, require_real_context
     epilog=f"If CHECKS are provided, only those checks and their dependencies will be enabled. Valid CHECKS are: {', '.join(sorted(ALL_CHECK_NAMES))}",
     add_help_option=False,
 )
-@click.option("--default", is_flag=True, help="use default settings for all checks, including whether they are enabled")
-@click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")
-@click.option("--preview", "-p", is_flag=True, help="preview the automatic fixes that would be made with -a")
-@click.option("--fix", "-f", is_flag=True, help="prompt when there is a selectable fix available")
-@click.option("--interactive", "-i", is_flag=True, help="ask what to do even if the only options are manual (implies -f)")
-@click.argument("checks", nargs=-1)
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.option("--default", is_flag=True, help="use default settings for all checks, including whether they are enabled")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--automatic", "-a", is_flag=True, help="if there is an automatic fix, do it WITHOUT ASKING")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--preview", "-p", is_flag=True, help="preview the automatic fixes that would be made with -a")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--fix", "-f", is_flag=True, help="prompt when there is a selectable fix available")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--interactive", "-i", is_flag=True, help="ask what to do even if the only options are manual (implies -f)")  # pyright: ignore[reportUnknownMemberType]
+@click.argument("checks", nargs=-1)  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool, interactive: bool, checks: list[str]):
     require_real_context(ctx)

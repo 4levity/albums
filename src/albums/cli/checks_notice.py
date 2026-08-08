@@ -10,9 +10,9 @@ from .cli_context import pass_context, require_configured, require_persistent_co
 
 
 @click.command("notice", help="selected albums stop ignoring specified checks", add_help_option=False)
-@click.option("--force", "-f", is_flag=True, help="always skip confirmation")
-@click.argument("check_names", nargs=-1)
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.option("--force", "-f", is_flag=True, help="always skip confirmation")  # pyright: ignore[reportUnknownMemberType]
+@click.argument("check_names", nargs=-1)  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def checks_notice(ctx: Context, force: bool, check_names: list[str]):
     require_configured(ctx)

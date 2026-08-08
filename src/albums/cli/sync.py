@@ -21,10 +21,10 @@ logger: Final = logging.getLogger(__name__)
     epilog="DESTINATION can be any path, or use the path / collection name of a configured sync destination",
     add_help_option=False,
 )
-@click.argument("destination", required=False)
-@click.option("--delete", "-d", is_flag=True, help="delete unrecognized paths in destination")
-@click.option("--force", "-f", is_flag=True, help="skip confirmation when deleting files")
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.argument("destination", required=False)  # pyright: ignore[reportUnknownMemberType]
+@click.option("--delete", "-d", is_flag=True, help="delete unrecognized paths in destination")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--force", "-f", is_flag=True, help="skip confirmation when deleting files")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def sync(ctx: Context, destination: str, delete: bool, force: bool):
     require_configured(ctx)

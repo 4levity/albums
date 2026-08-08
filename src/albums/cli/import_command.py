@@ -8,11 +8,11 @@ from .cli_context import enter_folder_context, pass_context, require_configured,
 
 
 @click.command("import", help="check albums, copy each to library after it passes", add_help_option=False)
-@click.argument("scan_folder", required=True)
-@click.option("--extra", "-x", is_flag=True, help="copy extra files not scanned by albums")
-@click.option("--recursive", "-r", is_flag=True, help="copy folders (one album max, implies --extra)")
-@click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes + import to default location")
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.argument("scan_folder", required=True)  # pyright: ignore[reportUnknownMemberType]
+@click.option("--extra", "-x", is_flag=True, help="copy extra files not scanned by albums")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--recursive", "-r", is_flag=True, help="copy folders (one album max, implies --extra)")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--automatic", "-a", is_flag=True, help="perform automatic fixes + import to default location")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, scan_folder: str):
     require_configured(ctx)

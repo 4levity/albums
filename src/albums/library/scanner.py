@@ -207,9 +207,12 @@ def _picture_cache(album: Album | None) -> PictureScannerCache:
 
 def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan: TargetRescan | None) -> Track | None:
     with tagger.open(filename) as file:
-        check_streams = target_scan is None or target_scan.streams
-        if (check_streams and file.has_video()) or (not check_streams and isinstance(target_scan.source, OtherFile)):
-            return None
+        if target_scan is None or target_scan.streams:
+            if file.has_video():  # check file streams
+                return None
+        else:
+            if isinstance(target_scan.source, OtherFile):
+                return None
 
         if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
             tags = [TagV(tag=t.tag, value=t.value) for t in target_scan.source.tags]  # we could probably update the existing track instead.

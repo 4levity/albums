@@ -3,7 +3,7 @@ from typing import Any
 import rich_click as click
 
 
-class InvisibleCountParam(click.ParamType):
+class InvisibleCountParam(click.ParamType[int]):
     name = "count"
 
     def convert(self, value: Any, param: click.Parameter | None, ctx: click.Context | None):

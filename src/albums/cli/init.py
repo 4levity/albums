@@ -13,8 +13,8 @@ from .cli_context import pass_context
 
 
 @click.command(help="initialize albums database", add_help_option=False)
-@click.argument("library-path", required=False)
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.argument("library-path", required=False)  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def init(ctx: Context, library_path: str | None):
     if ctx.db_path.exists():

@@ -12,9 +12,9 @@ from .cli_context import pass_context, require_real_context
 
 
 @click.command(help="run a SQL command against albums db", add_help_option=False)
-@click.argument("sql-command", required=True)
-@click.option("--json", "-j", is_flag=True, help="output result as JSON object")
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.argument("sql-command", required=True)  # pyright: ignore[reportUnknownMemberType]
+@click.option("--json", "-j", is_flag=True, help="output result as JSON object")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def sql(ctx: Context, sql_command: str, json: bool):
     require_real_context(ctx)

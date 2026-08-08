@@ -12,8 +12,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 @click.command(help="scan and update database", add_help_option=False)
-@click.option("--reread", "-r", is_flag=True, help="reread tracks even if size/timestamp are unchanged")
-@click.help_option("--help", "-h", help="show this message and exit")
+@click.option("--reread", "-r", is_flag=True, help="reread tracks even if size/timestamp are unchanged")  # pyright: ignore[reportUnknownMemberType]
+@click.help_option("--help", "-h", help="show this message and exit")  # pyright: ignore[reportUnknownMemberType]
 @pass_context
 def scan(ctx: Context, reread: bool):
     require_configured(ctx)
