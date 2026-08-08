@@ -6,8 +6,8 @@ import mutagen
 from mutagen._tags import PaddingInfo
 
 from ..base_mutagen import AbstractMutagenTagger
-from ..helpers import vorbis_comment_set_tag, vorbis_comment_tags
 from ..types import BasicTag, MutagenFileType, Picture
+from ..vorbis import vorbis_comment_set_tag, vorbis_comment_tags
 
 logger: Final = logging.getLogger(__name__)
 

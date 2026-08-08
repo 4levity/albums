@@ -8,8 +8,9 @@ from mutagen.oggvorbis import OggVorbis
 
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
-from ..helpers import album_picture_to_flac, scan_flac_picture, vorbis_comment_set_tag, vorbis_comment_tags
+from ..helpers import album_picture_to_flac, scan_flac_picture
 from ..types import BasicTag, Picture
+from ..vorbis import vorbis_comment_set_tag, vorbis_comment_tags
 
 
 class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
