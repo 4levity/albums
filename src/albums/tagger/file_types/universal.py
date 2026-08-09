@@ -41,7 +41,8 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
     @override
     def get_tags(self):
         try:
-            return vorbis_comment_tags(self._file)  # pyright: ignore[reportArgumentType]
+            result = vorbis_comment_tags(self._file)  # pyright: ignore[reportArgumentType]
+            return result[0]
         except Exception as ex:
             logger.warning(f"error reading tags from {self._file.filename}: {repr(ex)}")
             return ()

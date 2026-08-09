@@ -52,7 +52,8 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
 
     @override
     def get_tags(self):
-        return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+        result = vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+        return result[0]
 
     @override
     def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
