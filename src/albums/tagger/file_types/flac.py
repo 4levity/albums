@@ -57,5 +57,5 @@ class FlacTagger(AbstractMutagenTagger[FLAC]):
         return vorbis_comment_legacy_tags(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
 
     @override
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
         vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]

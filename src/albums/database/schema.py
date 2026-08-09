@@ -156,6 +156,14 @@ CREATE INDEX idx_album_other_file_album_id ON album_other_file(album_id);
 ALTER TABLE album ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE album ADD COLUMN modified_at INTEGER NOT NULL DEFAULT 0;
 """,
+    15: """
+CREATE TABLE track_legacy_tag (
+    track_legacy_tag_id INTEGER PRIMARY KEY,
+    track_id REFERENCES track(track_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    tag_name TEXT NOT NULL
+);
+CREATE INDEX idx_legacy_tag_track_id ON track_legacy_tag(track_id);
+""",
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

@@ -55,7 +55,7 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
             return ()
 
     @override
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
         try:
             vorbis_comment_set_tag(self._file, tag, value)  # pyright: ignore[reportArgumentType]
         except Exception as ex:

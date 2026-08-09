@@ -147,7 +147,9 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         return tuple(basic_tags)
 
     @override
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+        if not isinstance(tag, BasicTag):
+            raise ValueError("id3 tagger only uses BasicTag")
         tags = self._ensure_id3()
         if value is None:
             match tag:

@@ -48,10 +48,11 @@ def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicTag, Tuple[
     return tuple(tags_flat)
 
 
-def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag, value: str | list[str] | None):
+def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag | str, value: str | list[str] | None):
+    tag_value = tag.value if isinstance(tag, BasicTag) else tag
     if value is None:
-        if tag != BasicTag.UNKNOWN and tag.value in file_tags:
-            del file_tags[tag.value]
+        if tag != BasicTag.UNKNOWN and tag_value in file_tags:
+            del file_tags[tag_value]
     else:
         value_list = value if isinstance(value, list) else [value]
         match tag:
@@ -59,8 +60,8 @@ def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag, value: str | 
                 raise ValueError("cannot set tag value UNKNOWN")
             case BasicTag.COMPILATION:
                 if value_list and value_list[0]:
-                    file_tags[tag.value] = ["1"]
-                elif tag.value in file_tags:
-                    del file_tags[tag.value]
+                    file_tags[tag_value] = ["1"]
+                elif tag_value in file_tags:
+                    del file_tags[tag_value]
             case _:
-                file_tags[tag.value] = value_list
+                file_tags[tag_value] = value_list

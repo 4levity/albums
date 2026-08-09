@@ -75,6 +75,20 @@ class IgnoreCheckEntity(Base):
         self.check_name = check_name
 
 
+class LegacyTagEntity(Base):
+    __tablename__ = "track_legacy_tag"
+    __table_args__ = (Index("idx_legacy_tag_track_id", "track_id"),)
+
+    track_legacy_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="legacy_tag_entities")
+
+    tag_name: Mapped[str] = mapped_column(Text, nullable=False)
+
+    def __init__(self, tag_name: str):
+        self.tag_name = tag_name
+
+
 class TrackPicture(Base):
     __tablename__ = "track_picture"
     __table_args__ = (Index("idx_track_picture_track_id", "track_id"),)
@@ -141,6 +155,8 @@ class Track(Base):
 
     pictures: Mapped[List[TrackPicture]] = relationship("TrackPicture", back_populates="track", cascade="all, delete-orphan")
     tags: Mapped[List[TagV]] = relationship("TagV", back_populates="track", cascade="all, delete-orphan")
+    legacy_tag_entities: Mapped[List[LegacyTagEntity]] = relationship("LegacyTagEntity", back_populates="track", cascade="all, delete-orphan")
+    legacy_tags: AssociationProxy[List[str]] = association_proxy("legacy_tag_entities", "tag_name")
 
     def to_dict(self) -> dict[str, Any]:
         return {

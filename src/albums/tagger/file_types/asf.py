@@ -155,7 +155,9 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         return tuple(basic_tags)
 
     @override
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+        if not isinstance(tag, BasicTag):
+            raise ValueError("asf tagger only uses BasicTag")
         tags = self._ensure_tags()
         if value is None:
             match tag:

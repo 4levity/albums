@@ -222,9 +222,14 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
                 return None
 
         if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
-            tags = [TagV(tag=t.tag, value=t.value) for t in target_scan.source.tags]  # we could probably update the existing track instead.
+            tags = [TagV(tag=t.tag, value=t.value) for t in target_scan.source.tags]
         else:
             tags = [TagV(tag=tag, value=value) for tag, values in file.get_tags() for value in values]
+
+        if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
+            legacy_tags = list(target_scan.source.legacy_tags)
+        else:
+            legacy_tags = [tag_name for (tag_name, _) in file.get_legacy_tags()]
 
         if target_scan is not None and not target_scan.images and isinstance(target_scan.source, Track):
             pictures = [
@@ -249,6 +254,7 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
             stream=stream,
             pictures=pictures,
             tags=tags,
+            legacy_tags=legacy_tags,
         )
 
 

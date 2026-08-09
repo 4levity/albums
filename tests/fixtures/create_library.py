@@ -2,13 +2,14 @@ import io
 import os
 import shutil
 from pathlib import Path
-from typing import Collection
+from typing import Collection, Mapping, Set
 
 from PIL import Image
 
 from albums.picture.format import mime_type_to_format
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture
+from albums.tagger.types import BasicTag, Picture
+from albums.tagger.vorbis import LEGACY_VORBIS_TAGS
 from albums.types import Album, Track, TrackPicture
 
 from .empty_files import (
@@ -20,6 +21,8 @@ from .empty_files import (
     EMPTY_OGG_VORBIS_FILE_BYTES,
     EMPTY_WMA_FILE_BYTES,
 )
+
+LEGACY_TAG_MAP: Mapping[str, BasicTag] = dict(LEGACY_VORBIS_TAGS)
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
@@ -46,8 +49,15 @@ def create_track_file(path: Path, spec: Track):
                 image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, mime_type_to_format(pic.picture_info.mime_type))
                 picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
                 tags.add_picture(picture, image_data)
-            for tag_name, values in spec.tag_dict().items():
-                tags.set_tag(tag_name, list(values))
+            spec_tags = spec.tag_dict()
+            represented_by_legacy_tags: Set[BasicTag] = set()
+            for tag_name in spec.legacy_tags:
+                basic_tag = LEGACY_TAG_MAP[tag_name]
+                tags.set_tag(tag_name, spec_tags[basic_tag])
+                represented_by_legacy_tags.add(basic_tag)
+            for tag_name, values in spec_tags.items():
+                if tag_name not in represented_by_legacy_tags:
+                    tags.set_tag(tag_name, list(values))
 
 
 def create_picture_file(path: Path, width: int = 400, height: int = 400, color: str = "blue"):
