@@ -10,7 +10,7 @@ from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import album_picture_to_flac, scan_flac_picture
 from ..types import BasicTag, Picture
-from ..vorbis import vorbis_comment_set_tag, vorbis_comment_tags
+from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
 
 
 class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
@@ -43,17 +43,23 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
 
     @override
     def _remove_picture(self, remove_picture: Picture) -> None:
-        new_picture_blocks = [
+        new_pictures = [
             base64_block
             for base64_block in self._get_picture_blocks()
             if scan_flac_picture(FlacPicture(base64.b64decode(base64_block)), self._picture_scanner)[0] != remove_picture
         ]
-        self._file.tags["metadata_block_picture"] = new_picture_blocks  # pyright: ignore[reportOptionalSubscript]
+        self._file.tags["metadata_block_picture"] = new_pictures  # pyright: ignore[reportOptionalSubscript]
 
     @override
     def get_tags(self):
-        result = vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
-        return result[0]
+        return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+
+    @override
+    def get_legacy_tags(self):
+        if self._file.tags is not None:
+            return vorbis_comment_legacy_tags(self._file.tags)
+        else:
+            return ()
 
     @override
     def _set_tag(self, tag: BasicTag, value: str | List[str] | None):

@@ -12,7 +12,16 @@ LEGACY_VORBIS_TAGS: Final[Tuple[Tuple[str, BasicTag], ...]] = (
 )
 
 
-def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[Tuple[BasicTag, Tuple[str, ...]], ...], Tuple[Tuple[str, BasicTag], ...]]:
+def vorbis_comment_legacy_tags(file_tags: VCommentDict) -> Tuple[Tuple[str, BasicTag], ...]:
+    legacy_tags: list[tuple[str, BasicTag]] = []
+    for legacy_name, basic_tag in LEGACY_VORBIS_TAGS:
+        if legacy_name in file_tags:
+            legacy_tags.append((legacy_name, basic_tag))
+    # Basic tags as first item of tuple, legacy tags as second item
+    return tuple(legacy_tags)
+
+
+def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
     # Use dict to track tags by BasicTag with list of values (for easy deduplication)
     tags: dict[BasicTag, list[str]] = {}
 
@@ -21,26 +30,22 @@ def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[Tuple[BasicTag, 
         if tag != BasicTag.UNKNOWN and tag.value in file_tags:
             tags[tag] = [str(value) for value in file_tags[tag.value]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
 
-    # Process legacy tags
-    legacy_tags: list[tuple[str, BasicTag]] = []
-    for legacy_name, basic_tag in LEGACY_VORBIS_TAGS:
-        if legacy_name in file_tags:
-            legacy_tags.append((legacy_name, basic_tag))
-            # Also add to main tags list with the corresponding BasicTag, avoiding duplicates
-            values = [str(value) for value in file_tags[legacy_name]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-            if basic_tag in tags:
-                # Extend existing values with non-duplicate new values
-                for value in values:
-                    if value not in tags[basic_tag]:
-                        tags[basic_tag].append(value)
-            else:
-                # Add new tag with its values
-                tags[basic_tag] = list(values)
+    # Read values from legacy tags if present
+    for legacy_name, basic_tag in vorbis_comment_legacy_tags(file_tags):
+        values = [str(value) for value in file_tags[legacy_name]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+        if basic_tag in tags:
+            # Extend existing values with non-duplicate new values
+            for value in values:
+                if value not in tags[basic_tag]:
+                    tags[basic_tag].append(value)
+        else:
+            # Add new tag with its values
+            tags[basic_tag] = list(values)
 
     tags_flat = ((basic_tag, tuple(values)) for basic_tag, values in tags.items())
 
     # Basic tags as first item of tuple, legacy tags as second item
-    return (tuple(tags_flat), tuple(legacy_tags))
+    return tuple(tags_flat)
 
 
 def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag, value: str | list[str] | None):

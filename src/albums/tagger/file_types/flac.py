@@ -10,7 +10,7 @@ from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import album_picture_to_flac, scan_flac_picture
 from ..types import BasicTag, Picture
-from ..vorbis import vorbis_comment_set_tag, vorbis_comment_tags
+from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
 
 
 class FlacTagger(AbstractMutagenTagger[FLAC]):
@@ -50,8 +50,11 @@ class FlacTagger(AbstractMutagenTagger[FLAC]):
 
     @override
     def get_tags(self):
-        result = vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
-        return result[0]
+        return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+
+    @override
+    def get_legacy_tags(self):
+        return vorbis_comment_legacy_tags(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
 
     @override
     def _set_tag(self, tag: BasicTag, value: str | List[str] | None):

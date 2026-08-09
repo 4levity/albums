@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
-from typing import Final, Generator, List, Tuple
+from typing import Final, Generator, List, Sequence, Tuple
 
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
@@ -243,5 +243,5 @@ class TaggerFile:
     def get_legacy_tags(self) -> Tuple[Tuple[str, BasicTag], ...]:
         return ()
 
-    def update_legacy_tags(self) -> None:
+    def update_legacy_tags(self, tags: Sequence[str]) -> None:
         pass
