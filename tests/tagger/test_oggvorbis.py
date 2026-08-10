@@ -178,7 +178,7 @@ class TestOggVorbis:
             ("label", BasicTag.ORGANIZATION),
             ("totaldiscs", BasicTag.DISCTOTAL),
         )
-        assert legacy == expected
+        assert sorted(legacy) == sorted(expected)
 
     def test_get_tags_legacy_mapping(self):
         with TestOggVorbis.tagger.open(track_legacy.filename) as file:

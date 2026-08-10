@@ -6,9 +6,14 @@ from .types import BasicTag
 
 LEGACY_VORBIS_TAGS: Final[Tuple[Tuple[str, BasicTag], ...]] = (
     ("album artist", BasicTag.ALBUMARTIST),
+    ("disc number", BasicTag.DISCNUMBER),
+    ("totaldiscs", BasicTag.DISCTOTAL),
     ("label", BasicTag.ORGANIZATION),
     ("publisher", BasicTag.ORGANIZATION),
-    ("totaldiscs", BasicTag.DISCTOTAL),
+    ("track number", BasicTag.TRACKNUMBER),
+    ("numtracks", BasicTag.TRACKTOTAL),
+    ("number_of_tracks", BasicTag.TRACKTOTAL),
+    ("totaltracks", BasicTag.TRACKTOTAL),
 )
 
 

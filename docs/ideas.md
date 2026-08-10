@@ -24,6 +24,8 @@ icon: lucide/flask-conical
     - use $genre in path templates
 - read album comment tags (various) and add per-album check(s)
 - scan date(s), require/special validate, use in file/folder name templates
+- support new field checks for composer, lyricist, year/date (and their aliases)
+  to address possible split-albums
 - many suggested fixes for current no-fix check failures in TODOs
 - low bitrate or suboptimal codec
 - not all tracks encoded the same (file type or bitrate target)

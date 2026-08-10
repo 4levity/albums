@@ -162,7 +162,7 @@ class TestFlac:
             ("label", BasicTag.ORGANIZATION),
             ("totaldiscs", BasicTag.DISCTOTAL),
         )
-        assert legacy == expected
+        assert sorted(legacy) == sorted(expected)
 
     def test_get_tags_legacy_mapping(self):
         with TestFlac.tagger.open(track3.filename) as file:
