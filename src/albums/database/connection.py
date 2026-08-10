@@ -31,7 +31,18 @@ def enable_foreign_keys(connection: Any, _):
         cursor.close()
 
 
-def open(filename: str | Path, echo: bool = False):
+def open(filename: str | Path, echo: bool = False, version: int | None = None):
+    """Open or create a database.
+
+    Args:
+        filename: Database file path, or MEMORY for in-memory.
+        echo: Enable SQLAlchemy query logging.
+        version: If specified, create/migrate the database to this version instead of the latest.
+            Useful for tests that need to test specific migrations.
+
+    Returns:
+        SQLAlchemy Engine.
+    """
     existing_db = Path(filename).exists()
     db = create_engine("sqlite://" if filename == MEMORY else f"sqlite:///{filename}", echo=echo)
     try:
@@ -40,7 +51,7 @@ def open(filename: str | Path, echo: bool = False):
                 connection = conn.connection
                 connection.executescript(SQL_INIT_SCHEMA)
 
-            migrate(db, True)
+            migrate(db, True, target_version=version)
         else:
             if existing_db:
                 _maintain(db)
@@ -50,7 +61,7 @@ def open(filename: str | Path, echo: bool = False):
                     connection = conn.connection
                     connection.executescript(SQL_INIT_SCHEMA)
 
-            migrate(db, False)
+            migrate(db, False, target_version=version)
             with Session(db) as session:
                 session.execute(text(SQL_CLEANUP))
         return db

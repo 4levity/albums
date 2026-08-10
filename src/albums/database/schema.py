@@ -211,15 +211,27 @@ WHERE name IN ('album artist', 'label', 'publisher', 'totaldiscs');
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())
 
 
-def migrate(db: Engine, quiet: bool):
+def migrate(db: Engine, quiet: bool, target_version: int | None = None):
+    """Migrate the database to the given target version (or CURRENT_SCHEMA_VERSION if not specified).
+
+    Args:
+        db: SQLAlchemy engine.
+        quiet: Suppress migration log messages.
+        target_version: Target schema version. If None, migrates to CURRENT_SCHEMA_VERSION.
+            Useful for tests that need a database at a specific intermediate version.
+    """
+    effective_target = target_version if target_version is not None else CURRENT_SCHEMA_VERSION
+
     with Session(db) as session:
         db_version = int(str(session.scalar(select(schema_table.c.version))))
     if db_version > CURRENT_SCHEMA_VERSION:
         raise RuntimeError(f"the database is newer than this version of albums ({db_version} > {CURRENT_SCHEMA_VERSION})")
-    if db_version == CURRENT_SCHEMA_VERSION:
+    if db_version > effective_target:
+        raise ValueError(f"the database is newer than the target database version ({db_version} > {effective_target})")
+    if db_version == effective_target:
         return
 
-    migrations = range(db_version + 1, CURRENT_SCHEMA_VERSION + 1)
+    migrations = range(db_version + 1, effective_target + 1)
     if not quiet:
         logger.debug(f"database schema version {db_version}, migrations to perform: {migrations}")
     for migration in migrations:
@@ -229,5 +241,5 @@ def migrate(db: Engine, quiet: bool):
             connection = conn.connection
             connection.executescript(MIGRATIONS[migration])
     with Session(db) as session:
-        session.execute(update(schema_table), {"version": CURRENT_SCHEMA_VERSION})
+        session.execute(update(schema_table), {"version": effective_target})
         session.commit()

@@ -10,17 +10,9 @@ from albums.types import Album, BasicTag, Track
 class TestMigration16LegacyTags:
     """Test that migration 16 migrates legacy vorbis tag names to canonical BasicTag field names."""
 
-    def _create_db_at_v15(self):
-        """Create an in-memory database at schema version 15 (before the legacy tag migration)."""
-        db = connection.open(connection.MEMORY)
-        # Downgrade schema to v15 by modifying version directly
-        with db.begin() as conn:
-            conn.execute(text("UPDATE _schema SET version = 15;"))
-        return db
-
     def test_legacy_tags_migrated(self):
         """Test basic migration of legacy tags to canonical names."""
-        db = self._create_db_at_v15()
+        db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
                 album = Album(
@@ -45,8 +37,8 @@ class TestMigration16LegacyTags:
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track2_id}, 'label', 'LabelVal');"))
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track2_id}, 'totaldiscs', '3');"))
 
-            # Migrate to v16
-            schema.migrate(db, quiet=True)
+            # Migrate v15 → v16 only
+            schema.migrate(db, quiet=True, target_version=16)
 
             with Session(db) as session:
                 # Verify legacy tags were recorded in track_legacy_tag
@@ -83,7 +75,7 @@ class TestMigration16LegacyTags:
 
     def test_duplicate_values_not_created(self):
         """Verify migration doesn't create duplicate values when legacy and canonical have same value."""
-        db = self._create_db_at_v15()
+        db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
                 album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUMARTIST: "SameArtist"})])
@@ -96,7 +88,7 @@ class TestMigration16LegacyTags:
             with db.begin() as conn:
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'album artist', 'SameArtist');"))
 
-            schema.migrate(db, quiet=True)
+            schema.migrate(db, quiet=True, target_version=16)
 
             with Session(db) as session:
                 # Should only have ONE row with the canonical name and this value (no duplicates)
@@ -115,7 +107,7 @@ class TestMigration16LegacyTags:
 
     def test_noop_when_no_legacy_tags(self):
         """Migration should be a no-op when there are no legacy tags."""
-        db = self._create_db_at_v15()
+        db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
                 album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUMARTIST: "Artist"})])
@@ -123,7 +115,7 @@ class TestMigration16LegacyTags:
                 session.flush()
                 session.commit()
 
-            schema.migrate(db, quiet=True)
+            schema.migrate(db, quiet=True, target_version=16)
 
             with Session(db) as session:
                 # Should be unchanged
@@ -140,7 +132,7 @@ class TestMigration16LegacyTags:
 
     def test_both_label_and_publisher_migrate_to_organization(self):
         """Verify both 'label' and 'publisher' legacy tags migrate to ORGANIZATION without creating duplicates."""
-        db = self._create_db_at_v15()
+        db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
                 album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "Existing"})])
@@ -154,7 +146,7 @@ class TestMigration16LegacyTags:
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'label', 'LabelCo');"))
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'publisher', 'PublishCo');"))
 
-            schema.migrate(db, quiet=True)
+            schema.migrate(db, quiet=True, target_version=16)
 
             with Session(db) as session:
                 tag_rows = session.execute(
