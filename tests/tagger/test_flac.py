@@ -7,7 +7,7 @@ from mutagen.flac import Picture as FlacPicture
 
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureType
+from albums.tagger.types import BasicTag, Picture, PictureType
 from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
@@ -25,7 +25,13 @@ track2 = Track(
         TrackPicture(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
     ],
 )
-album = Album(path="bar" + os.sep, tracks=[track1, track2])
+track3 = Track(
+    filename="3.flac",
+    tag={BasicTag.ORGANIZATION: "ABC", BasicTag.ALBUMARTIST: "foo artist", BasicTag.DISCTOTAL: "2"},
+    legacy_tags=["label", "album artist", "totaldiscs"],
+)
+
+album = Album(path="bar" + os.sep, tracks=[track1, track2, track3])
 
 
 class TestFlac:
@@ -141,3 +147,27 @@ class TestFlac:
         with TestFlac.tagger.open(track2.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
         assert set(pictures) == {back, replacement}
+
+    def test_get_legacy_tags_empty(self):
+        with TestFlac.tagger.open(track1.filename) as file:
+            legacy = file.get_legacy_tags()
+        assert legacy == ()
+
+    def test_get_legacy_tags_present(self):
+        with TestFlac.tagger.open(track3.filename) as file:
+            legacy = file.get_legacy_tags()
+
+        expected = (
+            ("album artist", BasicTag.ALBUMARTIST),
+            ("label", BasicTag.ORGANIZATION),
+            ("totaldiscs", BasicTag.DISCTOTAL),
+        )
+        assert sorted(legacy) == sorted(expected)
+
+    def test_get_tags_legacy_mapping(self):
+        with TestFlac.tagger.open(track3.filename) as file:
+            tags = dict(file.get_tags())
+
+        assert tags[BasicTag.ORGANIZATION] == ("ABC",)
+        assert tags[BasicTag.ALBUMARTIST] == ("foo artist",)
+        assert tags[BasicTag.DISCTOTAL] == ("2",)

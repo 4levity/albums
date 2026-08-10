@@ -25,7 +25,12 @@ fix: install ## Automatically fix lint/format
 	$(POETRY) run ruff format
 	$(POETRY) run ruff check . --fix
 
-test: install ## Run all tests
+test-no-warnings: install ## Run all tests without coverage, fail on any warnings
+	$(POETRY) run pytest -v --max-warnings=0
+
+test: test-no-warnings install ## Run all tests with coverage (depends on test-no-warnings)
+	# Running tests twice: once without coverage to catch new warnings,
+	# and once with coverage for coverage reports (warnings ignored during coverage run)
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 

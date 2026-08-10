@@ -88,17 +88,13 @@ class TestAsf:
     def test_set_unsupported_asf_tags(self):
         with TestAsf.tagger.open(track.filename) as file:
             with pytest.raises(ValueError):
-                file.set_tag(BasicTag.OLD_TOTAL_DISCS, "2")
-            with pytest.raises(ValueError):
                 file.set_tag(BasicTag.RELEASECOUNTRY, "UK")
 
     def test_remove_unsupported_asf_tags(self, mocker):
         with TestAsf.tagger.open(track.filename) as file:
             mock_logger = mocker.patch("albums.tagger.file_types.asf.logger")
-            file.set_tag(BasicTag.OLD_TOTAL_DISCS, None)
-            assert mock_logger.warning.call_count == 1
             file.set_tag(BasicTag.RELEASECOUNTRY, None)
-            assert mock_logger.warning.call_count == 2
+            assert mock_logger.warning.call_count == 1
 
     def test_update_asf_compilation(self):
         with TestAsf.tagger.open(track.filename) as file:

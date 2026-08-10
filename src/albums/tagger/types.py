@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
-from typing import Final, Generator, List, Tuple
+from typing import Final, Generator, List, Sequence, Tuple
 
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
@@ -46,11 +46,6 @@ class BasicTag(StrEnum):
     DISCNUMBER = auto()
     DISCTOTAL = auto()
     GENRE = auto()
-
-    OLD_ALBUM_ARTIST = "album artist"  # vorbis comment only; correct is "albumartist"
-    OLD_LABEL = "label"  # vorbis comment only; correct is "organization"
-    OLD_PUBLISHER = "publisher"  # vorbis comment only; correct is "organization"
-    OLD_TOTAL_DISCS = "totaldiscs"  # vorbis comment only; correct is "disctotal"
 
     ORGANIZATION = auto()  # Publisher, record label
     RELEASECOUNTRY = auto()  # vorbis comment only (MUSICBRAINZ_ALBUMRELEASECOUNTRY is probably preferred)
@@ -229,9 +224,23 @@ class TaggerFile:
     def get_stream_info(self) -> StreamInfo: ...
     def get_image_data(self, picture: Picture) -> bytes: ...
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
-    def has_video(self) -> bool: ...
 
-    def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None: ...
+    # set_tag must support BasicTag but may raise an exception if str type tag is provided
+    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None: ...
     def add_picture(self, new_picture: Picture, image_data: bytes) -> None: ...
     def remove_picture(self, remove_picture: Picture) -> None: ...
     def close(self) -> None: ...
+
+    # file types that may be video streams (e.g. mp4) should implement this:
+    def has_video(self) -> bool:
+        return False
+
+    # file types that may have automatically-convertible legacy tags (e.g. FLAC, Ogg Vorbis) should implement these:
+    def set_legacy_tag(self, tag: str, value: str | List[str] | None) -> None:
+        raise NotImplementedError()
+
+    def get_legacy_tags(self) -> Tuple[Tuple[str, BasicTag], ...]:
+        return ()
+
+    def update_legacy_tags(self, tags: Sequence[str]) -> None:
+        pass

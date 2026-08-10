@@ -15,10 +15,6 @@ class ImageFileReader(TaggerFile):
         self._picture_scanner = picture_scanner
 
     @override
-    def has_video(self) -> bool:
-        return False
-
-    @override
     def get_tags(self):
         return ()
 
@@ -41,7 +37,7 @@ class ImageFileReader(TaggerFile):
         yield self._image
 
     @override
-    def set_tag(self, tag: BasicTag, value: str | Sequence[str] | None) -> None:
+    def set_tag(self, tag: BasicTag | str, value: str | Sequence[str] | None) -> None:
         raise NotImplementedError("ImageFileReader")
 
     @override

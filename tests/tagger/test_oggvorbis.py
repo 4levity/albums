@@ -34,7 +34,12 @@ track = Track(
         TrackPicture(picture_info=PictureInfo("image/jpeg", 300, 300, 24, 1, b""), picture_type=PictureType.COVER_BACK),
     ],
 )
-album = Album(path="foobar" + os.sep, tracks=[track])
+track_legacy = Track(
+    filename="2.ogg",
+    tag={BasicTag.ORGANIZATION: "ABC", BasicTag.ALBUMARTIST: "foo artist", BasicTag.DISCTOTAL: "2"},
+    legacy_tags=["label", "album artist", "totaldiscs"],
+)
+album = Album(path="foobar" + os.sep, tracks=[track, track_legacy])
 
 
 class TestOggVorbis:
@@ -163,3 +168,22 @@ class TestOggVorbis:
 
         with TestOggVorbis.tagger.open(track.filename) as file:
             assert set(pic for (pic, _) in file.get_pictures()) == {replacement, back}
+
+    def test_get_legacy_tags_present(self):
+        with TestOggVorbis.tagger.open(track_legacy.filename) as file:
+            legacy = file.get_legacy_tags()
+
+        expected = (
+            ("album artist", BasicTag.ALBUMARTIST),
+            ("label", BasicTag.ORGANIZATION),
+            ("totaldiscs", BasicTag.DISCTOTAL),
+        )
+        assert sorted(legacy) == sorted(expected)
+
+    def test_get_tags_legacy_mapping(self):
+        with TestOggVorbis.tagger.open(track_legacy.filename) as file:
+            tags = dict(file.get_tags())
+
+        assert tags[BasicTag.ORGANIZATION] == ("ABC",)
+        assert tags[BasicTag.ALBUMARTIST] == ("foo artist",)
+        assert tags[BasicTag.DISCTOTAL] == ("2",)

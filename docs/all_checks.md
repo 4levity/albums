@@ -200,7 +200,6 @@ Rules:
 - If present, the disc total should be the number of distinct disc number values
   which should be the same as the highest disc number
 - All tracks with disc total should also have disc number
-- The legacy tag "totaldiscs" should be removed if it is present
 - The selected disc total presence policy should apply
     - **"consistent"**: either all tracks have disc total, or none do
     - **"always"**: all tracks should have disc total
@@ -208,9 +207,8 @@ Rules:
 
 !!!success "Dependency"
 
-    Requires the `invalid-track-or-disc-number` check to pass first.
-
-**Automatic fix** if any track has "totaldiscs" tag, remove it.
+    Requires the `invalid-track-or-disc-number` and `legacy-tags` checks to
+    pass first.
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
 the tag. If the policy is "always", and a consistent total is set on some
@@ -332,6 +330,21 @@ extra spaces or other whitespace characters at the beginning or end.
 **Automatic fix**: Remove whitespace from the beginning and end of all values
 for all supported basic text tags.
 
+### legacy-tags
+
+Some files may contain legacy tag names that map to the standard tags. For
+example, `album artist` is a legacy name for the standard `albumartist`. And
+`label` or `publisher` are legacy names for `organization`, while `totaldiscs`
+is a legacy name for `disctotal`.
+
+Some tools may still create these legacy tag names. This check reports when any
+tracks in an album have legacy tags present so they can be converted to the
+standard equivalents.
+
+**Automatic fix**: Remove each legacy tag and set the corresponding standard
+tag. If multiple tracks have values for the same BasicTag (from both legacy and
+standard sources), the values are merged with duplicates removed.
+
 ### album-tag
 
 Tracks should have `album` tags. The fix attempts to guess album name from tags
@@ -358,20 +371,16 @@ Rules:
 - If any tracks have different artists, all tracks should have the same album
   artist.
 - If any track has album artist, all tracks should have the same album artist.
-- For FLAC and other Vorbis Comment files only: the tag `album artist` should
-  not be present (standard is `albumartist`).
 
 The fix offers candidates found in the tags plus the option "Various Artists".
-It can also remove or convert legacy tags or apply a policy from options below.
+It can also apply a policy from options below.
+
+!!!success "Dependency"
+
+    Requires the `legacy-tags` check to pass first.
 
 **Automatic fix**: If the album artist is or would be redundant, and one of the
 optional policies below is enabled, apply the policy.
-
-**Automatic fix**: If legacy album artist tag is present and standard album
-artist tag is not present, convert the tag to the standard.
-
-**Automatic fix**: If both legacy album artist tag and standard album artist tag
-are present, remove the legacy album artist tag. (Value is not checked.)
 
 <!-- pyml disable line-length -->
 
@@ -546,12 +555,9 @@ tracks, set that value on the tracks which have no value. And if the policy is
 
 See "Other Tags: Per Album" above for common behavior of this check.
 
-In addition, for Vorbis Comment tags (FLAC, etc) the label/publisher should be
-stored only as `organization`. If the legacy Vorbis Comment tags `label` or
-`publisher` are set, they should be removed to avoid confusion and players
-splitting albums.
+!!!success "Dependency"
 
-**Automatic fix**: If `label` or `publisher` are present, remove them.
+    Requires the `legacy-tags` check to pass first.
 
 ### album-sort-tag, album-artist-sort-tag, barcode-tag, compilation-tag, release-type-tag
 

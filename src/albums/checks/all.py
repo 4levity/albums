@@ -32,6 +32,7 @@ from .tags.check_compilation_tag import CheckCompilationTag
 from .tags.check_duplicate_album import CheckDuplicateAlbum
 from .tags.check_extra_whitespace import CheckExtraWhitespace
 from .tags.check_genre_present import CheckGenrePresent
+from .tags.check_legacy_tags import CheckLegacyTags
 from .tags.check_musicbrainz_tags import CheckMusicBrainzTags
 from .tags.check_publisher_tag import CheckPublisherTag
 from .tags.check_releasecountry_tag import CheckReleaseCountryTag
@@ -49,6 +50,7 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     # tag checks 1
     CheckUnreadableTrack,
     CheckExtraWhitespace,
+    CheckLegacyTags,
     # numbering checks
     CheckDiscInTrackNumber,
     CheckInvalidTrackOrDiscNumber,

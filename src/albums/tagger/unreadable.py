@@ -28,11 +28,7 @@ class UnreadableTagger(TaggerFile):
         yield from ()
 
     @override
-    def has_video(self) -> bool:
-        return False
-
-    @override
-    def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None:
+    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None:
         raise ValueError(f"cannot set tags - unreadable file {self._filename}")
 
     @override

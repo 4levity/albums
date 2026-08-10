@@ -49,7 +49,7 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
     (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
     (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     (BasicTag.ORGANIZATION, "TPUB"),
-    # nonstandard: this tagger will read and remove it but will not set it (OTOH, maybe should be treated same as e.g. OLD_LABEL)
+    # nonstandard: this tagger will read and remove it but will not set it
     (BasicTag.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),  # nonstandard
     (BasicTag.RELEASETYPE, "TXXX:RELEASETYPE"),  # nonstandard
     #
@@ -147,7 +147,9 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         return tuple(basic_tags)
 
     @override
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+        if not isinstance(tag, BasicTag):
+            raise ValueError("id3 tagger only uses BasicTag")
         tags = self._ensure_id3()
         if value is None:
             match tag:
@@ -161,8 +163,6 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     self._set_tpos(disc_number, None)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
-                case BasicTag.OLD_ALBUM_ARTIST | BasicTag.OLD_LABEL | BasicTag.OLD_PUBLISHER | BasicTag.OLD_TOTAL_DISCS:
-                    logger.warning(f"don't know how to remove {tag.name} from ID3 tag in {self._get_file().filename}")
                 case BasicTag.TRACKNUMBER:
                     (_, track_total) = self._get_trck()
                     self._set_trck(None, track_total)
@@ -203,14 +203,7 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
-                case (
-                    BasicTag.OLD_ALBUM_ARTIST
-                    | BasicTag.OLD_LABEL
-                    | BasicTag.OLD_PUBLISHER
-                    | BasicTag.OLD_TOTAL_DISCS
-                    | BasicTag.RELEASECOUNTRY
-                    | BasicTag.RELEASETYPE
-                ):
+                case BasicTag.RELEASECOUNTRY | BasicTag.RELEASETYPE:
                     raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
                 case BasicTag.ORGANIZATION:
                     tags["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)

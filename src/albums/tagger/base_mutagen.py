@@ -21,7 +21,8 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
     # subclass must implement
     def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
     def _get_file(self) -> _FT: ...
-    def _set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None: ...
+    # _set_tag must support BasicTag but may raise an exception if str type tag is provided
+    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None: ...
 
     # subclass must implement if advertising Cap.PICTURES
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
@@ -42,10 +43,6 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         self._get_file().save(padding=self._padding)  # pyright: ignore[reportUnknownMemberType]
 
     @override
-    def has_video(self) -> bool:
-        return False
-
-    @override
     def get_stream_info(self):
         file = self._get_file()
         return _get_stream_info(file.filename, file.info, self._get_codec())  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
@@ -59,7 +56,7 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         return image_data
 
     @override
-    def set_tag(self, tag: BasicTag, value: str | List[str] | None) -> None:
+    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None:
         self._set_tag(tag, value)
         self._changed = True
 
