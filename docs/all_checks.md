@@ -332,6 +332,21 @@ extra spaces or other whitespace characters at the beginning or end.
 **Automatic fix**: Remove whitespace from the beginning and end of all values
 for all supported basic text tags.
 
+### legacy-tags
+
+Some files may contain legacy tag names that map to the standard tags. For
+example, `album artist` is a legacy name for the standard `albumartist`. And
+`label` or `publisher` are legacy names for `organization`, while `totaldiscs`
+is a legacy name for `disctotal`.
+
+Some tools may still create these legacy tag names. This check reports when any
+tracks in an album have legacy tags present so they can be converted to the
+standard equivalents.
+
+**Automatic fix**: Remove each legacy tag and set the corresponding standard
+tag. If multiple tracks have values for the same BasicTag (from both legacy and
+standard sources), the values are merged with duplicates removed.
+
 ### album-tag
 
 Tracks should have `album` tags. The fix attempts to guess album name from tags
