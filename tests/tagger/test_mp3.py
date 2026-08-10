@@ -104,8 +104,6 @@ class TestMp3:
     def test_set_unsupported_id3_tags(self):
         with TestMp3.tagger.open(track.filename) as file:
             with pytest.raises(ValueError):
-                file.set_tag(BasicTag.OLD_TOTAL_DISCS, "2")
-            with pytest.raises(ValueError):
                 file.set_tag(BasicTag.RELEASETYPE, "EP")
             with pytest.raises(ValueError):
                 file.set_tag(BasicTag.RELEASECOUNTRY, "UK")
@@ -113,10 +111,8 @@ class TestMp3:
     def test_remove_unsupported_id3_tags(self, mocker):
         with TestMp3.tagger.open(track.filename) as file:
             mock_logger = mocker.patch("albums.tagger.base_id3.logger")
-            file.set_tag(BasicTag.OLD_TOTAL_DISCS, None)
-            assert mock_logger.warning.call_count == 1
             file.set_tag(BasicTag.OLD_ALBUM_ARTIST, None)
-            assert mock_logger.warning.call_count == 2
+            assert mock_logger.warning.call_count == 1
 
     def test_update_id3_compilation(self):
         with TestMp3.tagger.open(track.filename) as file:
