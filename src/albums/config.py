@@ -1,3 +1,9 @@
+"""Application configuration types, defaults and serialization logic.
+
+Configuration values are persisted to the SQLite database as JSON-encoded rows
+in the ``setting`` table and reloaded into a ``Configuration`` dataclass at startup.
+"""
+
 from __future__ import annotations
 
 import json
@@ -17,6 +23,7 @@ from .types import CheckConfiguration
 
 logger: Final = logging.getLogger(__name__)
 
+# OS-specific directories for storing application data and caches.
 PLATFORM_DIRS: Final = PlatformDirs("albums", "4levity")
 
 
@@ -25,6 +32,16 @@ type SettingValueType = Union[str, int, float, bool, Sequence[str], Sequence[Ser
 
 
 class SettingEntity(Base):
+    """SQLAlchemy model mapping to the ``setting`` table.
+
+    Each row stores one configuration item keyed by a dotted ``section.name`` string.
+
+    Attributes:
+        name: Configuration key in ``"section.option"`` format (primary key).
+        value: JSON-serializable setting value. The raw type is stored as-is for simple scalars,
+               complex structures are round-tripped through the :class:`~.orm.SerializableValueAsJson` type.
+    """
+
     __tablename__ = "setting"
 
     name: Mapped[str] = mapped_column(Text, nullable=False, primary_key=True)
@@ -32,6 +49,12 @@ class SettingEntity(Base):
 
 
 class PathCompatibilityOption(StrEnum):
+    """Target platform restrictions applied when constructing safe file/folder names.
+
+    Choosing a stricter target (e.g. ``WINDOWS``) prevents generation path components that
+    would be rejected by that OS's filesystem rules.
+    """
+
     LINUX = "Linux"
     WINDOWS = "Windows"
     MACOS = "macOS"
@@ -40,36 +63,78 @@ class PathCompatibilityOption(StrEnum):
 
 
 class RescanOption(StrEnum):
+    """Policy controlling automatic library re-scans when albums change.
+
+    Values correspond to CLI ``--rescan`` argument choices and are persisted in settings.
+    """
+
     ALWAYS = auto()
     NEVER = auto()
     AUTO = auto()
 
 
+# Default directory structure template applied when importing music into the library via ``albums import``.
 DEFAULT_IMPORT_PATH: Final = Template("$artist/$album")
+
+# Default directory structure for compilation albums where there is no single artist.
 DEFAULT_IMPORT_PATH_VARIOUS: Final = Template("Compilations/$album")
+
+# Additional import path template options to present by default.
 DEFAULT_MORE_IMPORT_PATHS: Final = (Template("$A1/$artist/$album"), Template("Soundtracks/$album"))
+
+# Maximum number of directories scanned during ``import --scan`` before proceeding to import.
 DEFAULT_IMPORT_SCAN_MAX_PATHS: Final = 250
 
 
 def default_checks_config() -> Mapping[str, CheckConfiguration]:
-    from .checks.all import ALL_CHECKS  # local import because .checks.all imports all checks which will import this module
+    """Return a fresh dict of factory-default check configurations keyed by check name.
+
+    Returns:
+        A mapping from each registered check's ``name`` to a mutable copy of its default config dict.
+    """
+    from .checks.all import ALL_CHECKS  # local import because .checks.all imports every check, which will import this module
 
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
 
 
 class ID3v1Policy(IntEnum):
-    # Do not change, these are the values used by mutagen MP3.save()
-    REMOVE = 0
-    UPDATE = 1
-    CREATE = 2
+    """Strategy for handling legacy ID3v1 tags when saving MP3 files.
+
+    Values map directly to the numeric codes expected by ``mutagen.mp3.MP3.save``'s ``v1`` parameter.
+    """
+
+    REMOVE = 0  # Strip any existing ID3v1 tag on save.
+    UPDATE = 1  # Update existing ID3v1 in-place if present; otherwise leave absent.
+    CREATE = 2  # Always write an ID3v1 tag (creating one when none exists).
 
 
+# Audio file conversion profile used by default when syncing to destinations that require transcoding.
 DEFAULT_FILE_CONVERT_PROFILE: Final = "mp3"
+
+# Marker string placed in UI lists to signify the "no-collection" option (all albums).
 ALL_ALBUMS = "< use all albums >"
 
 
 @dataclass
 class SyncDestination:
+    """Describes a single device or folder that library albums can be synced to.
+
+    When syncing, albums belonging to the specified collection are copied into
+    *path_root* using either *relpath_template_artist* or *relpath_template_compilation*.
+    Files may be transcoded based on the provided profile and technical caps.
+
+    Attributes:
+        collection: Collection name whose albums populate this destination (``ALL_ALBUMS`` for everything).
+        path_root: Root filesystem path where synced files are written.
+        relpath_template_artist: Path template for artist albums; supports ``$artist``, ``$album``, etc.
+        relpath_template_compilation: Path template for compilation albums with multiple artists.
+        allow_file_types: Whitelist of audio file extensions to include (empty accepts all supported types).
+        convert_profile: Transcoding profile identifier for the destination player or device.
+        max_kbps: Target bitrate cap in kilobits per second (0 = no limit).
+        max_sample_rate: Target sample rate cap in Hz (0 = no limit).
+        max_bits_per_sample: Target sample depth cap (0 = no limit).
+    """
+
     collection: str
     path_root: Path
     relpath_template_artist: Template = Template("")
@@ -83,10 +148,15 @@ class SyncDestination:
     def __str__(self) -> str:
         return f"sync {self.collection or 'all albums'} -> {self.path_root}"
 
-    def __lt__(self, other: SyncDestination):
+    def __lt__(self, other: SyncDestination) -> bool:
         return self.collection < other.collection or (self.collection == other.collection and str(self.path_root) < str(other.path_root))
 
     def to_dict(self) -> SerializedSyncDestination:
+        """Serialize the destination into a JSON-safe dictionary for database storage.
+
+        Returns:
+            A dict suitable for inclusion in ``SerializedSyncDestination`` lists.
+        """
         return {
             "collection": self.collection,
             "path_root": str(self.path_root),
@@ -100,7 +170,15 @@ class SyncDestination:
         }
 
     @classmethod
-    def from_dict(cls, values: SerializedSyncDestination):
+    def from_dict(cls, values: SerializedSyncDestination) -> SyncDestination:  # noqa: ANN102
+        """Construct a ``SyncDestination`` from JSON-serializable data loaded from the database.
+
+        Args:
+            values: Dict previously produced by :meth:`to_dict` or equivalent structure.
+
+        Returns:
+            A fully initialized sync destination instance.
+        """
         return SyncDestination(
             str(values["collection"]),
             Path(str(values["path_root"])),
@@ -116,6 +194,27 @@ class SyncDestination:
 
 @dataclass
 class Configuration:
+    """In-memory representation of user-facing application configuration.
+
+    Attributes:
+        checks: Per-check tuning options keyed by check name.
+        default_import_path: Path template for new artist albums when using ``albums import``.
+        default_import_path_various: Path template for compilation albums during import.
+        more_import_paths: Extra path template options shown to user when importing.
+        import_scan_max_paths: Limit on directories explored by ``import`` scan.
+        library: Root directory scanned and managed as the music library.
+        transcoder_cache: On-disk folder caching transcoded audio files to avoid repeated work.
+        transcoder_cache_size: Maximum cache size in bytes (default 16 GiB).
+        open_folder_command: Shell command to run to open a file manager on a folder.
+        path_compatibility: Filesystem character restrictions applied to generated filenames.
+        path_replace_slash: Replacement character used for ``/`` and ``\\`` in folder names.
+        path_replace_invalid: Replacement substring for other filesystem-illegal characters (empty to strip).
+        rescan: Automatic scan policy whenever a command is about to be invoked.
+        tagger: Shell command to invoke to run an external tagger on a folder.
+        id3v1: Policy for legacy ID3v1 tags when saving MP3 files.
+        sync_destinations: Destination folders to which albums can be synced.
+    """
+
     checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
     default_import_path: Template = DEFAULT_IMPORT_PATH
     default_import_path_various: Template = DEFAULT_IMPORT_PATH_VARIOUS
@@ -134,6 +233,15 @@ class Configuration:
     sync_destinations: List[SyncDestination] = field(default_factory=list[SyncDestination])
 
     def to_values(self) -> Mapping[str, SettingValueType]:
+        """Serialize configuration into a flat dict of dotted keys for database storage.
+
+        Returns:
+            A mapping of ``"section.option"`` keys to serializable values ready for insertion
+            into the ``setting`` table via ``SettingEntity`` rows.
+
+        Raises:
+            ValueError: If *checks* contains an unknown check name or a setting with a type mismatch.
+        """
         values: Dict[str, SettingValueType] = {
             "settings.default_import_path": self.default_import_path.template,
             "settings.default_import_path_various": self.default_import_path_various.template,
@@ -164,7 +272,19 @@ class Configuration:
         return values
 
     @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, SettingValueType]]):
+    def from_values(cls, values: Iterator[Tuple[str, SettingValueType]]) -> tuple[Configuration, bool]:
+        """Reconstruct application configuration from raw database ``setting`` rows.
+
+        Settings with unexpected keys or type mismatches are logged as warnings and ignored
+        so that older or corrupted databases do not crash the app on load.
+
+        Args:
+            values: Iterable of ``(key, value)`` pairs where *key* is a dotted configuration name.
+
+        Returns:
+            A two-element tuple containing the populated ``Configuration`` object and a boolean flag
+            indicating whether any database rows were skipped due to validation failures.
+        """
         config = Configuration()
         ignored_values = False
         for k, value in values:
@@ -175,7 +295,7 @@ class Configuration:
                 continue
             [section, name] = tokens
             if section == "settings":
-                # TODO validate templates
+                # TODO validate templates when loaded from DB
                 if name == "default_import_path":
                     config.default_import_path = Template(str(value))
                 elif name == "default_import_path_various":

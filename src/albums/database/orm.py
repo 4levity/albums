@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from string import Template
 from typing import Any, Final, override
 
 from sqlalchemy import Column, Dialect, Integer, String, Table, Text, TypeDecorator
@@ -11,16 +10,18 @@ from ..picture.info import LoadIssuesType
 
 
 class Base(DeclarativeBase):
-    pass
+    """SQLAlchemy declarative base for all database models."""
 
 
 schema_table: Final = Table("_schema", Base.metadata, Column("version", Integer, nullable=False, unique=True))
 NO_DEFAULT_VALUE_LIST_STR: Final = [
     "".join(["!", "NO DEFAULT VALUE"])
-]  # generate string at runtime and use special characters, so it won't be interned
+]  # Sentinel default for TagList.get() - never a real tag value, used to detect caller omitting default
 
 
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):
+    """Persist enum members as integer values."""
+
     impl = Integer
 
     @override
@@ -38,6 +39,8 @@ class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):
 
 
 class SerializableValueAsJson[_VT](TypeDecorator[_VT]):
+    """Serialize/deserialize values to/from JSON text."""
+
     impl = Text
 
     cache_ok = True
@@ -52,6 +55,8 @@ class SerializableValueAsJson[_VT](TypeDecorator[_VT]):
 
 
 class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
+    """Serialize/deserialize load issues tuples to/from JSON text."""
+
     impl = Text
 
     cache_ok = True
@@ -69,21 +74,9 @@ class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
         return tuple([(str(k), v) for [k, v] in kv])
 
 
-class TemplateAsString(TypeDecorator[Template]):
-    impl = Text
-
-    cache_ok = True
-
-    @override
-    def process_bind_param(self, value: Template | None, dialect: Dialect):
-        return value.template if value else ""
-
-    @override
-    def process_result_value(self, value: str | None, dialect: Dialect) -> Template | None:
-        return None if value is None else Template(value)
-
-
 class SafeStringEnum[EnumType](TypeDecorator[EnumType]):
+    """Persist enum as string, returning a fallback value for unknown strings."""
+
     impl = String
 
     cache_ok = True

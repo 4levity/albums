@@ -14,6 +14,7 @@ from albums.database.schema import SQL_INIT_SCHEMA, migrate
 
 logger: Final = logging.getLogger(__name__)
 
+# Sentinel for in-memory database
 MEMORY: Final = ":memory:"
 
 SQL_INIT_CONNECTION: Final = """

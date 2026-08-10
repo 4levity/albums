@@ -1,3 +1,5 @@
+"""English pluralization helpers for generating grammatically correct user-facing messages."""
+
 import re
 from typing import Sized
 

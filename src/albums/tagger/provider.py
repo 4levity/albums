@@ -5,6 +5,8 @@ from .folder import AlbumTagger
 
 
 class AlbumTaggerProvider:
+    """Provides an AlbumTagger instance for an album folder."""
+
     _base_path: Path
     _tagger: AlbumTagger | None = None
     _id3v1: ID3v1Policy

@@ -4,6 +4,7 @@ from mutagen._vorbis import VCommentDict
 
 from .types import BasicTag
 
+# Mapping of legacy Vorbis comment names to their canonical BasicTag equivalents
 LEGACY_VORBIS_TAGS: Final[Tuple[Tuple[str, BasicTag], ...]] = (
     ("album artist", BasicTag.ALBUMARTIST),
     ("disc number", BasicTag.DISCNUMBER),

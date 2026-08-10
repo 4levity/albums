@@ -21,6 +21,8 @@ from .unreadable import UnreadableTagger
 
 
 class Cap(Enum):
+    """Capabilities supported by different file types for tagging."""
+
     BASIC_TAGS = auto()
     FORMATTED_TRACK_NUMBER = auto()
     PICTURES = auto()
@@ -40,6 +42,7 @@ _SUFFIX_SUPPORT = {
     ".aif": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
     ".aiff": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
 }
+# File extensions for supported audio formats
 AUDIO_FILE_SUFFIXES: Final = frozenset(_SUFFIX_SUPPORT.keys())
 
 _SUFFIX_SUPPORT.update((suffix, {Cap.PICTURES}) for suffix in SUPPORTED_IMAGE_SUFFIXES)
@@ -47,6 +50,8 @@ SUFFIX_SUPPORT: Final[Mapping[str, Set[Cap]]] = _SUFFIX_SUPPORT
 
 
 class AlbumTagger:
+    """Handles reading and writing tags for media files within a single album folder."""
+
     @staticmethod
     def supports(filename: str, *needs: Cap) -> bool:
         if not needs:

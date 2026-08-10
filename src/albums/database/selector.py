@@ -13,6 +13,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 class Comparator(StrEnum):
+    """Comparison operators for database queries."""
+
     MATCH_REGEX = "~"
     NEQ = "!="
     LTE = "<="
@@ -24,6 +26,8 @@ class Comparator(StrEnum):
 
 @dataclass(frozen=True)
 class Match:
+    """A filter value paired with a comparison operator."""
+
     value: str
     comparator: Comparator = Comparator.EQ
 
@@ -38,6 +42,15 @@ _TRACK_COLUMNS: Final = {
 
 
 def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}, invert: bool = False) -> Generator[Album, None, None]:
+    """Load albums matching the given filters.
+
+    Filters support keys like ``path``, ``collection``, ``ignore_check``, track columns (``bitrate``, ``codec``, etc.), and ``tag:...`` for tag values.
+
+    Args:
+        session: Database session.
+        filter: Mapping of filter keys to list of match criteria.
+        invert: If true, return albums that don't match any filter.
+    """
     stmt = select(Album)
     tags: list[Tuple[str, List[Match]]] = [(k.partition(":")[2], matches) for k, matches in filter.items() if k.startswith("tag:")]
     if tags:

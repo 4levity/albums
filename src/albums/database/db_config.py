@@ -11,6 +11,10 @@ logger: Final = logging.getLogger(__name__)
 
 
 def load(db: Engine) -> Configuration:
+    """Load configuration from the database.
+
+    Returns valid settings and discards any unknown keys with a warning.
+    """
     with Session(db) as session:
         (config, ignored_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
 
@@ -20,6 +24,7 @@ def load(db: Engine) -> Configuration:
 
 
 def save(db: Engine, configuration: Configuration):
+    """Persist configuration to the database, replacing all stored settings."""
     settings = configuration.to_values()
     with Session(db) as session:
         stmt = insert(SettingEntity).values([{"name": k, "value": v} for k, v in settings.items()])

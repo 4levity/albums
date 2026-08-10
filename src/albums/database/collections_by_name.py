@@ -11,6 +11,7 @@ from albums.types import CollectionEntity
 # SAWarning: Identity map already had an identity for (<class 'albums.types.CollectionEntity'>, (1,), None), replacing it with newly flushed object.
 #     Are there load operations occurring inside of an event handler within the flush?
 def collections_by_name(session: Session, collection_names: Sequence[str]):
+    """Look up existing collections or create new ones by name, returning a name-to-entity mapping."""
     return dict(
         (
             name,

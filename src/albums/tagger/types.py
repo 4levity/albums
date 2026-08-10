@@ -33,7 +33,10 @@ from ..picture.info import PictureInfo
 
 
 class BasicTag(StrEnum):
-    # BasicTag names must be the same as the corresponding Vorbis Comment names
+    """Standard metadata fields supported across audio formats.
+
+    BasicTag values must be the same as the corresponding Vorbis Comment field names.
+    """
 
     ALBUM = auto()
     ALBUMSORT = auto()
@@ -197,6 +200,8 @@ class PictureType(IntEnum):
 
 @dataclass(frozen=True)
 class Picture:
+    """Metadata for a picture (may be embedded in a tag, or just an image file)."""
+
     picture_info: PictureInfo
     type: PictureType
     description: str
@@ -204,6 +209,8 @@ class Picture:
 
 @dataclass(frozen=True)
 class StreamInfo:
+    """Describes audio stream properties like length, bitrate, and codec."""
+
     length: float = 0.0
     bitrate: int = 0
     channels: int = 0
@@ -220,6 +227,8 @@ class StreamInfo:
 
 
 class TaggerFile:
+    """Abstract interface for reading and writing tags/images on a single media file."""
+
     def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
     def get_stream_info(self) -> StreamInfo: ...
     def get_image_data(self, picture: Picture) -> bytes: ...
