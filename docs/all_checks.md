@@ -207,7 +207,8 @@ Rules:
 
 !!!success "Dependency"
 
-    Requires the `invalid-track-or-disc-number` check to pass first.
+    Requires the `invalid-track-or-disc-number` and `legacy-tags` checks to
+    pass first.
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
 the tag. If the policy is "always", and a consistent total is set on some
@@ -373,6 +374,10 @@ Rules:
 
 The fix offers candidates found in the tags plus the option "Various Artists".
 It can also apply a policy from options below.
+
+!!!success "Dependency"
+
+    Requires the `legacy-tags` check to pass first.
 
 **Automatic fix**: If the album artist is or would be redundant, and one of the
 optional policies below is enabled, apply the policy.
@@ -549,6 +554,10 @@ tracks, set that value on the tracks which have no value. And if the policy is
 ### publisher-tag
 
 See "Other Tags: Per Album" above for common behavior of this check.
+
+!!!success "Dependency"
+
+    Requires the `legacy-tags` check to pass first.
 
 ### album-sort-tag, album-artist-sort-tag, barcode-tag, compilation-tag, release-type-tag
 

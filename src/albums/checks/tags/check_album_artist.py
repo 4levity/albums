@@ -20,6 +20,7 @@ OPTION_COPY_ALBUM_ARTIST_TO_ARTIST: Final = ">> Copy album artist -> artist"
 class CheckAlbumArtist(Check):
     name = "album-artist"
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
+    must_pass_checks = {"legacy-tags"}
 
     def init(self, check_config: dict[str, Any]):
         self.remove_redundant = bool(check_config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"]))

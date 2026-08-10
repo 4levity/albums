@@ -21,7 +21,7 @@ OPTION_SET_DISC_TOTAL: Final = ">> Set disc total"
 class CheckDiscNumbering(Check):
     name = "disc-numbering"
     default_config = {"enabled": True, "discs_in_separate_folders": True, "disctotal_policy": "consistent", "remove_redundant_discnumber": False}
-    must_pass_checks = {"invalid-track-or-disc-number"}
+    must_pass_checks = {"legacy-tags", "invalid-track-or-disc-number"}
 
     def init(self, check_config: dict[str, Any]):
         self.discs_in_separate_folders = check_config.get("discs_in_separate_folders", self.default_config["discs_in_separate_folders"])

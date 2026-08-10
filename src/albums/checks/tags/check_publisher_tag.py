@@ -6,3 +6,4 @@ class CheckPublisherTag(BaseCheckTagPerAlbum):
     name = "publisher-tag"
     tag = BasicTag.ORGANIZATION
     tag_description = "publisher/organization"
+    must_pass_checks = {"legacy-tags"}
