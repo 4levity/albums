@@ -47,10 +47,6 @@ class BasicTag(StrEnum):
     DISCTOTAL = auto()
     GENRE = auto()
 
-    OLD_ALBUM_ARTIST = "album artist"  # vorbis comment only; correct is "albumartist"
-    OLD_LABEL = "label"  # vorbis comment only; correct is "organization"
-    OLD_PUBLISHER = "publisher"  # vorbis comment only; correct is "organization"
-
     ORGANIZATION = auto()  # Publisher, record label
     RELEASECOUNTRY = auto()  # vorbis comment only (MUSICBRAINZ_ALBUMRELEASECOUNTRY is probably preferred)
     RELEASETYPE = auto()  # vorbis comment only (MUSICBRAINZ_ALBUMRELEASETYPE is probably preferred)

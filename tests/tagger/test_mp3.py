@@ -2,6 +2,8 @@ import os
 
 import pytest
 import xxhash
+from mutagen.id3._frames import TXXX
+from mutagen.id3._specs import Encoding
 
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
@@ -110,9 +112,19 @@ class TestMp3:
 
     def test_remove_unsupported_id3_tags(self, mocker):
         with TestMp3.tagger.open(track.filename) as file:
+            id3 = file._ensure_id3()
+            id3["TXXX:RELEASECOUNTRY"] = TXXX(encoding=Encoding.UTF8, desc="RELEASECOUNTRY", text=["US"])
+
+            tags = dict(file.get_tags())
+            assert BasicTag.RELEASECOUNTRY in tags
+
             mock_logger = mocker.patch("albums.tagger.base_id3.logger")
-            file.set_tag(BasicTag.OLD_ALBUM_ARTIST, None)
-            assert mock_logger.warning.call_count == 1
+            # RELEASECOUNTRY uses TAG_TO_ID3_TEXT_FRAME mapping, so removal falls through to wildcard case (no warning)
+            file.set_tag(BasicTag.RELEASECOUNTRY, None)
+            assert mock_logger.warning.call_count == 0
+
+            tags = dict(file.get_tags())
+            assert BasicTag.RELEASECOUNTRY not in tags
 
     def test_update_id3_compilation(self):
         with TestMp3.tagger.open(track.filename) as file:
