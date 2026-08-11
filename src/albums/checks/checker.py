@@ -7,12 +7,13 @@ from sqlalchemy.orm import Session
 
 from ..app import Context
 from ..database.selector import Match, load_album_entities
+from ..entities import Album
 from ..interactive.interact import interact, prompt_ignore_checks
 from ..library import scanner
 from ..tagger.provider import AlbumTaggerProvider
-from ..types import Album, CheckResult, FixResult
 from .all import ALL_CHECKS
 from .base_check import Check
+from .check_types import CheckResult, FixResult
 from .helpers import album_display_name
 
 logger: Final = logging.getLogger(__name__)

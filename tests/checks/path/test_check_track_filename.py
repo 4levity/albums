@@ -4,8 +4,8 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.path.check_track_filename import CheckTrackFilename
+from albums.entities import Album, Track
 from albums.tagger.types import BasicTag
-from albums.types import Album, Track
 
 
 class TestCheckTrackFilename:

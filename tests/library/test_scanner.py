@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection
 from albums.database.selector import load_album_entities
+from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture, PictureType
-from albums.types import Album, OtherFile, PictureFile, Track, TrackPicture
 
 from ..fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 

@@ -6,8 +6,8 @@ from typing import Final, Sequence
 from pathvalidate import sanitize_filename, sanitize_filepath
 
 from ..app import Context
+from ..entities import Album
 from ..tagger.types import BasicTag
-from ..types import Album
 
 logger: Final = logging.getLogger(__name__)
 

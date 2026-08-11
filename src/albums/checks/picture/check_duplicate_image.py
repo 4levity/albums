@@ -3,11 +3,12 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Final
 
+from ...entities import Album
 from ...interactive.image_table import render_image_table
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer
 from ..helpers import delete_files_except
 
 logger: Final = logging.getLogger(__name__)

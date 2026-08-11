@@ -1,4 +1,5 @@
-from ...types import BasicTag
+from albums.tagger.types import BasicTag
+
 from ..base_check_tag_per_album import BaseCheckTagPerAlbum
 
 

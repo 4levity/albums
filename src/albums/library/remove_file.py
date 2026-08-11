@@ -1,4 +1,4 @@
-from albums.types import Album
+from albums.entities import Album
 
 
 def remove_file(album: Album, filename: str) -> bool:

@@ -1,6 +1,7 @@
 from albums.app import Context
 from albums.checks.tags.check_releasecountry_tag import CheckReleaseCountryTag
-from albums.types import Album, BasicTag, Track
+from albums.entities import Album, Track
+from albums.tagger.types import BasicTag
 
 
 class TestCheckReleaseCountryTag:

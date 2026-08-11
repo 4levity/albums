@@ -2,11 +2,12 @@ from typing import Collection
 
 from rich.markup import escape
 
+from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import plural
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 
 class CheckExtraWhitespace(Check):

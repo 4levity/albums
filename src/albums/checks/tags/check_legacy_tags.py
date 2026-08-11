@@ -2,10 +2,11 @@ from typing import Final, override
 
 from rich.markup import escape
 
+from ...entities import Album
 from ...tagger.types import BasicTag
 from ...tagger.vorbis import LEGACY_VORBIS_TAGS
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 LEGACY_TO_BASIC: Final[dict[str, BasicTag]] = dict(LEGACY_VORBIS_TAGS)
 

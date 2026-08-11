@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..app import Context
 from ..checks.helpers import album_display_name
 from ..database.collections_by_name import collections_by_name
-from ..types import Album, AlbumCollectionAssociation
+from ..entities import Album, AlbumCollectionAssociation
 from .cli_context import pass_context, require_configured, require_persistent_context
 
 

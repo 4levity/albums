@@ -2,9 +2,9 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_extra_whitespace import CheckExtraWhitespace
+from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger, TaggerFile
 from albums.tagger.types import BasicTag
-from albums.types import Album, Track
 
 
 class TestCheckExtraWhitespace:

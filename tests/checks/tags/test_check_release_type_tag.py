@@ -1,7 +1,7 @@
 from albums.app import Context
 from albums.checks.tags.check_releasetype_tag import CheckReleaseTypeTag
+from albums.entities import Album, Track
 from albums.tagger.types import BasicTag
-from albums.types import Album, Track
 
 
 class TestCheckReleaseTypeTag:

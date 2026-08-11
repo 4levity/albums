@@ -6,11 +6,11 @@ from typing import Collection, Mapping, Set
 
 from PIL import Image
 
+from albums.entities import Album, Track, TrackPicture
 from albums.picture.format import mime_type_to_format
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture
 from albums.tagger.vorbis import LEGACY_VORBIS_TAGS
-from albums.types import Album, Track, TrackPicture
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,

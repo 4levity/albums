@@ -4,11 +4,12 @@ from subprocess import CompletedProcess
 from unittest.mock import call, mock_open, patch
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
+from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import PictureType, TaggerFile
-from albums.types import Album, FixResult, PictureFile, Track, TrackPicture
 
 from ...fixtures.create_library import make_image_data
 

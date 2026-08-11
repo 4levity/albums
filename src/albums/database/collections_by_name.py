@@ -3,7 +3,7 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from albums.types import CollectionEntity
+from albums.entities import CollectionEntity
 
 
 # It shouldn't be (and isn't strictly) necessary to look up collections or explicitly create them. But the association_proxy creator implementation

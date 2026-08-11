@@ -1,8 +1,9 @@
 from sqlalchemy import and_, func, select
 
-from ...types import Album, CheckResult
+from ...entities import Album
 from ...words.make import a_plural, is_plural
 from ..base_check import Check
+from ..check_types import CheckResult
 from ..helpers import album_display_name
 
 

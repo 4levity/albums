@@ -1,8 +1,9 @@
 import logging
 from collections import defaultdict
 
-from ...types import Album, CheckResult
+from ...entities import Album
 from ..base_check import Check
+from ..check_types import CheckResult
 
 logger = logging.getLogger(__name__)
 

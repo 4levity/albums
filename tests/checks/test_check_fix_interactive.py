@@ -6,9 +6,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.database import connection
+from albums.entities import Album, Track
 from albums.interactive.interact import OPTION_IGNORE_CHECK, OPTION_MORE_OPTIONS, interact
-from albums.types import Album, CheckResult, Fixer, FixResult, Track
 
 
 class MockFixer(Fixer):

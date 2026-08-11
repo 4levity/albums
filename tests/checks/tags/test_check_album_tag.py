@@ -3,9 +3,9 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.tags.check_album_tag import CheckAlbumTag
+from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Track
 
 
 class TestCheckAlbumTag:

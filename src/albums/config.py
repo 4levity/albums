@@ -18,8 +18,8 @@ from platformdirs import PlatformDirs
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from .checks.check_types import CheckConfiguration
 from .database.orm import Base, SerializableValueAsJson
-from .types import CheckConfiguration
 
 logger: Final = logging.getLogger(__name__)
 

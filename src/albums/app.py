@@ -14,7 +14,7 @@ from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
 from .config import Configuration
-from .types import Album
+from .entities import Album
 
 logger: Final = logging.getLogger(__name__)
 

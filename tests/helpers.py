@@ -4,7 +4,7 @@ from typing import Sequence
 from click.testing import CliRunner
 
 from albums.cli import entry_point
-from albums.types import Track
+from albums.entities import Track
 
 from .fixtures.create_library import create_track_file
 

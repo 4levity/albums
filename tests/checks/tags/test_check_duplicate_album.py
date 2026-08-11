@@ -5,7 +5,8 @@ from unittest.mock import call
 from albums.app import Context, Session
 from albums.checks.tags.check_duplicate_album import CheckDuplicateAlbum
 from albums.database import connection
-from albums.types import Album, BasicTag, Track
+from albums.entities import Album, Track
+from albums.tagger.types import BasicTag
 
 
 class TestCheckDuplicateAlbum:

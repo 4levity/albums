@@ -2,10 +2,10 @@ import os
 
 import pytest
 
+from albums.entities import Album, Track
 from albums.tagger.file_types.asf import WmPicture
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import PictureType
-from albums.types import Album, Track
 
 from ..fixtures.create_library import create_library
 

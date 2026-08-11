@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 from ..app import Context
 from ..config import ALL_ALBUMS, SyncDestination
 from ..database import db_config
+from ..entities import CollectionEntity
 from ..library.paths import show_template_path_help
 from ..tagger.folder import AUDIO_FILE_SUFFIXES
-from ..types import CollectionEntity
 
 _USE_ALL_ALBUMS = ">> Use all albums"
 

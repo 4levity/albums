@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.checks.tags.check_unreadable_track import CheckUnreadableTrack
 from albums.database import connection
+from albums.entities import Album, Track
 from albums.library import scanner
-from albums.types import Album, Track
 
 from ...fixtures.create_library import create_library
 

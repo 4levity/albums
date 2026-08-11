@@ -1,136 +1,41 @@
-"""Shared type definitions for library entities, check/fixer contracts, and result reporting."""
+"""ORM entity types for albums, tracks, pictures, etc."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum, auto
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union, overload
+from typing import Any, List, Mapping, Optional, Sequence, overload
 
-from rich.console import RenderableType
 from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
-from .database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
-from .picture.info import PictureInfo
-from .tagger.types import BasicTag, Picture, PictureType, StreamInfo
-
-# Mapping type representing the configuration items available for a single registered check.
-type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
+from albums.database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
+from albums.picture.info import PictureInfo
+from albums.tagger.types import BasicTag, Picture, PictureType, StreamInfo
 
 
-class FixResult(Enum):
-    """Outcome codes returned by fixer callbacks to signal database mutation status."""
+class TagV(Base):
+    """Single metadata tag value belonging to a track.
 
-    NO_CHANGE = auto()  # The fix ran but did not alter any persisted data.
-    CHANGED_ALBUM = auto()  # Album-level metadata was mutated; re-scan may be required.
-    DELETED_ALBUM = auto()  # An entire album was deleted.
-    CHANGED_OTHER = auto()  # Non-album resources (files, collections) were modified.
-
-    @staticmethod
-    def of(changed: bool) -> "FixResult":
-        """Convenience factory mapping a boolean to either ``NO_CHANGE`` or ``CHANGED_ALBUM``.
-
-        Args:
-            changed: ``True`` when the fix mutated library state.
-
-        Returns:
-            ``CHANGED_ALBUM`` if *changed* else ``NO_CHANGE``.
-        """
-        return FixResult.CHANGED_ALBUM if changed else FixResult.NO_CHANGE
-
-
-@dataclass
-class Fixer:
-    """Encapsulates a proposed correction along with user-interface hints for interactive mode.
-
-    When a check detects a problem, it may attach a *Fixer* to the ``CheckResult`` so the system
-    (or an interactive terminal prompt) can present options and apply the chosen fix.
+    When multiple frames share the same tag name (e.g., duplicate ``TCON`` genres), each gets its own row.
 
     Attributes:
-        fix: Callable accepting a selected option string and returning a ``FixResult``.
-        options: Human-readable choices presented to the user; must have at least one entry when free text is disabled.
-        option_free_text: When ``True``, offer the user an arbitrary text value in addition to *options*.
-        option_automatic_index: Index into *options* representing the automatic choice or None if no automatic choice.
-        table: Optional tabular data (headers + rows or row-factory callable) to display alongside options.
-        prompt: Text displayed above the options when asking for user input.
+        track_tag_id: Primary key.
+        track_id: Foreign key linking to the owning :class:`Track`.
+        track: ORM back-reference to the parent track.
+        tag: Canonicalized tag name from :class:`~.tagger.types.BasicTag`.
+        value: Decoded text content of this single metadata frame.
     """
 
-    fix: Callable[[str], FixResult]
-    options: Sequence[str]
-    option_free_text: bool = False
-    option_automatic_index: int | None = None
-    table: Tuple[Iterable[str], Iterable[Iterable[RenderableType]] | Callable[[], Iterable[Iterable[RenderableType]]]] | None = None
-    prompt: str = "select an option"  # e.g. "select an album artist for all tracks"
+    __tablename__ = "track_tag"
+    __table_args__ = (Index("idx_track_tag_track_id", "track_id"),)
 
-    def get_table(self) -> Tuple[Iterable[str], Iterable[Iterable[RenderableType]]] | None:
-        """Resolve the table hint into concrete headers and row data.
+    track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
 
-        If the stored rows were a lazy factory, they are invoked here so checks that defer expensive
-        computation can remain fast unless an interactive prompt actually renders.
-
-        Returns:
-            A ``(headers, rows)`` tuple or ``None`` when no table was configured.
-        """
-        if self.table is None:
-            return None
-        (headers, get_rows) = self.table
-        rows: Iterable[Iterable[RenderableType]] = get_rows if isinstance(get_rows, Iterable) else get_rows()  # pyright: ignore[reportUnknownVariableType]
-        return (headers, rows)
-
-
-@dataclass(frozen=True)
-class CheckResult:
-    """Outcome returned by check implementations to signal a problem that needs attention.
-
-    Attributes:
-        message: Human-readable description of what is wrong or missing for the album.
-        fixer: Optional correction proposal; when ``None`` the user must handle the issue manually.
-    """
-
-    message: str
-    fixer: Fixer | None = None
-
-
-class CollectionEntity(Base):
-    """Named group used to bucket albums so sync and filter commands can target a subset of the library.
-
-    Attributes:
-        collection_id: Primary key (auto-generated).
-        collection_name: Unique display name for this collection.
-    """
-
-    __tablename__ = "collection"
-
-    collection_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    collection_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-
-    def __repr__(self) -> str:
-        return f"CollectionEntity({self.collection_name})"
-
-
-class IgnoreCheckEntity(Base):
-    """Row recording that one or more checks should be skipped for a specific album.
-
-    Attributes:
-        album_ignore_check_id: Primary key.
-        album_id: Foreign key linking to the ``album`` row.
-        album: ORM back-reference to the owning :class:`Album`.
-        check_name: Name of the check to suppress (matches a registered check's *name*).
-    """
-
-    __tablename__ = "album_ignore_check"
-    __table_args__ = (Index("idx_ignore_check_album_id", "album_id"),)
-
-    album_ignore_check_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
-    album: Mapped[Optional[Album]] = relationship("Album", back_populates="ignore_check_entities")
-
-    check_name: Mapped[str] = mapped_column(Text, nullable=False)
-
-    def __init__(self, check_name: str):
-        self.check_name = check_name
+    tag: Mapped[BasicTag] = mapped_column("name", SafeStringEnum[BasicTag](BasicTag, BasicTag.UNKNOWN), nullable=False)
+    value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class LegacyTagEntity(Base):
@@ -198,30 +103,6 @@ class TrackPicture(Base):
 
     def __lt__(self, other: TrackPicture) -> bool:
         return self.embed_ix < other.embed_ix
-
-
-class TagV(Base):
-    """Single metadata tag value belonging to a track.
-
-    When multiple frames share the same tag name (e.g., duplicate ``TCON`` genres), each gets its own row.
-
-    Attributes:
-        track_tag_id: Primary key.
-        track_id: Foreign key linking to the owning :class:`Track`.
-        track: ORM back-reference to the parent track.
-        tag: Canonicalized tag name from :class:`~.tagger.types.BasicTag`.
-        value: Decoded text content of this single metadata frame.
-    """
-
-    __tablename__ = "track_tag"
-    __table_args__ = (Index("idx_track_tag_track_id", "track_id"),)
-
-    track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
-
-    tag: Mapped[BasicTag] = mapped_column("name", SafeStringEnum[BasicTag](BasicTag, BasicTag.UNKNOWN), nullable=False)
-    value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class Track(Base):
@@ -478,6 +359,23 @@ class Album(Base):
         }
 
 
+class CollectionEntity(Base):
+    """Named group used to bucket albums so sync and filter commands can target a subset of the library.
+
+    Attributes:
+        collection_id: Primary key (auto-generated).
+        collection_name: Unique display name for this collection.
+    """
+
+    __tablename__ = "collection"
+
+    collection_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    collection_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+
+    def __repr__(self) -> str:
+        return f"CollectionEntity({self.collection_name})"
+
+
 class AlbumCollectionAssociation(Base):
     """Many-to-many join table linking albums to named collections.
 
@@ -500,6 +398,29 @@ class AlbumCollectionAssociation(Base):
     collection_name: AssociationProxy[str] = association_proxy("collection", "collection_name")
 
     album: Mapped[Album] = relationship(back_populates="collection_associations")
+
+
+class IgnoreCheckEntity(Base):
+    """Row recording that one or more checks should be skipped for a specific album.
+
+    Attributes:
+        album_ignore_check_id: Primary key.
+        album_id: Foreign key linking to the ``album`` row.
+        album: ORM back-reference to the owning :class:`Album`.
+        check_name: Name of the check to suppress (matches a registered check's *name*).
+    """
+
+    __tablename__ = "album_ignore_check"
+    __table_args__ = (Index("idx_ignore_check_album_id", "album_id"),)
+
+    album_ignore_check_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    album_id: Mapped[Optional[int]] = mapped_column(ForeignKey("album.album_id"), nullable=False)
+    album: Mapped[Optional[Album]] = relationship("Album", back_populates="ignore_check_entities")
+
+    check_name: Mapped[str] = mapped_column(Text, nullable=False)
+
+    def __init__(self, check_name: str):
+        self.check_name = check_name
 
 
 class ScanHistoryEntity(Base):

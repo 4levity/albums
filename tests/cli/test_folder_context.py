@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 
 from albums.cli import entry_point
-from albums.types import Album, Track
+from albums.entities import Album, Track
 
 from .. import helpers
 from ..fixtures.create_library import create_library

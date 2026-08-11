@@ -5,9 +5,10 @@ from typing import Final
 from rich.markup import escape
 
 from ..app import Context
+from ..entities import Album
 from ..tagger.folder import AlbumTagger
 from ..tagger.types import BasicTag
-from ..types import Album, CheckResult, Fixer, FixResult
+from .check_types import CheckResult, Fixer, FixResult
 from .helpers import describe_track_number, ordered_tracks
 
 OPTION_REMOVE_TAG: Final = ">> Remove tag"

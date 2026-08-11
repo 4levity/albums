@@ -6,11 +6,12 @@ from typing import Collection, Final, Sequence
 
 from rich.markup import escape
 
+from ...entities import Album
 from ...interactive.image_table import render_image_table
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import delete_files_except
 
 logger: Final = logging.getLogger(__name__)

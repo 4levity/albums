@@ -13,7 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..app import Context
-from ..types import Album, CheckResult, FixResult
+from ..checks.check_types import CheckResult, FixResult
+from ..entities import Album
 
 logger: Final = logging.getLogger(__name__)
 

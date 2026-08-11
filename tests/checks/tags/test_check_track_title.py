@@ -4,9 +4,9 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_track_title import CheckTrackTitle
+from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, Track
 
 
 class TestCheckTrackTitle:

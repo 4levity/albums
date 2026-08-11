@@ -6,10 +6,11 @@ from typing import Any, Tuple
 from PIL import Image
 from rich.markup import escape
 
+from ...entities import Album
 from ...library.folder import read_binary_file
 from ...tagger.types import PictureType
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 
 class CheckCoverFilename(Check):

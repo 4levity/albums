@@ -7,10 +7,11 @@ import humanize
 from rich.markup import escape
 
 from ...checks.helpers import FRONT_COVER_FILENAME
+from ...entities import Album
 from ...interactive.image_table import render_image_table
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 logger: Final = logging.getLogger(__name__)
 

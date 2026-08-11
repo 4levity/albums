@@ -17,9 +17,9 @@ from sqlalchemy.orm import Session
 from ..app import Context
 from ..config import ALL_ALBUMS, SyncDestination
 from ..database.selector import Match, load_album_entities
+from ..entities import Album
 from ..library.paths import make_template_path
 from ..library.transcoder import Transcoder
-from ..types import Album
 from ..words.make import plural
 
 logger: Final = logging.getLogger(__name__)

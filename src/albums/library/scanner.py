@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session
 from albums.library.album_scanner import scan_album
 
 from ..app import SCANNER_VERSION, Context
+from ..entities import Album, ScanHistoryEntity
 from ..tagger.folder import AlbumTagger
-from ..types import Album, ScanHistoryEntity
 from ..words.make import plural
 from .album_scanner import picture_cache
 from .scanner_types import AlbumScanResult

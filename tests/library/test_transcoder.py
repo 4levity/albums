@@ -7,9 +7,10 @@ from unittest.mock import call
 import pytest
 
 from albums.app import Context
+from albums.entities import Album, Track, TrackPicture
 from albums.library.transcoder import Transcoder
 from albums.tagger.folder import AlbumTagger
-from albums.types import Album, BasicTag, PictureInfo, PictureType, Track, TrackPicture
+from albums.tagger.types import BasicTag, PictureInfo, PictureType
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg

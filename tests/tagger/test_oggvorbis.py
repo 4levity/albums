@@ -3,10 +3,10 @@ import os
 import pytest
 import xxhash
 
+from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicTag
 from albums.tagger.types import Picture, PictureType
-from albums.types import Album, Track, TrackPicture
 
 from ..fixtures.create_library import create_library, make_image_data
 

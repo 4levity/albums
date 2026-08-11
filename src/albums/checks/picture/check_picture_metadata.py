@@ -6,11 +6,12 @@ from typing import Final
 
 from rich.markup import escape
 
+from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture
-from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import plural, pluralize
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 logger: Final = logging.getLogger(__name__)
 

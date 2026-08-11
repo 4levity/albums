@@ -3,9 +3,11 @@ from typing import Any, Final
 
 from rich.markup import escape
 
+from ..entities import Album
 from ..tagger.folder import AlbumTagger, Cap
-from ..types import Album, BasicTag, CheckResult, Fixer, FixResult
+from ..tagger.types import BasicTag
 from .base_check import Check
+from .check_types import CheckResult, Fixer, FixResult
 from .tag_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)

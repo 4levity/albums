@@ -4,10 +4,11 @@ from typing import Any, Final, Sequence
 import yaml
 from rich.markup import escape
 
+from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BASIC_TAGS, BasicTag
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import describe_track_number, ordered_tracks
 
 OPTION_CONCATENATE_WITH: Final = ">> Concatenate unique values into one with "

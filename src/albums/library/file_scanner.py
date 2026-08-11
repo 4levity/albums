@@ -3,9 +3,9 @@ from pathlib import Path
 
 import humanize
 
+from albums.entities import Album, OtherFile, PictureFile, TagV, Track, TrackPicture
 from albums.picture.format import format_to_mime_type
 from albums.tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
-from albums.types import Album, OtherFile, PictureFile, TagV, Track, TrackPicture
 
 from .folder import MiniStat, read_binary_file
 from .remove_file import remove_file

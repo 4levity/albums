@@ -1,7 +1,7 @@
 from collections import defaultdict
 
+from albums.entities import Album
 from albums.tagger.types import BasicTag
-from albums.types import Album
 
 
 def get_artist_from_tags(album: Album) -> str | None:

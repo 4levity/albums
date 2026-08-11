@@ -3,10 +3,11 @@ from typing import Collection, Final, Mapping, Sequence
 
 from rich.markup import escape
 
+from ...entities import Album, Track
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicTag
-from ...types import Album, CheckResult, Fixer, FixResult, Track
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 from .check_track_numbering import describe_track_number, ordered_tracks
 
 logger: Final = logging.getLogger(__name__)

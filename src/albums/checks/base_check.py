@@ -5,8 +5,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from ..app import Context
+from ..entities import Album
 from ..tagger.provider import AlbumTaggerProvider
-from ..types import Album, CheckConfiguration, CheckResult
+from .check_types import CheckConfiguration, CheckResult
 
 
 class Check:

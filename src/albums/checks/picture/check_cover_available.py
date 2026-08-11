@@ -13,13 +13,14 @@ from rich.markup import escape
 
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 
+from ...entities import Album
 from ...interactive.image_table import render_image_table
 from ...library.tag_tools import get_album_name_from_tags, get_artist_from_tags
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer, FixResult
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import FRONT_COVER_FILENAME
 from ..path.check_cover_filename import CheckCoverFilename, parse_config_cover_filename
 

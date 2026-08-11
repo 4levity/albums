@@ -5,9 +5,9 @@ import shutil
 
 import pytest
 
+from albums.entities import Album, PictureFile, Track
 from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicTag
-from albums.types import Album, PictureFile, Track
 
 from .. import helpers
 from ..fixtures.create_library import create_library

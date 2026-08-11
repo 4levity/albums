@@ -6,8 +6,9 @@ from typing import Collection, Final, List, Mapping, Sequence, Tuple
 from rich.markup import escape
 
 from ..app import Context
+from ..entities import Album, Track
 from ..tagger.types import BasicTag
-from ..types import Album, FixResult, Track
+from .check_types import FixResult
 
 FRONT_COVER_FILENAME: Final = "cover"
 

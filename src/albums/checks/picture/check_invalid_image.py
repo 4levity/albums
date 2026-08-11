@@ -6,11 +6,12 @@ from typing import Final, Sequence
 from rich.console import RenderableType
 from rich.markup import escape
 
+from ...entities import Album
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import Cap
-from ...types import Album, CheckResult, Fixer, FixResult
 from ...words.make import pluralize
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 
 logger: Final = logging.getLogger(__name__)
 

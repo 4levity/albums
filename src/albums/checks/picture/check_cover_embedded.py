@@ -7,15 +7,16 @@ from PIL import Image
 from rich.console import RenderableType
 from rich.markup import escape
 
+from ...entities import Album, PictureFile
 from ...interactive.image_table import render_image_table
 from ...library.folder import read_binary_file
 from ...picture.format import mime_type_to_format
 from ...picture.info import PictureInfo
 from ...tagger.folder import Cap
 from ...tagger.types import Picture, PictureType
-from ...types import Album, CheckResult, Fixer, FixResult, PictureFile
 from ...words.make import is_plural, plural, pluralize
 from ..base_check import Check
+from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import FRONT_COVER_FILENAME
 
 logger: Final = logging.getLogger(__name__)

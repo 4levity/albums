@@ -17,9 +17,9 @@ import xxhash
 from rich.markup import escape
 
 from ..app import Context
+from ..entities import Album, Track
 from ..tagger.folder import AUDIO_FILE_SUFFIXES
 from ..tagger.provider import AlbumTaggerProvider
-from ..types import Album, Track
 
 logger: Final = logging.getLogger(__name__)
 

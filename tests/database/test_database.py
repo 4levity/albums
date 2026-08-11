@@ -6,7 +6,8 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from albums.database import connection, schema
-from albums.types import Album, BasicTag, Track
+from albums.entities import Album, Track
+from albums.tagger.types import BasicTag
 
 
 class TestDatabase:

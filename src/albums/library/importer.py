@@ -15,10 +15,10 @@ from sqlalchemy.orm import Session
 
 from ..app import Context
 from ..checks.checker import Checker
+from ..entities import Album
 from ..library.duplicates import DuplicateFinder, album_in_library
 from ..library.paths import make_template_paths
 from ..library.scanner import scan
-from ..types import Album
 from ..words.make import plural
 
 logger: Final = logging.getLogger(__name__)

@@ -2,8 +2,8 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.tags.check_musicbrainz_tags import AlbumTagger, CheckMusicBrainzTags
+from albums.entities import Album, Track
 from albums.tagger.types import BasicTag, TaggerFile
-from albums.types import Album, Track
 
 UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, aliased
 from albums.tagger.types import BasicTag
 
 from ..app import Context
-from ..types import Album, TagV
+from ..entities import Album, TagV
 from .tag_tools import get_album_name_from_tags, get_artist_from_tags
 
 

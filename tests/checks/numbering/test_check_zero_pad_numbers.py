@@ -2,9 +2,9 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
+from albums.entities import Album, TagV, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag
-from albums.types import Album, TagV, Track
 
 
 class TestZeroPadNumbers:
