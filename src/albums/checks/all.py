@@ -6,16 +6,16 @@ from .fields.check_album_artist_sort import CheckAlbumArtistSort
 from .fields.check_album_field import CheckAlbumField
 from .fields.check_album_sort import CheckAlbumSort
 from .fields.check_artist_tag import CheckArtistTag
-from .fields.check_barcode_tag import CheckBarcodeTag
-from .fields.check_compilation_tag import CheckCompilationTag
+from .fields.check_barcode_field import CheckBarcodeField
+from .fields.check_compilation_field import CheckCompilationField
 from .fields.check_duplicate_album import CheckDuplicateAlbum
 from .fields.check_extra_whitespace import CheckExtraWhitespace
 from .fields.check_genre_present import CheckGenrePresent
 from .fields.check_legacy_tags import CheckLegacyTags
 from .fields.check_musicbrainz_tags import CheckMusicBrainzTags
-from .fields.check_publisher_tag import CheckPublisherTag
-from .fields.check_releasecountry_tag import CheckReleaseCountryTag
-from .fields.check_releasetype_tag import CheckReleaseTypeTag
+from .fields.check_publisher_field import CheckPublisherField
+from .fields.check_releasecountry_field import CheckReleaseCountryField
+from .fields.check_releasetype_field import CheckReleaseTypeField
 from .fields.check_single_value_tags import CheckSingleValueTags
 from .fields.check_track_title import CheckTrackTitle
 from .numbering.check_disc_in_track_number import CheckDiscInTrackNumber
@@ -66,13 +66,13 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckTrackTitle,
     CheckGenrePresent,
     CheckMusicBrainzTags,
-    CheckPublisherTag,
+    CheckPublisherField,
     CheckAlbumSort,
     CheckAlbumArtistSort,
-    CheckBarcodeTag,
-    CheckCompilationTag,
-    CheckReleaseTypeTag,
-    CheckReleaseCountryTag,
+    CheckBarcodeField,
+    CheckCompilationField,
+    CheckReleaseTypeField,
+    CheckReleaseCountryField,
     # picture checks
     CheckInvalidImage,
     CheckDuplicateImage,

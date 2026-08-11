@@ -324,8 +324,8 @@ Field checks that are not related to numbering or pictures.
 
 ### extra-whitespace
 
-None of the basic fields like album, artist, title, track number, etc. should have
-extra spaces or other whitespace characters at the beginning or end.
+None of the basic fields like album, artist, title, track number, etc. should
+have extra spaces or other whitespace characters at the beginning or end.
 
 **Automatic fix**: Remove whitespace from the beginning and end of all values
 for all supported basic text tags.
@@ -501,8 +501,8 @@ Whether or not you use MusicBrainz, inconsistencies in MusicBrainz tags within
 an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
-interpret this as two separate albums even if Other Fields are all the same. This
-check reports when those tags are not set consistently across the album.
+interpret this as two separate albums even if Other Fields are all the same.
+This check reports when those tags are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
 MusicBrainz, you might want to remove all MusicBrainz tags to avoid conflicts
@@ -552,7 +552,7 @@ tracks, set that value on the tracks which have no value. And if the policy is
 | --------------------------- | --------------------------- |
 | `presence` = `"consistent"` | Set the tag presence policy |
 
-### publisher-tag
+### publisher-field
 
 See "Other Fields: Per Album" above for common behavior of this check.
 
@@ -560,11 +560,11 @@ See "Other Fields: Per Album" above for common behavior of this check.
 
     Requires the `legacy-tags` check to pass first.
 
-### album-sort-tag, album-artist-sort-tag, barcode-tag, compilation-tag, release-type-tag
+### album-sort, album-artist-sort, barcode-field, compilation-field, release-type-field
 
 See "Other Fields: Per Album" above for details on these per-album tag checks.
 
-### release-country-tag
+### release-country-field
 
 See "Other Fields: Per Album" above for common behavior of this check.
 

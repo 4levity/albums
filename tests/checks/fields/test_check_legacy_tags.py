@@ -1,5 +1,5 @@
 from albums.app import Context
-from albums.checks.base_check_tag_per_album import AlbumTagger
+from albums.checks.base_check_field_per_album import AlbumTagger
 from albums.checks.fields.check_legacy_tags import OPTION_CONVERT_LEGACY, CheckLegacyTags
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField, TaggerFile

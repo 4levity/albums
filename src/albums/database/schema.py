@@ -209,7 +209,16 @@ AND NOT EXISTS (
 DELETE FROM track_tag
 WHERE name IN ('album artist', 'label', 'publisher', 'totaldiscs');
 """,
-    17: generate_check_renames_sql({"album-tag": "album-field"}),
+    17: generate_check_renames_sql(
+        {
+            "album-tag": "album-field",
+            "barcode-tag": "barcode-field",
+            "compilation-tag": "compilation-field",
+            "publisher-tag": "publisher-field",
+            "release-country-tag": "release-country-field",
+            "release-type-tag": "release-type-field",
+        }
+    ),
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

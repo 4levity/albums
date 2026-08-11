@@ -13,10 +13,10 @@ from .tag_policy import Policy, check_policy
 logger: Final = logging.getLogger(__name__)
 
 
-class BaseCheckTagPerAlbum(Check):
-    # subclass must define check name and album tag to check
+class BaseCheckFieldPerAlbum(Check):
+    # subclass must define check name and album field to check
     name: str
-    tag: BasicField
+    field: BasicField
 
     # subclass may override
     # force presence to NEVER when album is a mix of vorbis-comment and non-vorbis-comment tracks
@@ -26,13 +26,13 @@ class BaseCheckTagPerAlbum(Check):
 
     # subclass may define additional config items, as well as description to use instead of tag.value
     default_config = {"enabled": True, "presence": "consistent"}
-    tag_description: str = ""
+    field_description: str = ""
 
     def init(self, check_config: dict[str, Any]):
         self.presence = Policy.from_str(str(check_config.get("presence", self.default_config["presence"])))
-        if not self.tag_description:
-            self.tag_description = self.tag.value
-        self.option_remove_tag = f">> Remove {self.tag_description} from all tracks"
+        if not self.field_description:
+            self.field_description = self.field.value
+        self.option_remove_field = f">> Remove {self.field_description} from all tracks"
 
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
@@ -43,58 +43,58 @@ class BaseCheckTagPerAlbum(Check):
             and self.presence != Policy.NEVER
             and not all(AlbumTagger.supports(track.filename, Cap.VORBIS_COMMENT) for track in album.tracks)
         ):
-            # this tag is only supported for vorbis comments, so if any track is not vorbis comment, the only reasonable policy is NEVER
+            # this field is only supported for vorbis comments, so if any track is not vorbis comment, the only reasonable policy is NEVER
             # (only makes a difference if the album is a mix of vorbis and non-vorbis tracks)
             presence = Policy.NEVER
         else:
             presence = self.presence
 
         single_value_for_album = presence != Policy.NEVER
-        presence_issue = check_policy(self.ctx, self.tagger.get(album.path), album, presence, self.tag, None, single_value_for_album)
+        presence_issue = check_policy(self.ctx, self.tagger.get(album.path), album, presence, self.field, None, single_value_for_album)
         if presence_issue is not None:
             return presence_issue
 
         if self.tuple_value:
-            values = set(track.get(self.tag, default=()) for track in album.tracks)
-            options = sorted(", ".join(v) for v in values) + [self.option_remove_tag]
+            values = set(track.get(self.field, default=()) for track in album.tracks)
+            options = sorted(", ".join(v) for v in values) + [self.option_remove_field]
         else:
-            values = set(value for track in album.tracks for value in track.get(self.tag, default=[""]))
-            options = sorted(filter(None, values)) + [self.option_remove_tag]
+            values = set(value for track in album.tracks for value in track.get(self.field, default=[""]))
+            options = sorted(filter(None, values)) + [self.option_remove_field]
 
         if len(values) > 1:
             option_automatic_index = None
             option_free_text = True
             table = (
-                ["filename", self.tag_description],
+                ["filename", self.field_description],
                 [
                     [
                         track.filename,
-                        ", ".join(track.get(self.tag, [""])) or "[italic]none[/italic]",
+                        ", ".join(track.get(self.field, [""])) or "[italic]none[/italic]",
                     ]
                     for track in sorted(album.tracks)
                 ],
             )
             return CheckResult(
-                f"multiple values for {self.tag_description}: {', '.join(sorted((str(v) or 'none') for v in values))}",
+                f"multiple values for {self.field_description}: {', '.join(sorted((str(v) or 'none') for v in values))}",
                 Fixer(
-                    lambda option: self._fix_set_tag(album, None if option == self.option_remove_tag else option),
+                    lambda option: self._fix_set_field(album, None if option == self.option_remove_field else option),
                     options,
                     option_free_text,
                     option_automatic_index,
                     table,
-                    f"Select {self.tag_description} for all tracks",
+                    f"Select {self.field_description} for all tracks",
                 ),
             )
 
-    def _fix_set_tag(self, album: Album, option: str | None):
+    def _fix_set_field(self, album: Album, option: str | None):
         tagger = self.tagger.get(album.path)
         changed = False
         for track in album.tracks:
-            current_values = track.get(self.tag, default=[])
+            current_values = track.get(self.field, default=[])
             if current_values and not option:
-                self.ctx.console.print(f"Removing {self.tag_description} on {escape(track.filename)}", highlight=False)
+                self.ctx.console.print(f"Removing {self.field_description} on {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tags:
-                    tags.set_field(self.tag, None)
+                    tags.set_field(self.field, None)
                 changed = True
             elif option:
                 set_value = None
@@ -105,8 +105,8 @@ class BaseCheckTagPerAlbum(Check):
                 elif len(current_values) != 1 or current_values[0] != option:
                     set_value = option
                 if set_value is not None:
-                    self.ctx.console.print(f"Setting {self.tag_description} on {escape(track.filename)}", highlight=False)
+                    self.ctx.console.print(f"Setting {self.field_description} on {escape(track.filename)}", highlight=False)
                     with tagger.open(track.filename) as tags:
-                        tags.set_field(self.tag, set_value)
+                        tags.set_field(self.field, set_value)
                     changed = True
         return FixResult.of(changed)

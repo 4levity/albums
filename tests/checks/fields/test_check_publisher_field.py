@@ -1,29 +1,29 @@
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.base_check_tag_per_album import AlbumTagger
-from albums.checks.fields.check_publisher_tag import CheckPublisherTag
+from albums.checks.base_check_field_per_album import AlbumTagger
+from albums.checks.fields.check_publisher_field import CheckPublisherField
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField, TaggerFile
 
 
-class TestCheckPublisherTag:
+class TestCheckPublisherField:
     def test_publisher_ok(self):
         tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
-        result = CheckPublisherTag(Context()).check(album)
+        result = CheckPublisherField(Context()).check(album)
         assert result is None
 
     def test_publisher_ok_none(self):
         tracks = [Track(filename="1.flac"), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
-        result = CheckPublisherTag(Context()).check(album)
+        result = CheckPublisherField(Context()).check(album)
         assert result is None
 
     def test_publisher_missing(self):
         tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
-        result = CheckPublisherTag(Context()).check(album)
+        result = CheckPublisherField(Context()).check(album)
         assert result is not None
         assert "organization policy=CONSISTENT but it is on some tracks and not others" in result.message
 
@@ -31,8 +31,8 @@ class TestCheckPublisherTag:
         tracks = [Track(filename="1.flac"), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         ctx = Context()
-        ctx.config.checks[CheckPublisherTag.name]["presence"] = "always"
-        result = CheckPublisherTag(ctx).check(album)
+        ctx.config.checks[CheckPublisherField.name]["presence"] = "always"
+        result = CheckPublisherField(ctx).check(album)
         assert result is not None
         assert result.fixer is None
         assert "organization policy=ALWAYS but it is not on all tracks" in result.message
@@ -40,7 +40,7 @@ class TestCheckPublisherTag:
     def test_publisher_different_select(self, mocker):
         tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
-        result = CheckPublisherTag(Context()).check(album)
+        result = CheckPublisherField(Context()).check(album)
         assert result is not None
         assert "multiple values for publisher/organization: ABC, XYZ" in result.message
         assert result.fixer is not None
@@ -60,7 +60,7 @@ class TestCheckPublisherTag:
     def test_publisher_different_remove(self, mocker):
         tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
-        result = CheckPublisherTag(Context()).check(album)
+        result = CheckPublisherField(Context()).check(album)
         assert result is not None
         assert "multiple values for publisher/organization: ABC, XYZ" in result.message
         assert result.fixer is not None
