@@ -1,5 +1,4 @@
 import logging
-import textwrap
 from typing import Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
@@ -12,59 +11,11 @@ from mutagen.mp3 import MP3
 from ..config import ID3v1Policy
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
+from .id3_helpers import format_numbered_value, get_text, must_get_text, parse_numbered_value, set_numbered_frame
+from .id3_mappings import BASIC_ID3_TEXT_FRAMES, TAG_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
 from .types import BasicTag, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
-
-BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
-    (BasicTag.ALBUM, "TALB"),
-    (BasicTag.ALBUMSORT, "TSOA"),
-    (BasicTag.ALBUMARTIST, "TPE2"),
-    (BasicTag.ALBUMARTISTSORT, "TSO2"),
-    (BasicTag.ARTIST, "TPE1"),
-    (BasicTag.ARTISTSORT, "TSOP"),
-    (BasicTag.BARCODE, "TXXX:BARCODE"),
-    (BasicTag.COMPILATION, "TCMP"),
-    (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
-    (BasicTag.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
-    (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
-    (BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE, "TXXX:MusicBrainz Album Release Type"),
-    (BasicTag.MUSICBRAINZ_ARRANGERID, "TXXX:MusicBrainz Arranger Id"),
-    (BasicTag.MUSICBRAINZ_ARTISTID, "TXXX:MusicBrainz Artist Id"),
-    (BasicTag.MUSICBRAINZ_COMPOSERID, "TXXX:MusicBrainz Composer Id"),
-    (BasicTag.MUSICBRAINZ_CONDUCTORID, "TXXX:MusicBrainz Conductor Id"),
-    (BasicTag.MUSICBRAINZ_DIRECTORID, "TXXX:MusicBrainz Director Id"),
-    (BasicTag.MUSICBRAINZ_DISCID, "TXXX:MusicBrainz Disc Id"),
-    (BasicTag.MUSICBRAINZ_LYRICISTID, "TXXX:MusicBrainz Lyricist Id"),
-    (BasicTag.MUSICBRAINZ_MIXERID, "TXXX:MusicBrainz Mixer Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "TXXX:MusicBrainz Original Album Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "TXXX:MusicBrainz Original Artist Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALRELEASEID, "TXXX:MusicBrainz Original Release Id"),
-    (BasicTag.MUSICBRAINZ_PRODUCERID, "TXXX:MusicBrainz Producer Id"),
-    (BasicTag.MUSICBRAINZ_RELEASEARTISTID, "TXXX:MusicBrainz Release Artist Id"),
-    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "TXXX:MusicBrainz Release Group Id"),
-    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "TXXX:MusicBrainz Release Track Id"),
-    (BasicTag.MUSICBRAINZ_REMIXERID, "TXXX:MusicBrainz Remixer Id"),
-    # also UFID:http://musicbrainz.org is track id / musicbrainz_recordingid
-    (BasicTag.MUSICBRAINZ_TRMID, "TXXX:MusicBrainz TRM Id"),
-    (BasicTag.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
-    (BasicTag.ORGANIZATION, "TPUB"),
-    # nonstandard: this tagger will read and remove it but will not set it
-    (BasicTag.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),  # nonstandard
-    (BasicTag.RELEASETYPE, "TXXX:RELEASETYPE"),  # nonstandard
-    #
-    (BasicTag.TITLE, "TIT2"),
-    # TCON too but we use .genres instead of .text
-    # TRCK and TPOS too but they are not 1:1
-)
-UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
-
-# TODO also pull other common values, like
-# "composer": "tcom",
-# "encoder": "tenc",
-# "date": "tdrc",  # recordingdate?
-
-TAG_TO_ID3_TEXT_FRAME: Final = dict(BASIC_ID3_TEXT_FRAMES)
 
 
 class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
@@ -122,7 +73,7 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
         if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
             id3 = self._ensure_id3()
-            basic_tags.extend((tag, tuple(_must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
+            basic_tags.extend((tag, tuple(must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
 
             if "TCON" in id3:
                 basic_tags.append((BasicTag.GENRE, tuple(id3["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
@@ -132,13 +83,13 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 ufid_data = bytes(id3[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 basic_tags.append((BasicTag.MUSICBRAINZ_TRACKID, (ufid_data.decode("ascii"),)))
 
-            (track_number, track_total) = self._get_trck()
+            track_number, track_total = self._get_trck()
             if track_number is not None:
                 basic_tags.append((BasicTag.TRACKNUMBER, (track_number,)))
             if track_total is not None:
                 basic_tags.append((BasicTag.TRACKTOTAL, (track_total,)))
 
-            (disc_number, disc_total) = self._get_tpos()
+            disc_number, disc_total = self._get_tpos()
             if disc_number is not None:
                 basic_tags.append((BasicTag.DISCNUMBER, (disc_number,)))
             if disc_total is not None:
@@ -156,18 +107,18 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.GENRE:
                     del tags["TCON"]
                 case BasicTag.DISCNUMBER:
-                    (_, disc_total) = self._get_tpos()
+                    _, disc_total = self._get_tpos()
                     self._set_tpos(None, disc_total)
                 case BasicTag.DISCTOTAL:
-                    (disc_number, _) = self._get_tpos()
+                    disc_number, _ = self._get_tpos()
                     self._set_tpos(disc_number, None)
                 case BasicTag.MUSICBRAINZ_TRACKID:
                     del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
                 case BasicTag.TRACKNUMBER:
-                    (_, track_total) = self._get_trck()
+                    _, track_total = self._get_trck()
                     self._set_trck(None, track_total)
                 case BasicTag.TRACKTOTAL:
-                    (track_number, _) = self._get_trck()
+                    track_number, _ = self._get_trck()
                     self._set_trck(track_number, None)
                 case BasicTag.UNKNOWN:
                     pass
@@ -194,10 +145,10 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     elif "TCMP" in tags:
                         del tags["TCMP"]
                 case BasicTag.DISCNUMBER:
-                    (_, disc_total) = self._get_tpos()
+                    _, disc_total = self._get_tpos()
                     self._set_tpos(value_list[0] if value_list[0] else None, disc_total)
                 case BasicTag.DISCTOTAL:
-                    (disc_number, _) = self._get_tpos()
+                    disc_number, _ = self._get_tpos()
                     self._set_tpos(disc_number, value_list[0] if value_list[0] else None)
                 case BasicTag.GENRE:
                     tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
@@ -210,10 +161,10 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                 case BasicTag.TITLE:
                     tags["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
                 case BasicTag.TRACKNUMBER:
-                    (_, track_total) = self._get_trck()
+                    _, track_total = self._get_trck()
                     self._set_trck(value_list[0] if value_list[0] else None, track_total)
                 case BasicTag.TRACKTOTAL:
-                    (track_number, _) = self._get_trck()
+                    track_number, _ = self._get_trck()
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
                 case BasicTag.UNKNOWN:
                     raise ValueError("cannot set tag value UNKNOWN")
@@ -225,77 +176,17 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
                     tags[frame] = TXXX(encoding=Encoding.UTF8, desc=description, text=value_list)
 
     def _get_tpos(self) -> Tuple[str | None, str | None]:
-        values = _get_text(self._get_file().tags, "TPOS")  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-        value = values[0] if values else None
-        if value is None:
-            return (None, None)
-        # else
-        if str.count(value, "/") == 1:
-            (disc_number, disc_total) = value.split("/")
-            return (disc_number, disc_total)
-        # else
-        return (value, None)
+        values = get_text(self._ensure_id3(), "TPOS")
+        return parse_numbered_value(values[0] if values else None)
 
     def _get_trck(self) -> Tuple[str | None, str | None]:
-        values = _get_text(self._get_file().tags, "TRCK")  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-        value = values[0] if values else None
-        if value is None:
-            return (None, None)
-        # else
-        if str.count(value, "/") == 1:
-            (track_number, track_total) = value.split("/")
-            return (track_number, track_total)
-        # else
-        return (value, None)
+        values = get_text(self._ensure_id3(), "TRCK")
+        return parse_numbered_value(values[0] if values else None)
 
     def _set_tpos(self, disc_number: str | None, disc_total: str | None):
-        if disc_number is None and disc_total is None:
-            value = None
-        elif disc_total is None:
-            value = disc_number
-        elif disc_number is None:
-            value = f"/{disc_total}"
-        else:
-            value = f"{disc_number}/{disc_total}"
-
-        id3 = self._ensure_id3()
-        if value is None and "TPOS" in id3:
-            del id3["TPOS"]
-        elif value is not None and "TPOS" not in id3:
-            id3.add(TPOS(encoding=Encoding.UTF8, text=[value]))  # pyright: ignore[reportUnknownMemberType]
-        elif value is not None and id3["TPOS"].text != [value]:  # pyright: ignore[reportUnknownMemberType]
-            id3["TPOS"] = TPOS(encoding=Encoding.UTF8, text=[value])
+        value = format_numbered_value(disc_number, disc_total)
+        set_numbered_frame(self._ensure_id3(), value, "TPOS", TPOS)
 
     def _set_trck(self, track_number: str | None, track_total: str | None):
-        if track_number is None and track_total is None:
-            value = None
-        elif track_total is None:
-            value = track_number
-        elif track_number is None:
-            value = f"/{track_total}"
-        else:
-            value = f"{track_number}/{track_total}"
-
-        id3 = self._ensure_id3()
-        if value is None and "TRCK" in id3:
-            del id3["TRCK"]
-        elif value is not None and "TRCK" not in id3:
-            id3.add(TRCK(encoding=Encoding.UTF8, text=[value]))  # pyright: ignore[reportUnknownMemberType]
-        elif value is not None and id3["TRCK"].text != [value]:  # pyright: ignore[reportUnknownMemberType]
-            id3["TRCK"] = TRCK(encoding=Encoding.UTF8, text=[value])
-
-
-def _get_text(id3: ID3 | None, frame_name: str):
-    if id3 is None:
-        return None
-    if frame_name not in id3:
-        return None
-    return _must_get_text(id3, frame_name)
-
-
-def _must_get_text(id3: ID3, frame_name: str):
-    frame = id3[frame_name]  # pyright: ignore[reportUnknownVariableType]
-    if hasattr(frame, "text") and isinstance(frame.text, list) and len(frame.text):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-        return [str(text) for text in frame.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]
-    # fallback if this does not look like a text frame
-    return [textwrap.shorten(str(frame), width=4096)]  # pyright: ignore[reportUnknownArgumentType]
+        value = format_numbered_value(track_number, track_total)
+        set_numbered_frame(self._ensure_id3(), value, "TRCK", TRCK)
