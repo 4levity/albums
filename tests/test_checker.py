@@ -153,7 +153,7 @@ class TestChecker:
                     "albums.interactive.interact.choice",
                     return_value=f">> KEEP left (THIS album) and DELETE right (other): One{os.sep}",
                 )
-                mock_confirm = mocker.patch("albums.checks.tags.check_duplicate_album.confirm", return_value=True)
+                mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
                 showed_issues = Checker(ctx, automatic=True, preview=False, fix=True, interactive=False, show_ignore_option=False).run_enabled(
                     session
                 )
@@ -201,7 +201,7 @@ class TestChecker:
                     "albums.interactive.interact.choice",
                     return_value=f">> DELETE left (THIS album) and KEEP right (other): One{os.sep}",
                 )
-                mock_confirm = mocker.patch("albums.checks.tags.check_duplicate_album.confirm", return_value=True)
+                mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
                 showed_issues = Checker(ctx, automatic=True, preview=False, fix=True, interactive=False, show_ignore_option=False).run_enabled(
                     session
                 )

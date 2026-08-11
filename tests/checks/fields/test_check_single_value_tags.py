@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from albums.app import Context
-from albums.checks.tags.check_single_value_tags import CheckSingleValueTags
+from albums.checks.fields.check_single_value_tags import CheckSingleValueTags
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField

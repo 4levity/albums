@@ -1,7 +1,7 @@
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.tags.check_musicbrainz_tags import AlbumTagger, CheckMusicBrainzTags
+from albums.checks.fields.check_musicbrainz_tags import AlbumTagger, CheckMusicBrainzTags
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField, TaggerFile
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context, Session
-from albums.checks.tags.check_duplicate_album import CheckDuplicateAlbum
+from albums.checks.fields.check_duplicate_album import CheckDuplicateAlbum
 from albums.database import connection
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField
@@ -48,8 +48,8 @@ class TestCheckDuplicateAlbum:
             ]
             assert result.fixer.option_automatic_index is None
 
-            mock_rmtree = mocker.patch("albums.checks.tags.check_duplicate_album.rmtree")
-            mock_confirm = mocker.patch("albums.checks.tags.check_duplicate_album.confirm", return_value=True)
+            mock_rmtree = mocker.patch("albums.checks.fields.check_duplicate_album.rmtree")
+            mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
             fix_result = result.fixer.fix(result.fixer.options[0])
 
             assert fix_result
@@ -79,8 +79,8 @@ class TestCheckDuplicateAlbum:
             ]
             assert result.fixer.option_automatic_index is None
 
-            mock_rmtree = mocker.patch("albums.checks.tags.check_duplicate_album.rmtree")
-            mock_confirm = mocker.patch("albums.checks.tags.check_duplicate_album.confirm", return_value=True)
+            mock_rmtree = mocker.patch("albums.checks.fields.check_duplicate_album.rmtree")
+            mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
             fix_result = result.fixer.fix(result.fixer.options[1])
 
             assert fix_result

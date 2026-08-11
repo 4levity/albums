@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.tags.check_artist_tag import CheckArtistTag
+from albums.checks.fields.check_artist_tag import CheckArtistTag
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField

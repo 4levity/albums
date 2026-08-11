@@ -10,15 +10,15 @@ All checks and their configuration options.
 
 Enabled checks will run in order on each album:
 
-1. `duplicate-pathname` check _("Path and Filename")_
-1. `illegal-pathname` check _("Path and Filename")_
-1. `file-extension` check _("Path and Filename")_
-1. `unreadable-track` check _("Other Tags")_
-1. `extra-whitespace` check _("Other Tags")_
+1. `duplicate-pathname` check _("Path and File")_
+1. `illegal-pathname` check _("Path and File")_
+1. `file-extension` check _("Path and File")_
+1. `unreadable-track` check _("Path and File")_
+1. `extra-whitespace` check _("Other Fields")_
 1. All "Numbering" checks
-1. Remaining "Other Tags" checks
+1. Remaining "Other Fields" checks
 1. All "Pictures" checks
-1. Remaining "Path and Filename" checks
+1. Remaining "Path and File" checks
 
 Within each category, the checks run in the order they are listed below.
 
@@ -31,7 +31,7 @@ the `disc-in-tracknumber` check should be applied before
 `invalid-image` check doesn't pass, none of the other "Pictures" checks can run.
 Other dependencies are listed below.
 
-## Checks: Path and Filename
+## Checks: Path and File
 
 ### duplicate-pathname
 
@@ -156,6 +156,14 @@ it according to the options.
 
 This check reports when an album has another album in a subfolder. Maybe they
 should be in separate folders or this check should be disabled. No fix offered.
+
+### unreadable-track
+
+This check runs before checking tags and fails if the tagger cannot open or
+detect streams in a track. This is probably because the file is corrupt. The fix
+offers to rename any unreadable tracks by adding `.unreadable` to the end of the
+filename, preserving the file but causing it to be ignored. The fix is **not**
+automatic.
 
 ## Checks: Numbering
 
@@ -310,21 +318,13 @@ Choose a policy for each tag. The policy options are:
 > disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
 > for example, track **4** of **7** and track **04** of **12**.
 
-## Other Tags
+## Other Fields
 
-Tag checks that are not related to numbering or pictures.
-
-### unreadable-track
-
-This check runs before all other tag checks and fails if the tagger cannot open
-or detect streams in a track. This is probably because the file is corrupt. The
-fix offers to rename any unreadable tracks by adding `.unreadable` to the end of
-the filename, preserving the file but causing it to be ignored. The fix is
-**not** automatic.
+Field checks that are not related to numbering or pictures.
 
 ### extra-whitespace
 
-None of the basic tags like album, artist, title, track number, etc. should have
+None of the basic fields like album, artist, title, track number, etc. should have
 extra spaces or other whitespace characters at the beginning or end.
 
 **Automatic fix**: Remove whitespace from the beginning and end of all values
@@ -501,7 +501,7 @@ Whether or not you use MusicBrainz, inconsistencies in MusicBrainz tags within
 an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
-interpret this as two separate albums even if other tags are all the same. This
+interpret this as two separate albums even if Other Fields are all the same. This
 check reports when those tags are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
@@ -527,7 +527,7 @@ MusicBrainz tags.
 
 <!-- pyml enable line-length -->
 
-## Other Tags: Per Album
+## Other Fields: Per Album
 
 The checks in this section each check a different tag corresponding to the name
 of the check, but they also share a purpose: if one of these tags is set
@@ -554,7 +554,7 @@ tracks, set that value on the tracks which have no value. And if the policy is
 
 ### publisher-tag
 
-See "Other Tags: Per Album" above for common behavior of this check.
+See "Other Fields: Per Album" above for common behavior of this check.
 
 !!!success "Dependency"
 
@@ -562,11 +562,11 @@ See "Other Tags: Per Album" above for common behavior of this check.
 
 ### album-sort-tag, album-artist-sort-tag, barcode-tag, compilation-tag, release-type-tag
 
-See "Other Tags: Per Album" above for details on these per-album tag checks.
+See "Other Fields: Per Album" above for details on these per-album tag checks.
 
 ### release-country-tag
 
-See "Other Tags: Per Album" above for common behavior of this check.
+See "Other Fields: Per Album" above for common behavior of this check.
 
 !!!warning
 
