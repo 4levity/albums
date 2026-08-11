@@ -3,45 +3,23 @@ import itertools
 import logging
 import time
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum, auto
-from pathlib import Path
-from typing import Callable, Final, Iterator, List, Mapping, Tuple
+from typing import Callable, Iterator, Mapping
 
-import humanize
 from rbloom import Bloom
 from rich.markup import escape
 from rich.progress import Progress
 from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session
 
+from albums.library.album_scanner import scan_album
+
 from ..app import SCANNER_VERSION, Context
-from ..picture.format import format_to_mime_type
-from ..picture.scan import PictureScannerCache
-from ..tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
-from ..types import Album, OtherFile, PictureFile, ScanHistoryEntity, TagV, Track, TrackPicture
+from ..tagger.folder import AlbumTagger
+from ..types import Album, ScanHistoryEntity
 from ..words.make import plural
-from .folder import MiniStat, read_binary_file, stat_dir
-
-MAX_IMAGE_SIZE: Final = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
-
-
-class AlbumScanResult(Enum):
-    NO_TRACKS = auto()
-    NEW = auto()
-    UPDATED = auto()
-    UNCHANGED = auto()
-    REMOVED = auto()
-
-
-@dataclass(frozen=True)
-class TargetRescan:
-    source: PictureFile | Track | OtherFile
-    tags: bool
-    images: bool
-    streams: bool
-
+from .album_scanner import picture_cache
+from .scanner_types import AlbumScanResult
 
 logger = logging.getLogger(__name__)
 
@@ -144,11 +122,11 @@ def scan_library(
         else:
             album_match = (None,)
         (album,) = album_match
-        tagger = AlbumTagger(ctx.config.library / path, preload={} if reread else _picture_cache(album))
+        tagger = AlbumTagger(ctx.config.library / path, preload={} if reread else picture_cache(album))
         with session.begin_nested() as path_scan_transaction:
             if album and album.album_id is not None:
                 unvisited_album_ids.remove(album.album_id)
-                result = _scan_album(ctx, tagger, album, reread)
+                result = scan_album(ctx, tagger, album, reread)
                 if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                     if result == AlbumScanResult.REMOVED:
                         session.delete(album)
@@ -158,7 +136,7 @@ def scan_library(
                     path_scan_transaction.commit()
             else:
                 album = Album(path=path, scanner=SCANNER_VERSION)
-                new_result = _scan_album(ctx, tagger, album, False)
+                new_result = scan_album(ctx, tagger, album, False)
                 if new_result == AlbumScanResult.UPDATED:
                     result = AlbumScanResult.NEW
                     session.add(album)
@@ -182,9 +160,9 @@ def rescan_albums(
 ) -> Mapping[AlbumScanResult, int]:
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for album in scan_albums:
-        tagger = AlbumTagger(ctx.config.library / album.path, preload={} if reread else _picture_cache(album))
+        tagger = AlbumTagger(ctx.config.library / album.path, preload={} if reread else picture_cache(album))
         with session.begin_nested() as album_scan_transaction:
-            result = _scan_album(ctx, tagger, album, reread)
+            result = scan_album(ctx, tagger, album, reread)
             scan_results[result] += 1
             if result != AlbumScanResult.UNCHANGED or album.scanner != SCANNER_VERSION:
                 if result == AlbumScanResult.REMOVED:
@@ -195,150 +173,3 @@ def rescan_albums(
                 album_scan_transaction.commit()
         update_progress()
     return scan_results
-
-
-def _picture_cache(album: Album | None) -> PictureScannerCache:
-    if not album:
-        return {}
-    return dict(
-        itertools.chain(
-            (
-                ((pic.picture_info.file_size, pic.picture_info.file_hash), pic.picture_info)
-                for track in sorted(album.tracks)
-                for pic in track.pictures
-            ),
-            (((file.picture_info.file_size, file.picture_info.file_hash), file.picture_info) for file in sorted(album.picture_files)),
-        )
-    )
-
-
-def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan: TargetRescan | None) -> Track | None:
-    with tagger.open(filename) as file:
-        if target_scan is None or target_scan.streams:
-            if file.has_video():  # check file streams
-                return None
-        else:
-            if isinstance(target_scan.source, OtherFile):
-                return None
-
-        if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
-            tags = [TagV(tag=t.tag, value=t.value) for t in target_scan.source.tags]
-            legacy_tags = list(target_scan.source.legacy_tags)
-        else:
-            tags = [TagV(tag=tag, value=value) for tag, values in file.get_tags() for value in values]
-            legacy_tags = [tag_name for (tag_name, _) in file.get_legacy_tags()]
-
-        if target_scan is not None and not target_scan.images and isinstance(target_scan.source, Track):
-            pictures = [
-                TrackPicture(picture_type=p.picture_type, picture_info=p.picture_info, description=p.description, embed_ix=p.embed_ix)
-                for p in target_scan.source.pictures
-            ]
-        else:
-            pictures = [
-                TrackPicture(picture_type=picture.type, picture_info=picture.picture_info, description=picture.description, embed_ix=embed_ix)
-                for embed_ix, picture in enumerate(picture for (picture, _data) in file.get_pictures())
-            ]
-
-        if target_scan is not None and not target_scan.streams and isinstance(target_scan.source, Track):
-            stream = target_scan.source.stream
-        else:
-            stream = file.get_stream_info()
-
-        return Track(
-            filename=filename,
-            file_size=stat.file_size,
-            modify_timestamp=stat.modify_timestamp,
-            stream=stream,
-            pictures=pictures,
-            tags=tags,
-            legacy_tags=legacy_tags,
-        )
-
-
-def _scan_picture_file(tagger: AlbumTagger, filename: str, stat: MiniStat, scan_target: TargetRescan | None) -> PictureFile | None:
-    if scan_target is not None and not scan_target.images and isinstance(scan_target.source, PictureFile):
-        p = scan_target.source
-        return PictureFile(filename=p.filename, modify_timestamp=p.modify_timestamp, cover_source=p.cover_source, picture_info=p.picture_info)
-
-    if stat.file_size > MAX_IMAGE_SIZE:
-        size = humanize.naturalsize(stat.file_size, binary=True)
-        max = humanize.naturalsize(MAX_IMAGE_SIZE, binary=True)
-        logger.warning(f"skipping image file {str(filename)} because it is {size} (albums max = {max})")
-        return None
-
-    expect_mime_type = format_to_mime_type(Path(filename).suffix.replace(".", ""))
-    picture_info = tagger.get_picture_scanner().scan(read_binary_file(tagger.path() / filename), expect_mime_type)
-    return PictureFile(filename=filename, modify_timestamp=stat.modify_timestamp, cover_source=False, picture_info=picture_info)
-
-
-def _scan_file(album: Album, tagger: AlbumTagger, path: Path, stat: MiniStat, target_scan: TargetRescan | None) -> None:
-    cover_source = _remove_file(album, path.name)
-
-    if str.lower(path.suffix) in AUDIO_FILE_SUFFIXES:
-        new_track = _scan_track(tagger, path.name, stat, target_scan)
-        if new_track is None:
-            album.other_files.append(OtherFile(filename=path.name, file_size=stat.file_size, modify_timestamp=stat.modify_timestamp))
-        else:
-            album.tracks.append(new_track)
-    else:
-        new_picture_file = _scan_picture_file(tagger, path.name, stat, target_scan)
-        if new_picture_file is None:
-            album.other_files.append(OtherFile(filename=path.name, file_size=stat.file_size, modify_timestamp=stat.modify_timestamp))
-        else:
-            new_picture_file.cover_source = cover_source
-            album.picture_files.append(new_picture_file)
-
-
-def _remove_file(album: Album, filename: str) -> bool:
-    while (to_remove := next((o for o in album.other_files if o.filename == filename), None)) is not None:
-        album.other_files.remove(to_remove)
-    while (to_remove := next((t for t in album.tracks if t.filename == filename), None)) is not None:
-        album.tracks.remove(to_remove)
-    removed_cover_source = False
-    while (original := next((f for f in album.picture_files if f.filename == filename), None)) is not None:
-        removed_cover_source |= original.cover_source
-        album.picture_files.remove(original)
-    return removed_cover_source
-
-
-def _scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = False) -> AlbumScanResult:
-    album_path = ctx.config.library / album.path
-    stored_files_list: List[Tuple[str, Tuple[MiniStat, PictureFile | Track | OtherFile]]] = [
-        (t.filename, (MiniStat(t.file_size, t.modify_timestamp), t)) for t in album.tracks
-    ]
-    stored_files_list.extend((f.filename, (MiniStat(f.picture_info.file_size, f.modify_timestamp), f)) for f in album.picture_files)
-    stored_files_list.extend((o.filename, (MiniStat(o.file_size, o.modify_timestamp), o)) for o in album.other_files)
-    duplicate_files = set(filename for (filename, _) in stored_files_list if sum(1 if filename == fn else 0 for (fn, _) in stored_files_list) > 1)
-    stored_files = dict(stored_files_list)
-    updated = False
-    for path, stat in stat_dir(album_path):
-        if path.name in stored_files:
-            (stored_stat, file) = stored_files[path.name]
-            targeted = None
-            if reread or stat != stored_stat or path.name in duplicate_files or (targeted := _needs_rescan(album.scanner, file)):
-                logger.debug(f"re-scanning file: {str(path)}")
-                _scan_file(album, tagger, path, stat, targeted)
-                updated = True  # TODO if reread==True, check whether file actually changed
-            del stored_files[path.name]
-        else:
-            logger.debug(f"scanning new file: {str(path)}")
-            _scan_file(album, tagger, path, stat, None)
-            updated = True
-    for filename in stored_files:  # anything left has been deleted
-        _remove_file(album, filename)
-        updated = True
-    if len(album.tracks) == 0:
-        return AlbumScanResult.REMOVED
-    return AlbumScanResult.UPDATED if updated else AlbumScanResult.UNCHANGED
-
-
-def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> TargetRescan | None:
-    if scanner < 6:
-        return TargetRescan(file, tags=True, images=True, streams=True)
-    if scanner < 7:
-        return TargetRescan(file, tags=False, images=False, streams=True)  # v7 added more stream info
-    if scanner < 8:
-        return TargetRescan(file, tags=True, images=False, streams=False)  # v7 tags are sus due to orm issues
-    if scanner == 8:
-        return TargetRescan(file, tags=False, images=False, streams=True)  # v8 could incorrectly treat video as track after rescan
-    return None

@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from albums.app import SCANNER_VERSION, Context
 from albums.database import connection
 from albums.database.selector import load_album_entities
-from albums.library.scanner import MAX_IMAGE_SIZE, TargetRescan, scan
+from albums.library.scanner import scan
+from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicTag, Picture, PictureType
@@ -540,7 +541,7 @@ class TestScanner:
             def rescan_only_streams(scanner, file):
                 return TargetRescan(file, tags=False, images=True, streams=scan_streams)
 
-            mock_needs_rescan = mocker.patch("albums.library.scanner._needs_rescan", side_effect=rescan_only_streams)
+            mock_needs_rescan = mocker.patch("albums.library.album_scanner._needs_rescan", side_effect=rescan_only_streams)
             mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")
 
             scan(ctx)
