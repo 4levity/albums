@@ -24,8 +24,8 @@ from .picture.check_invalid_image import CheckInvalidImage
 from .picture.check_picture_metadata import CheckPictureMetadata
 from .tags.check_album_artist import CheckAlbumArtist
 from .tags.check_album_artist_sort import CheckAlbumArtistSort
+from .tags.check_album_field import CheckAlbumField
 from .tags.check_album_sort import CheckAlbumSort
-from .tags.check_album_tag import CheckAlbumTag
 from .tags.check_artist_tag import CheckArtistTag
 from .tags.check_barcode_tag import CheckBarcodeTag
 from .tags.check_compilation_tag import CheckCompilationTag
@@ -58,7 +58,7 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckTrackNumbering,
     CheckZeroPadNumbers,
     # more tag checks
-    CheckAlbumTag,
+    CheckAlbumField,
     CheckAlbumArtist,
     CheckArtistTag,
     CheckDuplicateAlbum,

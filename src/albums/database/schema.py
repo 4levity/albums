@@ -4,9 +4,12 @@ from typing import Final, Mapping
 from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
+from albums.database.migration_helpers import generate_check_renames_sql
+
 from .orm import schema_table
 
 logger: Final = logging.getLogger(__name__)
+
 
 SQL_INIT_SCHEMA: Final = """
 CREATE TABLE _schema (
@@ -206,6 +209,7 @@ AND NOT EXISTS (
 DELETE FROM track_tag
 WHERE name IN ('album artist', 'label', 'publisher', 'totaldiscs');
 """,
+    17: generate_check_renames_sql({"album-tag": "album-field"}),
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

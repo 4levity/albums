@@ -20,7 +20,7 @@ logger: Final = logging.getLogger(__name__)
 class CheckFolderName(Check):
     name = "folder-name"
     default_config = {"enabled": True, "format": "$album", "ignore_folders": ["misc"]}
-    must_pass_checks = {"album-tag", "artist-tag"}
+    must_pass_checks = {"album-field", "artist-tag"}
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))

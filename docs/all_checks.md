@@ -345,10 +345,11 @@ standard equivalents.
 tag. If multiple tracks have values for the same field (from both legacy and
 standard sources), the values are merged with duplicates removed.
 
-### album-tag
+### album-field
 
-Tracks should have `album` tags. The fix attempts to guess album name from tags
-on other tracks in the folder, and the name of the folder. Choose from options.
+Tracks should have `album` fields. The fix attempts to guess album name from
+fields on other tracks in the folder, and the name of the folder. Choose from
+options.
 
 **Automatic fix**: If there is exactly one option for the album name, use it.
 

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.checks.all import ALL_CHECK_NAMES
-from albums.checks.tags.check_album_tag import CheckAlbumTag
+from albums.checks.tags.check_album_field import CheckAlbumField
 from albums.config import (
     DEFAULT_IMPORT_PATH,
     DEFAULT_IMPORT_PATH_VARIOUS,
@@ -26,8 +26,8 @@ class TestDatabaseConfig:
         try:
             config = load(db)
             assert len(config.checks) == len(ALL_CHECK_NAMES)
-            assert config.checks[CheckAlbumTag.name]["enabled"]
-            assert len(config.checks[CheckAlbumTag.name]) == len(CheckAlbumTag.default_config)
+            assert config.checks[CheckAlbumField.name]["enabled"]
+            assert len(config.checks[CheckAlbumField.name]) == len(CheckAlbumField.default_config)
             assert config.default_import_path == DEFAULT_IMPORT_PATH
             assert config.default_import_path_various == DEFAULT_IMPORT_PATH_VARIOUS
             assert config.more_import_paths == DEFAULT_MORE_IMPORT_PATHS

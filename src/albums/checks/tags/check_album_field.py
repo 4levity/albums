@@ -16,16 +16,16 @@ from ..helpers import show_tag
 logger: Final = logging.getLogger(__name__)
 
 
-class CheckAlbumTag(Check):
-    name = "album-tag"
+class CheckAlbumField(Check):
+    name = "album-field"
     default_config = {"enabled": True, "ignore_folders": ["misc"]}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckAlbumTag.default_config["ignore_folders"])
+        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckAlbumField.default_config["ignore_folders"])
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
-            logger.warning(f'album-tag.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            logger.warning(f'album-field.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
 

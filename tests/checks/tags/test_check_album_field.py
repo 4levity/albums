@@ -2,13 +2,13 @@ import os
 from pathlib import Path
 
 from albums.app import Context
-from albums.checks.tags.check_album_tag import CheckAlbumTag
+from albums.checks.tags.check_album_field import CheckAlbumField
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField
 
 
-class TestCheckAlbumTag:
+class TestCheckAlbumField:
     def test_check_needs_album__all(self):
         album = Album(
             path="foo" + os.sep,
@@ -18,7 +18,7 @@ class TestCheckAlbumTag:
                 Track(filename="3.flac"),
             ],
         )
-        result = CheckAlbumTag(Context()).check(album)
+        result = CheckAlbumField(Context()).check(album)
         assert "3 tracks missing album tag" in result.message
 
     def test_check_needs_album__one(self):
@@ -30,7 +30,7 @@ class TestCheckAlbumTag:
                 Track(filename="3.flac"),
             ],
         )
-        result = CheckAlbumTag(Context()).check(album)
+        result = CheckAlbumField(Context()).check(album)
         assert "1 track missing album tag" in result.message
 
     def test_check_needs_album__conflicting(self):
@@ -42,7 +42,7 @@ class TestCheckAlbumTag:
                 Track(filename="3.flac", tag={BasicField.ALBUM: "B"}),
             ],
         )
-        result = CheckAlbumTag(Context()).check(album)
+        result = CheckAlbumField(Context()).check(album)
         assert "2 conflicting album tag values" in result.message
         assert result.fixer is not None
         assert result.fixer.options == ["A", "B"]
@@ -59,7 +59,7 @@ class TestCheckAlbumTag:
                 Track(filename="3.flac"),
             ],
         )
-        result = CheckAlbumTag(Context()).check(album)
+        result = CheckAlbumField(Context()).check(album)
         assert result.fixer is not None
         assert result.fixer.options[0] == "Foo"
         assert result.fixer.option_automatic_index == 0
@@ -80,7 +80,7 @@ class TestCheckAlbumTag:
                 Track(filename="3.flac"),
             ],
         )
-        result = CheckAlbumTag(Context()).check(album)
+        result = CheckAlbumField(Context()).check(album)
         assert "1 track missing album tag" in str(result.message)
         assert result.fixer is not None
         assert result.fixer.option_automatic_index is None
