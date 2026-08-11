@@ -9,18 +9,18 @@ from albums.checks.path.check_folder_name import CheckFolderName
 from albums.database import connection
 from albums.entities import Album, Track
 from albums.library import scanner
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from ...fixtures.create_library import create_library
 
 
 class TestCheckFolderName:
     def test_folder_name_ok(self):
-        album = Album(path="Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
+        album = Album(path="Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
         assert not CheckFolderName(Context()).check(album)
 
     def test_folder_name_ok_artist(self):
-        album = Album(path="Bar - Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.ARTIST: "Bar"})])
+        album = Album(path="Bar - Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo", BasicField.ARTIST: "Bar"})])
         ctx = Context()
         ctx.config.checks[CheckFolderName.name]["format"] = "$artist - $album"
         assert not CheckFolderName(ctx).check(album)
@@ -29,8 +29,8 @@ class TestCheckFolderName:
         album = Album(
             path="Various Artists - Foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.ARTIST: "Bar", BasicTag.ALBUMARTIST: "Various Artists"}),
-                Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUMARTIST: "Various Artists"}),
+                Track(filename="1.flac", tag={BasicField.ALBUM: "Foo", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists"}),
+                Track(filename="1.flac", tag={BasicField.ALBUM: "Foo", BasicField.ARTIST: "Baz", BasicField.ALBUMARTIST: "Various Artists"}),
             ],
         )
         ctx = Context()
@@ -42,11 +42,11 @@ class TestCheckFolderName:
         assert not CheckFolderName(Context()).check(album)
 
     def test_folder_name_library_root(self):
-        album = Album(path=".", tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
+        album = Album(path=".", tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
         assert not CheckFolderName(Context()).check(album)
 
     def test_folder_name_fix(self, mocker):
-        album = Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
+        album = Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
         result = CheckFolderName(Context()).check(album)
         assert result
         assert "folder name does not match pattern" in result.message
@@ -60,7 +60,7 @@ class TestCheckFolderName:
         assert album.path == "Foo" + os.sep
 
     def test_folder_name_fix_case_sensitive(self, mocker):
-        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
         result = CheckFolderName(Context()).check(album)
         assert result
         assert "folder name does not match pattern" in result.message
@@ -76,7 +76,7 @@ class TestCheckFolderName:
     def test_folder_name_preserve_db_entry(self, mocker):
         ctx = Context()
         ctx.config.library = create_library(
-            "folder_name", [Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])]
+            "folder_name", [Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])]
         )
         ctx.db = connection.open(connection.MEMORY)
         try:
@@ -109,8 +109,8 @@ class TestCheckFolderName:
 
     def test_folder_name_conflict(self, mocker):
         ctx = Context()
-        album = Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
-        conflicting_album = Album(path="Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo"})])
+        album = Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
+        conflicting_album = Album(path="Foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])
         ctx.config.library = create_library("folder_name_conflict", [album, conflicting_album])
 
         result = CheckFolderName(ctx).check(album)

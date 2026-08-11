@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
 from albums.database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
 from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag, Picture, PictureType, StreamInfo
+from albums.tagger.types import BasicField, Picture, PictureType, StreamInfo
 
 
 class TagV(Base):
@@ -23,7 +23,7 @@ class TagV(Base):
         track_tag_id: Primary key.
         track_id: Foreign key linking to the owning :class:`Track`.
         track: ORM back-reference to the parent track.
-        tag: Canonicalized tag name from :class:`~.tagger.types.BasicTag`.
+        tag: Canonicalized tag name from :class:`~.tagger.types.BasicField`.
         value: Decoded text content of this single metadata frame.
     """
 
@@ -34,7 +34,7 @@ class TagV(Base):
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
     track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
 
-    tag: Mapped[BasicTag] = mapped_column("name", SafeStringEnum[BasicTag](BasicTag, BasicTag.UNKNOWN), nullable=False)
+    tag: Mapped[BasicField] = mapped_column("name", SafeStringEnum[BasicField](BasicField, BasicField.UNKNOWN), nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
@@ -158,36 +158,36 @@ class Track(Base):
             "tags": self.tag_dict(),
         }
 
-    def tag_dict(self) -> Mapping[BasicTag, List[str]]:
-        """Return all stored tags grouped by :class:`~.tagger.types.BasicTag` key.
+    def tag_dict(self) -> Mapping[BasicField, List[str]]:
+        """Return all stored tags grouped by :class:`~.tagger.types.BasicField` key.
 
         Returns:
             Mapping where each value is a list of frame text for that tag name.
         """
-        tags: dict[BasicTag, List[str]] = {}
+        tags: dict[BasicField, List[str]] = {}
         for tag_entity in self.tags:
             tags.setdefault(tag_entity.tag, []).append(tag_entity.value)
         return tags
 
-    def has(self, tag: BasicTag) -> bool:
+    def has(self, tag: BasicField) -> bool:
         """Return ``True`` when at least one value for *tag* exists.
 
         Args:
-            tag: The :class:`~.tagger.types.BasicTag` to check for.
+            tag: The :class:`~.tagger.types.BasicField` to check for.
         """
         return any(t.tag == tag for t in self.tags)
 
     @overload
-    def get(self, tag: BasicTag, default: None) -> Sequence[str] | None: ...
+    def get(self, tag: BasicField, default: None) -> Sequence[str] | None: ...
     @overload
-    def get(self, tag: BasicTag, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
-    def get(self, tag: BasicTag, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
+    def get(self, tag: BasicField, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
+    def get(self, tag: BasicField, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
         """Retrieve all values for *tag*, optionally with a default if no values available.
 
         If no default is specified and no values exist, raises ``KeyError``.
 
         Args:
-            tag: The :class:`~.tagger.types.BasicTag` to look up.
+            tag: The :class:`~.tagger.types.BasicField` to look up.
             default: Substitute value when no frames exist; raises ``KeyError`` if left unset explicitly.
 
         Returns:
@@ -201,9 +201,9 @@ class Track(Base):
         return result
 
     def __init__(self, **kw: Any):
-        """Construct a track row, accepting ``tags`` entity list or (for tests/convenience) a BasicTag->List mapping"""
+        """Construct a track row, accepting ``tags`` entity list or (for tests/convenience) a BasicField->List mapping"""
         if "tags" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
-            t: Mapping[BasicTag, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
+            t: Mapping[BasicField, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
             kw["tags"] = [TagV(tag=tag, value=v) for tag, values in t.items() for v in ([values] if isinstance(values, str) else values)]
             del kw["tag"]
         super().__init__(**kw)

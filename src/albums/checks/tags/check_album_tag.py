@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ...words.make import plural, pluralize
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
@@ -39,8 +39,8 @@ class CheckAlbumTag(Check):
 
         track_album_tags: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
-            if track.has(BasicTag.ALBUM):
-                for album_tag in track.get(BasicTag.ALBUM):
+            if track.has(BasicField.ALBUM):
+                for album_tag in track.get(BasicField.ALBUM):
                     track_album_tags[album_tag] += 1
             else:
                 track_album_tags[""] += 1
@@ -65,9 +65,9 @@ class CheckAlbumTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicTag.ALBUM, default=None)),
-                    show_tag(track.get(BasicTag.ARTIST, default=None)),
-                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
+                    show_tag(track.get(BasicField.ALBUM, default=None)),
+                    show_tag(track.get(BasicField.ARTIST, default=None)),
+                    show_tag(track.get(BasicField.ALBUMARTIST, default=None)),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -85,8 +85,8 @@ class CheckAlbumTag(Check):
         changed = False
         for track in sorted(album.tracks):
             file = self.ctx.config.library / album.path / track.filename
-            if track.get(BasicTag.ALBUM, default=[]) != (option,):
+            if track.get(BasicField.ALBUM, default=[]) != (option,):
                 self.ctx.console.print(f"setting album on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ALBUM, option)])
+                self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ALBUM, option)])
                 changed = True
         return FixResult.of(changed)

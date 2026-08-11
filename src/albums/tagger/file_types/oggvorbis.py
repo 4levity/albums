@@ -9,7 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import album_picture_to_flac, scan_flac_picture
-from ..types import BasicTag, Picture
+from ..types import BasicField, Picture
 from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
 
 
@@ -62,7 +62,7 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
             return ()
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
         vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
 
     def _get_picture_blocks(self) -> list[str]:

@@ -5,7 +5,7 @@ import xxhash
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
-from albums.tagger.folder import AlbumTagger, BasicTag
+from albums.tagger.folder import AlbumTagger, BasicField
 from albums.tagger.types import Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
@@ -15,19 +15,19 @@ UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.ogg",
     tag={
-        BasicTag.ARTIST: "C",
-        BasicTag.TITLE: "one",
-        BasicTag.ALBUM: "foobar",
-        BasicTag.ALBUMARTIST: "foo",
-        BasicTag.TRACKNUMBER: "1",
-        BasicTag.TRACKTOTAL: "2",
-        BasicTag.DISCNUMBER: "3",
-        BasicTag.DISCTOTAL: "4",
-        BasicTag.GENRE: "Rock",
-        BasicTag.ORGANIZATION: "ABC",
-        BasicTag.BARCODE: "0123",
-        BasicTag.MUSICBRAINZ_ALBUMID: UUID0,
-        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.ARTIST: "C",
+        BasicField.TITLE: "one",
+        BasicField.ALBUM: "foobar",
+        BasicField.ALBUMARTIST: "foo",
+        BasicField.TRACKNUMBER: "1",
+        BasicField.TRACKTOTAL: "2",
+        BasicField.DISCNUMBER: "3",
+        BasicField.DISCTOTAL: "4",
+        BasicField.GENRE: "Rock",
+        BasicField.ORGANIZATION: "ABC",
+        BasicField.BARCODE: "0123",
+        BasicField.MUSICBRAINZ_ALBUMID: UUID0,
+        BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
@@ -36,7 +36,7 @@ track = Track(
 )
 track_legacy = Track(
     filename="2.ogg",
-    tag={BasicTag.ORGANIZATION: "ABC", BasicTag.ALBUMARTIST: "foo artist", BasicTag.DISCTOTAL: "2"},
+    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
     legacy_tags=["label", "album artist", "totaldiscs"],
 )
 album = Album(path="foobar" + os.sep, tracks=[track, track_legacy])
@@ -62,73 +62,73 @@ class TestOggVorbis:
         assert pictures[1].picture_info.width == pictures[1].picture_info.height == 300
 
         track_tags = track.tag_dict()
-        assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
-        assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
-        assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
-        assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
-        assert tags[BasicTag.TRACKNUMBER] == tuple(track_tags[BasicTag.TRACKNUMBER])
-        assert tags[BasicTag.TRACKTOTAL] == tuple(track_tags[BasicTag.TRACKTOTAL])
-        assert tags[BasicTag.DISCNUMBER] == tuple(track_tags[BasicTag.DISCNUMBER])
-        assert tags[BasicTag.DISCTOTAL] == tuple(track_tags[BasicTag.DISCTOTAL])
-        assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
-        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
-        assert tags[BasicTag.BARCODE] == tuple(track_tags[BasicTag.BARCODE])
-        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMID])
-        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        assert tags[BasicField.ARTIST] == tuple(track_tags[BasicField.ARTIST])
+        assert tags[BasicField.TITLE] == tuple(track_tags[BasicField.TITLE])
+        assert tags[BasicField.ALBUM] == tuple(track_tags[BasicField.ALBUM])
+        assert tags[BasicField.ALBUMARTIST] == tuple(track_tags[BasicField.ALBUMARTIST])
+        assert tags[BasicField.TRACKNUMBER] == tuple(track_tags[BasicField.TRACKNUMBER])
+        assert tags[BasicField.TRACKTOTAL] == tuple(track_tags[BasicField.TRACKTOTAL])
+        assert tags[BasicField.DISCNUMBER] == tuple(track_tags[BasicField.DISCNUMBER])
+        assert tags[BasicField.DISCTOTAL] == tuple(track_tags[BasicField.DISCTOTAL])
+        assert tags[BasicField.GENRE] == tuple(track_tags[BasicField.GENRE])
+        assert tags[BasicField.ORGANIZATION] == tuple(track_tags[BasicField.ORGANIZATION])
+        assert tags[BasicField.BARCODE] == tuple(track_tags[BasicField.BARCODE])
+        assert tags[BasicField.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMID])
+        assert tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
 
     def test_update_ogg_vorbis_tags(self):
         TestOggVorbis.tagger.set_basic_tags(
             TestOggVorbis.library / album.path / track.filename,
             [
-                (BasicTag.ARTIST, "a1"),
-                (BasicTag.TITLE, "t"),
-                (BasicTag.ALBUM, "a3"),
-                (BasicTag.ALBUMARTIST, "a2"),
-                (BasicTag.TRACKNUMBER, "5"),
-                (BasicTag.TRACKTOTAL, "6"),
-                (BasicTag.DISCNUMBER, "7"),
-                (BasicTag.DISCTOTAL, "8"),
-                (BasicTag.GENRE, "Country"),
-                (BasicTag.ORGANIZATION, "Q"),
-                (BasicTag.BARCODE, "0000"),
-                (BasicTag.MUSICBRAINZ_ALBUMID, UUID1),
-                (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
+                (BasicField.ARTIST, "a1"),
+                (BasicField.TITLE, "t"),
+                (BasicField.ALBUM, "a3"),
+                (BasicField.ALBUMARTIST, "a2"),
+                (BasicField.TRACKNUMBER, "5"),
+                (BasicField.TRACKTOTAL, "6"),
+                (BasicField.DISCNUMBER, "7"),
+                (BasicField.DISCTOTAL, "8"),
+                (BasicField.GENRE, "Country"),
+                (BasicField.ORGANIZATION, "Q"),
+                (BasicField.BARCODE, "0000"),
+                (BasicField.MUSICBRAINZ_ALBUMID, UUID1),
+                (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
             ],
         )
         with TestOggVorbis.tagger.open(track.filename) as file:
             tags = dict(file.get_tags())
-        assert tags[BasicTag.ARTIST] == ("a1",)
-        assert tags[BasicTag.TITLE] == ("t",)
-        assert tags[BasicTag.ALBUM] == ("a3",)
-        assert tags[BasicTag.ALBUMARTIST] == ("a2",)
-        assert tags[BasicTag.TRACKNUMBER] == ("5",)
-        assert tags[BasicTag.TRACKTOTAL] == ("6",)
-        assert tags[BasicTag.DISCNUMBER] == ("7",)
-        assert tags[BasicTag.DISCTOTAL] == ("8",)
-        assert tags[BasicTag.GENRE] == ("Country",)
-        assert tags[BasicTag.ORGANIZATION] == ("Q",)
-        assert tags[BasicTag.BARCODE] == ("0000",)
-        assert tags[BasicTag.MUSICBRAINZ_ALBUMID] == (UUID1,)
-        assert tags[BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+        assert tags[BasicField.ARTIST] == ("a1",)
+        assert tags[BasicField.TITLE] == ("t",)
+        assert tags[BasicField.ALBUM] == ("a3",)
+        assert tags[BasicField.ALBUMARTIST] == ("a2",)
+        assert tags[BasicField.TRACKNUMBER] == ("5",)
+        assert tags[BasicField.TRACKTOTAL] == ("6",)
+        assert tags[BasicField.DISCNUMBER] == ("7",)
+        assert tags[BasicField.DISCTOTAL] == ("8",)
+        assert tags[BasicField.GENRE] == ("Country",)
+        assert tags[BasicField.ORGANIZATION] == ("Q",)
+        assert tags[BasicField.BARCODE] == ("0000",)
+        assert tags[BasicField.MUSICBRAINZ_ALBUMID] == (UUID1,)
+        assert tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
 
     def test_update_ogg_vorbis_compilation(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
             tags = dict(file.get_tags())
-            assert BasicTag.COMPILATION not in tags
-            file.set_tag(BasicTag.COMPILATION, "1")  # normal enable
+            assert BasicField.COMPILATION not in tags
+            file.set_tag(BasicField.COMPILATION, "1")  # normal enable
         with TestOggVorbis.tagger.open(track.filename) as file:
             tags = dict(file.get_tags())
-            assert tags.get(BasicTag.COMPILATION) == ("1",)
+            assert tags.get(BasicField.COMPILATION) == ("1",)
 
-            file.set_tag(BasicTag.COMPILATION, None)  # normal disable
+            file.set_tag(BasicField.COMPILATION, None)  # normal disable
         with TestOggVorbis.tagger.open(track.filename) as file:
             tags = dict(file.get_tags())
-            assert BasicTag.COMPILATION not in tags
+            assert BasicField.COMPILATION not in tags
 
-            file.set_tag(BasicTag.COMPILATION, "anything")
+            file.set_tag(BasicField.COMPILATION, "anything")
         with TestOggVorbis.tagger.open(track.filename) as file:
             tags = dict(file.get_tags())
-            assert tags.get(BasicTag.COMPILATION) == ("1",)  # set to anything = set to 1
+            assert tags.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_remove_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:
@@ -174,9 +174,9 @@ class TestOggVorbis:
             legacy = file.get_legacy_tags()
 
         expected = (
-            ("album artist", BasicTag.ALBUMARTIST),
-            ("label", BasicTag.ORGANIZATION),
-            ("totaldiscs", BasicTag.DISCTOTAL),
+            ("album artist", BasicField.ALBUMARTIST),
+            ("label", BasicField.ORGANIZATION),
+            ("totaldiscs", BasicField.DISCTOTAL),
         )
         assert sorted(legacy) == sorted(expected)
 
@@ -184,6 +184,6 @@ class TestOggVorbis:
         with TestOggVorbis.tagger.open(track_legacy.filename) as file:
             tags = dict(file.get_tags())
 
-        assert tags[BasicTag.ORGANIZATION] == ("ABC",)
-        assert tags[BasicTag.ALBUMARTIST] == ("foo artist",)
-        assert tags[BasicTag.DISCTOTAL] == ("2",)
+        assert tags[BasicField.ORGANIZATION] == ("ABC",)
+        assert tags[BasicField.ALBUMARTIST] == ("foo artist",)
+        assert tags[BasicField.DISCTOTAL] == ("2",)

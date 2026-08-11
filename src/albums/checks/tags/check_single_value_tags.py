@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BASIC_TAGS, BasicTag
+from ...tagger.types import BASIC_TAGS, BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import describe_track_number, ordered_tracks
@@ -23,7 +23,7 @@ class CheckSingleValueTags(Check):
         tags: list[str] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])
         if not isinstance(tags, list) or any(not isinstance(tag, str) or tag not in BASIC_TAGS for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ValueError(f"single-value-tags.tags configuration must be a list of supported tags: {', '.join(BASIC_TAGS)}")
-        self.single_value_tags = list(BasicTag(tag) for tag in tags)
+        self.single_value_tags = list(BasicField(tag) for tag in tags)
 
         concatenators: list[str] = check_config.get("concatenators", CheckSingleValueTags.default_config["concatenators"])
         if not isinstance(concatenators, list) or any(not isinstance(concatenator, str) for concatenator in concatenators):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -74,7 +74,7 @@ class CheckSingleValueTags(Check):
         changed = False
         for track in sorted(album.tracks):
             file = self.ctx.config.library / album.path / track.filename
-            new_values: list[tuple[BasicTag, str | list[str] | None]] = []
+            new_values: list[tuple[BasicField, str | list[str] | None]] = []
             tags = track.tag_dict()
             for tag in self.single_value_tags:
                 if tag in tags and len(tags[tag]) > 1:

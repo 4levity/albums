@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.tags.check_artist_tag import CheckArtistTag
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckArtistTag:
@@ -14,8 +14,8 @@ class TestCheckArtistTag:
         album = Album(
             path="A" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B"}),
             ],
         )
         result = CheckArtistTag(Context()).check(album)
@@ -35,16 +35,16 @@ class TestCheckArtistTag:
         assert fix_result
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
-            call(path / album.tracks[0].filename, [(BasicTag.ARTIST, "Foo")]),
-            call(path / album.tracks[1].filename, [(BasicTag.ARTIST, "Foo")]),
+            call(path / album.tracks[0].filename, [(BasicField.ARTIST, "Foo")]),
+            call(path / album.tracks[1].filename, [(BasicField.ARTIST, "Foo")]),
         ]
 
     def test_artist_tag_conflict(self, mocker):
         album = Album(
             path=f"Foo{os.sep}Bar{os.sep}",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "Baz"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Baz"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Baz"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Baz"}),
                 Track(filename="3.flac"),
             ],
         )

@@ -10,7 +10,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...library.tag_tools import get_album_name_from_tags, get_artist_from_tags
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 
@@ -82,9 +82,9 @@ class CheckFolderName(Check):
 
     def _can_generate_folder_name(self, album: Album) -> bool:
         ids = self.format.get_identifiers()
-        if "album" in ids and not any(t.has(BasicTag.ALBUM) for t in album.tracks):
+        if "album" in ids and not any(t.has(BasicField.ALBUM) for t in album.tracks):
             return False
-        if "artist" in ids and not any(t.has(BasicTag.ARTIST) or t.has(BasicTag.ALBUMARTIST) for t in album.tracks):
+        if "artist" in ids and not any(t.has(BasicField.ARTIST) or t.has(BasicField.ALBUMARTIST) for t in album.tracks):
             return False
         return True
 

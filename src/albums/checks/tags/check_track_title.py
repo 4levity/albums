@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from ...entities import Album, Track
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ...words.make import plural
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
@@ -24,17 +24,17 @@ class CheckTrackTitle(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None
 
-        no_title = sum(0 if track.get(BasicTag.TITLE, default="") else 1 for track in album.tracks)
+        no_title = sum(0 if track.get(BasicField.TITLE, default="") else 1 for track in album.tracks)
         if no_title:
             proposed_titles = list(self._proposed_title(track) for track in sorted(album.tracks))
-            any_fixable = any(not track.get(BasicTag.TITLE, default="") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
+            any_fixable = any(not track.get(BasicField.TITLE, default="") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
             if any_fixable:
                 table = (
                     ["filename", "title", "proposed new title"],
                     [
                         [
                             escape(track.filename),
-                            show_tag(track.get(BasicTag.TITLE, default=None)),
+                            show_tag(track.get(BasicField.TITLE, default=None)),
                             escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
                         ]
                         for (ix, track) in enumerate(sorted(album.tracks))
@@ -51,7 +51,7 @@ class CheckTrackTitle(Check):
         return None
 
     def _proposed_title(self, track: Track):
-        if track.get(BasicTag.TITLE, default=""):
+        if track.get(BasicField.TITLE, default=""):
             return None
 
         (_, _, title) = parse_filename(track.filename)
@@ -65,6 +65,6 @@ class CheckTrackTitle(Check):
             new_title = self._proposed_title(track)
             if new_title:
                 self.ctx.console.print(f"setting title on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.TITLE, new_title)])
+                self.tagger.get(album.path).set_basic_tags(file, [(BasicField.TITLE, new_title)])
                 changed = True
         return FixResult.of(changed)

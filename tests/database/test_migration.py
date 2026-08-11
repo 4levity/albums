@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 
 from albums.database import connection, schema
 from albums.entities import Album, Track
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestMigration16LegacyTags:
-    """Test that migration 16 migrates legacy vorbis tag names to canonical BasicTag field names."""
+    """Test that migration 16 migrates legacy vorbis tag names to canonical BasicField field names."""
 
     def test_legacy_tags_migrated(self):
         """Test basic migration of legacy tags to canonical names."""
@@ -19,8 +19,8 @@ class TestMigration16LegacyTags:
                 album = Album(
                     path="foo" + os.sep,
                     tracks=[
-                        Track(filename="1.flac", tag={BasicTag.ALBUMARTIST: "Canonical Artist"}),
-                        Track(filename="2.flac", tag={BasicTag.ARTIST: "Test"}),
+                        Track(filename="1.flac", tag={BasicField.ALBUMARTIST: "Canonical Artist"}),
+                        Track(filename="2.flac", tag={BasicField.ARTIST: "Test"}),
                     ],
                 )
                 session.add(album)
@@ -55,15 +55,15 @@ class TestMigration16LegacyTags:
                 tag_rows = session.execute(text("SELECT track_id, name, value FROM track_tag ORDER BY track_id, name, value;")).fetchall()
                 # Track 1 should have: canonical ALBUMARTIST + migrated legacy albumartist, and migrated publisher to organization
                 track1_tags = {(r.name, r.value) for r in tag_rows if r.track_id == track1_id}
-                assert (BasicTag.ALBUMARTIST.value, "Canonical Artist") in track1_tags  # original canonical
-                assert (BasicTag.ALBUMARTIST.value, "LegacyArtist") in track1_tags  # migrated from "album artist"
-                assert (BasicTag.ORGANIZATION.value, "PublisherVal") in track1_tags  # migrated from "publisher"
+                assert (BasicField.ALBUMARTIST.value, "Canonical Artist") in track1_tags  # original canonical
+                assert (BasicField.ALBUMARTIST.value, "LegacyArtist") in track1_tags  # migrated from "album artist"
+                assert (BasicField.ORGANIZATION.value, "PublisherVal") in track1_tags  # migrated from "publisher"
 
                 # Track 2 should have: ARTIST (original) + migrated label to organization + migrated totaldiscs to disctotal
                 track2_tags = {(r.name, r.value) for r in tag_rows if r.track_id == track2_id}
-                assert (BasicTag.ARTIST.value, "Test") in track2_tags
-                assert (BasicTag.ORGANIZATION.value, "LabelVal") in track2_tags  # migrated from "label"
-                assert (BasicTag.DISCTOTAL.value, "3") in track2_tags  # migrated from "totaldiscs"
+                assert (BasicField.ARTIST.value, "Test") in track2_tags
+                assert (BasicField.ORGANIZATION.value, "LabelVal") in track2_tags  # migrated from "label"
+                assert (BasicField.DISCTOTAL.value, "3") in track2_tags  # migrated from "totaldiscs"
 
             # Verify old legacy tag rows were deleted
             with Session(db) as session:
@@ -79,7 +79,7 @@ class TestMigration16LegacyTags:
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
-                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUMARTIST: "SameArtist"})])
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUMARTIST: "SameArtist"})])
                 session.add(album)
                 session.flush()
                 track_id = album.tracks[0].track_id
@@ -95,7 +95,7 @@ class TestMigration16LegacyTags:
                 # Should only have ONE row with the canonical name and this value (no duplicates)
                 tag_rows = session.execute(text("SELECT track_id, name, value FROM track_tag WHERE track_id = :tid;"), {"tid": track_id}).fetchall()
                 assert len(tag_rows) == 1
-                assert tag_rows[0].name == BasicTag.ALBUMARTIST.value
+                assert tag_rows[0].name == BasicField.ALBUMARTIST.value
                 assert tag_rows[0].value == "SameArtist"
 
             # Verify legacy was recorded
@@ -111,7 +111,7 @@ class TestMigration16LegacyTags:
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
-                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUMARTIST: "Artist"})])
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUMARTIST: "Artist"})])
                 session.add(album)
                 session.flush()
                 session.commit()
@@ -122,7 +122,7 @@ class TestMigration16LegacyTags:
                 # Should be unchanged
                 tag_rows = session.execute(text("SELECT name, value FROM track_tag;")).fetchall()
                 assert len(tag_rows) == 1
-                assert tag_rows[0].name == BasicTag.ALBUMARTIST.value
+                assert tag_rows[0].name == BasicField.ALBUMARTIST.value
                 assert tag_rows[0].value == "Artist"
 
                 # No legacy tags recorded
@@ -136,7 +136,7 @@ class TestMigration16LegacyTags:
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
-                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "Existing"})])
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ORGANIZATION: "Existing"})])
                 session.add(album)
                 session.flush()
                 track_id = album.tracks[0].track_id
@@ -156,7 +156,7 @@ class TestMigration16LegacyTags:
                 # Should have 3 rows: Existing + LabelCo + PublishCo all under ORGANIZATION
                 assert len(tag_rows) == 3
                 for row in tag_rows:
-                    assert row.name == BasicTag.ORGANIZATION.value
+                    assert row.name == BasicField.ORGANIZATION.value
 
             with Session(db) as session:
                 # Both legacy tag names should be recorded

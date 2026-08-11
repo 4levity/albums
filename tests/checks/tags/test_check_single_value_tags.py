@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_single_value_tags import CheckSingleValueTags
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 def context(checks, db=None):
@@ -19,8 +19,8 @@ class TestCheckSingleValueTags:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
@@ -33,11 +33,11 @@ class TestCheckSingleValueTags:
                 Track(
                     filename="1.flac",
                     tag={
-                        BasicTag.ARTIST: ["Alice", "Bob"],
-                        BasicTag.TITLE: ["blue", "no, yellow"],
+                        BasicField.ARTIST: ["Alice", "Bob"],
+                        BasicField.TITLE: ["blue", "no, yellow"],
                     },
                 ),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueTags(Context()).check(album)
@@ -58,15 +58,15 @@ class TestCheckSingleValueTags:
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
-            [(BasicTag.ARTIST, ["Alice / Bob"]), (BasicTag.TITLE, ["blue / no, yellow"])],
+            [(BasicField.ARTIST, ["Alice / Bob"]), (BasicField.TITLE, ["blue / no, yellow"])],
         )
 
     def test_single_value_tags_concat_no_auto(self, mocker):
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: ["Alice", "Bob"], BasicTag.TITLE: ["blue", "no, yellow"]}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: ["Alice", "Bob"], BasicField.TITLE: ["blue", "no, yellow"]}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         ctx = Context()
@@ -85,13 +85,13 @@ class TestCheckSingleValueTags:
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
-            [(BasicTag.ARTIST, ["Alice/Bob"]), (BasicTag.TITLE, ["blue/no, yellow"])],
+            [(BasicField.ARTIST, ["Alice/Bob"]), (BasicField.TITLE, ["blue/no, yellow"])],
         )
 
     def test_single_value_tags_duplicates(self, mocker):
         album = Album(
             path="",
-            tracks=[Track(filename="1.flac", tag={BasicTag.ARTIST: ["Alice", "Alice", "Bob"], BasicTag.TITLE: ["blue", "blue", "blue"]})],
+            tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: ["Alice", "Alice", "Bob"], BasicField.TITLE: ["blue", "blue", "blue"]})],
         )
         result = CheckSingleValueTags(Context()).check(album)
         assert "multiple values for single value tags" in result.message
@@ -107,5 +107,5 @@ class TestCheckSingleValueTags:
         assert mock_set_basic_tags.call_count == 1
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
-            [(BasicTag.ARTIST, ["Alice", "Bob"]), (BasicTag.TITLE, ["blue"])],
+            [(BasicField.ARTIST, ["Alice", "Bob"]), (BasicField.TITLE, ["blue"])],
         )

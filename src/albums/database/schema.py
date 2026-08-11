@@ -165,7 +165,7 @@ CREATE TABLE track_legacy_tag (
 CREATE INDEX idx_legacy_tag_track_id ON track_legacy_tag(track_id);
 """,
     16: """
--- Migrate legacy vorbis comment tag names to canonical BasicTag field names
+-- Migrate legacy vorbis comment tag names to canonical BasicField field names
 -- Record presence of legacy tags in track_legacy_tag for tracking purposes
 INSERT INTO track_legacy_tag (track_id, tag_name)
 SELECT DISTINCT tt.track_id, tt.name FROM track_tag tt

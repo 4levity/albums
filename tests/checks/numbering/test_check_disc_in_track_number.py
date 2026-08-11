@@ -5,7 +5,7 @@ from albums.app import Context
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckDiscInTrackNumber:
@@ -13,9 +13,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.DISCNUMBER: "1"}),
-                Track(filename="1-2.flac", tag={BasicTag.TRACKNUMBER: "2", BasicTag.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicTag.TRACKNUMBER: "1", BasicTag.DISCNUMBER: "2"}),
+                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -25,9 +25,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicTag.TRACKNUMBER: "1-1", BasicTag.DISCNUMBER: "1"}),
-                Track(filename="1-2.flac", tag={BasicTag.TRACKNUMBER: "1-2", BasicTag.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicTag.TRACKNUMBER: "2-1", BasicTag.DISCNUMBER: "2"}),
+                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1-1", BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "1-2", BasicField.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "2-1", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -37,9 +37,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicTag.TRACKNUMBER: "1-1"}),
-                Track(filename="1-2.flac", tag={BasicTag.TRACKNUMBER: "1-2"}),
-                Track(filename="2-1.flac", tag={BasicTag.TRACKNUMBER: "2-1"}),
+                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1-1"}),
+                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "1-2"}),
+                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "2-1"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -53,5 +53,5 @@ class TestCheckDiscInTrackNumber:
         assert mock_set_basic_tags.call_count == 3
         assert mock_set_basic_tags.call_args.args == (
             Path(album.path) / album.tracks[2].filename,
-            [(BasicTag.DISCNUMBER, "2"), (BasicTag.TRACKNUMBER, "1")],
+            [(BasicField.DISCNUMBER, "2"), (BasicField.TRACKNUMBER, "1")],
         )

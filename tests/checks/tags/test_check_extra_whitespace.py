@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_extra_whitespace import CheckExtraWhitespace
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger, TaggerFile
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckExtraWhitespace:
@@ -12,8 +12,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice", BasicTag.TITLE: "red"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
@@ -23,8 +23,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "Alice ", BasicTag.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Alice ", BasicTag.TITLE: "red "}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice ", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice ", BasicField.TITLE: "red "}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
@@ -40,4 +40,8 @@ class TestCheckExtraWhitespace:
         mock_set_tag = mocker.patch.object(tagger, "set_tag")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_set_tag.call_args_list == [call(BasicTag.ARTIST, ["Alice"]), call(BasicTag.ARTIST, ["Alice"]), call(BasicTag.TITLE, ["red"])]
+        assert mock_set_tag.call_args_list == [
+            call(BasicField.ARTIST, ["Alice"]),
+            call(BasicField.ARTIST, ["Alice"]),
+            call(BasicField.TITLE, ["red"]),
+        ]

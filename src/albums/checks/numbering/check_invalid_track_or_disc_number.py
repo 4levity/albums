@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from ...entities import Album, Track
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 from .check_track_numbering import describe_track_number, ordered_tracks
@@ -13,7 +13,7 @@ from .check_track_numbering import describe_track_number, ordered_tracks
 logger: Final = logging.getLogger(__name__)
 
 OPTION_AUTOMATIC_REPAIR: Final = ">> Automatically remove zero, non-numeric and multiple values"
-SINGLE_POSITIVE_NUMBER_TAGS: Final = [BasicTag.TRACKNUMBER, BasicTag.TRACKTOTAL, BasicTag.DISCNUMBER, BasicTag.DISCTOTAL]
+SINGLE_POSITIVE_NUMBER_TAGS: Final = [BasicField.TRACKNUMBER, BasicField.TRACKTOTAL, BasicField.DISCNUMBER, BasicField.DISCTOTAL]
 
 
 class CheckInvalidTrackOrDiscNumber(Check):
@@ -50,7 +50,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         changed = False
         for track in album.tracks:
             file = self.ctx.config.library / album.path / track.filename
-            new_values: list[tuple[BasicTag, str | list[str] | None]] = []
+            new_values: list[tuple[BasicField, str | list[str] | None]] = []
             for tag in SINGLE_POSITIVE_NUMBER_TAGS:
                 track_tags = track.tag_dict()
                 if tag in track_tags:
@@ -88,14 +88,14 @@ def get_issues_invalid_disc_or_track_number(tracks: Sequence[Track]):
     return issues
 
 
-def _has_multi_value(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+def _has_multi_value(tags: Mapping[BasicField, Sequence[str]], check_tags: Collection[BasicField]):
     for tag in check_tags:
         if len(tags.get(tag, [])) > 1:
             return True
     return False
 
 
-def _has_non_numeric(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+def _has_non_numeric(tags: Mapping[BasicField, Sequence[str]], check_tags: Collection[BasicField]):
     for tag_name in check_tags:
         for value in tags.get(tag_name, []):
             if not value.isdecimal():
@@ -103,7 +103,7 @@ def _has_non_numeric(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collect
     return False
 
 
-def _has_zero_value(tags: Mapping[BasicTag, Sequence[str]], check_tags: Collection[BasicTag]):
+def _has_zero_value(tags: Mapping[BasicField, Sequence[str]], check_tags: Collection[BasicField]):
     for tag_name in check_tags:
         for value in tags.get(tag_name, []):
             if value.isdecimal() and int(value) == 0:

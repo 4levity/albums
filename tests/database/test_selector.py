@@ -8,7 +8,7 @@ from albums.database import connection
 from albums.database.selector import Comparator, Match, load_album_entities
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag, PictureType, StreamInfo
+from albums.tagger.types import BasicField, PictureType, StreamInfo
 
 
 class TestSelector:
@@ -19,7 +19,7 @@ class TestSelector:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Bar", BasicTag.ALBUMARTIST: "Various Artists", BasicTag.ALBUM: "=:="},
+                    tag={BasicField.TITLE: "Foo", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists", BasicField.ALBUM: "=:="},
                     stream=StreamInfo(1.0, 128000, 6, "FLAC", 48000, 24),
                     pictures=[
                         TrackPicture(
@@ -44,12 +44,12 @@ class TestSelector:
                 Track(
                     filename="1.flac",
                     stream=StreamInfo(1.0, 64000, 2, "FLAC", 44100, 16),
-                    tag={BasicTag.TITLE: "A", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
+                    tag={BasicField.TITLE: "A", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
                 ),
                 Track(
                     filename="2.flac",
                     stream=StreamInfo(1.0, 128000, 2, "MP3", 44100, 0),
-                    tag={BasicTag.TITLE: "Foo", BasicTag.ARTIST: "Baz", BasicTag.ALBUM: "al bum"},
+                    tag={BasicField.TITLE: "Foo", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
                 ),
             ],
             collections=["bar"],
@@ -77,7 +77,7 @@ class TestSelector:
                 assert len(result) == 1
                 assert result[0].path == "foo" + os.sep
                 assert result[0].scanner == 3
-                assert sorted(result[0].tracks[0].get(BasicTag.ARTIST, default=[])) == ["Bar"]
+                assert sorted(result[0].tracks[0].get(BasicField.ARTIST, default=[])) == ["Bar"]
                 assert result[0].tracks[0].stream.length == 1.0
                 assert result[0].tracks[0].stream.codec == "FLAC"
                 assert len(result[0].tracks[0].pictures) == 1

@@ -1,12 +1,12 @@
 from albums.app import Context
 from albums.checks.tags.check_releasetype_tag import CheckReleaseTypeTag
 from albums.entities import Album, Track
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckReleaseTypeTag:
     def test_releasetype_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.RELEASETYPE: "Album"}), Track(filename="2.flac", tag={BasicTag.RELEASETYPE: "Album"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.RELEASETYPE: "Album"}), Track(filename="2.flac", tag={BasicField.RELEASETYPE: "Album"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeTag(Context()).check(album)
         assert result is None
@@ -19,8 +19,8 @@ class TestCheckReleaseTypeTag:
 
     def test_releasetype_ok_multi(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicTag.RELEASETYPE: ["Live", "Album"]}),
-            Track(filename="2.flac", tag={BasicTag.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="1.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="2.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
         ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeTag(Context()).check(album)
@@ -28,8 +28,8 @@ class TestCheckReleaseTypeTag:
 
     def test_releasetype_conflict_multi(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicTag.RELEASETYPE: ["Live", "Album"]}),
-            Track(filename="2.flac", tag={BasicTag.RELEASETYPE: ["Live"]}),
+            Track(filename="1.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="2.flac", tag={BasicField.RELEASETYPE: ["Live"]}),
         ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeTag(Context()).check(album)

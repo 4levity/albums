@@ -6,7 +6,7 @@ from albums.app import Context
 from albums.checks.tags.check_track_title import CheckTrackTitle
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckTrackTitle:
@@ -14,9 +14,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.mp3", tag={BasicTag.TITLE: "foo"}),
-                Track(filename="2 bar.mp3", tag={BasicTag.TITLE: "bar"}),
-                Track(filename="3 baz.mp3", tag={BasicTag.TITLE: "baz"}),
+                Track(filename="1 foo.mp3", tag={BasicField.TITLE: "foo"}),
+                Track(filename="2 bar.mp3", tag={BasicField.TITLE: "bar"}),
+                Track(filename="3 baz.mp3", tag={BasicField.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -44,17 +44,17 @@ class TestCheckTrackTitle:
         assert mock_set_basic_tags.call_count == 4
         path = Path(album.path)
         assert mock_set_basic_tags.call_args_list == [
-            call(path / album.tracks[0].filename, [(BasicTag.TITLE, "foo")]),
-            call(path / album.tracks[1].filename, [(BasicTag.TITLE, "bar")]),
-            call(path / album.tracks[2].filename, [(BasicTag.TITLE, "baz")]),
-            call(path / album.tracks[3].filename, [(BasicTag.TITLE, "bop")]),
+            call(path / album.tracks[0].filename, [(BasicField.TITLE, "foo")]),
+            call(path / album.tracks[1].filename, [(BasicField.TITLE, "bar")]),
+            call(path / album.tracks[2].filename, [(BasicField.TITLE, "baz")]),
+            call(path / album.tracks[3].filename, [(BasicField.TITLE, "bop")]),
         ]
 
     def test_check_track_title_guess_some(self, mocker):
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tag={BasicTag.TITLE: "foo"}),
+                Track(filename="1 foo.flac", tag={BasicField.TITLE: "foo"}),
                 Track(filename="2 bar.flac"),
                 Track(filename="3.flac"),
             ],
@@ -69,7 +69,7 @@ class TestCheckTrackTitle:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1  # track 3 could not be fixed
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TITLE, "bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])
 
     def test_check_track_title_no_guess(self, mocker):
         album = Album(path="Foobar" + os.sep, tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
@@ -82,9 +82,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tag={BasicTag.TITLE: "foo"}),
+                Track(filename="1 foo.flac", tag={BasicField.TITLE: "foo"}),
                 Track(filename="2 bar.flac"),
-                Track(filename="3 baz.flac", tag={BasicTag.TITLE: "baz"}),
+                Track(filename="3 baz.flac", tag={BasicField.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -97,4 +97,4 @@ class TestCheckTrackTitle:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicTag.TITLE, "bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])

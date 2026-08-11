@@ -6,7 +6,7 @@ import mutagen
 from mutagen._tags import PaddingInfo
 
 from ..base_mutagen import AbstractMutagenTagger
-from ..types import BasicTag, MutagenFileType, Picture
+from ..types import BasicField, MutagenFileType, Picture
 from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
 
 logger: Final = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
             return ()
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
         try:
             vorbis_comment_set_tag(self._file, tag, value)  # pyright: ignore[reportArgumentType]
         except Exception as ex:

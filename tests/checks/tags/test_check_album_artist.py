@@ -4,7 +4,7 @@ from albums.app import Context
 from albums.checks.tags.check_album_artist import CheckAlbumArtist
 from albums.entities import Album, TagV, Track
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckAlbumArtist:
@@ -12,9 +12,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
-                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -25,9 +25,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="3.flac", tag={BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicField.ALBUMARTIST: "Foo"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -38,9 +38,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -50,9 +50,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="album/",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B"}),
-                Track(filename="3.flac", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "B"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -73,29 +73,29 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix("B")
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ALBUMARTIST, "B")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "B")])
 
     def test_check_albumartist_require(self, mocker):
         album_complies = Album(
             path="c/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
             ],
         )
         album_no_auto = Album(
             path="b/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="3.mp3", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="3.mp3", tag={BasicField.ARTIST: "B"}),
             ],
         )
         album_auto = Album(
             path="a/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A"}),
             ],
         )
 
@@ -127,21 +127,25 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicTag.ALBUMARTIST, "A")])
+        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, "A")])
 
     def test_check_albumartist_require_various_various(self, mocker):
         album_complies = Album(
             path="c/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ARTIST: "Various Artists", BasicTag.ALBUMARTIST: "Various Artists"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ARTIST: "Various Artists", BasicTag.ALBUMARTIST: "Various Artists"}),
+                Track(
+                    filename="1.mp3", tag={BasicField.ARTIST: "A", BasicField.ARTIST: "Various Artists", BasicField.ALBUMARTIST: "Various Artists"}
+                ),
+                Track(
+                    filename="2.mp3", tag={BasicField.ARTIST: "A", BasicField.ARTIST: "Various Artists", BasicField.ALBUMARTIST: "Various Artists"}
+                ),
             ],
         )
         album_auto = Album(
             path="a/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "Various Artists"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "Various Artists"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "Various Artists"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "Various Artists"}),
             ],
         )
 
@@ -163,30 +167,30 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_tags.call_count == 2
         assert mock_set_basic_tags.call_args.args == (
             Path(album_auto.path) / album_auto.tracks[1].filename,
-            [(BasicTag.ALBUMARTIST, "Various Artists")],
+            [(BasicField.ALBUMARTIST, "Various Artists")],
         )
 
     def test_check_albumartist_remove(self, mocker):
         album_auto = Album(
             path="c/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
             ],
         )
         album_no_auto = Album(
             path="b/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="3.mp3", tag={BasicTag.ARTIST: "B"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="3.mp3", tag={BasicField.ARTIST: "B"}),
             ],
         )
         album_complies = Album(
             path="a/",
             tracks=[
-                Track(filename="1.mp3", tag={BasicTag.ARTIST: "A"}),
-                Track(filename="2.mp3", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.mp3", tag={BasicField.ARTIST: "A"}),
             ],
         )
 
@@ -218,17 +222,17 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicTag.ALBUMARTIST, None)])
+        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, None)])
 
     def test_multiple_albumartist(self):
         album = Album(
             path="B",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="3.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
-                Track(filename="4.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
-                Track(filename="5.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "Bar"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Bar"}),
+                Track(filename="4.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Bar"}),
+                Track(filename="5.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Bar"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -241,9 +245,9 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="3.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Bar"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Bar"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -259,14 +263,14 @@ class TestCheckAlbumArtist:
         fix_result = result.fixer.fix(result.fixer.options[4])
         assert fix_result
         assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicTag.ARTIST, "Bar")])
+        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ARTIST, "Bar")])
 
     def test_multiple_albumartist__same_artist_2(self):
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "A"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "A"}),
             ],
         )
         result = CheckAlbumArtist(Context()).check(album)
@@ -276,8 +280,8 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "Foo", BasicTag.ALBUMARTIST: "Foo"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "Foo", BasicTag.ALBUMARTIST: "Foo"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Foo"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Foo"}),
             ],
         )
         ctx = Context()
@@ -289,8 +293,8 @@ class TestCheckAlbumArtist:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUMARTIST: "A"}),
-                Track(filename="2.flac", tag={BasicTag.ARTIST: "B", BasicTag.ALBUMARTIST: "A"}),
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "A"}),
             ],
         )
         checker = CheckAlbumArtist(Context())
@@ -299,6 +303,6 @@ class TestCheckAlbumArtist:
         assert result is None
 
         # same artists, all albumartist the same
-        album.tracks[1].tags = [TagV(tag=BasicTag.ARTIST, value="A"), TagV(tag=BasicTag.ALBUMARTIST, value="A")]
+        album.tracks[1].tags = [TagV(tag=BasicField.ARTIST, value="A"), TagV(tag=BasicField.ALBUMARTIST, value="A")]
         result = checker.check(album)
         assert result is None

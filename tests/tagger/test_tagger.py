@@ -5,14 +5,14 @@ from mutagen.mp3 import MP3
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
-from albums.tagger.folder import AlbumTagger, BasicTag
+from albums.tagger.folder import AlbumTagger, BasicField
 from albums.tagger.types import PictureType
 
 from ..fixtures.create_library import create_library
 
 mp3track = Track(
     filename="1.mp3",
-    tag={BasicTag.TITLE: "T", BasicTag.TRACKNUMBER: "1", BasicTag.TRACKTOTAL: "3"},
+    tag={BasicField.TITLE: "T", BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "3"},
     pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
 )
 mp3album = Album(path="baz" + os.sep, tracks=[mp3track])
@@ -30,7 +30,7 @@ class TestAlbumTagger:
         with tagger.open(mp3track.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
             tags = dict(file.get_tags())
-            assert tags[BasicTag.TRACKNUMBER] == ("1",)
+            assert tags[BasicField.TRACKNUMBER] == ("1",)
         assert mock_mp3_save.call_count == 0
 
         with tagger.open(mp3track.filename) as file:
@@ -39,11 +39,11 @@ class TestAlbumTagger:
         assert mock_mp3_save.call_count == 0
 
         with tagger.open(mp3track.filename) as file:
-            file.set_tag(BasicTag.ALBUM, "baz")
+            file.set_tag(BasicField.ALBUM, "baz")
         assert mock_mp3_save.call_count == 1
 
         with tagger.open(mp3track.filename) as file:
-            assert dict(file.get_tags())[BasicTag.ALBUM] == ("baz",)
+            assert dict(file.get_tags())[BasicField.ALBUM] == ("baz",)
             (picture, image_data) = next(file.get_pictures())
             file.remove_picture(picture)
         assert mock_mp3_save.call_count == 2

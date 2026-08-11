@@ -8,7 +8,7 @@ from mutagen.flac import Picture as FlacPicture
 from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag, Picture, PictureType
+from albums.tagger.types import BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -27,7 +27,7 @@ track2 = Track(
 )
 track3 = Track(
     filename="3.flac",
-    tag={BasicTag.ORGANIZATION: "ABC", BasicTag.ALBUMARTIST: "foo artist", BasicTag.DISCTOTAL: "2"},
+    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
     legacy_tags=["label", "album artist", "totaldiscs"],
 )
 
@@ -158,9 +158,9 @@ class TestFlac:
             legacy = file.get_legacy_tags()
 
         expected = (
-            ("album artist", BasicTag.ALBUMARTIST),
-            ("label", BasicTag.ORGANIZATION),
-            ("totaldiscs", BasicTag.DISCTOTAL),
+            ("album artist", BasicField.ALBUMARTIST),
+            ("label", BasicField.ORGANIZATION),
+            ("totaldiscs", BasicField.DISCTOTAL),
         )
         assert sorted(legacy) == sorted(expected)
 
@@ -168,6 +168,6 @@ class TestFlac:
         with TestFlac.tagger.open(track3.filename) as file:
             tags = dict(file.get_tags())
 
-        assert tags[BasicTag.ORGANIZATION] == ("ABC",)
-        assert tags[BasicTag.ALBUMARTIST] == ("foo artist",)
-        assert tags[BasicTag.DISCTOTAL] == ("2",)
+        assert tags[BasicField.ORGANIZATION] == ("ABC",)
+        assert tags[BasicField.ALBUMARTIST] == ("foo artist",)
+        assert tags[BasicField.DISCTOTAL] == ("2",)

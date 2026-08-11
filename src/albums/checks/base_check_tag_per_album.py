@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from ..entities import Album
 from ..tagger.folder import AlbumTagger, Cap
-from ..tagger.types import BasicTag
+from ..tagger.types import BasicField
 from .base_check import Check
 from .check_types import CheckResult, Fixer, FixResult
 from .tag_policy import Policy, check_policy
@@ -16,7 +16,7 @@ logger: Final = logging.getLogger(__name__)
 class BaseCheckTagPerAlbum(Check):
     # subclass must define check name and album tag to check
     name: str
-    tag: BasicTag
+    tag: BasicField
 
     # subclass may override
     # force presence to NEVER when album is a mix of vorbis-comment and non-vorbis-comment tracks

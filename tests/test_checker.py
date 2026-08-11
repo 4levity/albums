@@ -9,7 +9,7 @@ from albums.checks.checker import Checker
 from albums.database import connection, selector
 from albums.entities import Album, Track
 from albums.library import scanner
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from .fixtures.create_library import create_library
 
@@ -21,15 +21,15 @@ class TestChecker:
             tracks=[
                 Track(
                     filename="01 one.flac",
-                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "01", BasicTag.TITLE: "one"},
+                    tag={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "one"},
                 ),
                 Track(
                     filename="02 two.flac",
-                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "02", BasicTag.TITLE: "two"},
+                    tag={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "02", BasicField.TITLE: "two"},
                 ),
                 Track(
                     filename="03 three.flac",
-                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "03", BasicTag.TITLE: "three"},
+                    tag={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "03", BasicField.TITLE: "three"},
                 ),
             ],
         )
@@ -53,7 +53,7 @@ class TestChecker:
             tracks=[
                 Track(
                     filename="1-01 one.flac",
-                    tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-01", BasicTag.TITLE: "one"},
+                    tag={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1-01", BasicField.TITLE: "one"},
                 )
             ],
         )
@@ -75,8 +75,8 @@ class TestChecker:
 
             with Session(ctx.db) as session:
                 album = next(ctx.select_album_entities(session))
-                assert album.tracks[0].get(BasicTag.TRACKNUMBER) == ("01",)
-                assert album.tracks[0].get(BasicTag.DISCNUMBER) == ("1",)
+                assert album.tracks[0].get(BasicField.TRACKNUMBER) == ("01",)
+                assert album.tracks[0].get(BasicField.DISCNUMBER) == ("1",)
         finally:
             ctx.db.dispose()
 
@@ -84,9 +84,9 @@ class TestChecker:
         album = Album(
             path="foo" + os.sep,
             tracks=[  # disc-in-track-number fails -> invalid-track-or-disc-number does not run -> other checks do not run
-                Track(filename="1.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-01", BasicTag.TITLE: "one"}),
-                Track(filename="2.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-02", BasicTag.TITLE: "two"}),
-                Track(filename="3.flac", tag={BasicTag.ALBUM: "Foo", BasicTag.TRACKNUMBER: "1-03", BasicTag.TITLE: "three"}),
+                Track(filename="1.flac", tag={BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1-01", BasicField.TITLE: "one"}),
+                Track(filename="2.flac", tag={BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1-02", BasicField.TITLE: "two"}),
+                Track(filename="3.flac", tag={BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1-03", BasicField.TITLE: "three"}),
             ],
         )
         ctx = Context()
@@ -130,12 +130,15 @@ class TestChecker:
             Album(
                 path="One!" + os.sep,
                 tracks=[
-                    Track(filename="01 a.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "One!", BasicTag.TRACKNUMBER: "01", BasicTag.TITLE: "a"})
+                    Track(
+                        filename="01 a.flac",
+                        tag={BasicField.ARTIST: "A", BasicField.ALBUM: "One!", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "a"},
+                    )
                 ],
             ),
             Album(
                 path="One" + os.sep,
-                tracks=[Track(filename="1.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "One!", BasicTag.TRACKNUMBER: "01"})],
+                tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "One!", BasicField.TRACKNUMBER: "01"})],
             ),
         ]
         ctx = Context()
@@ -170,13 +173,19 @@ class TestChecker:
             Album(
                 path="One!" + os.sep,
                 tracks=[
-                    Track(filename="01 a.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "One", BasicTag.TRACKNUMBER: "01", BasicTag.TITLE: "a"})
+                    Track(
+                        filename="01 a.flac",
+                        tag={BasicField.ARTIST: "A", BasicField.ALBUM: "One", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "a"},
+                    )
                 ],
             ),
             Album(
                 path="One" + os.sep,
                 tracks=[
-                    Track(filename="01 a.flac", tag={BasicTag.ARTIST: "A", BasicTag.ALBUM: "One", BasicTag.TRACKNUMBER: "01", BasicTag.TITLE: "a"})
+                    Track(
+                        filename="01 a.flac",
+                        tag={BasicField.ARTIST: "A", BasicField.ALBUM: "One", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "a"},
+                    )
                 ],
             ),
         ]

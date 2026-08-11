@@ -10,46 +10,46 @@ from mutagen.asf._attrs import ASFByteArrayAttribute
 
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
-from ..types import BasicTag, Picture, PictureType
+from ..types import BasicField, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 
 
-BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicTag, str], ...]] = (
-    (BasicTag.ALBUM, "WM/AlbumTitle"),
-    (BasicTag.ALBUMSORT, "WM/AlbumSortOrder"),
-    (BasicTag.ALBUMARTIST, "WM/AlbumArtist"),
-    (BasicTag.ALBUMARTISTSORT, "WM/AlbumArtistSortOrder"),
-    (BasicTag.ARTIST, "Author"),
-    (BasicTag.ARTISTSORT, "WM/ArtistSortOrder"),
-    (BasicTag.BARCODE, "WM/Barcode"),
-    (BasicTag.COMPILATION, "WM/IsCompilation"),
-    (BasicTag.GENRE, "WM/Genre"),
-    (BasicTag.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
-    (BasicTag.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),
-    (BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "MusicBrainz/Album Release Country"),
-    (BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE, "MusicBrainz/Album Release Type"),
-    (BasicTag.MUSICBRAINZ_ARRANGERID, "MusicBrainz/Arranger Id"),
-    (BasicTag.MUSICBRAINZ_ARTISTID, "MusicBrainz/Artist Id"),
-    (BasicTag.MUSICBRAINZ_COMPOSERID, "MusicBrainz/Composer Id"),
-    (BasicTag.MUSICBRAINZ_CONDUCTORID, "MusicBrainz/Conductor Id"),
-    (BasicTag.MUSICBRAINZ_DIRECTORID, "MusicBrainz/Director Id"),
-    (BasicTag.MUSICBRAINZ_DISCID, "MusicBrainz/Disc Id"),
-    (BasicTag.MUSICBRAINZ_LYRICISTID, "MusicBrainz/Lyricist Id"),
-    (BasicTag.MUSICBRAINZ_MIXERID, "MusicBrainz/Mixer Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALALBUMID, "MusicBrainz/Original Album Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALARTISTID, "MusicBrainz/Original Artist Id"),
-    (BasicTag.MUSICBRAINZ_ORIGINALRELEASEID, "MusicBrainz/Original Release Id"),
-    (BasicTag.MUSICBRAINZ_PRODUCERID, "MusicBrainz/Producer Id"),
-    (BasicTag.MUSICBRAINZ_RELEASEARTISTID, "MusicBrainz/Release Artist Id"),
-    (BasicTag.MUSICBRAINZ_RELEASEGROUPID, "MusicBrainz/Release Group Id"),
-    (BasicTag.MUSICBRAINZ_RELEASETRACKID, "MusicBrainz/Release Track Id"),
-    (BasicTag.MUSICBRAINZ_REMIXERID, "MusicBrainz/Remixer Id"),
-    (BasicTag.MUSICBRAINZ_TRACKID, "MusicBrainz/Track Id"),
-    (BasicTag.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
-    (BasicTag.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
-    (BasicTag.ORGANIZATION, "Publisher"),
-    (BasicTag.TITLE, "Title"),
+BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicField, str], ...]] = (
+    (BasicField.ALBUM, "WM/AlbumTitle"),
+    (BasicField.ALBUMSORT, "WM/AlbumSortOrder"),
+    (BasicField.ALBUMARTIST, "WM/AlbumArtist"),
+    (BasicField.ALBUMARTISTSORT, "WM/AlbumArtistSortOrder"),
+    (BasicField.ARTIST, "Author"),
+    (BasicField.ARTISTSORT, "WM/ArtistSortOrder"),
+    (BasicField.BARCODE, "WM/Barcode"),
+    (BasicField.COMPILATION, "WM/IsCompilation"),
+    (BasicField.GENRE, "WM/Genre"),
+    (BasicField.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
+    (BasicField.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),
+    (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "MusicBrainz/Album Release Country"),
+    (BasicField.MUSICBRAINZ_ALBUMRELEASETYPE, "MusicBrainz/Album Release Type"),
+    (BasicField.MUSICBRAINZ_ARRANGERID, "MusicBrainz/Arranger Id"),
+    (BasicField.MUSICBRAINZ_ARTISTID, "MusicBrainz/Artist Id"),
+    (BasicField.MUSICBRAINZ_COMPOSERID, "MusicBrainz/Composer Id"),
+    (BasicField.MUSICBRAINZ_CONDUCTORID, "MusicBrainz/Conductor Id"),
+    (BasicField.MUSICBRAINZ_DIRECTORID, "MusicBrainz/Director Id"),
+    (BasicField.MUSICBRAINZ_DISCID, "MusicBrainz/Disc Id"),
+    (BasicField.MUSICBRAINZ_LYRICISTID, "MusicBrainz/Lyricist Id"),
+    (BasicField.MUSICBRAINZ_MIXERID, "MusicBrainz/Mixer Id"),
+    (BasicField.MUSICBRAINZ_ORIGINALALBUMID, "MusicBrainz/Original Album Id"),
+    (BasicField.MUSICBRAINZ_ORIGINALARTISTID, "MusicBrainz/Original Artist Id"),
+    (BasicField.MUSICBRAINZ_ORIGINALRELEASEID, "MusicBrainz/Original Release Id"),
+    (BasicField.MUSICBRAINZ_PRODUCERID, "MusicBrainz/Producer Id"),
+    (BasicField.MUSICBRAINZ_RELEASEARTISTID, "MusicBrainz/Release Artist Id"),
+    (BasicField.MUSICBRAINZ_RELEASEGROUPID, "MusicBrainz/Release Group Id"),
+    (BasicField.MUSICBRAINZ_RELEASETRACKID, "MusicBrainz/Release Track Id"),
+    (BasicField.MUSICBRAINZ_REMIXERID, "MusicBrainz/Remixer Id"),
+    (BasicField.MUSICBRAINZ_TRACKID, "MusicBrainz/Track Id"),
+    (BasicField.MUSICBRAINZ_TRMID, "MusicBrainz/TRM Id"),
+    (BasicField.MUSICBRAINZ_WORKID, "MusicBrainz/Work Id"),
+    (BasicField.ORGANIZATION, "Publisher"),
+    (BasicField.TITLE, "Title"),
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
@@ -134,74 +134,74 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         raise NotImplementedError()
 
     @override
-    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
-        basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
+    def get_tags(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+        basic_tags: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             tags = self._ensure_tags()
             basic_tags.extend((tag, tuple(self._property_to_text(p) for p in tags[prop])) for tag, prop in BASIC_ASF_PROPERTIES if prop in tags)  # pyright: ignore[reportUnknownVariableType]
 
             (track_number, track_total) = self._get_wm_tracknumber()
             if track_number:
-                basic_tags.append((BasicTag.TRACKNUMBER, (str(track_number),)))
+                basic_tags.append((BasicField.TRACKNUMBER, (str(track_number),)))
             if track_total:
-                basic_tags.append((BasicTag.TRACKTOTAL, (str(track_total),)))
+                basic_tags.append((BasicField.TRACKTOTAL, (str(track_total),)))
 
             (disc_number, disc_total) = self._get_wm_partofset()
             if disc_number is not None:
-                basic_tags.append((BasicTag.DISCNUMBER, (str(disc_number),)))
+                basic_tags.append((BasicField.DISCNUMBER, (str(disc_number),)))
             if disc_total is not None:
-                basic_tags.append((BasicTag.DISCTOTAL, (str(disc_total),)))
+                basic_tags.append((BasicField.DISCTOTAL, (str(disc_total),)))
 
         return tuple(basic_tags)
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
-        if not isinstance(tag, BasicTag):
-            raise ValueError("asf tagger only uses BasicTag")
+    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
+        if not isinstance(tag, BasicField):
+            raise ValueError("asf tagger only uses BasicField")
         tags = self._ensure_tags()
         if value is None:
             match tag:
-                case BasicTag.DISCNUMBER:
+                case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(None, disc_total)
-                case BasicTag.DISCTOTAL:
+                case BasicField.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
-                case BasicTag.RELEASECOUNTRY | BasicTag.RELEASETYPE:
+                case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
                     logger.warning(f"don't know how to remove {tag.name} from ASF tag in {self._get_file().filename}")
-                case BasicTag.TRACKNUMBER:
+                case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(None, track_total)
-                case BasicTag.TRACKTOTAL:
+                case BasicField.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, None)
-                case BasicTag.UNKNOWN:
+                case BasicField.UNKNOWN:
                     pass
                 case _:
                     del tags[TAG_TO_ASF_PROPERTY[tag]]
         else:
             value_list = value if isinstance(value, List) else [value]
             match tag:
-                case BasicTag.COMPILATION:
+                case BasicField.COMPILATION:
                     if value_list and value_list[0]:
                         tags[TAG_TO_ASF_PROPERTY[tag]] = ["1"]
                     elif TAG_TO_ASF_PROPERTY[tag] in tags:
                         del tags[TAG_TO_ASF_PROPERTY[tag]]
-                case BasicTag.DISCNUMBER:
+                case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(value_list[0] if value_list[0] else None, disc_total)
-                case BasicTag.DISCTOTAL:
+                case BasicField.DISCTOTAL:
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
-                case BasicTag.RELEASECOUNTRY | BasicTag.RELEASETYPE:
+                case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
                     raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
-                case BasicTag.TRACKNUMBER:
+                case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)
-                case BasicTag.TRACKTOTAL:
+                case BasicField.TRACKTOTAL:
                     (track_number, _) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(track_number, value_list[0] if value_list[0] else None)
-                case BasicTag.UNKNOWN:
+                case BasicField.UNKNOWN:
                     raise ValueError("cannot set tag value UNKNOWN")
                 case _:
                     tags[TAG_TO_ASF_PROPERTY[tag]] = value_list

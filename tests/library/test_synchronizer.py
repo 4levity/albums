@@ -13,7 +13,7 @@ from albums.database import connection
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, Track
 from albums.library.synchronizer import SyncDestination, Synchronizer
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag, StreamInfo
+from albums.tagger.types import BasicField, StreamInfo
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg
@@ -34,13 +34,13 @@ class TestSynchronizer:
             Album(
                 path="foo" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicTag.ARTIST: "baz", BasicTag.ALBUM: "foo", BasicTag.TITLE: "one"}),
-                    Track(filename="2.flac", tag={BasicTag.ARTIST: "baz", BasicTag.ALBUM: "foo", BasicTag.TITLE: "two"}),
+                    Track(filename="1.flac", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "one"}),
+                    Track(filename="2.flac", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "two"}),
                 ],
             ),
             Album(
                 path="bar" + os.sep,
-                tracks=[Track(filename="1.mp3", tag={BasicTag.ARTIST: "baz", BasicTag.ALBUM: "bar", BasicTag.TITLE: "aaa"})],
+                tracks=[Track(filename="1.mp3", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "bar", BasicField.TITLE: "aaa"})],
             ),
         ]
         mock_ensure_ffmpeg = mocker.patch("albums.library.transcoder.ensure_ffmpeg")
@@ -81,10 +81,10 @@ class TestSynchronizer:
                 t1 = dict(file.get_tags())
             with tagger.open("2.mp3") as file:
                 t2 = dict(file.get_tags())
-            assert t1.get(BasicTag.TITLE) == ("one",)
-            assert t1.get(BasicTag.ALBUM) == ("foo",)
-            assert t1.get(BasicTag.ARTIST) == ("baz",)
-            assert t2.get(BasicTag.TITLE) == ("two",)
+            assert t1.get(BasicField.TITLE) == ("one",)
+            assert t1.get(BasicField.ALBUM) == ("foo",)
+            assert t1.get(BasicField.ARTIST) == ("baz",)
+            assert t2.get(BasicField.TITLE) == ("two",)
         finally:
             ctx.db.dispose()
 
@@ -93,22 +93,30 @@ class TestSynchronizer:
             Album(
                 path="foo" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", stream=StreamInfo(1, 900000, 2, "FLAC", 44100, 16), tag={BasicTag.ARTIST: "a", BasicTag.ALBUM: "foo"})
+                    Track(
+                        filename="1.flac", stream=StreamInfo(1, 900000, 2, "FLAC", 44100, 16), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"}
+                    )
                 ],
             ),
             Album(
                 path="moo" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", stream=StreamInfo(1, 800000, 2, "FLAC", 44100, 24), tag={BasicTag.ARTIST: "a", BasicTag.ALBUM: "foo"})
+                    Track(
+                        filename="1.flac", stream=StreamInfo(1, 800000, 2, "FLAC", 44100, 24), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"}
+                    )
                 ],
             ),
             Album(
                 path="bar" + os.sep,
-                tracks=[Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 48000), tag={BasicTag.ARTIST: "a", BasicTag.ALBUM: "bar"})],
+                tracks=[
+                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 48000), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "bar"})
+                ],
             ),
             Album(
                 path="baz" + os.sep,
-                tracks=[Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 44100), tag={BasicTag.ARTIST: "a", BasicTag.ALBUM: "baz"})],
+                tracks=[
+                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 44100), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "baz"})
+                ],
             ),
         ]
         mock_ensure_ffmpeg = mocker.patch("albums.library.transcoder.ensure_ffmpeg")

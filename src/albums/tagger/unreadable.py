@@ -1,6 +1,6 @@
 from typing import Generator, List, Tuple, override
 
-from .types import BasicTag, Picture, StreamInfo, TaggerFile
+from .types import BasicField, Picture, StreamInfo, TaggerFile
 
 
 class UnreadableTagger(TaggerFile):
@@ -28,7 +28,7 @@ class UnreadableTagger(TaggerFile):
         yield from ()
 
     @override
-    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None:
+    def set_tag(self, tag: BasicField | str, value: str | List[str] | None) -> None:
         raise ValueError(f"cannot set tags - unreadable file {self._filename}")
 
     @override

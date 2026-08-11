@@ -3,12 +3,12 @@ from typing import Final, override
 from rich.markup import escape
 
 from ...entities import Album
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ...tagger.vorbis import LEGACY_VORBIS_TAGS
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 
-LEGACY_TO_BASIC: Final[dict[str, BasicTag]] = dict(LEGACY_VORBIS_TAGS)
+LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_TAGS)
 
 OPTION_CONVERT_LEGACY = ">> Convert legacy tags to standard tags"
 

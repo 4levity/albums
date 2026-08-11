@@ -16,7 +16,7 @@ from .file_types.mp3 import Mp3Tagger
 from .file_types.mp4 import Mp4Tagger
 from .file_types.oggvorbis import OggVorbisTagger
 from .file_types.universal import UniversalTagger
-from .types import BasicTag, TaggerFile
+from .types import BasicField, TaggerFile
 from .unreadable import UnreadableTagger
 
 
@@ -96,7 +96,7 @@ class AlbumTagger:
     def path(self) -> Path:
         return self._folder
 
-    def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[BasicTag, str | List[str] | None]]):
+    def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[BasicField, str | List[str] | None]]):
         if path.parent != self._folder:
             raise ValueError(f"invalid path {str(path)} this AlbumTagger only works in {str(self._folder)}")
         with self.open(path.name) as f:

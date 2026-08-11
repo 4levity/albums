@@ -7,7 +7,7 @@ import pytest
 
 from albums.entities import Album, PictureFile, Track
 from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from .. import helpers
 from ..fixtures.create_library import create_library
@@ -15,14 +15,14 @@ from ..fixtures.create_library import create_library
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1", BasicTag.ARTIST: "a"})],
+        tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tag={BasicTag.TITLE: "1"}),
-            Track(filename="2.flac", tag={BasicTag.TITLE: "2"}),
+            Track(filename="1.flac", tag={BasicField.TITLE: "1"}),
+            Track(filename="2.flac", tag={BasicField.TITLE: "2"}),
         ],
     ),
 ]
@@ -222,13 +222,19 @@ class TestCli:
             Album(
                 path="foobar" + os.sep,
                 tracks=[
-                    Track(filename="01.flac", tag={BasicTag.TITLE: "1", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "foobar", BasicTag.ARTIST: "baz"})
+                    Track(
+                        filename="01.flac",
+                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foobar", BasicField.ARTIST: "baz"},
+                    )
                 ],
             ),
             Album(
                 path="baz" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicTag.TITLE: "1", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "baz", BasicTag.ARTIST: "baz"})
+                    Track(
+                        filename="1.flac",
+                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "baz", BasicField.ARTIST: "baz"},
+                    )
                 ],
             ),
         ]
@@ -253,7 +259,10 @@ class TestCli:
         new_album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="01 one.flac", tag={BasicTag.TITLE: "one", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "foo", BasicTag.ARTIST: "a"})
+                Track(
+                    filename="01 one.flac",
+                    tag={BasicField.TITLE: "one", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foo", BasicField.ARTIST: "a"},
+                )
             ],
         )
 

@@ -342,7 +342,7 @@ tracks in an album have legacy tags present so they can be converted to the
 standard equivalents.
 
 **Automatic fix**: Remove each legacy tag and set the corresponding standard
-tag. If multiple tracks have values for the same BasicTag (from both legacy and
+tag. If multiple tracks have values for the same field (from both legacy and
 standard sources), the values are merged with duplicates removed.
 
 ### album-tag

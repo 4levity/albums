@@ -1,9 +1,9 @@
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from ..base_check_tag_per_album import BaseCheckTagPerAlbum
 
 
 class CheckReleaseCountryTag(BaseCheckTagPerAlbum):
     name = "release-country-tag"
-    tag = BasicTag.RELEASECOUNTRY
+    tag = BasicField.RELEASECOUNTRY
     vorbis_only = True

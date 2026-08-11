@@ -3,7 +3,7 @@ from typing import Any, Collection, Final
 
 from rich.markup import escape
 
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
@@ -15,32 +15,32 @@ logger: Final = logging.getLogger(__name__)
 
 ALL_MBID_TAGS: Final = frozenset(
     (
-        BasicTag.MUSICBRAINZ_ALBUMARTISTID,
-        BasicTag.MUSICBRAINZ_ALBUMID,
-        BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY,
-        BasicTag.MUSICBRAINZ_ARRANGERID,
-        BasicTag.MUSICBRAINZ_ARTISTID,
-        BasicTag.MUSICBRAINZ_COMPOSERID,
-        BasicTag.MUSICBRAINZ_CONDUCTORID,
-        BasicTag.MUSICBRAINZ_DIRECTORID,
-        BasicTag.MUSICBRAINZ_DISCID,
-        BasicTag.MUSICBRAINZ_LYRICISTID,
-        BasicTag.MUSICBRAINZ_MIXERID,
-        BasicTag.MUSICBRAINZ_ORIGINALALBUMID,
-        BasicTag.MUSICBRAINZ_ORIGINALARTISTID,
-        BasicTag.MUSICBRAINZ_ORIGINALRELEASEID,
-        BasicTag.MUSICBRAINZ_PRODUCERID,
-        BasicTag.MUSICBRAINZ_TRACKID,
-        BasicTag.MUSICBRAINZ_TRMID,
-        BasicTag.MUSICBRAINZ_RELEASEARTISTID,
-        BasicTag.MUSICBRAINZ_RELEASEGROUPID,
-        BasicTag.MUSICBRAINZ_RELEASETRACKID,
-        BasicTag.MUSICBRAINZ_REMIXERID,
-        BasicTag.MUSICBRAINZ_WORKID,
+        BasicField.MUSICBRAINZ_ALBUMARTISTID,
+        BasicField.MUSICBRAINZ_ALBUMID,
+        BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY,
+        BasicField.MUSICBRAINZ_ARRANGERID,
+        BasicField.MUSICBRAINZ_ARTISTID,
+        BasicField.MUSICBRAINZ_COMPOSERID,
+        BasicField.MUSICBRAINZ_CONDUCTORID,
+        BasicField.MUSICBRAINZ_DIRECTORID,
+        BasicField.MUSICBRAINZ_DISCID,
+        BasicField.MUSICBRAINZ_LYRICISTID,
+        BasicField.MUSICBRAINZ_MIXERID,
+        BasicField.MUSICBRAINZ_ORIGINALALBUMID,
+        BasicField.MUSICBRAINZ_ORIGINALARTISTID,
+        BasicField.MUSICBRAINZ_ORIGINALRELEASEID,
+        BasicField.MUSICBRAINZ_PRODUCERID,
+        BasicField.MUSICBRAINZ_TRACKID,
+        BasicField.MUSICBRAINZ_TRMID,
+        BasicField.MUSICBRAINZ_RELEASEARTISTID,
+        BasicField.MUSICBRAINZ_RELEASEGROUPID,
+        BasicField.MUSICBRAINZ_RELEASETRACKID,
+        BasicField.MUSICBRAINZ_REMIXERID,
+        BasicField.MUSICBRAINZ_WORKID,
     )
 )
 
-DEPRECATED_MBID_TAGS: Final = frozenset((BasicTag.MUSICBRAINZ_TRMID,))
+DEPRECATED_MBID_TAGS: Final = frozenset((BasicField.MUSICBRAINZ_TRMID,))
 
 
 class CheckMusicBrainzTags(Check):
@@ -76,13 +76,13 @@ class CheckMusicBrainzTags(Check):
             )
 
         return (
-            self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMID)
-            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMARTISTID)
-            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
-            or self._check_consistent_tag(album, BasicTag.MUSICBRAINZ_ALBUMRELEASETYPE)
+            self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMID)
+            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMARTISTID)
+            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
+            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMRELEASETYPE)
         )
 
-    def _check_consistent_tag(self, album: Album, check_tag: BasicTag) -> CheckResult | None:
+    def _check_consistent_tag(self, album: Album, check_tag: BasicField) -> CheckResult | None:
         values = set(v for track in album.tracks for v in track.get(check_tag, ["none"]))
         if len(values) > 1:
             options = [f">> Remove {check_tag.name} tags", ">> Remove all MusicBrainz tags"]
@@ -92,7 +92,7 @@ class CheckMusicBrainzTags(Check):
                 Fixer(lambda option: self._remove_tags(album, ALL_MBID_TAGS, option, check_tag), options, False, option_automatic_index),
             )
 
-    def _remove_tags(self, album: Album, default_remove_tags: Collection[BasicTag], option: str = "", option_match_tag: BasicTag | None = None):
+    def _remove_tags(self, album: Album, default_remove_tags: Collection[BasicField], option: str = "", option_match_tag: BasicField | None = None):
         tagger = self.tagger.get(album.path)
         changed = False
         if option and option_match_tag and option_match_tag.name in option:

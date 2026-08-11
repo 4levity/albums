@@ -7,7 +7,7 @@ from pathvalidate import sanitize_filename, sanitize_filepath
 
 from ..app import Context
 from ..entities import Album
-from ..tagger.types import BasicTag
+from ..tagger.types import BasicField
 
 logger: Final = logging.getLogger(__name__)
 
@@ -27,9 +27,9 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
     if unknown_identifiers:
         logger.warning(f"ignoring unknown template identifiers: {', '.join(unknown_identifiers)}")
 
-    tag_values: defaultdict[BasicTag, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
+    tag_values: defaultdict[BasicField, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
     for track in album.tracks:
-        for tag, values in ((k, v) for k, v in track.tag_dict().items() if k in {BasicTag.ALBUM, BasicTag.ALBUMARTIST, BasicTag.ARTIST}):
+        for tag, values in ((k, v) for k, v in track.tag_dict().items() if k in {BasicField.ALBUM, BasicField.ALBUMARTIST, BasicField.ARTIST}):
             for value in values:
                 tag_values[tag][value] += 1
     tag_values_by_freq = dict(
@@ -44,15 +44,15 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
         folder = folder.replace("/", ctx.config.path_replace_slash)
         return sanitize_filename(folder, replacement_text=ctx.config.path_replace_invalid, platform=ctx.config.path_compatibility)
 
-    if BasicTag.ALBUMARTIST in tag_values_by_freq:
-        albumartists = tag_values_by_freq[BasicTag.ALBUMARTIST]
+    if BasicField.ALBUMARTIST in tag_values_by_freq:
+        albumartists = tag_values_by_freq[BasicField.ALBUMARTIST]
         artist_v = safe_path_element(albumartists[0][0])
         if len(albumartists) > 1 and using_artist:
             logger.warning(f"generating library path: more than one album artist value, using {artist_v}")
-        if len(tag_values_by_freq.get(BasicTag.ARTIST, [])) > 1:
+        if len(tag_values_by_freq.get(BasicField.ARTIST, [])) > 1:
             various = True
-    elif BasicTag.ARTIST in tag_values_by_freq:
-        artists = tag_values_by_freq[BasicTag.ARTIST]
+    elif BasicField.ARTIST in tag_values_by_freq:
+        artists = tag_values_by_freq[BasicField.ARTIST]
         artist_v = safe_path_element(artists[0][0])
         if len(artists) > 1:
             various = True
@@ -64,8 +64,8 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
 
     album_v = ""
     if "album" in used_identifiers:
-        if BasicTag.ALBUM in tag_values_by_freq:
-            albums = tag_values_by_freq[BasicTag.ALBUM]
+        if BasicField.ALBUM in tag_values_by_freq:
+            albums = tag_values_by_freq[BasicField.ALBUM]
             album_v = safe_path_element(albums[0][0])
             if len(albums) > 1:
                 logger.warning(f"generating library path: more than one album artist value, using {album_v}")

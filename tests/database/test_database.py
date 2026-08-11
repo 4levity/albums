@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.database import connection, schema
 from albums.entities import Album, Track
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestDatabase:
@@ -78,7 +78,7 @@ class TestDatabase:
         db = connection.open(connection.MEMORY)
         try:
             with Session(db) as session:
-                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicTag.ALBUM: "foo"})])
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "foo"})])
                 session.add(album)
                 session.flush()
                 track_id = album.tracks[0].track_id
@@ -90,7 +90,7 @@ class TestDatabase:
                 (album,) = session.execute(select(Album)).tuples().one()
                 tag = album.tracks[0].tag_dict()
                 assert len(tag) == 2
-                assert tag[BasicTag.ALBUM] == ["foo"]
-                assert sorted(tag[BasicTag.UNKNOWN]) == ["bar", "baz"]
+                assert tag[BasicField.ALBUM] == ["foo"]
+                assert sorted(tag[BasicField.UNKNOWN]) == ["bar", "baz"]
         finally:
             db.dispose()

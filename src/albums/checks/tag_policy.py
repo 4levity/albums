@@ -7,7 +7,7 @@ from rich.markup import escape
 from ..app import Context
 from ..entities import Album
 from ..tagger.folder import AlbumTagger
-from ..tagger.types import BasicTag
+from ..tagger.types import BasicField
 from .check_types import CheckResult, Fixer, FixResult
 from .helpers import describe_track_number, ordered_tracks
 
@@ -32,8 +32,8 @@ def check_policy(
     tagger: AlbumTagger,
     album: Album,
     policy: Policy,
-    tag: BasicTag,
-    required_tag: BasicTag | None,
+    tag: BasicField,
+    required_tag: BasicField | None,
     single_value_for_album: bool = False,
 ) -> CheckResult | None:
     if policy == Policy.NEVER and single_value_for_album:
@@ -89,7 +89,7 @@ def check_policy(
     raise RuntimeError(f"internal error! tag={tag.value}, policy={policy.name}, on_all_tracks={on_all_tracks}, on_any_tracks={on_any_tracks}")
 
 
-def _fix(ctx: Context, tagger: AlbumTagger, album: Album, tag: BasicTag, option: str) -> FixResult:
+def _fix(ctx: Context, tagger: AlbumTagger, album: Album, tag: BasicField, option: str) -> FixResult:
     if option.startswith(OPTION_REMOVE_TAG):
         value = None
     else:

@@ -1,12 +1,12 @@
 from albums.app import Context
 from albums.checks.tags.check_genre_present import CheckGenrePresent
 from albums.entities import Album, Track
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 
 class TestCheckGenrePresent:
     def test_genre_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicTag.GENRE: "Rock"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicField.GENRE: "Rock"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is None
@@ -18,14 +18,14 @@ class TestCheckGenrePresent:
         assert result is None
 
     def test_genre_missing(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.GENRE: "Rock"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is not None
         assert "genre policy=CONSISTENT but it is on some tracks and not others" in result.message
 
     def test_genre_inconsistent(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicTag.GENRE: "Country"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicField.GENRE: "Country"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is not None

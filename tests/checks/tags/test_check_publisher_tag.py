@@ -4,12 +4,12 @@ from albums.app import Context
 from albums.checks.base_check_tag_per_album import AlbumTagger
 from albums.checks.tags.check_publisher_tag import CheckPublisherTag
 from albums.entities import Album, Track
-from albums.tagger.types import BasicTag, TaggerFile
+from albums.tagger.types import BasicField, TaggerFile
 
 
 class TestCheckPublisherTag:
     def test_publisher_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "ABC"}), Track(filename="2.flac", tag={BasicTag.ORGANIZATION: "ABC"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is None
@@ -21,7 +21,7 @@ class TestCheckPublisherTag:
         assert result is None
 
     def test_publisher_missing(self):
-        tracks = [Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is not None
@@ -38,7 +38,7 @@ class TestCheckPublisherTag:
         assert "organization policy=ALWAYS but it is not on all tracks" in result.message
 
     def test_publisher_different_select(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicTag.ORGANIZATION: "ABC"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is not None
@@ -55,10 +55,10 @@ class TestCheckPublisherTag:
         assert result.fixer.fix(result.fixer.options[0])
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicTag.ORGANIZATION, "ABC")]
+        assert mock_set_tag.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
 
     def test_publisher_different_remove(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicTag.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicTag.ORGANIZATION: "ABC"})]
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherTag(Context()).check(album)
         assert result is not None
@@ -75,4 +75,4 @@ class TestCheckPublisherTag:
         assert result.fixer.fix(result.fixer.options[0])
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicTag.ORGANIZATION, "ABC")]
+        assert mock_set_tag.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]

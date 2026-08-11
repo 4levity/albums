@@ -2,24 +2,24 @@ from typing import Final, Tuple
 
 from mutagen._vorbis import VCommentDict
 
-from .types import BasicTag
+from .types import BasicField
 
-# Mapping of legacy Vorbis comment names to their canonical BasicTag equivalents
-LEGACY_VORBIS_TAGS: Final[Tuple[Tuple[str, BasicTag], ...]] = (
-    ("album artist", BasicTag.ALBUMARTIST),
-    ("disc number", BasicTag.DISCNUMBER),
-    ("totaldiscs", BasicTag.DISCTOTAL),
-    ("label", BasicTag.ORGANIZATION),
-    ("publisher", BasicTag.ORGANIZATION),
-    ("track number", BasicTag.TRACKNUMBER),
-    ("numtracks", BasicTag.TRACKTOTAL),
-    ("number_of_tracks", BasicTag.TRACKTOTAL),
-    ("totaltracks", BasicTag.TRACKTOTAL),
+# Mapping of legacy Vorbis comment names to their canonical BasicField equivalents
+LEGACY_VORBIS_TAGS: Final[Tuple[Tuple[str, BasicField], ...]] = (
+    ("album artist", BasicField.ALBUMARTIST),
+    ("disc number", BasicField.DISCNUMBER),
+    ("totaldiscs", BasicField.DISCTOTAL),
+    ("label", BasicField.ORGANIZATION),
+    ("publisher", BasicField.ORGANIZATION),
+    ("track number", BasicField.TRACKNUMBER),
+    ("numtracks", BasicField.TRACKTOTAL),
+    ("number_of_tracks", BasicField.TRACKTOTAL),
+    ("totaltracks", BasicField.TRACKTOTAL),
 )
 
 
-def vorbis_comment_legacy_tags(file_tags: VCommentDict) -> Tuple[Tuple[str, BasicTag], ...]:
-    legacy_tags: list[tuple[str, BasicTag]] = []
+def vorbis_comment_legacy_tags(file_tags: VCommentDict) -> Tuple[Tuple[str, BasicField], ...]:
+    legacy_tags: list[tuple[str, BasicField]] = []
     for legacy_name, basic_tag in LEGACY_VORBIS_TAGS:
         if legacy_name in file_tags:
             legacy_tags.append((legacy_name, basic_tag))
@@ -27,13 +27,13 @@ def vorbis_comment_legacy_tags(file_tags: VCommentDict) -> Tuple[Tuple[str, Basi
     return tuple(legacy_tags)
 
 
-def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
-    # Use dict to track tags by BasicTag with list of values (for easy deduplication)
-    tags: dict[BasicTag, list[str]] = {}
+def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+    # Use dict to track tags by BasicField with list of values (for easy deduplication)
+    tags: dict[BasicField, list[str]] = {}
 
     # Process standard tags
-    for tag in BasicTag:
-        if tag != BasicTag.UNKNOWN and tag.value in file_tags:
+    for tag in BasicField:
+        if tag != BasicField.UNKNOWN and tag.value in file_tags:
             tags[tag] = [str(value) for value in file_tags[tag.value]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
 
     # Read values from legacy tags if present
@@ -54,17 +54,17 @@ def vorbis_comment_tags(file_tags: VCommentDict) -> Tuple[Tuple[BasicTag, Tuple[
     return tuple(tags_flat)
 
 
-def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicTag | str, value: str | list[str] | None):
-    tag_value = tag.value if isinstance(tag, BasicTag) else tag
+def vorbis_comment_set_tag(file_tags: VCommentDict, tag: BasicField | str, value: str | list[str] | None):
+    tag_value = tag.value if isinstance(tag, BasicField) else tag
     if value is None:
-        if tag != BasicTag.UNKNOWN and tag_value in file_tags:
+        if tag != BasicField.UNKNOWN and tag_value in file_tags:
             del file_tags[tag_value]
     else:
         value_list = value if isinstance(value, list) else [value]
         match tag:
-            case BasicTag.UNKNOWN:
+            case BasicField.UNKNOWN:
                 raise ValueError("cannot set tag value UNKNOWN")
-            case BasicTag.COMPILATION:
+            case BasicField.COMPILATION:
                 if value_list and value_list[0]:
                     file_tags[tag_value] = ["1"]
                 elif tag_value in file_tags:

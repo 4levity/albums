@@ -32,10 +32,10 @@ from mutagen.wavpack import WavPack
 from ..picture.info import PictureInfo
 
 
-class BasicTag(StrEnum):
+class BasicField(StrEnum):
     """Standard metadata fields supported across audio formats.
 
-    BasicTag values must be the same as the corresponding Vorbis Comment field names.
+    BasicField values must be the same as the corresponding Vorbis Comment field names.
     """
 
     ALBUM = auto()
@@ -130,7 +130,7 @@ class BasicTag(StrEnum):
     UNKNOWN = auto()
 
 
-BASIC_TAGS: Final = frozenset(tag.value for tag in BasicTag)
+BASIC_TAGS: Final = frozenset(tag.value for tag in BasicField)
 
 type MutagenFileType = (
     AAC
@@ -229,13 +229,13 @@ class StreamInfo:
 class TaggerFile:
     """Abstract interface for reading and writing tags/images on a single media file."""
 
-    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
+    def get_tags(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]: ...
     def get_stream_info(self) -> StreamInfo: ...
     def get_image_data(self, picture: Picture) -> bytes: ...
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
 
-    # set_tag must support BasicTag but may raise an exception if str type tag is provided
-    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None: ...
+    # set_tag must support BasicField but may raise an exception if str type tag is provided
+    def set_tag(self, tag: BasicField | str, value: str | List[str] | None) -> None: ...
     def add_picture(self, new_picture: Picture, image_data: bytes) -> None: ...
     def remove_picture(self, remove_picture: Picture) -> None: ...
     def close(self) -> None: ...
@@ -248,7 +248,7 @@ class TaggerFile:
     def set_legacy_tag(self, tag: str, value: str | List[str] | None) -> None:
         raise NotImplementedError()
 
-    def get_legacy_tags(self) -> Tuple[Tuple[str, BasicTag], ...]:
+    def get_legacy_tags(self) -> Tuple[Tuple[str, BasicField], ...]:
         return ()
 
     def update_legacy_tags(self, tags: Sequence[str]) -> None:

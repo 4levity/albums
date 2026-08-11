@@ -4,7 +4,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ...words.make import plural
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
@@ -17,7 +17,7 @@ class CheckExtraWhitespace(Check):
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
-        tags: set[BasicTag] = set()
+        tags: set[BasicField] = set()
         filenames: set[str] = set()
         example: str | None = None
         for tag, values, filename in [(k, v, track.filename) for track in sorted(album.tracks) for k, v in track.tag_dict().items()]:

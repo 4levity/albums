@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ...words.make import plural
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
@@ -39,12 +39,12 @@ class CheckArtistTag(Check):
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
-            if track.has(BasicTag.ARTIST):
-                for artist_tag in track.get(BasicTag.ARTIST):
+            if track.has(BasicField.ARTIST):
+                for artist_tag in track.get(BasicField.ARTIST):
                     artist_values[artist_tag].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
-            for album_artist_tag in track.get(BasicTag.ALBUMARTIST, default=[]):
+            for album_artist_tag in track.get(BasicField.ALBUMARTIST, default=[]):
                 artist_values[album_artist_tag].append(track.filename)
 
         if not artist_values[""]:  # no tracks missing artist tag
@@ -63,9 +63,9 @@ class CheckArtistTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicTag.ALBUMARTIST, default=None)),
-                    show_tag(track.get(BasicTag.ARTIST, default=None)),
-                    show_tag([candidates[0]] if candidates and not track.has(BasicTag.ARTIST) else None),
+                    show_tag(track.get(BasicField.ALBUMARTIST, default=None)),
+                    show_tag(track.get(BasicField.ARTIST, default=None)),
+                    show_tag([candidates[0]] if candidates and not track.has(BasicField.ARTIST) else None),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -88,5 +88,5 @@ class CheckArtistTag(Check):
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {escape(filename)}", highlight=False)
-            self.tagger.get(album.path).set_basic_tags(file, [(BasicTag.ARTIST, option)])
+            self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ARTIST, option)])
         return FixResult.CHANGED_ALBUM

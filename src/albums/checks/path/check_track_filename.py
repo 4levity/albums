@@ -9,7 +9,7 @@ from rich.markup import escape
 
 from ...entities import Album, Track
 from ...tagger.folder import Cap
-from ...tagger.types import BasicTag
+from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
@@ -49,9 +49,9 @@ class CheckTrackFilename(Check):
             )
 
     def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
-        title_tags = ", ".join(track.get(BasicTag.TITLE, default=["[bold italic]none[/bold italic]"]))
-        discnum = track.get(BasicTag.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
-        tracknum = track.get(BasicTag.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
+        title_tags = ", ".join(track.get(BasicField.TITLE, default=["[bold italic]none[/bold italic]"]))
+        discnum = track.get(BasicField.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
+        tracknum = track.get(BasicField.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
         new_filename = self._generate_filename(album, track)
         return [
             escape(track.filename),
@@ -62,14 +62,14 @@ class CheckTrackFilename(Check):
         ]
 
     def _generate_filename(self, album: Album, track: Track):
-        tracktag = track.get(BasicTag.TRACKNUMBER, default=None)
-        disctag = track.get(BasicTag.DISCNUMBER, default=None)
+        tracktag = track.get(BasicField.TRACKNUMBER, default=None)
+        disctag = track.get(BasicField.DISCNUMBER, default=None)
         tracknumber = tracktag[0] if tracktag else ""
         discnumber = disctag[0] if disctag else ""
 
         # for padding on m4a files
-        track_count = int(track.get(BasicTag.TRACKTOTAL, default=["0"])[0]) or len(album.tracks)
-        disc_count = int(track.get(BasicTag.DISCTOTAL, default=["0"])[0]) or 9
+        track_count = int(track.get(BasicField.TRACKTOTAL, default=["0"])[0]) or len(album.tracks)
+        disc_count = int(track.get(BasicField.DISCTOTAL, default=["0"])[0]) or 9
 
         already_formatted = self.tagger.get(album.path).supports(track.filename, Cap.FORMATTED_TRACK_NUMBER)
         discnumber_pad = discnumber if already_formatted else self._pad("discnumber", discnumber, disc_count)
@@ -79,10 +79,10 @@ class CheckTrackFilename(Check):
         else:
             track_auto = ""
 
-        title = self.join_multiple.join(track.get(BasicTag.TITLE, default=[f"Track {tracknumber}" if tracknumber else ""]))
-        artist = self.join_multiple.join(track.get(BasicTag.ARTIST, default=[""]))
+        title = self.join_multiple.join(track.get(BasicField.TITLE, default=[f"Track {tracknumber}" if tracknumber else ""]))
+        artist = self.join_multiple.join(track.get(BasicField.ARTIST, default=[""]))
 
-        if track.has(BasicTag.ARTIST) and track.has(BasicTag.ALBUMARTIST) and track.get(BasicTag.ARTIST) != track.get(BasicTag.ALBUMARTIST):
+        if track.has(BasicField.ARTIST) and track.has(BasicField.ALBUMARTIST) and track.get(BasicField.ARTIST) != track.get(BasicField.ALBUMARTIST):
             title_auto = f"{artist} - {title}"
         else:
             title_auto = title
