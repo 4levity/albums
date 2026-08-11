@@ -82,9 +82,9 @@ class TestCheckDiscNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total tag"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_set_basic_tags.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [(BasicField.DISCTOTAL, "2")])]
+        assert mock_set_basic_fields.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [(BasicField.DISCTOTAL, "2")])]
 
     def test_check_disctotal_inconsistent(self):
         album = Album(
@@ -182,12 +182,12 @@ class TestCheckDiscNumbering:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_set_tag.call_count == 2
-        assert mock_set_tag.call_args_list == [call(BasicField.DISCNUMBER, None), call(BasicField.DISCNUMBER, None)]
+        assert mock_set_field.call_count == 2
+        assert mock_set_field.call_args_list == [call(BasicField.DISCNUMBER, None), call(BasicField.DISCNUMBER, None)]
 
     def test_check_discnumbering_remove_redundant_total(self, mocker):
         album = Album(
@@ -209,12 +209,12 @@ class TestCheckDiscNumbering:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-        assert mock_set_tag.call_count == 4
-        assert mock_set_tag.call_args_list == [
+        assert mock_set_field.call_count == 4
+        assert mock_set_field.call_args_list == [
             call(BasicField.DISCNUMBER, None),
             call(BasicField.DISCTOTAL, None),
             call(BasicField.DISCNUMBER, None),

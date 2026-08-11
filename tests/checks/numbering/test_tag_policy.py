@@ -51,10 +51,10 @@ class TestTotalTags:
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.option_free_text
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_set_basic_tags.call_args_list == [call(Path(album.tracks[0].filename), [(BasicField.TRACKTOTAL, "1")])]
+        assert mock_set_basic_fields.call_args_list == [call(Path(album.tracks[0].filename), [(BasicField.TRACKTOTAL, "1")])]
 
     def test_check_tag_policy_always_unfixable(self, mocker):
         album = Album(
@@ -86,11 +86,11 @@ class TestTotalTags:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "1")])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "1")])
 
     def test_check_tag_policy_consistent_no_other(self, mocker):
         album = Album(
@@ -109,11 +109,11 @@ class TestTotalTags:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
 
     def test_check_tag_policy_never(self, mocker):
         album = Album(
@@ -132,11 +132,11 @@ class TestTotalTags:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
 
     def test_check_tag_policy_total_without_index(self, mocker):
         album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac", tag={BasicField.TRACKTOTAL: "1"})])
@@ -152,8 +152,8 @@ class TestTotalTags:
         assert result.fixer.options == [">> Remove tag tracktotal"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])

@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BASIC_TAGS, BasicField
+from ...tagger.types import BASIC_FIELDS, BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 from ..helpers import describe_track_number, ordered_tracks
@@ -21,8 +21,8 @@ class CheckSingleValueTags(Check):
 
     def init(self, check_config: dict[str, Any]):
         tags: list[str] = check_config.get("tags", CheckSingleValueTags.default_config["tags"])
-        if not isinstance(tags, list) or any(not isinstance(tag, str) or tag not in BASIC_TAGS for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError(f"single-value-tags.tags configuration must be a list of supported tags: {', '.join(BASIC_TAGS)}")
+        if not isinstance(tags, list) or any(not isinstance(tag, str) or tag not in BASIC_FIELDS for tag in tags):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError(f"single-value-tags.tags configuration must be a list of supported tags: {', '.join(BASIC_FIELDS)}")
         self.single_value_tags = list(BasicField(tag) for tag in tags)
 
         concatenators: list[str] = check_config.get("concatenators", CheckSingleValueTags.default_config["concatenators"])
@@ -32,7 +32,7 @@ class CheckSingleValueTags(Check):
         self.automatic_concatenate = bool(check_config.get("automatic_concatenate", CheckSingleValueTags.default_config["automatic_concatenate"]))
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
 
         multiple_value_tags: list[dict[str, dict[str, Sequence[str]]]] = []
@@ -85,7 +85,7 @@ class CheckSingleValueTags(Check):
                     changed = True
             if new_values:
                 self.ctx.console.print(f"setting {' and '.join(list(name for (name, _) in new_values))} on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, new_values)
+                self.tagger.get(album.path).set_basic_fields(file, new_values)
                 changed = True
 
         return FixResult.of(changed)

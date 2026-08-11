@@ -82,7 +82,7 @@ class TrackTotalFixer(Fixer):
                 track_changed = True
             if track_changed:
                 changed = True
-                tagger.set_basic_tags(path, [(BasicField.TRACKTOTAL, new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
+                tagger.set_basic_fields(path, [(BasicField.TRACKTOTAL, new_tracktotal if new_tracktotal is None else str(new_tracktotal))])
         return FixResult.of(changed)
 
 
@@ -106,7 +106,7 @@ class CheckTrackNumbering(Check):
         if folder_str in self.ignore_folders:
             return None
 
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None  # this check works for tracks with "tracknumber" tag
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
@@ -211,5 +211,5 @@ class CheckTrackNumbering(Check):
                 new_tracknumber = new_tracknumbers[track.filename]
                 path = self.ctx.config.library / album.path / track.filename
                 self.ctx.console.print(f"setting track number {new_tracknumber} on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(path, [(BasicField.TRACKNUMBER, new_tracknumber)])
+                self.tagger.get(album.path).set_basic_fields(path, [(BasicField.TRACKNUMBER, new_tracknumber)])
         return FixResult.CHANGED_ALBUM

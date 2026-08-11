@@ -110,7 +110,7 @@ class TestTranscoder:
         with AlbumTagger(mp3.parent).open(mp3.name) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
 
-            assert file.get_tags() == ((BasicField.TITLE, ("one",)),)
+            assert file.get_fields() == ((BasicField.TITLE, ("one",)),)
             assert len(pictures) == 1
             pic = pictures[0]
             assert pic.type == PictureType.COVER_FRONT

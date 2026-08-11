@@ -49,12 +49,12 @@ class TestCheckMusicBrainzTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.MUSICBRAINZ_TRMID, None)]
+        assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_TRMID, None)]
 
     def test_remove_all(self, mocker):
         album = Album(
@@ -75,12 +75,12 @@ class TestCheckMusicBrainzTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.MUSICBRAINZ_TRACKID, None), call(BasicField.MUSICBRAINZ_TRMID, None)]
+        assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_TRACKID, None), call(BasicField.MUSICBRAINZ_TRMID, None)]
 
     def test_some_artist_mbid(self, mocker):
         album = Album(
@@ -103,12 +103,12 @@ class TestCheckMusicBrainzTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[1].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMID, None)]
+        assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMID, None)]
 
     def test_varying_albumartist_mbid(self, mocker):
         album = Album(
@@ -134,12 +134,12 @@ class TestCheckMusicBrainzTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename), call(album.tracks[1].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None), call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None)]
+        assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None), call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None)]
 
     def test_inconsistent_mbid_remove_all(self, mocker):
         album = Album(
@@ -161,12 +161,12 @@ class TestCheckMusicBrainzTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[1])
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename), call(album.tracks[1].filename)]
-        assert mock_set_tag.call_args_list == [
+        assert mock_set_field.call_args_list == [
             call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None),
             call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None),
             call(BasicField.MUSICBRAINZ_ALBUMID, None),

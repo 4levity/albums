@@ -23,7 +23,7 @@ from .unreadable import UnreadableTagger
 class Cap(Enum):
     """Capabilities supported by different file types for tagging."""
 
-    BASIC_TAGS = auto()
+    BASIC_FIELDS = auto()
     FORMATTED_TRACK_NUMBER = auto()
     PICTURES = auto()
     PICTURE_TYPE = auto()
@@ -31,16 +31,16 @@ class Cap(Enum):
 
 
 _SUFFIX_SUPPORT = {
-    ".flac": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
-    ".m4a": {Cap.BASIC_TAGS, Cap.PICTURES},
-    ".m4b": {Cap.BASIC_TAGS, Cap.PICTURES},
-    ".mp4": {Cap.BASIC_TAGS, Cap.PICTURES},
-    ".mp3": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
-    ".ogg": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
-    ".wma": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER},  # ASF / WMA reading pictures is implemented but so far untested (so no writing)
-    ".asf": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER},
-    ".aif": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
-    ".aiff": {Cap.BASIC_TAGS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
+    ".flac": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
+    ".m4a": {Cap.BASIC_FIELDS, Cap.PICTURES},
+    ".m4b": {Cap.BASIC_FIELDS, Cap.PICTURES},
+    ".mp4": {Cap.BASIC_FIELDS, Cap.PICTURES},
+    ".mp3": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
+    ".ogg": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE, Cap.VORBIS_COMMENT},
+    ".wma": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER},  # ASF / WMA reading pictures is implemented but so far untested (so no writing)
+    ".asf": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER},
+    ".aif": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
+    ".aiff": {Cap.BASIC_FIELDS, Cap.FORMATTED_TRACK_NUMBER, Cap.PICTURES, Cap.PICTURE_TYPE},
 }
 # File extensions for supported audio formats
 AUDIO_FILE_SUFFIXES: Final = frozenset(_SUFFIX_SUPPORT.keys())
@@ -96,12 +96,12 @@ class AlbumTagger:
     def path(self) -> Path:
         return self._folder
 
-    def set_basic_tags(self, path: Path, tag_values: Collection[Tuple[BasicField, str | List[str] | None]]):
+    def set_basic_fields(self, path: Path, field_values: Collection[Tuple[BasicField, str | List[str] | None]]):
         if path.parent != self._folder:
             raise ValueError(f"invalid path {str(path)} this AlbumTagger only works in {str(self._folder)}")
         with self.open(path.name) as f:
-            for tag, value in tag_values:
-                f.set_tag(tag, value)
+            for field, value in field_values:
+                f.set_field(field, value)
 
     def _get_tagger_file(self, path: Path):
         suffix = str.lower(path.suffix)

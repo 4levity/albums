@@ -150,12 +150,12 @@ class TestFlac:
 
     def test_get_legacy_tags_empty(self):
         with TestFlac.tagger.open(track1.filename) as file:
-            legacy = file.get_legacy_tags()
+            legacy = file.get_legacy_fields()
         assert legacy == ()
 
     def test_get_legacy_tags_present(self):
         with TestFlac.tagger.open(track3.filename) as file:
-            legacy = file.get_legacy_tags()
+            legacy = file.get_legacy_fields()
 
         expected = (
             ("album artist", BasicField.ALBUMARTIST),
@@ -164,10 +164,10 @@ class TestFlac:
         )
         assert sorted(legacy) == sorted(expected)
 
-    def test_get_tags_legacy_mapping(self):
+    def test_get_fields_legacy_mapping(self):
         with TestFlac.tagger.open(track3.filename) as file:
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
 
-        assert tags[BasicField.ORGANIZATION] == ("ABC",)
-        assert tags[BasicField.ALBUMARTIST] == ("foo artist",)
-        assert tags[BasicField.DISCTOTAL] == ("2",)
+        assert fields[BasicField.ORGANIZATION] == ("ABC",)
+        assert fields[BasicField.ALBUMARTIST] == ("foo artist",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)

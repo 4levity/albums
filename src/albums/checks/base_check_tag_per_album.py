@@ -35,7 +35,7 @@ class BaseCheckTagPerAlbum(Check):
         self.option_remove_tag = f">> Remove {self.tag_description} from all tracks"
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         if (
@@ -94,7 +94,7 @@ class BaseCheckTagPerAlbum(Check):
             if current_values and not option:
                 self.ctx.console.print(f"Removing {self.tag_description} on {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tags:
-                    tags.set_tag(self.tag, None)
+                    tags.set_field(self.tag, None)
                 changed = True
             elif option:
                 set_value = None
@@ -107,6 +107,6 @@ class BaseCheckTagPerAlbum(Check):
                 if set_value is not None:
                     self.ctx.console.print(f"Setting {self.tag_description} on {escape(track.filename)}", highlight=False)
                     with tagger.open(track.filename) as tags:
-                        tags.set_tag(self.tag, set_value)
+                        tags.set_field(self.tag, set_value)
                     changed = True
         return FixResult.of(changed)

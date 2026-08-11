@@ -32,7 +32,7 @@ class CheckGenrePresent(Check):
         # TODO validate that genre list is valid, if a list of valid genres is configured
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         # TODO check_policy should take an option list for its fixer
@@ -83,6 +83,6 @@ class CheckGenrePresent(Check):
             if "/".join(track.get(BasicField.GENRE, default=[""])) != option:
                 self.ctx.console.print(f'Setting genre to "{option}" on {escape(track.filename)}', highlight=False)
                 with tagger.open(track.filename) as tags:
-                    tags.set_tag(BasicField.GENRE, option)
+                    tags.set_field(BasicField.GENRE, option)
                 changed = True
         return FixResult.of(changed)

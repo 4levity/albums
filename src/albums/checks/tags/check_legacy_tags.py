@@ -4,11 +4,11 @@ from rich.markup import escape
 
 from ...entities import Album
 from ...tagger.types import BasicField
-from ...tagger.vorbis import LEGACY_VORBIS_TAGS
+from ...tagger.vorbis import LEGACY_VORBIS_FIELDS
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 
-LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_TAGS)
+LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_FIELDS)
 
 OPTION_CONVERT_LEGACY = ">> Convert legacy tags to standard tags"
 
@@ -54,11 +54,11 @@ class CheckLegacyTags(Check):
                 for tag in basic_tags:
                     values = track_tags[tag]
                     self.ctx.console.print(f"setting {tag.name}={values} on {escape(track.filename)}", highlight=False)
-                    file.set_tag(tag, values)
+                    file.set_field(tag, values)
 
                 for legacy_name in track.legacy_tags:
                     self.ctx.console.print(f"removing {legacy_name} from {escape(track.filename)}", highlight=False)
-                    file.set_tag(legacy_name, None)
+                    file.set_field(legacy_name, None)
 
             changed = True
 

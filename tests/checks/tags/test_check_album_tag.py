@@ -64,11 +64,11 @@ class TestCheckAlbumTag:
         assert result.fixer.options[0] == "Foo"
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")])
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")])
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album tag, where present it is different than folder name, no automatic fix
@@ -93,8 +93,8 @@ class TestCheckAlbumTag:
         assert len(rows) == 3  # tracks
         assert len([h for h in hh]) == len(rows[0])  # headers
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Bar")])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Bar")])

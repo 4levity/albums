@@ -15,7 +15,7 @@ class ImageFileReader(TaggerFile):
         self._picture_scanner = picture_scanner
 
     @override
-    def get_tags(self):
+    def get_fields(self):
         return ()
 
     @override
@@ -37,7 +37,7 @@ class ImageFileReader(TaggerFile):
         yield self._image
 
     @override
-    def set_tag(self, tag: BasicField | str, value: str | Sequence[str] | None) -> None:
+    def set_field(self, field: BasicField | str, value: str | Sequence[str] | None) -> None:
         raise NotImplementedError("ImageFileReader")
 
     @override

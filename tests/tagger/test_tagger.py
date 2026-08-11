@@ -29,7 +29,7 @@ class TestAlbumTagger:
 
         with tagger.open(mp3track.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
-            tags = dict(file.get_tags())
+            tags = dict(file.get_fields())
             assert tags[BasicField.TRACKNUMBER] == ("1",)
         assert mock_mp3_save.call_count == 0
 
@@ -39,11 +39,11 @@ class TestAlbumTagger:
         assert mock_mp3_save.call_count == 0
 
         with tagger.open(mp3track.filename) as file:
-            file.set_tag(BasicField.ALBUM, "baz")
+            file.set_field(BasicField.ALBUM, "baz")
         assert mock_mp3_save.call_count == 1
 
         with tagger.open(mp3track.filename) as file:
-            assert dict(file.get_tags())[BasicField.ALBUM] == ("baz",)
+            assert dict(file.get_fields())[BasicField.ALBUM] == ("baz",)
             (picture, image_data) = next(file.get_pictures())
             file.remove_picture(picture)
         assert mock_mp3_save.call_count == 2

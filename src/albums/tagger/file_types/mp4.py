@@ -104,10 +104,10 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
         if new_picture.type != PictureType.COVER_FRONT:
             logger.warning(f'embedding picture {new_picture.type.name} as "cover", picture type not supported in {self._file.filename}')
 
-        tags = self._ensure_tags()
-        covers: list[MP4Cover] = tags["covr"] if "covr" in tags else []  # pyright: ignore[reportUnknownVariableType]
+        fields = self._ensure_tagged_mp4()
+        covers: list[MP4Cover] = fields["covr"] if "covr" in fields else []  # pyright: ignore[reportUnknownVariableType]
         covers.append(MP4Cover(image_data, imageformat))  # pyright: ignore[reportUnknownMemberType]
-        tags["covr"] = covers
+        fields["covr"] = covers
 
     @override
     def _get_file(self):
@@ -123,39 +123,39 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             self._add_picture(pic, data)
 
     @override
-    def get_tags(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
-        basic_tags: list[Tuple[BasicField, Tuple[str, ...]]] = []
+    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+        basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
-            tags = self._ensure_tags()
-            basic_tags.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
-            basic_tags.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
+            tags = self._ensure_tagged_mp4()
+            basic_fields.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
+            basic_fields.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
             if "cpil" in tags and tags["cpil"]:
-                basic_tags.append((BasicField.COMPILATION, ("1",)))
+                basic_fields.append((BasicField.COMPILATION, ("1",)))
 
             (track_number, track_total) = self._get_trkn()
             if track_number:
-                basic_tags.append((BasicField.TRACKNUMBER, (str(track_number),)))
+                basic_fields.append((BasicField.TRACKNUMBER, (str(track_number),)))
             if track_total:
-                basic_tags.append((BasicField.TRACKTOTAL, (str(track_total),)))
+                basic_fields.append((BasicField.TRACKTOTAL, (str(track_total),)))
 
             (disc_number, disc_total) = self._get_disk()
             if disc_number is not None:
-                basic_tags.append((BasicField.DISCNUMBER, (str(disc_number),)))
+                basic_fields.append((BasicField.DISCNUMBER, (str(disc_number),)))
             if disc_total is not None:
-                basic_tags.append((BasicField.DISCTOTAL, (str(disc_total),)))
+                basic_fields.append((BasicField.DISCTOTAL, (str(disc_total),)))
 
         # TODO also load legacy "gnre" value with id3v1 genre number
 
-        return tuple(basic_tags)
+        return tuple(basic_fields)
 
     @override
-    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
-        if not isinstance(tag, BasicField):
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
+        if not isinstance(field, BasicField):
             raise ValueError("mp4 tagger only uses BasicField")
-        tags = self._ensure_tags()
+        fields = self._ensure_tagged_mp4()
 
         if value is None:
-            match tag:
+            match field:
                 case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(None, disc_total)
@@ -163,7 +163,7 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, None)
                 case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
-                    logger.warning(f"don't know how to remove {tag.name} from MP4 tag in {self._get_file().filename}")
+                    logger.warning(f"don't know how to remove {field.name} from MP4 tag in {self._get_file().filename}")
                 case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(None, track_total)
@@ -173,15 +173,15 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicField.UNKNOWN:
                     pass
                 case _:
-                    del tags[TAG_TO_M4A_FRAME[tag]]
+                    del fields[TAG_TO_M4A_FRAME[field]]
         else:
             value_list = value if isinstance(value, List) else [value]
-            match tag:
+            match field:
                 case BasicField.COMPILATION:
                     if value_list and value_list[0]:
-                        tags["cpil"] = ["1"]
-                    elif "cpil" in tags:
-                        del tags["cpil"]
+                        fields["cpil"] = ["1"]
+                    elif "cpil" in fields:
+                        del fields["cpil"]
                 case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_disk()
                     self._set_disk(int(value_list[0]) if value_list[0] else None, disc_total)
@@ -189,7 +189,7 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                     (disc_number, _) = self._get_disk()
                     self._set_disk(disc_number, int(value_list[0]) if value_list[0] else None)
                 case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
-                    raise ValueError(f"cannot set {tag.name} in MP4 tag on {self._get_file().filename}")
+                    raise ValueError(f"cannot set {field.name} in MP4 tag on {self._get_file().filename}")
                 case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_trkn()
                     self._set_trkn(int(value_list[0]) if value_list[0] else None, track_total)
@@ -199,14 +199,14 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
                 case BasicField.UNKNOWN:
                     raise ValueError("cannot set tag value UNKNOWN")
                 case _:
-                    if tag in TAG_TO_M4A_BYTES_FRAME:
-                        prop = TAG_TO_M4A_BYTES_FRAME[tag]  # type: ignore
-                        tags[prop] = [MP4FreeForm(v.encode("utf-8"), AtomDataType.UTF8) for v in value_list]
+                    if field in TAG_TO_M4A_BYTES_FRAME:
+                        prop = TAG_TO_M4A_BYTES_FRAME[field]  # type: ignore
+                        fields[prop] = [MP4FreeForm(v.encode("utf-8"), AtomDataType.UTF8) for v in value_list]
                     else:
-                        prop = TAG_TO_M4A_TEXT_FRAME[tag]  # pyright: ignore[reportArgumentType]
-                        tags[prop] = value_list
+                        prop = TAG_TO_M4A_TEXT_FRAME[field]  # pyright: ignore[reportArgumentType]
+                        fields[prop] = value_list
 
-    def _ensure_tags(self) -> MP4Tags:
+    def _ensure_tagged_mp4(self) -> MP4Tags:
         if self._file.tags is None:
             self._file.add_tags()
         return self._file.tags  # pyright: ignore[reportReturnType]
@@ -232,12 +232,12 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
         return (track_number if track_number else None, track_total if track_total else None)
 
     def _set_disk(self, disc_number: int | None, disc_total: int | None):
-        tags = self._ensure_tags()
-        tags["disk"] = [(disc_number if disc_number else 0, disc_total if disc_total else 0)]
+        fields = self._ensure_tagged_mp4()
+        fields["disk"] = [(disc_number if disc_number else 0, disc_total if disc_total else 0)]
 
     def _set_trkn(self, track_number: int | None, track_total: int | None):
-        tags = self._ensure_tags()
-        tags["trkn"] = [(track_number if track_number else 0, track_total if track_total else 0)]
+        fields = self._ensure_tagged_mp4()
+        fields["trkn"] = [(track_number if track_number else 0, track_total if track_total else 0)]
 
 
 def _mp4_has_video(path: Path) -> bool:

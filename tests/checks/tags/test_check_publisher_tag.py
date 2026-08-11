@@ -50,12 +50,12 @@ class TestCheckPublisherTag:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[0])
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
+        assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
 
     def test_publisher_different_remove(self, mocker):
         tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
@@ -70,9 +70,9 @@ class TestCheckPublisherTag:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[0])
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
-        assert mock_set_tag.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
+        assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]

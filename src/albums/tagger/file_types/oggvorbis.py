@@ -10,7 +10,7 @@ from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import album_picture_to_flac, scan_flac_picture
 from ..types import BasicField, Picture
-from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
+from ..vorbis import vorbis_comment_fields, vorbis_comment_legacy_fields, vorbis_comment_set_field
 
 
 class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
@@ -51,19 +51,19 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
         self._file.tags["metadata_block_picture"] = new_pictures  # pyright: ignore[reportOptionalSubscript]
 
     @override
-    def get_tags(self):
-        return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+    def get_fields(self):
+        return vorbis_comment_fields(self._file.tags)  # pyright: ignore[reportArgumentType]
 
     @override
-    def get_legacy_tags(self):
+    def get_legacy_fields(self):
         if self._file.tags is not None:
-            return vorbis_comment_legacy_tags(self._file.tags)
+            return vorbis_comment_legacy_fields(self._file.tags)
         else:
             return ()
 
     @override
-    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
-        vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
+        vorbis_comment_set_field(self._file.tags, field, value)  # pyright: ignore[reportArgumentType]
 
     def _get_picture_blocks(self) -> list[str]:
         return self._file.get("metadata_block_picture", [])  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportReturnType]

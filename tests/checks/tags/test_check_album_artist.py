@@ -69,11 +69,11 @@ class TestCheckAlbumArtist:
         assert len(headers) == len(rows[0])  # headers
 
         # we select "B" and it is fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix("B")
         assert fix_result
-        assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "B")])
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "B")])
 
     def test_check_albumartist_require(self, mocker):
         album_complies = Album(
@@ -123,11 +123,11 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, "A")])
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, "A")])
 
     def test_check_albumartist_require_various_various(self, mocker):
         album_complies = Album(
@@ -161,11 +161,11 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (
             Path(album_auto.path) / album_auto.tracks[1].filename,
             [(BasicField.ALBUMARTIST, "Various Artists")],
         )
@@ -218,11 +218,11 @@ class TestCheckAlbumArtist:
         assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, None)])
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, None)])
 
     def test_multiple_albumartist(self):
         album = Album(
@@ -259,11 +259,11 @@ class TestCheckAlbumArtist:
         assert "album artist to use" in result.fixer.prompt
 
         # we select "copy album artist to artist" and it is fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[4])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ARTIST, "Bar")])
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ARTIST, "Bar")])
 
     def test_multiple_albumartist__same_artist_2(self):
         album = Album(

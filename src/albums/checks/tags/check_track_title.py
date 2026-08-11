@@ -21,7 +21,7 @@ class CheckTrackTitle(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         no_title = sum(0 if track.get(BasicField.TITLE, default="") else 1 for track in album.tracks)
@@ -65,6 +65,6 @@ class CheckTrackTitle(Check):
             new_title = self._proposed_title(track)
             if new_title:
                 self.ctx.console.print(f"setting title on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, [(BasicField.TITLE, new_title)])
+                self.tagger.get(album.path).set_basic_fields(file, [(BasicField.TITLE, new_title)])
                 changed = True
         return FixResult.of(changed)

@@ -30,11 +30,11 @@ class TestCheckArtistTag:
         assert result.fixer.options == ["Foo"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
         path = Path(album.path)
-        assert mock_set_basic_tags.call_args_list == [
+        assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.ARTIST, "Foo")]),
             call(path / album.tracks[1].filename, [(BasicField.ARTIST, "Foo")]),
         ]

@@ -53,7 +53,7 @@ BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     # WM/TrackNumber and WM/PartOfSet too but they are not 1:1
 )
 
-TAG_TO_ASF_PROPERTY: Final = dict(BASIC_ASF_PROPERTIES)
+FIELD_TO_ASF_PROPERTY: Final = dict(BASIC_ASF_PROPERTIES)
 
 
 @dataclass(frozen=True)
@@ -134,33 +134,37 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         raise NotImplementedError()
 
     @override
-    def get_tags(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
-        basic_tags: list[Tuple[BasicField, Tuple[str, ...]]] = []
+    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+        basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
-            tags = self._ensure_tags()
-            basic_tags.extend((tag, tuple(self._property_to_text(p) for p in tags[prop])) for tag, prop in BASIC_ASF_PROPERTIES if prop in tags)  # pyright: ignore[reportUnknownVariableType]
+            asf_fields = self._ensure_tagged_asf()
+            basic_fields.extend(
+                (tag, tuple(self._property_to_text(p) for p in asf_fields[prop]))  # pyright: ignore[reportUnknownVariableType]
+                for tag, prop in BASIC_ASF_PROPERTIES
+                if prop in asf_fields
+            )
 
             (track_number, track_total) = self._get_wm_tracknumber()
             if track_number:
-                basic_tags.append((BasicField.TRACKNUMBER, (str(track_number),)))
+                basic_fields.append((BasicField.TRACKNUMBER, (str(track_number),)))
             if track_total:
-                basic_tags.append((BasicField.TRACKTOTAL, (str(track_total),)))
+                basic_fields.append((BasicField.TRACKTOTAL, (str(track_total),)))
 
             (disc_number, disc_total) = self._get_wm_partofset()
             if disc_number is not None:
-                basic_tags.append((BasicField.DISCNUMBER, (str(disc_number),)))
+                basic_fields.append((BasicField.DISCNUMBER, (str(disc_number),)))
             if disc_total is not None:
-                basic_tags.append((BasicField.DISCTOTAL, (str(disc_total),)))
+                basic_fields.append((BasicField.DISCTOTAL, (str(disc_total),)))
 
-        return tuple(basic_tags)
+        return tuple(basic_fields)
 
     @override
-    def _set_tag(self, tag: BasicField | str, value: str | List[str] | None):
-        if not isinstance(tag, BasicField):
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
+        if not isinstance(field, BasicField):
             raise ValueError("asf tagger only uses BasicField")
-        tags = self._ensure_tags()
+        fields = self._ensure_tagged_asf()
         if value is None:
-            match tag:
+            match field:
                 case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(None, disc_total)
@@ -168,7 +172,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, None)
                 case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
-                    logger.warning(f"don't know how to remove {tag.name} from ASF tag in {self._get_file().filename}")
+                    logger.warning(f"don't know how to remove {field.name} from ASF tag in {self._get_file().filename}")
                 case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(None, track_total)
@@ -178,15 +182,15 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicField.UNKNOWN:
                     pass
                 case _:
-                    del tags[TAG_TO_ASF_PROPERTY[tag]]
+                    del fields[FIELD_TO_ASF_PROPERTY[field]]
         else:
             value_list = value if isinstance(value, List) else [value]
-            match tag:
+            match field:
                 case BasicField.COMPILATION:
                     if value_list and value_list[0]:
-                        tags[TAG_TO_ASF_PROPERTY[tag]] = ["1"]
-                    elif TAG_TO_ASF_PROPERTY[tag] in tags:
-                        del tags[TAG_TO_ASF_PROPERTY[tag]]
+                        fields[FIELD_TO_ASF_PROPERTY[field]] = ["1"]
+                    elif FIELD_TO_ASF_PROPERTY[field] in fields:
+                        del fields[FIELD_TO_ASF_PROPERTY[field]]
                 case BasicField.DISCNUMBER:
                     (_, disc_total) = self._get_wm_partofset()
                     self._set_wm_partofset(value_list[0] if value_list[0] else None, disc_total)
@@ -194,7 +198,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
                 case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
-                    raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
+                    raise ValueError(f"cannot set {field.name} in ID3 tag on {self._get_file().filename}")
                 case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)
@@ -204,9 +208,9 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 case BasicField.UNKNOWN:
                     raise ValueError("cannot set tag value UNKNOWN")
                 case _:
-                    tags[TAG_TO_ASF_PROPERTY[tag]] = value_list
+                    fields[FIELD_TO_ASF_PROPERTY[field]] = value_list
 
-    def _ensure_tags(self) -> ASFTags:
+    def _ensure_tagged_asf(self) -> ASFTags:
         if self._file.tags is None:
             self._file.add_tags()
         return self._file.tags
@@ -253,11 +257,11 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         else:
             value = f"{disc_number}/{disc_total}"
 
-        tags = self._ensure_tags()
-        if value is None and "WM/PartOfSet" in tags:
-            del tags["WM/PartOfSet"]
-        elif value is not None and ("WM/PartOfSet" not in tags or tags["WM/PartOfSet"] != [value]):
-            tags["WM/PartOfSet"] = [value]
+        fields = self._ensure_tagged_asf()
+        if value is None and "WM/PartOfSet" in fields:
+            del fields["WM/PartOfSet"]
+        elif value is not None and ("WM/PartOfSet" not in fields or fields["WM/PartOfSet"] != [value]):
+            fields["WM/PartOfSet"] = [value]
 
     def _set_wm_tracknumber(self, track_number: str | None, track_total: str | None):
         if track_number is None and track_total is None:
@@ -269,8 +273,8 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         else:
             value = f"{track_number}/{track_total}"
 
-        tags = self._ensure_tags()
-        if value is None and "WM/TrackNumber" in tags:
-            del tags["WM/TrackNumber"]
-        elif value is not None and ("WM/TrackNumber" not in tags or tags["WM/TrackNumber"] != [value]):
-            tags["WM/TrackNumber"] = [value]
+        fields = self._ensure_tagged_asf()
+        if value is None and "WM/TrackNumber" in fields:
+            del fields["WM/TrackNumber"]
+        elif value is not None and ("WM/TrackNumber" not in fields or fields["WM/TrackNumber"] != [value]):
+            fields["WM/TrackNumber"] = [value]

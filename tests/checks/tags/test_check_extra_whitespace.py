@@ -37,10 +37,10 @@ class TestCheckExtraWhitespace:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert mock_set_tag.call_args_list == [
+        assert mock_set_field.call_args_list == [
             call(BasicField.ARTIST, ["Alice"]),
             call(BasicField.ARTIST, ["Alice"]),
             call(BasicField.TITLE, ["red"]),

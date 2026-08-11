@@ -48,10 +48,10 @@ class TestCheckDiscInTrackNumber:
         assert fixer
         assert fixer.options == [">> Split track number into disc number and track number"]
         assert fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert fixer.fix(fixer.options[fixer.option_automatic_index])
-        assert mock_set_basic_tags.call_count == 3
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[2].filename,
             [(BasicField.DISCNUMBER, "2"), (BasicField.TRACKNUMBER, "1")],
         )

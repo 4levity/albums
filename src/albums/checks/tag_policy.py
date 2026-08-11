@@ -99,10 +99,10 @@ def _fix(ctx: Context, tagger: AlbumTagger, album: Album, tag: BasicField, optio
         path = ctx.config.library / album.path / track.filename
         if value is None and track.has(tag):
             ctx.console.print(f"removing {tag} from {escape(track.filename)}", highlight=False)
-            tagger.set_basic_tags(path, [(tag, None)])
+            tagger.set_basic_fields(path, [(tag, None)])
             changed = True
         if value is not None and (not track.has(tag) or track.get(tag) != (value,)):
             ctx.console.print(f"setting {tag} on {escape(track.filename)}", highlight=False)
-            tagger.set_basic_tags(path, [(tag, value)])
+            tagger.set_basic_fields(path, [(tag, value)])
             changed = True
     return FixResult.of(changed)

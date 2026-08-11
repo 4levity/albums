@@ -52,4 +52,4 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
 
 UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
 
-TAG_TO_ID3_TEXT_FRAME: Final = dict(BASIC_ID3_TEXT_FRAMES)
+FIELD_TO_ID3_TEXT_FRAME: Final = dict(BASIC_ID3_TEXT_FRAMES)

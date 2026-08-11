@@ -32,7 +32,7 @@ class CheckAlbumArtist(Check):
             self.require_redundant = False
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         albumartists: defaultdict[str, int] = defaultdict(int)
@@ -125,18 +125,18 @@ class CheckAlbumArtist(Check):
             if album_artist_value == OPTION_REMOVE_ALBUM_ARTIST:
                 if track.has(BasicField.ALBUMARTIST):
                     self.ctx.console.print(f"removing albumartist from {escape(track.filename)}", highlight=False)
-                    self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ALBUMARTIST, None)])
+                    self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUMARTIST, None)])
                     changed = True
                 # else nothing to remove
             elif album_artist_value == OPTION_COPY_ALBUM_ARTIST_TO_ARTIST:
                 if track.has(BasicField.ALBUMARTIST):
                     self.ctx.console.print(f"copying albumartist to artist in {escape(track.filename)}", highlight=False)
                     albumartist = track.get(BasicField.ALBUMARTIST)[0]
-                    self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ARTIST, albumartist)])
+                    self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ARTIST, albumartist)])
                     changed = True
             elif track.get(BasicField.ALBUMARTIST, default=[]) != [album_artist_value]:
                 self.ctx.console.print(f"setting albumartist on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ALBUMARTIST, album_artist_value)])
+                self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUMARTIST, album_artist_value)])
                 changed = True
             # else nothing to set
 

@@ -47,7 +47,7 @@ class CheckDiscInTrackNumber(Check):
             path = self.ctx.config.library / album.path / track.filename
             self.ctx.console.print(f"setting discnumber and tracknumber on {escape(track.filename)}", highlight=False)
             (discnumber, tracknumber) = self._proposed_disc_and_tracknumber(track)
-            self.tagger.get(album.path).set_basic_tags(path, [(BasicField.DISCNUMBER, discnumber), (BasicField.TRACKNUMBER, tracknumber)])
+            self.tagger.get(album.path).set_basic_fields(path, [(BasicField.DISCNUMBER, discnumber), (BasicField.TRACKNUMBER, tracknumber)])
         return FixResult.CHANGED_ALBUM
 
     def _proposed_disc_and_tracknumber(self, track: Track):

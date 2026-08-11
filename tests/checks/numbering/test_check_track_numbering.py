@@ -87,10 +87,10 @@ class TestCheckTrackNumbering:
         assert fixer
         assert fixer.options == [">> Set tracktotal to number of tracks: 3"]
         assert fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert fixer.fix(fixer.options[fixer.option_automatic_index])
         path = Path(album.path)
-        assert mock_set_basic_tags.call_args_list == [
+        assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "3")]),
             call(path / album.tracks[1].filename, [(BasicField.TRACKTOTAL, "3")]),
         ]
@@ -102,10 +102,10 @@ class TestCheckTrackNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 3 tracks based on filenames"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         path = Path(album.path)
-        assert mock_set_basic_tags.call_args_list == [
+        assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")]),
             call(path / album.tracks[1].filename, [(BasicField.TRACKNUMBER, "2")]),
             call(path / album.tracks[2].filename, [(BasicField.TRACKNUMBER, "3")]),
@@ -125,10 +125,10 @@ class TestCheckTrackNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 2 tracks based on filenames"]
         assert result.fixer.option_automatic_index == 0
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         path = Path(album.path)
-        assert mock_set_basic_tags.call_args_list == [
+        assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")]),
             call(path / album.tracks[1].filename, [(BasicField.TRACKNUMBER, "2")]),
         ]

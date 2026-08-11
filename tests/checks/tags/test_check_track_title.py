@@ -38,12 +38,12 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 4
+        assert mock_set_basic_fields.call_count == 4
         path = Path(album.path)
-        assert mock_set_basic_tags.call_args_list == [
+        assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TITLE, "foo")]),
             call(path / album.tracks[1].filename, [(BasicField.TITLE, "bar")]),
             call(path / album.tracks[2].filename, [(BasicField.TITLE, "baz")]),
@@ -65,11 +65,11 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1  # track 3 could not be fixed
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])
+        assert mock_set_basic_fields.call_count == 1  # track 3 could not be fixed
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])
 
     def test_check_track_title_no_guess(self, mocker):
         album = Album(path="Foobar" + os.sep, tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
@@ -93,8 +93,8 @@ class TestCheckTrackTitle:
         assert result.fixer.options == [">> Use proposed track titles"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])

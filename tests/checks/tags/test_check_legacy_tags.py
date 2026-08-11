@@ -53,7 +53,7 @@ class TestCheckLegacyTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
@@ -62,7 +62,7 @@ class TestCheckLegacyTags:
         assert set(c[0][0] for c in mock_tagger_open.call_args_list) == {"1.flac", "2.flac"}
 
         # Verify the tag operations were performed
-        tag_calls = [c[0] for c in mock_set_tag.call_args_list]
+        tag_calls = [c[0] for c in mock_set_field.call_args_list]
         assert (BasicField.ORGANIZATION, ["ABC"]) in tag_calls
         assert ("label", None) in tag_calls
         assert (BasicField.ALBUMARTIST, ["Artist X"]) in tag_calls
@@ -83,12 +83,12 @@ class TestCheckLegacyTags:
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
-        mock_set_tag = mocker.patch.object(tagger, "set_tag")
+        mock_set_field = mocker.patch.object(tagger, "set_field")
 
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
         # Verify that disctotal was set and totaldiscs removed
-        tag_calls = [c[0] for c in mock_set_tag.call_args_list]
+        tag_calls = [c[0] for c in mock_set_field.call_args_list]
         assert (BasicField.DISCTOTAL, ["2"]) in tag_calls
         assert ("totaldiscs", None) in tag_calls

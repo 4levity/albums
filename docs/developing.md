@@ -109,14 +109,14 @@ File types that use ID3 extend `AbstractId3Tagger`.
 ### Common Tags
 
 The tagger in `albums` only uses the values in `albums.tagger.types.BasicField`.
-In general, all files that advertise basic tag capability are expected to be
+In general, all files that advertise basic field capability are expected to be
 able to read and write values corresponding to each of these.
 
-To add support for a new tag:
+To add support for a new field:
 
 - Add the new common tag to `BasicField`.
 - For FLAC and Ogg Vorbis support, simply use the same name as the Vorbis
-  Comment, or edit `vorbis_comment_tags()` and `vorbis_comment_set_tag()`.
+  Comment, or edit `vorbis_comment_fields()` and `vorbis_comment_set_field()`.
 - For MP3 and AIFF support, add to `AbstractId3Tagger`.
 - Add to all other implementations in `albums.tagger.file_types`
 

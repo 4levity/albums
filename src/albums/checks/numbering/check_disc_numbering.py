@@ -139,11 +139,11 @@ class CheckDiscNumbering(Check):
             path = self.ctx.config.library / album.path / track.filename
             if value is None and track.has(BasicField.DISCTOTAL):
                 self.ctx.console.print(f"removing disctotal from {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(path, [(BasicField.DISCTOTAL, None)])
+                self.tagger.get(album.path).set_basic_fields(path, [(BasicField.DISCTOTAL, None)])
                 changed = True
             if value is not None and (not track.has(BasicField.DISCTOTAL) or int(track.get(BasicField.DISCTOTAL)[0]) != int(value)):
                 self.ctx.console.print(f"setting disctotal on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(path, [(BasicField.DISCTOTAL, value)])
+                self.tagger.get(album.path).set_basic_fields(path, [(BasicField.DISCTOTAL, value)])
                 changed = True
         return FixResult.of(changed)
 
@@ -163,6 +163,6 @@ class CheckDiscNumbering(Check):
             self.ctx.console.print(f"removing {' and '.join(remove_tag.value for remove_tag in remove_tags)} from {escape(track.filename)}")
             with tagger.open(track.filename) as tags:
                 for remove_tag in remove_tags:
-                    tags.set_tag(remove_tag, None)
+                    tags.set_field(remove_tag, None)
             changed = True
         return FixResult.of(changed)

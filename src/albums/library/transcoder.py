@@ -95,7 +95,7 @@ class Transcoder:
         if track.tags or track.pictures:
             with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
                 for tag, value in track.tag_dict().items():
-                    dest_tags.set_tag(tag, value)
+                    dest_tags.set_field(tag, value)
                 if track.pictures:
                     with self._tagger.get(album_path).open(track.filename) as src_tags:
                         for pic, image_data in src_tags.get_pictures():

@@ -34,7 +34,7 @@ class CheckAlbumTag(Check):
         if folder_str in self.ignore_folders:
             return None
 
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         track_album_tags: defaultdict[str, int] = defaultdict(int)
@@ -87,6 +87,6 @@ class CheckAlbumTag(Check):
             file = self.ctx.config.library / album.path / track.filename
             if track.get(BasicField.ALBUM, default=[]) != (option,):
                 self.ctx.console.print(f"setting album on {escape(track.filename)}", highlight=False)
-                self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ALBUM, option)])
+                self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUM, option)])
                 changed = True
         return FixResult.of(changed)

@@ -180,6 +180,6 @@ class CheckZeroPadNumbers(Check):
                     self.ctx.console.print(
                         f"setting {' and '.join(list(name for (name, _) in new_values))} on {escape(track.filename)}", highlight=False
                     )
-                    self.tagger.get(album.path).set_basic_tags(file, new_values)
+                    self.tagger.get(album.path).set_basic_fields(file, new_values)
                     changed = True
         return FixResult.of(changed)

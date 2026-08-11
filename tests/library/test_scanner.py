@@ -370,7 +370,7 @@ class TestScanner:
                 track_id = tracks[0].track_id
 
                 with AlbumTagger(library / created_album.path).open(tracks[0].filename) as tags:
-                    tags.set_tag(BasicField.ARTIST, "test replace track")
+                    tags.set_field(BasicField.ARTIST, "test replace track")
 
                 assert scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()

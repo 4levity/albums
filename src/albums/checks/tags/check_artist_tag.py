@@ -34,7 +34,7 @@ class CheckArtistTag(Check):
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
@@ -88,5 +88,5 @@ class CheckArtistTag(Check):
         for filename in filenames:
             file = self.ctx.config.library / album.path / filename
             self.ctx.console.print(f"setting artist on {escape(filename)}", highlight=False)
-            self.tagger.get(album.path).set_basic_tags(file, [(BasicField.ARTIST, option)])
+            self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ARTIST, option)])
         return FixResult.CHANGED_ALBUM

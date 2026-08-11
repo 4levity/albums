@@ -39,11 +39,11 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 9
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicField.TRACKNUMBER, "09")])
+        assert mock_set_basic_fields.call_count == 9
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicField.TRACKNUMBER, "09")])
 
     def test_check_pad_remove_all_unnecessary(self, mocker):
         album = Album(
@@ -89,11 +89,11 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
             [(BasicField.TRACKNUMBER, "2"), (BasicField.TRACKTOTAL, "2"), (BasicField.DISCNUMBER, "1"), (BasicField.DISCTOTAL, "1")],
         )
@@ -128,11 +128,11 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicField.TRACKNUMBER, "09")])
+        assert mock_set_basic_fields.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicField.TRACKNUMBER, "09")])
 
     def test_check_pad_two_digit_minimum(self, mocker):
         album = Album(
@@ -178,11 +178,11 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 2
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 2
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
             [(BasicField.TRACKNUMBER, "02"), (BasicField.TRACKTOTAL, "02"), (BasicField.DISCNUMBER, "01"), (BasicField.DISCTOTAL, "01")],
         )
@@ -207,7 +207,7 @@ class TestZeroPadNumbers:
         assert result.fixer.table
 
         # automatically fixed
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")])
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")])

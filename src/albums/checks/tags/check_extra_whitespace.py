@@ -15,7 +15,7 @@ class CheckExtraWhitespace(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None  # this check only makes sense for files with common tags
         tags: set[BasicField] = set()
         filenames: set[str] = set()
@@ -47,6 +47,6 @@ class CheckExtraWhitespace(Check):
                     new_values = [v.strip() for v in values]
                     if any(new_values[ix] != v for ix, v in enumerate(values)):
                         self.ctx.console.print(f"Removing whitespace from {tag.value} in {escape(track.filename)}")
-                        tags.set_tag(tag, new_values)
+                        tags.set_field(tag, new_values)
                         changed = True
         return FixResult.of(changed)

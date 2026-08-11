@@ -52,11 +52,11 @@ class TestCheckSingleValueTags:
         ]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
             [(BasicField.ARTIST, ["Alice / Bob"]), (BasicField.TITLE, ["blue / no, yellow"])],
         )
@@ -79,11 +79,11 @@ class TestCheckSingleValueTags:
         assert result.fixer.options[1] == '>> Concatenate unique values into one with "/"'
         assert result.fixer.option_automatic_index is None
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[1])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
             [(BasicField.ARTIST, ["Alice/Bob"]), (BasicField.TITLE, ["blue/no, yellow"])],
         )
@@ -101,11 +101,11 @@ class TestCheckSingleValueTags:
         assert result.fixer.option_automatic_index == 0
         assert result.fixer.options[0] == ">> Remove duplicate values (preserve unique multiple values)"
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[0])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
             [(BasicField.ARTIST, ["Alice", "Bob"]), (BasicField.TITLE, ["blue"])],
         )

@@ -34,11 +34,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")])
 
     def test_multiple_value(self, mocker):
         album = Album(
@@ -52,11 +52,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
 
     def test_non_numeric_value(self, mocker):
         album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "one"})])
@@ -66,11 +66,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
 
     def test_zero_value(self, mocker):
         album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "0"})])
@@ -80,11 +80,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, None)])
 
     def test_multiple_issues(self, mocker):
         album = Album(
@@ -109,11 +109,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        mock_set_basic_tags = mocker.patch.object(AlbumTagger, "set_basic_tags")
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert fix_result
-        assert mock_set_basic_tags.call_count == 1
-        assert mock_set_basic_tags.call_args.args == (
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
             [(BasicField.TRACKNUMBER, "1"), (BasicField.TRACKTOTAL, None), (BasicField.DISCNUMBER, None), (BasicField.DISCTOTAL, None)],
         )

@@ -66,10 +66,10 @@ class TestMp4:
         TestMp4.library = create_library("tagger_mp3", [album])
         TestMp4.tagger = AlbumTagger(TestMp4.library / album.path)
 
-    def test_read_write_m4a_tags(self):
+    def test_read_write_m4a_tag(self):
         with TestMp4.tagger.open(track1.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
             assert not file.has_video()
         assert len(pictures) == 2
         assert pictures[0].type == PictureType.COVER_FRONT
@@ -78,34 +78,34 @@ class TestMp4:
         assert pictures[1].type == PictureType.COVER_FRONT  # always
         assert pictures[1].picture_info.mime_type == "image/jpeg"
         assert pictures[1].picture_info.width == pictures[1].picture_info.height == 401
-        track_tags = track1.tag_dict()
-        assert tags[BasicField.ARTIST] == tuple(track_tags[BasicField.ARTIST])
-        assert tags[BasicField.ALBUMARTIST] == tuple(track_tags[BasicField.ALBUMARTIST])
-        assert tags[BasicField.ALBUM] == tuple(track_tags[BasicField.ALBUM])
-        assert tags[BasicField.TITLE] == tuple(track_tags[BasicField.TITLE])
-        assert tags[BasicField.GENRE] == tuple(track_tags[BasicField.GENRE])
-        assert tags[BasicField.TRACKNUMBER] == tuple(track_tags[BasicField.TRACKNUMBER])
-        assert tags[BasicField.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMID])
-        assert tags[BasicField.MUSICBRAINZ_TRACKID] == tuple(track_tags[BasicField.MUSICBRAINZ_TRACKID])
-        assert tags[BasicField.ORGANIZATION] == tuple(track_tags[BasicField.ORGANIZATION])
-        assert tags[BasicField.BARCODE] == tuple(track_tags[BasicField.BARCODE])
-        assert tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        track_fields = track1.tag_dict()
+        assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
+        assert fields[BasicField.ALBUMARTIST] == tuple(track_fields[BasicField.ALBUMARTIST])
+        assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])
+        assert fields[BasicField.TITLE] == tuple(track_fields[BasicField.TITLE])
+        assert fields[BasicField.GENRE] == tuple(track_fields[BasicField.GENRE])
+        assert fields[BasicField.TRACKNUMBER] == tuple(track_fields[BasicField.TRACKNUMBER])
+        assert fields[BasicField.MUSICBRAINZ_ALBUMID] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMID])
+        assert fields[BasicField.MUSICBRAINZ_TRACKID] == tuple(track_fields[BasicField.MUSICBRAINZ_TRACKID])
+        assert fields[BasicField.ORGANIZATION] == tuple(track_fields[BasicField.ORGANIZATION])
+        assert fields[BasicField.BARCODE] == tuple(track_fields[BasicField.BARCODE])
+        assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
 
     def test_mp4_audio(self):
         with TestMp4.tagger.open(track2.filename) as file:
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
             assert not file.has_video()
-        track_tags = track2.tag_dict()
-        assert tags[BasicField.TRACKNUMBER] == tuple(track_tags[BasicField.TRACKNUMBER])
+        track_fields = track2.tag_dict()
+        assert fields[BasicField.TRACKNUMBER] == tuple(track_fields[BasicField.TRACKNUMBER])
 
     def test_mp4_video(self):
         with TestMp4.tagger.open(video.filename) as file:
             assert file.has_video()
             pictures = [pic for (pic, _) in file.get_pictures()]
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
             assert len(pictures) == 0
-            assert len(tags) == 0
-            file.set_tag(BasicField.TRACKNUMBER, "3")
+            assert len(fields) == 0
+            file.set_field(BasicField.TRACKNUMBER, "3")
             image_data = make_image_data(600, 600, "JPEG")
             pic = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.COVER_FRONT, "")
             file.add_picture(pic, image_data)
@@ -113,10 +113,10 @@ class TestMp4:
         with TestMp4.tagger.open(video.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
             assert pictures == [pic]
-            assert file.get_tags() == ((BasicField.TRACKNUMBER, ("3",)),)
+            assert file.get_fields() == ((BasicField.TRACKNUMBER, ("3",)),)
 
     def test_update_mp4_tags(self):
-        TestMp4.tagger.set_basic_tags(
+        TestMp4.tagger.set_basic_fields(
             TestMp4.library / album.path / track1.filename,
             [
                 (BasicField.ARTIST, "a1"),
@@ -132,104 +132,104 @@ class TestMp4:
             ],
         )
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicField.ARTIST] == ("a1",)
-        assert tags[BasicField.ALBUMARTIST] == ("a2",)
-        assert tags[BasicField.ALBUM] == ("a3",)
-        assert tags[BasicField.TITLE] == ("t",)
-        assert tags[BasicField.GENRE] == ("Country",)
-        assert tags[BasicField.MUSICBRAINZ_ALBUMID] == (UUID1,)
-        assert tags[BasicField.MUSICBRAINZ_TRACKID] == (UUID0,)
-        assert tags[BasicField.ORGANIZATION] == ("Q",)
-        assert tags[BasicField.BARCODE] == ("0000",)
-        assert tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.ARTIST] == ("a1",)
+        assert fields[BasicField.ALBUMARTIST] == ("a2",)
+        assert fields[BasicField.ALBUM] == ("a3",)
+        assert fields[BasicField.TITLE] == ("t",)
+        assert fields[BasicField.GENRE] == ("Country",)
+        assert fields[BasicField.MUSICBRAINZ_ALBUMID] == (UUID1,)
+        assert fields[BasicField.MUSICBRAINZ_TRACKID] == (UUID0,)
+        assert fields[BasicField.ORGANIZATION] == ("Q",)
+        assert fields[BasicField.BARCODE] == ("0000",)
+        assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
 
     def test_update_mp4_compilation(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-            assert BasicField.COMPILATION not in tags
-            file.set_tag(BasicField.COMPILATION, "1")  # normal enable
+            fields = dict(file.get_fields())
+            assert BasicField.COMPILATION not in fields
+            file.set_field(BasicField.COMPILATION, "1")  # normal enable
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-            assert tags.get(BasicField.COMPILATION) == ("1",)
+            fields = dict(file.get_fields())
+            assert fields.get(BasicField.COMPILATION) == ("1",)
 
-            file.set_tag(BasicField.COMPILATION, None)  # normal disable
+            file.set_field(BasicField.COMPILATION, None)  # normal disable
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-            assert BasicField.COMPILATION not in tags
+            fields = dict(file.get_fields())
+            assert BasicField.COMPILATION not in fields
 
-            file.set_tag(BasicField.COMPILATION, "anything")
+            file.set_field(BasicField.COMPILATION, "anything")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-            assert tags.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
+            fields = dict(file.get_fields())
+            assert fields.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
 
     def test_write_mp4_tracktotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicField.TRACKNUMBER] == ("1",)
-        assert tags[BasicField.TRACKTOTAL] == ("3",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("1",)
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
 
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.TRACKTOTAL, "02")
-            tags = dict(file.get_tags())
-        assert tags[BasicField.TRACKNUMBER] == ("1",)
-        assert tags[BasicField.TRACKTOTAL] == ("2",)  # tag cannot store leading 0
+            file.set_field(BasicField.TRACKTOTAL, "02")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("1",)
+        assert fields[BasicField.TRACKTOTAL] == ("2",)  # tag cannot store leading 0
 
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.TRACKNUMBER, "3")
-            tags = dict(file.get_tags())
-        assert tags[BasicField.TRACKNUMBER] == ("3",)
-        assert tags[BasicField.TRACKTOTAL] == ("2",)
+            file.set_field(BasicField.TRACKNUMBER, "3")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("3",)
+        assert fields[BasicField.TRACKTOTAL] == ("2",)
 
         # write both at once
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.TRACKNUMBER, "2")
-            file.set_tag(BasicField.TRACKTOTAL, "3")
+            file.set_field(BasicField.TRACKNUMBER, "2")
+            file.set_field(BasicField.TRACKTOTAL, "3")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicField.TRACKNUMBER] == ("2",)
-        assert tags[BasicField.TRACKTOTAL] == ("3",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("2",)
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
 
         # remove total
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.TRACKTOTAL, None)
-            tags = dict(file.get_tags())
-        assert tags[BasicField.TRACKNUMBER] == ("2",)
-        assert BasicField.TRACKTOTAL not in tags
+            file.set_field(BasicField.TRACKTOTAL, None)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("2",)
+        assert BasicField.TRACKTOTAL not in fields
 
     def test_write_mp4_disctotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicField.DISCNUMBER] == ("2",)
-        assert tags[BasicField.DISCTOTAL] == ("2",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)
 
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.DISCTOTAL, "1")
-            tags = dict(file.get_tags())
-        assert tags[BasicField.DISCNUMBER] == ("2",)
-        assert tags[BasicField.DISCTOTAL] == ("1",)
+            file.set_field(BasicField.DISCTOTAL, "1")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("1",)
 
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.DISCNUMBER, "1")
-            tags = dict(file.get_tags())
-        assert tags[BasicField.DISCNUMBER] == ("1",)
-        assert tags[BasicField.DISCTOTAL] == ("1",)
+            file.set_field(BasicField.DISCNUMBER, "1")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("1",)
+        assert fields[BasicField.DISCTOTAL] == ("1",)
 
         # write both at once
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.DISCNUMBER, "2")
-            file.set_tag(BasicField.DISCTOTAL, "2")
+            file.set_field(BasicField.DISCNUMBER, "2")
+            file.set_field(BasicField.DISCTOTAL, "2")
         with TestMp4.tagger.open(track1.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicField.DISCNUMBER] == ("2",)
-        assert tags[BasicField.DISCTOTAL] == ("2",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)
 
         # remove total
         with TestMp4.tagger.open(track1.filename) as file:
-            file.set_tag(BasicField.DISCTOTAL, None)
-            tags = dict(file.get_tags())
-        assert tags[BasicField.DISCNUMBER] == ("2",)
-        assert BasicField.DISCTOTAL not in tags
+            file.set_field(BasicField.DISCTOTAL, None)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert BasicField.DISCTOTAL not in fields
 
     def test_remove_one_m4a_pic(self):
         with TestMp4.tagger.open(track1.filename) as file:

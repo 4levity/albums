@@ -54,7 +54,7 @@ class CheckMusicBrainzTags(Check):
             raise ValueError("musicbrainz-tags.remove_deprecated must be enabled if remove_all is enabled")
 
     def check(self, album: Album):
-        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_TAGS) for track in album.tracks):
+        if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
         if not any(any(track.has(mbid) for mbid in ALL_MBID_TAGS) for track in album.tracks):
@@ -106,6 +106,6 @@ class CheckMusicBrainzTags(Check):
                 self.ctx.console.print(f"Removing MusicBrainz tags ({', '.join(remove)}) from {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tags:
                     for tag_to_remove in remove:
-                        tags.set_tag(tag_to_remove, None)
+                        tags.set_field(tag_to_remove, None)
                 changed = True
         return FixResult.of(changed)

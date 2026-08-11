@@ -10,7 +10,7 @@ from albums.entities import Album, Track, TrackPicture
 from albums.picture.format import mime_type_to_format
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField, Picture
-from albums.tagger.vorbis import LEGACY_VORBIS_TAGS
+from albums.tagger.vorbis import LEGACY_VORBIS_FIELDS
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,
@@ -22,7 +22,7 @@ from .empty_files import (
     EMPTY_WMA_FILE_BYTES,
 )
 
-LEGACY_TAG_MAP: Mapping[str, BasicField] = dict(LEGACY_VORBIS_TAGS)
+LEGACY_TAG_MAP: Mapping[str, BasicField] = dict(LEGACY_VORBIS_FIELDS)
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 
@@ -53,11 +53,11 @@ def create_track_file(path: Path, spec: Track):
             represented_by_legacy_tags: Set[BasicField] = set()
             for tag_name in spec.legacy_tags:
                 basic_tag = LEGACY_TAG_MAP[tag_name]
-                tags.set_tag(tag_name, spec_tags[basic_tag])
+                tags.set_field(tag_name, spec_tags[basic_tag])
                 represented_by_legacy_tags.add(basic_tag)
             for tag_name, values in spec_tags.items():
                 if tag_name not in represented_by_legacy_tags:
-                    tags.set_tag(tag_name, list(values))
+                    tags.set_field(tag_name, list(values))
 
 
 def create_picture_file(path: Path, width: int = 400, height: int = 400, color: str = "blue"):
