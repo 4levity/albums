@@ -84,10 +84,10 @@ The folder name format is a template string. The template substitutions are:
 
 ### track-filename
 
-Track filenames should match tags. Typically they include the track number and
-title. They start with the disc number if part of a set, and include the artist
-name if the album is a compilation. Filenames should be valid, as described by
-`path_compatibility` and related settings in [Usage](./usage.md).
+Track filenames should match tag fields. Typically they include the track number
+and title. They start with the disc number if part of a set, and include the
+artist name if the album is a compilation. Filenames should be valid, as
+described by `path_compatibility` and related settings in [Usage](./usage.md).
 
 The filename format is a template string. The template substitutions are:
 
@@ -105,9 +105,9 @@ The filename format is a template string. The template substitutions are:
 <!-- pyml enable line-length -->
 
 The zero-padding on track number and disc number (if any) normally comes from
-formatting applied to the corresponding tag value. `albums` can format the tags
+formatting applied to the corresponding field. `albums` can format the fields
 with the `zero-pad-numbers` check/fix. But in some formats like **M4A**, the
-tracknumber and discnumber tags don't support formatting. For such formats, if
+tracknumber and discnumber fields don't support formatting. For such formats, if
 the `zero-pad-numbers` check is enabled, the `tracknumber_pad` and
 `discnumber_pad` options from _that_ check will be used to generate possibly
 zero-padded `$tracknumber` and `$discnumber` substitutions in _this_ check.
@@ -167,15 +167,15 @@ automatic.
 
 ## Checks: Numbering
 
-Track number and disc number tag issues.
+Track number and disc number field issues.
 
 ### disc-in-track-number
 
-If the disc number and track number are combined in the track number tag with a
-dash (i.e. track number="2-03") instead of being in separate tags, this is
+If the disc number and track number are combined in the track number field with
+a dash (i.e. track number="2-03") instead of being in separate fields, this is
 treated as an error. Subsequent checks require track numbers to be numeric.
 
-**Automatic fix**: Split the values into track number and disc number tags.
+**Automatic fix**: Split the values into track number and disc number fields.
 
 ### invalid-track-or-disc-number
 
@@ -190,16 +190,17 @@ have a single value and that value should be a positive number (0 is not valid).
 
     Requires the `disc-in-track-number` check to pass first.
 
-**Automatic fix**: For each of the noted tags in each track, discard all values
-that are non-numeric or 0. If exactly one unique value remains, save it.
-Otherwise, delete the tag.
+**Automatic fix**: For each of the noted fields in each track, discard all
+values that are non-numeric or 0. If exactly one unique value remains, save it.
+Otherwise, delete the field.
 
 ### disc-numbering
 
 Reports on issues with disc number and disc total (`TPOS` in ID3). Optionally,
-removes redundant disc number tag for sets of one. See configuration to control
-whether multiple disc sets should be required to have all tracks in one folder.
-Mismatching disc total values are one reason players incorrectly split albums.
+removes redundant disc number field for sets of one. See configuration to
+control whether multiple disc sets should be required to have all tracks in one
+folder. Mismatching disc total values are one reason players incorrectly split
+albums.
 
 Rules:
 
@@ -219,7 +220,7 @@ Rules:
     pass first.
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
-the tag. If the policy is "always", and a consistent total is set on some
+the field. If the policy is "always", and a consistent total is set on some
 tracks, set the same total on the others.
 
 <!-- pyml disable line-length -->
@@ -227,8 +228,8 @@ tracks, set the same total on the others.
 | Option = default                          | Description                                                     |
 | ----------------------------------------- | --------------------------------------------------------------- |
 | `discs_in_separate_folders` = **true**    | if true, discs from one album may be stored in separate folders |
-| `remove_redundant_discnumber` = **false** | if true, disc number tag "1" can be removed if no other discs   |
-| `disctotal_policy` = `"consistent"`       | Set the tag presence policy for disc total                      |
+| `remove_redundant_discnumber` = **false** | if true, disc number field "1" can be removed if no other discs |
+| `disctotal_policy` = `"consistent"`       | Set the field presence policy for disc total                    |
 
 <!-- pyml enable line-length -->
 
@@ -265,20 +266,20 @@ The rules are:
 
     Requires the `disc-numbering` check to pass first.
 
-**Automatic fix** for missing track numbers: If track number tags are missing
+**Automatic fix** for missing track numbers: If track number fields are missing
 from some tracks but all track numbers can be guessed from the filename,
-recreate track number tags from filenames.
+recreate track number fields from filenames.
 
 **Automatic fix** for track total policy: If the policy is "never", always
-remove the tag. If the policy is "always", and a consistent total is set on some
-tracks, set the same total on the others.
+remove the field. If the policy is "always", and a consistent total is set on
+some tracks, set the same total on the others.
 
 <!-- pyml disable line-length -->
 
 | Option = default                     | Description                                             |
 | ------------------------------------ | ------------------------------------------------------- |
 | `ignore_folders` = `["misc"]`        | in all folders with these names, ignore track numbering |
-| `tracktotal_policy` = `"consistent"` | Set the tag presence policy for track total             |
+| `tracktotal_policy` = `"consistent"` | Set the field presence policy for track total           |
 
 <!-- pyml enable line-length -->
 
@@ -296,11 +297,12 @@ disc number, disc total) are only stored as plain unformatted numbers.
 
     Requires the `invalid-track-or-disc-number` check to pass first.
 
-**Automatic fix**: If no major problems detected in relevant tags, apply policy.
+**Automatic fix**: If no major problems detected in relevant fields, apply
+policy.
 
-Choose a policy for each tag. The policy options are:
+Choose a policy for each field. The policy options are:
 
-- **"ignore"**: don't check this tag
+- **"ignore"**: don't check this field
 - **"never"**: do not use leading zeros
 - **"if_needed"**: leading zeros when required for all values to have the same
   number of digits (same as "never" for track/disc totals)
@@ -328,7 +330,7 @@ None of the basic fields like album, artist, title, track number, etc. should
 have extra spaces or other whitespace characters at the beginning or end.
 
 **Automatic fix**: Remove whitespace from the beginning and end of all values
-for all supported basic text tags.
+for all supported basic text fields.
 
 ### legacy-fields
 
@@ -363,8 +365,8 @@ options.
 
 ### album-artist
 
-The "album artist" tag (e.g. `albumartist`, `TPE2`) allows many media players to
-group tracks in the same album when the "artist" is not the same on all the
+The "album artist" field (e.g. `albumartist`, `TPE2`) allows many media players
+to group tracks in the same album when the "artist" is not the same on all the
 tracks.
 
 Rules:
@@ -373,7 +375,7 @@ Rules:
   artist.
 - If any track has album artist, all tracks should have the same album artist.
 
-The fix offers candidates found in the tags plus the option "Various Artists".
+The fix offers candidates found in the fields plus the option "Various Artists".
 It can also apply a policy from options below.
 
 !!!success "Dependency"
@@ -450,7 +452,7 @@ automatic fix will remove them. And if `automatic_concatenate` is enabled
 
 ### track-title
 
-Each track should have at least one title tag. This check doesn't care if a
+Each track should have at least one title field. This check doesn't care if a
 track has more than one title. If the track doesn't have a title, it can be
 guessed from the filename, as long as the filename looks similar to one of these
 examples:
@@ -465,14 +467,14 @@ If the filename looks like a track number only, no title guess will be made.
 However, if the title doesn't match any recognized pattern, the guess will be
 the whole filename except for the extension.
 
-**Automatic fix**: If every tag that has a missing title also has a filename
+**Automatic fix**: If every file that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
 
 ### genre-present
 
-This check applies a user-defined policy for genre tags. By default, if genre is
-present on any track, the same genre must be present on all tracks in the album.
-The presence policy options are:
+This check applies a user-defined policy for genre fields. By default, if genre
+is present on any track, the same genre must be present on all tracks in the
+album. The presence policy options are:
 
 - **"consistent"**: either all tracks have genre, or none do
 - **"always"**: all tracks should have genre
@@ -486,7 +488,7 @@ genre on the others.
 
 | Option = default                   | Description                                                  |
 | ---------------------------------- | ------------------------------------------------------------ |
-| `presence` = `"consistent"`        | Set the tag presence policy for genre                        |
+| `presence` = `"consistent"`        | Set the field presence policy for genre                      |
 | `per_track` = **false**            | If **true** genre may be different on each track in an album |
 | `select_genres` = `["Blues", ...]` | List of genre options to display - edit to suit preferences  |
 
@@ -506,15 +508,15 @@ an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
 interpret this as two separate albums even if Other Fields are all the same.
-This check reports when those tags are not set consistently across the album.
+This check reports when those fields are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
 MusicBrainz, you might want to remove all MusicBrainz fields to avoid conflicts
-between them and the standard tags. If you do use MusicBrains, you may want to
+between them and the standard fields. If you do use MusicBrains, you may want to
 remove deprecated MusicBrainz fields (`MusicBrainz TRM Id`).
 
 **Automatic fix**: If `MusicBrainz Album Id` or `MusicBrainz Album Artist Id` is
-not the same on all tracks (or not set on every track), remove that tag from
+not the same on all tracks (or not set on every track), remove that field from
 every track.
 
 **Automatic fix**: If `remove_all` is enabled, remove all MusicBrainz fields.
@@ -533,28 +535,29 @@ MusicBrainz fields.
 
 ## Other Fields: Per Album
 
-The checks in this section each check a different tag corresponding to the name
-of the check, but they also share a purpose: if one of these tags is set
+The checks in this section each check a different field corresponding to the
+name of the check, but they also share a purpose: if one of these fields is set
 inconsistently on tracks in an album, some players treat this as distinct
-albums. So each of these tags should be set to the same value, or not set.
+albums. So each of these fields should be set to the same value, or not set.
 
-These checks apply a user-defined policy for the corresponding tags. The
+These checks apply a user-defined policy for the corresponding fields. The
 presence policy options are:
 
-- **"consistent"**: either all tracks have the tag, or none do
-- **"always"**: all tracks should have the tag
-- **"never"**: the tag should be removed
+- **"consistent"**: either all tracks have the field, or none do
+- **"always"**: all tracks should have the field
+- **"never"**: the field should be removed
 
 If any track has a value, then all values must be the same.
 
-**Automatic fix** If the policy is "never", always remove the tag. If the policy
-is "consistent" or "always", and a consistent value is set but only on some
-tracks, set that value on the tracks which have no value. And if the policy is
-"consistent" but no single value is identified, remove the tag from all tracks.
+**Automatic fix** If the policy is "never", always remove the field. If the
+policy is "consistent" or "always", and a consistent value is set but only on
+some tracks, set that value on the tracks which have no value. And if the policy
+is "consistent" but no single value is identified, remove the field from all
+tracks.
 
-| Option = default            | Description                 |
-| --------------------------- | --------------------------- |
-| `presence` = `"consistent"` | Set the tag presence policy |
+| Option = default            | Description                   |
+| --------------------------- | ----------------------------- |
+| `presence` = `"consistent"` | Set the field presence policy |
 
 ### publisher
 
@@ -566,7 +569,7 @@ See "Other Fields: Per Album" above for common behavior of this check.
 
 ### album-sort, album-artist-sort, barcode, compilation
 
-See "Other Fields: Per Album" above for details on these per-album tag checks.
+See "Other Fields: Per Album" above for details on these per-album field checks.
 
 ### release-country, release-type
 

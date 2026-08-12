@@ -10,7 +10,7 @@ icon: lucide/flask-conical
   in-place, 2. use temp dir 3. copy to library, then fix)
 - Select/filter albums based on stream info, recent access, etc
 - Support additional file formats
-- Dynamic collections e.g. by tag value or partial path
+- Dynamic collections e.g. by field value or partial path
 - Option to use ID3 2.3 instead of 2.4 (if people still do that?)
 - Improve Unicode support (e.g. case insensitive comparisons)
 - Localize interface (per volunteer)

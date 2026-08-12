@@ -24,7 +24,7 @@ class BaseCheckFieldPerAlbum(Check):
     # the value for the album can be a multi-value (still needs to be the same on all tracks)
     tuple_value: bool = False
 
-    # subclass may define additional config items, as well as description to use instead of tag.value
+    # subclass may define additional config items, as well as description to use instead of just the field name
     default_config = {"enabled": True, "presence": "consistent"}
     field_description: str = ""
 

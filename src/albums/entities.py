@@ -39,7 +39,7 @@ class FieldV(Base):
 
 
 class LegacyFieldEntity(Base):
-    """Stores legacy/deprecated field names used by a track, indicating the tag should be updated.
+    """Stores legacy/deprecated field names used by a track, indicating the field should be updated.
 
     Attributes:
         track_legacy_tag_id: Primary key.
@@ -162,7 +162,7 @@ class Track(Base):
         """Return all stored fields grouped by :class:`~.tagger.types.BasicField` key.
 
         Returns:
-            Mapping where each value is a list of frame text for that tag name.
+            Mapping where each value is a list of frame text for that field.
         """
         map_fields: dict[BasicField, List[str]] = {}
         for tag_entity in self.fields:
@@ -170,7 +170,7 @@ class Track(Base):
         return map_fields
 
     def has(self, field: BasicField) -> bool:
-        """Return ``True`` when at least one value for *tag* exists.
+        """Return ``True`` when at least one value for *field* exists.
 
         Args:
             field: The :class:`~.tagger.types.BasicField` to check for.
@@ -182,7 +182,7 @@ class Track(Base):
     @overload
     def get(self, field: BasicField, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
     def get(self, field: BasicField, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
-        """Retrieve all values for *tag*, optionally with a default if no values available.
+        """Retrieve all values for *field*, optionally with a default if no values available.
 
         If no default is specified and no values exist, raises ``KeyError``.
 

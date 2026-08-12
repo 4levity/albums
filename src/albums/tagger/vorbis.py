@@ -63,7 +63,7 @@ def vorbis_comment_set_field(file_fields: VCommentDict, field: BasicField | str,
         value_list = value if isinstance(value, list) else [value]
         match field:
             case BasicField.UNKNOWN:
-                raise ValueError("cannot set tag value UNKNOWN")
+                raise ValueError("cannot set field UNKNOWN")
             case BasicField.COMPILATION:
                 if value_list and value_list[0]:
                     file_fields[field_name] = ["1"]

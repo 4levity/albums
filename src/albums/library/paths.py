@@ -27,14 +27,14 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
     if unknown_identifiers:
         logger.warning(f"ignoring unknown template identifiers: {', '.join(unknown_identifiers)}")
 
-    tag_values: defaultdict[BasicField, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
+    field_value_count: defaultdict[BasicField, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
     for track in album.tracks:
-        for tag, values in ((k, v) for k, v in track.field_dict().items() if k in {BasicField.ALBUM, BasicField.ALBUMARTIST, BasicField.ARTIST}):
+        for field, values in ((k, v) for k, v in track.field_dict().items() if k in {BasicField.ALBUM, BasicField.ALBUMARTIST, BasicField.ARTIST}):
             for value in values:
-                tag_values[tag][value] += 1
-    tag_values_by_freq = dict(
-        (tag, sorted(((value, count) for value, count in value_map.items()), key=lambda vc: vc[1], reverse=True))
-        for tag, value_map in tag_values.items()
+                field_value_count[field][value] += 1
+    values_by_freq = dict(
+        (field, sorted(((value, count) for value, count in value_map.items()), key=lambda vc: vc[1], reverse=True))
+        for field, value_map in field_value_count.items()
     )
     artist_v = ""
     various = False
@@ -44,15 +44,15 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
         folder = folder.replace("/", ctx.config.path_replace_slash)
         return sanitize_filename(folder, replacement_text=ctx.config.path_replace_invalid, platform=ctx.config.path_compatibility)
 
-    if BasicField.ALBUMARTIST in tag_values_by_freq:
-        albumartists = tag_values_by_freq[BasicField.ALBUMARTIST]
+    if BasicField.ALBUMARTIST in values_by_freq:
+        albumartists = values_by_freq[BasicField.ALBUMARTIST]
         artist_v = safe_path_element(albumartists[0][0])
         if len(albumartists) > 1 and using_artist:
             logger.warning(f"generating library path: more than one album artist value, using {artist_v}")
-        if len(tag_values_by_freq.get(BasicField.ARTIST, [])) > 1:
+        if len(values_by_freq.get(BasicField.ARTIST, [])) > 1:
             various = True
-    elif BasicField.ARTIST in tag_values_by_freq:
-        artists = tag_values_by_freq[BasicField.ARTIST]
+    elif BasicField.ARTIST in values_by_freq:
+        artists = values_by_freq[BasicField.ARTIST]
         artist_v = safe_path_element(artists[0][0])
         if len(artists) > 1:
             various = True
@@ -64,8 +64,8 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
 
     album_v = ""
     if "album" in used_identifiers:
-        if BasicField.ALBUM in tag_values_by_freq:
-            albums = tag_values_by_freq[BasicField.ALBUM]
+        if BasicField.ALBUM in values_by_freq:
+            albums = values_by_freq[BasicField.ALBUM]
             album_v = safe_path_element(albums[0][0])
             if len(albums) > 1:
                 logger.warning(f"generating library path: more than one album artist value, using {album_v}")

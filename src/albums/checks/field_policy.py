@@ -86,7 +86,7 @@ def check_policy(
         return CheckResult(f"{field} policy={policy.name} but it appears on tracks", fixer)
     elif policy == Policy.CONSISTENT and on_all_tracks != on_any_tracks:
         return CheckResult(f"{field} policy={policy.name} but it is on some tracks and not others", fixer)
-    raise RuntimeError(f"internal error! tag={field.value}, policy={policy.name}, on_all_tracks={on_all_tracks}, on_any_tracks={on_any_tracks}")
+    raise RuntimeError(f"internal error! field={field.value}, policy={policy.name}, on_all_tracks={on_all_tracks}, on_any_tracks={on_any_tracks}")
 
 
 def _fix(ctx: Context, tagger: AlbumTagger, album: Album, field: BasicField, option: str) -> FixResult:

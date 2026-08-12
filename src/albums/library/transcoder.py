@@ -93,13 +93,13 @@ class Transcoder:
         run_ffmpeg(["-i", track.filename, *self._ffmpeg_options, str(dest)], album_path)
 
         if track.fields or track.pictures:
-            with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
-                for tag, value in track.field_dict().items():
-                    dest_tags.set_field(tag, value)
+            with self._tagger.get(dest.parent).open(dest.name) as dest_fields:
+                for field, value in track.field_dict().items():
+                    dest_fields.set_field(field, value)
                 if track.pictures:
                     with self._tagger.get(album_path).open(track.filename) as src_tags:
                         for pic, image_data in src_tags.get_pictures():
-                            dest_tags.add_picture(pic, image_data)
+                            dest_fields.add_picture(pic, image_data)
 
     def _initialize(self):
         if self.initialized:

@@ -114,7 +114,7 @@ able to read and write values corresponding to each of these.
 
 To add support for a new field:
 
-- Add the new common tag to `BasicField`.
+- Add the new common field to `BasicField`.
 - For FLAC and Ogg Vorbis support, simply use the same name as the Vorbis
   Comment, or edit `vorbis_comment_fields()` and `vorbis_comment_set_field()`.
 - For MP3 and AIFF support, add to `AbstractId3Tagger`.

@@ -101,7 +101,7 @@ class Importer:
         )
 
     def _check_existing_destination(self, album: Album, library_paths: Sequence[str]) -> Tuple[bool, bool]:
-        # TODO check for duplicate album by tag values too
+        # TODO check for duplicate album by field values too
         existing = next((path for path in library_paths if (self._parent_context.config.library / path).exists()), None)
         if existing is None:
             existing = album_in_library(self.ctx, album)
