@@ -9,10 +9,10 @@ from albums.tagger.types import BasicField
 
 
 class TestMigration16LegacyTags:
-    """Test that migration 16 migrates legacy vorbis tag names to canonical BasicField field names."""
+    """Test that migration 16 migrates legacy vorbis field names to canonical BasicField field names."""
 
     def test_legacy_tags_migrated(self):
-        """Test basic migration of legacy tags to canonical names."""
+        """Test basic migration of legacy fields to canonical names."""
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
@@ -29,12 +29,12 @@ class TestMigration16LegacyTags:
                 track2_id = album.tracks[1].track_id
                 session.commit()
 
-            # Insert legacy tags directly into the database to simulate pre-migration state
+            # Insert legacy fields directly into the database to simulate pre-migration state
             with db.begin() as conn:
-                # Track 1 has both canonical and legacy tags for artist
+                # Track 1 has both canonical and legacy fields for artist
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track1_id}, 'album artist', 'LegacyArtist');"))
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track1_id}, 'publisher', 'PublisherVal');"))
-                # Track 2 has legacy-only tags
+                # Track 2 has legacy-only fields
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track2_id}, 'label', 'LabelVal');"))
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track2_id}, 'totaldiscs', '3');"))
 
@@ -42,7 +42,7 @@ class TestMigration16LegacyTags:
             schema.migrate(db, quiet=True, target_version=16)
 
             with Session(db) as session:
-                # Verify legacy tags were recorded in track_legacy_tag
+                # Verify legacy fields were recorded in track_legacy_tag
                 legacy_tags = session.execute(text("SELECT track_id, tag_name FROM track_legacy_tag ORDER BY track_id, tag_name;")).fetchall()
                 assert len(legacy_tags) == 4
                 assert (track1_id, "album artist") in [(r.track_id, r.tag_name) for r in legacy_tags]
@@ -65,7 +65,7 @@ class TestMigration16LegacyTags:
                 assert (BasicField.ORGANIZATION.value, "LabelVal") in track2_tags  # migrated from "label"
                 assert (BasicField.DISCTOTAL.value, "3") in track2_tags  # migrated from "totaldiscs"
 
-            # Verify old legacy tag rows were deleted
+            # Verify old legacy fields rows were deleted
             with Session(db) as session:
                 legacy_rows = session.execute(
                     text("SELECT name FROM track_tag WHERE name IN ('album artist', 'label', 'publisher', 'totaldiscs');")
@@ -107,7 +107,7 @@ class TestMigration16LegacyTags:
             db.dispose()
 
     def test_noop_when_no_legacy_tags(self):
-        """Migration should be a no-op when there are no legacy tags."""
+        """Migration should be a no-op when there are no legacy fields."""
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
@@ -125,14 +125,14 @@ class TestMigration16LegacyTags:
                 assert tag_rows[0].name == BasicField.ALBUMARTIST.value
                 assert tag_rows[0].value == "Artist"
 
-                # No legacy tags recorded
+                # No legacy fields recorded
                 legacy_count = session.scalar(text("SELECT COUNT(*) FROM track_legacy_tag;"))
                 assert legacy_count == 0
         finally:
             db.dispose()
 
     def test_both_label_and_publisher_migrate_to_organization(self):
-        """Verify both 'label' and 'publisher' legacy tags migrate to ORGANIZATION without creating duplicates."""
+        """Verify both 'label' and 'publisher' legacy fields migrate to ORGANIZATION without creating duplicates."""
         db = connection.open(connection.MEMORY, version=15)
         try:
             with Session(db) as session:
@@ -171,7 +171,7 @@ class TestMigration16LegacyTags:
 
 
 class TestMigration17CheckRename:
-    """Test that migration 17 renames check 'album-tag' to 'album-field'."""
+    """Test that migration 17 renames check 'album-tag' to 'album' and single-value-fields.tags to single-value-fields.values."""
 
     def test_check_name_renamed_in_ignore_table(self):
         """Test that album_ignore_check entries with old check name are updated."""
@@ -197,7 +197,7 @@ class TestMigration17CheckRename:
             with Session(db) as session:
                 ignore_rows = session.execute(text("SELECT check_name FROM album_ignore_check WHERE album_id = :aid;"), {"aid": album_id}).fetchall()
                 assert len(ignore_rows) == 1
-                assert ignore_rows[0].check_name == "album-field"
+                assert ignore_rows[0].check_name == "album"
         finally:
             db.dispose()
 
@@ -210,7 +210,7 @@ class TestMigration17CheckRename:
                 conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('album-tag.enabled', 'false');"))
                 conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('album-tag.ignore_folders', '[\"test\"]');"))
                 # Add another unrelated check to verify it's not affected
-                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('artist-tag.enabled', 'true');"))
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('cover-filename.enabled', 'true');"))
 
             # Migrate v16 -> v17
             schema.migrate(db, quiet=True, target_version=17)
@@ -220,12 +220,12 @@ class TestMigration17CheckRename:
                 setting_dict = {r.name: r.value_json for r in settings}
 
                 # Check that old names were renamed
-                assert "album-field.enabled" in setting_dict
-                assert "album-field.ignore_folders" in setting_dict
-                assert setting_dict["album-field.enabled"] == "false"
+                assert "album.enabled" in setting_dict
+                assert "album.ignore_folders" in setting_dict
+                assert setting_dict["album.enabled"] == "false"
 
                 # Check that unrelated check was not affected
-                assert "artist-tag.enabled" in setting_dict
+                assert "cover-filename.enabled" in setting_dict
 
                 # Check that old names don't exist anymore
                 assert "album-tag.enabled" not in setting_dict
@@ -258,7 +258,7 @@ class TestMigration17CheckRename:
             with Session(db) as session:
                 ignore_rows = session.execute(text("SELECT album_id, check_name FROM album_ignore_check ORDER BY album_id;")).fetchall()
                 assert len(ignore_rows) == 2
-                assert all(r.check_name == "album-field" for r in ignore_rows)
+                assert all(r.check_name == "album" for r in ignore_rows)
         finally:
             db.dispose()
 
@@ -275,8 +275,8 @@ class TestMigration17CheckRename:
 
             # Insert only unrelated checks and settings
             with db.begin() as conn:
-                conn.execute(text(f"INSERT INTO album_ignore_check (album_id, check_name) VALUES ({album_id}, 'artist-tag');"))
-                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('artist-tag.enabled', 'true');"))
+                conn.execute(text(f"INSERT INTO album_ignore_check (album_id, check_name) VALUES ({album_id}, 'artist');"))
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('artist.enabled', 'true');"))
 
             # Migrate v16 -> v17
             schema.migrate(db, quiet=True, target_version=17)
@@ -284,11 +284,43 @@ class TestMigration17CheckRename:
             with Session(db) as session:
                 ignore_rows = session.execute(text("SELECT check_name FROM album_ignore_check;")).fetchall()
                 assert len(ignore_rows) == 1
-                assert ignore_rows[0].check_name == "artist-tag"
+                assert ignore_rows[0].check_name == "artist"
 
                 setting_rows = session.execute(text("SELECT name FROM setting;")).fetchall()
                 setting_names = [r.name for r in setting_rows]
-                assert "artist-tag.enabled" in setting_names
-                assert not any("album-tag" in name or "album-field" in name for name in setting_names)
+                assert "artist.enabled" in setting_names
+                assert not any("album-tag" in name or "album" in name for name in setting_names)
+        finally:
+            db.dispose()
+
+    def test_single_setting_renamed(self):
+        """Test that single-value-fields.tags setting is updated (the check is also renamed)."""
+        db = connection.open(connection.MEMORY, version=16)
+        try:
+            # Insert old check config keys into setting table manually
+            with db.begin() as conn:
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('single-value-tags.enabled', 'false');"))
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('single-value-tags.tags', '[\"test\"]');"))
+                # Add another unrelated check to verify it's not affected
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('cover-filename.enabled', 'true');"))
+
+            # Migrate v16 -> v17
+            schema.migrate(db, quiet=True, target_version=17)
+
+            with Session(db) as session:
+                settings = session.execute(text("SELECT name, value_json FROM setting ORDER BY name;")).fetchall()
+                setting_dict = {r.name: r.value_json for r in settings}
+
+                # Check that old names were renamed
+                assert "single-value-fields.enabled" in setting_dict
+                assert "single-value-fields.fields" in setting_dict
+                assert setting_dict["single-value-fields.enabled"] == "false"
+
+                # Check that unrelated check was not affected
+                assert "cover-filename.enabled" in setting_dict
+
+                # Check that old names don't exist anymore
+                assert "single-value-tags.enabled" not in setting_dict
+                assert "single-value-tags.tags" not in setting_dict
         finally:
             db.dispose()

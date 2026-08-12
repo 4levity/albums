@@ -8,4 +8,4 @@ class CheckAlbumSort(BaseCheckFieldPerAlbum):
     field = BasicField.ALBUMSORT
     field_description = "album sort order"
 
-    # TODO: check or generate sort order tag
+    # TODO: check or generate sort order field

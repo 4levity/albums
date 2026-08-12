@@ -169,7 +169,7 @@ CREATE INDEX idx_legacy_tag_track_id ON track_legacy_tag(track_id);
 """,
     16: """
 -- Migrate legacy vorbis comment tag names to canonical BasicField field names
--- Record presence of legacy tags in track_legacy_tag for tracking purposes
+-- Record presence of legacy fields in track_legacy_tag for tracking purposes
 INSERT INTO track_legacy_tag (track_id, tag_name)
 SELECT DISTINCT tt.track_id, tt.name FROM track_tag tt
 WHERE tt.name IN ('album artist', 'label', 'publisher', 'totaldiscs')
@@ -211,14 +211,21 @@ WHERE name IN ('album artist', 'label', 'publisher', 'totaldiscs');
 """,
     17: generate_check_renames_sql(
         {
-            "album-tag": "album-field",
-            "barcode-tag": "barcode-field",
-            "compilation-tag": "compilation-field",
-            "publisher-tag": "publisher-field",
-            "release-country-tag": "release-country-field",
-            "release-type-tag": "release-type-field",
+            "album-tag": "album",
+            "artist-tag": "artist",
+            "barcode-tag": "barcode",
+            "compilation-tag": "compilation",
+            "legacy-tags": "legacy-fields",
+            "musicbrainz-tags": "musicbrainz-fields",
+            "publisher-tag": "publisher",
+            "release-country-tag": "release-country",
+            "release-type-tag": "release-type",
+            "single-value-tags": "single-value-fields",
         }
-    ),
+    )
+    + """
+UPDATE setting SET name='single-value-fields.fields' WHERE name='single-value-fields.tags';
+""",
 }
 
 CURRENT_SCHEMA_VERSION: Final = max(MIGRATIONS.keys())

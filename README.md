@@ -26,7 +26,7 @@ It can work with a single folder or scan a whole media library into its database
 to make subsequent operations fast. It has
 [many automated checks and fixes](https://4levity.github.io/albums/all_checks/)
 for metadata related issues such as track numbering (sequence, totals, disc
-numbers), album-artist tags, embedding cover art, etc. It supports marking
+numbers), album-artist fields, embedding cover art, etc. It supports marking
 albums as part of "collections," for example to make a list of albums to sync to
 a digital audio player. It can also perform the sync.
 

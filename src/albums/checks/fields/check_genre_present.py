@@ -9,7 +9,7 @@ from albums.tagger.types import BasicField
 
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
-from ..tag_policy import Policy, check_policy
+from ..field_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class CheckGenrePresent(Check):
         for track in album.tracks:
             if "/".join(track.get(BasicField.GENRE, default=[""])) != option:
                 self.ctx.console.print(f'Setting genre to "{option}" on {escape(track.filename)}', highlight=False)
-                with tagger.open(track.filename) as tags:
-                    tags.set_field(BasicField.GENRE, option)
+                with tagger.open(track.filename) as tag:
+                    tag.set_field(BasicField.GENRE, option)
                 changed = True
         return FixResult.of(changed)

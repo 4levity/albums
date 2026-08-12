@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from albums.app import Context
-from albums.checks.fields.check_single_value_tags import CheckSingleValueTags
+from albums.checks.fields.check_single_value_fields import CheckSingleValueFields
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField
@@ -14,8 +14,8 @@ def context(checks, db=None):
     return ctx
 
 
-class TestCheckSingleValueTags:
-    def test_single_value_tags_ok(self):
+class TestCheckSingleValueFields:
+    def test_single_value_fields_ok(self):
         album = Album(
             path="",
             tracks=[
@@ -23,10 +23,10 @@ class TestCheckSingleValueTags:
                 Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
-        result = CheckSingleValueTags(Context()).check(album)
+        result = CheckSingleValueFields(Context()).check(album)
         assert result is None
 
-    def test_single_value_tags_concat(self, mocker):
+    def test_single_value_fields_concat(self, mocker):
         album = Album(
             path="",
             tracks=[
@@ -40,8 +40,8 @@ class TestCheckSingleValueTags:
                 Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
-        result = CheckSingleValueTags(Context()).check(album)
-        assert "multiple values for single value tags" in result.message
+        result = CheckSingleValueFields(Context()).check(album)
+        assert "multiple values for single value fields" in result.message
         assert result.fixer
         assert not result.fixer.option_free_text
         assert result.fixer.table
@@ -61,7 +61,7 @@ class TestCheckSingleValueTags:
             [(BasicField.ARTIST, ["Alice / Bob"]), (BasicField.TITLE, ["blue / no, yellow"])],
         )
 
-    def test_single_value_tags_concat_no_auto(self, mocker):
+    def test_single_value_fields_concat_no_auto(self, mocker):
         album = Album(
             path="",
             tracks=[
@@ -70,9 +70,9 @@ class TestCheckSingleValueTags:
             ],
         )
         ctx = Context()
-        ctx.config.checks[CheckSingleValueTags.name]["automatic_concatenate"] = False
-        result = CheckSingleValueTags(ctx).check(album)
-        assert "multiple values for single value tags" in result.message
+        ctx.config.checks[CheckSingleValueFields.name]["automatic_concatenate"] = False
+        result = CheckSingleValueFields(ctx).check(album)
+        assert "multiple values for single value fields" in result.message
         assert result.fixer
         assert not result.fixer.option_free_text
         assert result.fixer.table
@@ -88,13 +88,13 @@ class TestCheckSingleValueTags:
             [(BasicField.ARTIST, ["Alice/Bob"]), (BasicField.TITLE, ["blue/no, yellow"])],
         )
 
-    def test_single_value_tags_duplicates(self, mocker):
+    def test_single_value_fields_duplicates(self, mocker):
         album = Album(
             path="",
             tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: ["Alice", "Alice", "Bob"], BasicField.TITLE: ["blue", "blue", "blue"]})],
         )
-        result = CheckSingleValueTags(Context()).check(album)
-        assert "multiple values for single value tags" in result.message
+        result = CheckSingleValueFields(Context()).check(album)
+        assert "multiple values for single value fields" in result.message
         assert result.fixer
         assert not result.fixer.option_free_text
         assert result.fixer.table

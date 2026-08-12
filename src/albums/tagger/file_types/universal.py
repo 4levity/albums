@@ -51,7 +51,7 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
         try:
             return vorbis_comment_legacy_fields(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
         except Exception as ex:
-            logger.warning(f"error reading legacy tags from {self._file.filename}: {repr(ex)}")
+            logger.warning(f"error reading legacy fields from {self._file.filename}: {repr(ex)}")
             return ()
 
     @override

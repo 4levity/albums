@@ -49,7 +49,7 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
 
 
 def ordered_tracks(album: Album):
-    # sort by discnumber/tracknumber tag if all tracks have one
+    # sort by discnumber/tracknumber field if all tracks have one
     has_discnumber = all(len(track.get(BasicField.DISCNUMBER, default=[])) == 1 for track in album.tracks)
     if all(len(track.get(BasicField.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
         if has_discnumber:
@@ -61,23 +61,23 @@ def ordered_tracks(album: Album):
 
 
 def describe_track_number(track: Track):
-    tags = track.tag_dict()
+    fields = track.tag_dict()
 
-    if BasicField.DISCNUMBER in tags or BasicField.DISCTOTAL in tags:
-        s = f"(disc {tags.get(BasicField.DISCNUMBER, ['<no disc>'])[0]}{('/' + tags[BasicField.DISCTOTAL][0]) if BasicField.DISCTOTAL in tags else ''}) "
+    if BasicField.DISCNUMBER in fields or BasicField.DISCTOTAL in fields:
+        s = f"(disc {fields.get(BasicField.DISCNUMBER, ['<no disc>'])[0]}{('/' + fields[BasicField.DISCTOTAL][0]) if BasicField.DISCTOTAL in fields else ''}) "
     else:
         s = ""
 
-    s += f"{tags.get(BasicField.TRACKNUMBER, ['<no track>'])[0]}{('/' + tags[BasicField.TRACKTOTAL][0]) if BasicField.TRACKTOTAL in tags else ''}"
+    s += f"{fields.get(BasicField.TRACKNUMBER, ['<no track>'])[0]}{('/' + fields[BasicField.TRACKTOTAL][0]) if BasicField.TRACKTOTAL in fields else ''}"
     return s
 
 
-def show_tag(tag: Sequence[str] | None) -> str:
-    if tag is None:
+def format_field_values(values: Sequence[str] | None) -> str:
+    if values is None:
         return "[bold italic]None[/bold italic]"
-    if len(tag) == 1:
-        return escape(str(tag[0]))
-    return escape(str(tag))
+    if len(values) == 1:
+        return escape(str(values[0]))
+    return escape(str(values))
 
 
 def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:

@@ -11,13 +11,13 @@ from ...tagger.types import BasicField
 from ...words.make import plural, pluralize
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import show_tag
+from ..helpers import format_field_values
 
 logger: Final = logging.getLogger(__name__)
 
 
 class CheckAlbumField(Check):
-    name = "album-field"
+    name = "album"
     default_config = {"enabled": True, "ignore_folders": ["misc"]}
 
     def init(self, check_config: dict[str, Any]):
@@ -25,7 +25,7 @@ class CheckAlbumField(Check):
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders
         ):
-            logger.warning(f'album-field.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
+            logger.warning(f'album.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
             ignore_folders = []
         self.ignore_folders = list(str(folder) for folder in ignore_folders)
 
@@ -37,37 +37,37 @@ class CheckAlbumField(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
-        track_album_tags: defaultdict[str, int] = defaultdict(int)
+        track_album_fields: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
             if track.has(BasicField.ALBUM):
-                for album_tag in track.get(BasicField.ALBUM):
-                    track_album_tags[album_tag] += 1
+                for album_field in track.get(BasicField.ALBUM):
+                    track_album_fields[album_field] += 1
             else:
-                track_album_tags[""] += 1
+                track_album_fields[""] += 1
 
-        album_tags = list(track_album_tags.keys())
-        candidates = sorted(filter(None, album_tags), key=lambda a: track_album_tags[a], reverse=True)[:12]
+        album_fields = list(track_album_fields.keys())
+        candidates = sorted(filter(None, album_fields), key=lambda a: track_album_fields[a], reverse=True)[:12]
         if len(candidates) > 1:  # multiple conflicting album names (not including folder name)
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            return CheckResult(f"{len(candidates)} conflicting album tag {pluralize('value', candidates)}", self._make_fixer(album, candidates))
+            return CheckResult(f"{len(candidates)} conflicting album field {pluralize('value', candidates)}", self._make_fixer(album, candidates))
 
-        if track_album_tags[""] > 0:  # tracks missing album tag
+        if track_album_fields[""] > 0:  # tracks missing album field
             if folder_str not in candidates:
                 candidates.append(folder_str)
-            return CheckResult(f"{plural(track_album_tags[''], 'track')} missing album tag", self._make_fixer(album, candidates))
+            return CheckResult(f"{plural(track_album_fields[''], 'track')} missing album field", self._make_fixer(album, candidates))
 
         return None
 
     def _make_fixer(self, album: Album, options: list[str]):
         table = (
-            ["filename", "album tag", "artist", "album artist"],
+            ["filename", "album", "artist", "album artist"],
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicField.ALBUM, default=None)),
-                    show_tag(track.get(BasicField.ARTIST, default=None)),
-                    show_tag(track.get(BasicField.ALBUMARTIST, default=None)),
+                    format_field_values(track.get(BasicField.ALBUM, default=None)),
+                    format_field_values(track.get(BasicField.ARTIST, default=None)),
+                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
                 ]
                 for track in sorted(album.tracks)
             ],

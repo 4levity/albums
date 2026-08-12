@@ -51,11 +51,11 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                (changed, deleted, quit) = interact(ctx, session, "album-field", CheckResult("hello", fixer), album, True)
+                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True)
                 assert changed
                 assert quit
                 assert mock_confirm.call_count == 1
-                assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-field" for this album?')
+                assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album" for this album?')
 
                 rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album.album_id})
                 assert rows == 1
@@ -75,9 +75,9 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                (changed, deleted, quit) = interact(ctx, session, "album-field", CheckResult("hello", fixer), album, True)
+                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True)
                 assert mock_confirm.call_count == 1
-                assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album-field" for this album?')
+                assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album" for this album?')
 
                 rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album.album_id})
                 assert rows == 1

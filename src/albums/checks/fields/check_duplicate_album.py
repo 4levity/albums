@@ -24,7 +24,7 @@ OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): 
 class CheckDuplicateAlbum(Check):
     name = "duplicate-album"
     default_config = {"enabled": True}
-    must_pass_checks = {"album-field", "artist-tag"}
+    must_pass_checks = {"album", "artist"}
     _duplicates = DuplicateFinder()
 
     def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):

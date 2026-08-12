@@ -65,10 +65,10 @@ class CheckInvalidImage(Check):
                 load_issue = dict(pic.picture_info.load_issue)
                 if "error" in load_issue:
                     if tagger.supports(track.filename, Cap.PICTURES):
-                        with tagger.open(track.filename) as tags:
-                            for file in [pic for pic, _data in tags.get_pictures() if (any(k == "error" for k, _ in pic.picture_info.load_issue))]:
+                        with tagger.open(track.filename) as tag:
+                            for file in [pic for pic, _data in tag.get_pictures() if (any(k == "error" for k, _ in pic.picture_info.load_issue))]:
                                 self.ctx.console.print(f"Removing {file.type.name} embedded image from {escape(track.filename)}")
-                                tags.remove_picture(file)
+                                tag.remove_picture(file)
                                 changed = True
                     else:
                         logger.warning(f"cannot remove embedded image from {track.filename} because file type not supported yet")

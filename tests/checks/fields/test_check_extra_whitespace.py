@@ -29,9 +29,9 @@ class TestCheckExtraWhitespace:
         )
         result = CheckExtraWhitespace(Context()).check(album)
         assert result is not None
-        assert "Extra whitespace present in 2 files in tags: artist, title" in result.message
+        assert "Extra whitespace present in 2 files in fields: artist, title" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Strip leading and trailing whitespace in tags: artist, title"]
+        assert result.fixer.options == [">> Strip leading and trailing whitespace in fields: artist, title"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()

@@ -203,14 +203,14 @@ class CheckCoverEmbedded(Check):
         tagger = self.tagger.get(album.path)
         for track in sorted(album.tracks):
             if tagger.supports(track.filename, Cap.PICTURES):
-                with tagger.open(track.filename) as tags:
-                    current_cover = next((pic for pic, _data in tags.get_pictures() if pic.type == PictureType.COVER_FRONT), None)
+                with tagger.open(track.filename) as tag:
+                    current_cover = next((pic for pic, _data in tag.get_pictures() if pic.type == PictureType.COVER_FRONT), None)
                     if current_cover:
                         self.ctx.console.print(f"Replacing front cover image in {escape(track.filename)}")
-                        tags.remove_picture(current_cover)
+                        tag.remove_picture(current_cover)
                     else:
                         self.ctx.console.print(f"Adding front cover image to {escape(track.filename)}")
-                    tags.add_picture(new_cover, image_data)
+                    tag.add_picture(new_cover, image_data)
             else:
                 self.ctx.console.print(f"Skipping unsupported file {escape(track.filename)}")
         return FixResult.CHANGED_ALBUM
@@ -222,8 +222,8 @@ class CheckCoverEmbedded(Check):
         return FixResult.CHANGED_ALBUM
 
     def _fix_extract_cover_source(self, album: Album, filename: str, cover: Picture):
-        with self.tagger.get(album.path).open(filename) as tags:
-            image_data = tags.get_image_data(cover)
+        with self.tagger.get(album.path).open(filename) as tag:
+            image_data = tag.get_image_data(cover)
         source_image = Image.open(io.BytesIO(image_data))
         source_image.load()  # fail here if not loadable
 

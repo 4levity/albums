@@ -18,7 +18,7 @@ from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolic
 class CheckTrackFilename(Check):
     name = "track-filename"
     default_config = {"enabled": True, "format": "$track_auto $title_auto", "join_multiple": ", "}
-    must_pass_checks = {"album-artist", "artist-tag", "track-numbering", "track-title"}
+    must_pass_checks = {"album-artist", "artist", "track-numbering", "track-title"}
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
@@ -41,7 +41,7 @@ class CheckTrackFilename(Check):
         if any(track.filename != generated_filenames[ix] for ix, track in enumerate(sorted(album.tracks))):
             options = [">> Use generated filenames"]
             option_automatic_index = 0
-            headers = ["Current Filename", "Disc#", "Track#", "Title Tag", "Proposed Filename"]
+            headers = ["Current Filename", "Disc#", "Track#", "Title", "Proposed Filename"]
             table = (headers, [self._table_row(album, track) for track in sorted(album.tracks)])
             return CheckResult(
                 "track filenames do not match configured pattern",
@@ -49,7 +49,7 @@ class CheckTrackFilename(Check):
             )
 
     def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
-        title_tags = ", ".join(track.get(BasicField.TITLE, default=["[bold italic]none[/bold italic]"]))
+        title_fields = ", ".join(track.get(BasicField.TITLE, default=["[bold italic]none[/bold italic]"]))
         discnum = track.get(BasicField.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
         tracknum = track.get(BasicField.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
         new_filename = self._generate_filename(album, track)
@@ -57,15 +57,15 @@ class CheckTrackFilename(Check):
             escape(track.filename),
             discnum,
             tracknum,
-            title_tags,
+            title_fields,
             new_filename if new_filename != track.filename else "[bold italic]no change[/bold italic]",
         ]
 
     def _generate_filename(self, album: Album, track: Track):
-        tracktag = track.get(BasicField.TRACKNUMBER, default=None)
-        disctag = track.get(BasicField.DISCNUMBER, default=None)
-        tracknumber = tracktag[0] if tracktag else ""
-        discnumber = disctag[0] if disctag else ""
+        track_field = track.get(BasicField.TRACKNUMBER, default=None)
+        disc_field = track.get(BasicField.DISCNUMBER, default=None)
+        tracknumber = track_field[0] if track_field else ""
+        discnumber = disc_field[0] if disc_field else ""
 
         # for padding on m4a files
         track_count = int(track.get(BasicField.TRACKTOTAL, default=["0"])[0]) or len(album.tracks)
@@ -131,10 +131,10 @@ class CheckTrackFilename(Check):
 
         return FixResult.CHANGED_ALBUM
 
-    def _pad(self, tag_name: Literal["tracknumber", "tracktotal", "discnumber", "disctotal"], value: str, total: int) -> str:
+    def _pad(self, field_name: Literal["tracknumber", "tracktotal", "discnumber", "disctotal"], value: str, total: int) -> str:
         if not value or not int(value):
             return ""
         if not self.ctx.config.checks[CheckZeroPadNumbers.name]["enabled"]:
             return value
-        policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{tag_name}_pad"]))
+        policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{field_name}_pad"]))
         return apply_pad_policy(value, policy, total)

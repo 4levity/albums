@@ -4,5 +4,5 @@ from ..base_check_field_per_album import BaseCheckFieldPerAlbum
 
 
 class CheckBarcodeField(BaseCheckFieldPerAlbum):
-    name = "barcode-field"
+    name = "barcode"
     field = BasicField.BARCODE

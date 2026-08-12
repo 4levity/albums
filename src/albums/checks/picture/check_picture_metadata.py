@@ -87,15 +87,15 @@ class CheckPictureMetadata(Check):
         for track_index in mismatch_tracks:
             track = album.tracks[track_index]
             tagger = self.tagger.get(album.path)
-            with tagger.open(track.filename) as tags:
-                all_pictures = list(tags.get_pictures())
+            with tagger.open(track.filename) as tag:
+                all_pictures = list(tag.get_pictures())
                 self.ctx.console.print(f"Re-embedding {pluralize('picture', all_pictures)} in {escape(track.filename)}", highlight=False)
                 for pic, _data in all_pictures:
-                    tags.remove_picture(pic)
+                    tag.remove_picture(pic)
                 for pic, image_data in all_pictures:
                     new_pic_scan = tagger.get_picture_scanner().scan(image_data)
                     new_pic = Picture(new_pic_scan, pic.type, pic.description)
-                    tags.add_picture(new_pic, image_data)
+                    tag.add_picture(new_pic, image_data)
         album_path = self.ctx.config.library / album.path
         for old_name, new_name in image_files_to_rename:
             self.ctx.console.print(f"Renaming {escape(old_name)} to {escape(new_name)}", highlight=False)

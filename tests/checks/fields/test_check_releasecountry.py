@@ -1,5 +1,5 @@
 from albums.app import Context
-from albums.checks.fields.check_releasecountry_field import CheckReleaseCountryField
+from albums.checks.fields.check_releasecountry import CheckReleaseCountryField
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField
 
@@ -24,7 +24,7 @@ class TestCheckReleaseCountryField:
         assert result is not None
         assert "releasecountry policy=CONSISTENT but it is on some tracks and not others" in result.message
         assert result.fixer is not None
-        assert result.fixer.options == ["US", ">> Remove tag releasecountry"]
+        assert result.fixer.options == ["US", ">> Remove field releasecountry"]
         assert result.fixer.option_automatic_index == 0
 
     def test_releasecountry_ok_inconsistent_mixed(self):
@@ -34,5 +34,5 @@ class TestCheckReleaseCountryField:
         assert result is not None
         assert "releasecountry policy=NEVER but it appears on tracks" in result.message
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove tag releasecountry"]
+        assert result.fixer.options == [">> Remove field releasecountry"]
         assert result.fixer.option_automatic_index == 0

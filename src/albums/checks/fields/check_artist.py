@@ -11,13 +11,13 @@ from ...tagger.types import BasicField
 from ...words.make import plural
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import show_tag
+from ..helpers import format_field_values
 
 logger: Final = logging.getLogger(__name__)
 
 
-class CheckArtistTag(Check):
-    name = "artist-tag"
+class CheckArtistField(Check):
+    name = "artist"
     default_config = {
         "enabled": True,
         "ignore_parent_folders": ["compilation", "compilations", "soundtrack", "soundtracks", "various artists"],
@@ -25,11 +25,11 @@ class CheckArtistTag(Check):
     must_pass_checks = {"album-artist"}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_parent_folders: list[Any] = check_config.get("ignore_parent_folders", CheckArtistTag.default_config["ignore_parent_folders"])
+        ignore_parent_folders: list[Any] = check_config.get("ignore_parent_folders", CheckArtistField.default_config["ignore_parent_folders"])
         if not isinstance(ignore_parent_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_parent_folders
         ):
-            logger.warning(f'artist-tag.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
+            logger.warning(f'artist.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
             ignore_parent_folders = []
         self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
 
@@ -40,14 +40,14 @@ class CheckArtistTag(Check):
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
             if track.has(BasicField.ARTIST):
-                for artist_tag in track.get(BasicField.ARTIST):
-                    artist_values[artist_tag].append(track.filename)
+                for artist_name in track.get(BasicField.ARTIST):
+                    artist_values[artist_name].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
-            for album_artist_tag in track.get(BasicField.ALBUMARTIST, default=[]):
-                artist_values[album_artist_tag].append(track.filename)
+            for album_artist_name in track.get(BasicField.ALBUMARTIST, default=[]):
+                artist_values[album_artist_name].append(track.filename)
 
-        if not artist_values[""]:  # no tracks missing artist tag
+        if not artist_values[""]:  # no tracks missing artist field
             return None
 
         parent_folder_str = Path(album.path).parent.name
@@ -63,9 +63,9 @@ class CheckArtistTag(Check):
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicField.ALBUMARTIST, default=None)),
-                    show_tag(track.get(BasicField.ARTIST, default=None)),
-                    show_tag([candidates[0]] if candidates and not track.has(BasicField.ARTIST) else None),
+                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
+                    format_field_values(track.get(BasicField.ARTIST, default=None)),
+                    format_field_values([candidates[0]] if candidates and not track.has(BasicField.ARTIST) else None),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -73,7 +73,7 @@ class CheckArtistTag(Check):
         option_free_text = True
         option_automatic_index = 0 if len(candidates) == 1 else None
         return CheckResult(
-            f"{plural(artist_values[''], 'track')} missing artist tag",
+            f"{plural(artist_values[''], 'track')} missing artist field",
             Fixer(
                 lambda option: self._fix(album, option, artist_values[""]),
                 candidates,

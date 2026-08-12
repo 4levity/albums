@@ -10,11 +10,11 @@ from ..check_types import CheckResult, Fixer, FixResult
 
 LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_FIELDS)
 
-OPTION_CONVERT_LEGACY = ">> Convert legacy tags to standard tags"
+OPTION_CONVERT_LEGACY = ">> Convert legacy fields to standard fields"
 
 
-class CheckLegacyTags(Check):
-    name = "legacy-tags"
+class CheckLegacyFields(Check):
+    name = "legacy-fields"
     default_config = {"enabled": True}
 
     @override
@@ -28,12 +28,12 @@ class CheckLegacyTags(Check):
 
         option_automatic_index = 0
         table = (
-            ["filename", "convert tags"],
+            ["filename", "convert fields"],
             [[escape(track.filename), ", ".join(track.legacy_tags)] for track in sorted(album.tracks)],
         )
 
         return CheckResult(
-            f"Legacy tags {', '.join(sorted(all_legacy_names))} found",
+            f"Legacy fields {', '.join(sorted(all_legacy_names))} found",
             Fixer(
                 lambda option: self._fix_legacy_tags(album),
                 [OPTION_CONVERT_LEGACY],

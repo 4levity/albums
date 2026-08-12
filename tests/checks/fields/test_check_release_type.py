@@ -1,5 +1,5 @@
 from albums.app import Context
-from albums.checks.fields.check_releasetype_field import CheckReleaseTypeField
+from albums.checks.fields.check_releasetype import CheckReleaseTypeField
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField
 

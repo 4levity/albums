@@ -80,7 +80,7 @@ class TestCheckDiscNumbering:
         result = CheckDiscNumbering(Context()).check(album)
         assert "inconsistent disc total" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total tag"]
+        assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total field"]
         assert result.fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
@@ -99,7 +99,7 @@ class TestCheckDiscNumbering:
         result = CheckDiscNumbering(Context()).check(album)
         assert "inconsistent disc total" in result.message
         assert result.fixer
-        assert result.fixer.options == [">> Set disc total = 2", ">> Set disc total = 3", ">> Remove disc total tag"]
+        assert result.fixer.options == [">> Set disc total = 2", ">> Set disc total = 3", ">> Remove disc total field"]
         assert result.fixer.option_automatic_index is None
 
     def test_check_discnumber_inconsistent(self):

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from albums.app import Context
-from albums.checks.fields.check_album_field import CheckAlbumField
+from albums.checks.fields.check_album import CheckAlbumField
 from albums.entities import Album, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField
@@ -19,7 +19,7 @@ class TestCheckAlbumField:
             ],
         )
         result = CheckAlbumField(Context()).check(album)
-        assert "3 tracks missing album tag" in result.message
+        assert "3 tracks missing album field" in result.message
 
     def test_check_needs_album__one(self):
         album = Album(
@@ -31,7 +31,7 @@ class TestCheckAlbumField:
             ],
         )
         result = CheckAlbumField(Context()).check(album)
-        assert "1 track missing album tag" in result.message
+        assert "1 track missing album field" in result.message
 
     def test_check_needs_album__conflicting(self):
         album = Album(
@@ -43,14 +43,14 @@ class TestCheckAlbumField:
             ],
         )
         result = CheckAlbumField(Context()).check(album)
-        assert "2 conflicting album tag values" in result.message
+        assert "2 conflicting album field values" in result.message
         assert result.fixer is not None
         assert result.fixer.options == ["A", "B"]
         assert result.fixer.option_automatic_index is None
         assert result.fixer.option_free_text is not None
 
     def test_check_needs_album__fix_auto(self, mocker):
-        # album can be guessed from folder, no conflicting tags
+        # album can be guessed from folder, no conflicting fields
         album = Album(
             path="Foo" + os.sep,
             tracks=[
@@ -71,7 +71,7 @@ class TestCheckAlbumField:
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")])
 
     def test_check_needs_album__fix_interactive(self, mocker):
-        # not all tracks have album tag, where present it is different than folder name, no automatic fix
+        # not all tracks have album field, where present it is different than folder name, no automatic fix
         album = Album(
             path="Foo" + os.sep,
             tracks=[
@@ -81,7 +81,7 @@ class TestCheckAlbumField:
             ],
         )
         result = CheckAlbumField(Context()).check(album)
-        assert "1 track missing album tag" in str(result.message)
+        assert "1 track missing album field" in str(result.message)
         assert result.fixer is not None
         assert result.fixer.option_automatic_index is None
         assert result.fixer.option_free_text

@@ -9,7 +9,7 @@ from ...tagger.types import BasicField
 from ...words.make import plural
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import parse_filename, show_tag
+from ..helpers import format_field_values, parse_filename
 
 logger: Final = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class CheckTrackTitle(Check):
                     [
                         [
                             escape(track.filename),
-                            show_tag(track.get(BasicField.TITLE, default=None)),
+                            format_field_values(track.get(BasicField.TITLE, default=None)),
                             escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
                         ]
                         for (ix, track) in enumerate(sorted(album.tracks))
@@ -44,9 +44,9 @@ class CheckTrackTitle(Check):
                 options = [OPTION_USE_PROPOSED]
                 option_automatic_index = 0
                 fixer = Fixer(lambda _: self._fix(album), options, option_free_text, option_automatic_index, table)
-                return CheckResult(f"{plural(no_title, 'track')} missing title tag", fixer)
+                return CheckResult(f"{plural(no_title, 'track')} missing title field", fixer)
 
-            return CheckResult(f"{plural(no_title, 'track')} missing title tag and cannot guess from filename")
+            return CheckResult(f"{plural(no_title, 'track')} missing title field and cannot guess from filename")
 
         return None
 

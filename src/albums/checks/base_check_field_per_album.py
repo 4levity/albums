@@ -8,7 +8,7 @@ from ..tagger.folder import AlbumTagger, Cap
 from ..tagger.types import BasicField
 from .base_check import Check
 from .check_types import CheckResult, Fixer, FixResult
-from .tag_policy import Policy, check_policy
+from .field_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)
 
@@ -93,8 +93,8 @@ class BaseCheckFieldPerAlbum(Check):
             current_values = track.get(self.field, default=[])
             if current_values and not option:
                 self.ctx.console.print(f"Removing {self.field_description} on {escape(track.filename)}", highlight=False)
-                with tagger.open(track.filename) as tags:
-                    tags.set_field(self.field, None)
+                with tagger.open(track.filename) as tag:
+                    tag.set_field(self.field, None)
                 changed = True
             elif option:
                 set_value = None
@@ -106,7 +106,7 @@ class BaseCheckFieldPerAlbum(Check):
                     set_value = option
                 if set_value is not None:
                     self.ctx.console.print(f"Setting {self.field_description} on {escape(track.filename)}", highlight=False)
-                    with tagger.open(track.filename) as tags:
-                        tags.set_field(self.field, set_value)
+                    with tagger.open(track.filename) as tag:
+                        tag.set_field(self.field, set_value)
                     changed = True
         return FixResult.of(changed)

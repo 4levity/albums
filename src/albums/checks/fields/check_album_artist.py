@@ -9,7 +9,7 @@ from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import show_tag
+from ..helpers import format_field_values
 
 logger: Final = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ OPTION_COPY_ALBUM_ARTIST_TO_ARTIST: Final = ">> Copy album artist -> artist"
 class CheckAlbumArtist(Check):
     name = "album-artist"
     default_config = {"enabled": True, "remove_redundant": False, "require_redundant": False}
-    must_pass_checks = {"legacy-tags"}
+    must_pass_checks = {"legacy-fields"}
 
     def init(self, check_config: dict[str, Any]):
         self.remove_redundant = bool(check_config.get("remove_redundant", CheckAlbumArtist.default_config["remove_redundant"]))
@@ -62,7 +62,7 @@ class CheckAlbumArtist(Check):
         if len(nonblank_albumartists) > 1:  # distinct album artist values, not including blank
             options = candidates_various
             if len(artists) == 1:
-                # multiple album-artist values, and one artist - perhaps wrong tags were used
+                # multiple album-artist values, and one artist - perhaps wrong fields were used
                 # this doesn't fix the problem in one step, but after doing this, run the check again, and then next time select Various Artists
                 options.append(OPTION_COPY_ALBUM_ARTIST_TO_ARTIST)
             return CheckResult(
@@ -98,13 +98,13 @@ class CheckAlbumArtist(Check):
 
     def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
         table = (
-            ["filename", "album tag", "artist", "album artist"],
+            ["filename", "album", "artist", "album artist"],
             [
                 [
                     escape(track.filename),
-                    show_tag(track.get(BasicField.ALBUM, default=None)),
-                    show_tag(track.get(BasicField.ARTIST, default=None)),
-                    show_tag(track.get(BasicField.ALBUMARTIST, default=None)),
+                    format_field_values(track.get(BasicField.ALBUM, default=None)),
+                    format_field_values(track.get(BasicField.ARTIST, default=None)),
+                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
                 ]
                 for track in sorted(album.tracks)
             ],

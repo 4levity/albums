@@ -60,7 +60,7 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
                 logger.warning(f"generating library path: no album artist and more than one artist value, using {artist_v}")
     if not artist_v:
         artist_v = "Unknown Album"
-        logger.warning(f"generating library path: no album artist or artist tags, using {artist_v}")
+        logger.warning(f"generating library path: no album artist or artist fields, using {artist_v}")
 
     album_v = ""
     if "album" in used_identifiers:
@@ -71,7 +71,7 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
                 logger.warning(f"generating library path: more than one album artist value, using {album_v}")
         if not album_v:
             album_v = "Unknown Album"
-            logger.warning(f"generating library path: no album artist or artist tags, using {artist_v}")
+            logger.warning(f"generating library path: no album artist or artist fields, using {artist_v}")
 
     a1_v = str.lower(safe_path_element(artist_v[4] if artist_v.lower().startswith("the ") and len(artist_v) > 4 else artist_v[0]))
     if a1_v.isnumeric():

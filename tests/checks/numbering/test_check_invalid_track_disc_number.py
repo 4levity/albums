@@ -12,7 +12,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac"),  # no tags is ok
+                Track(filename="1.flac"),  # no tag is ok
                 Track(
                     filename="2.flac",
                     tag={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "12", BasicField.DISCNUMBER: "01", BasicField.DISCTOTAL: "2"},
@@ -29,7 +29,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
-        assert "track/disc numbering tags with multiple values" in result.message
+        assert "track/disc numbering fields with multiple values" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
@@ -47,7 +47,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
-        assert "track/disc numbering tags with multiple values" in result.message
+        assert "track/disc numbering fields with multiple values" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
         assert result.fixer.option_automatic_index == 0
@@ -62,7 +62,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "one"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
-        assert "track/disc numbering tags with non-numeric values" in result.message
+        assert "track/disc numbering fields with non-numeric values" in result.message
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
@@ -76,7 +76,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "0"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
-        assert "track/disc numbering tags where the value is 0" in result.message
+        assert "track/disc numbering fields where the value is 0" in result.message
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
@@ -103,9 +103,9 @@ class TestCheckInvalidTrackOrDiscNumber:
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
-        assert "track/disc numbering tags with multiple values" in result.message
-        assert "track/disc numbering tags with non-numeric values" in result.message
-        assert "track/disc numbering tags where the value is 0" in result.message
+        assert "track/disc numbering fields with multiple values" in result.message
+        assert "track/disc numbering fields with non-numeric values" in result.message
+        assert "track/disc numbering fields where the value is 0" in result.message
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 

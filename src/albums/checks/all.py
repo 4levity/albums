@@ -1,22 +1,22 @@
 from typing import Final
 
 from .base_check import Check
+from .fields.check_album import CheckAlbumField
 from .fields.check_album_artist import CheckAlbumArtist
 from .fields.check_album_artist_sort import CheckAlbumArtistSort
-from .fields.check_album_field import CheckAlbumField
 from .fields.check_album_sort import CheckAlbumSort
-from .fields.check_artist_tag import CheckArtistTag
-from .fields.check_barcode_field import CheckBarcodeField
-from .fields.check_compilation_field import CheckCompilationField
+from .fields.check_artist import CheckArtistField
+from .fields.check_barcode import CheckBarcodeField
+from .fields.check_compilation import CheckCompilationField
 from .fields.check_duplicate_album import CheckDuplicateAlbum
 from .fields.check_extra_whitespace import CheckExtraWhitespace
 from .fields.check_genre_present import CheckGenrePresent
-from .fields.check_legacy_tags import CheckLegacyTags
-from .fields.check_musicbrainz_tags import CheckMusicBrainzTags
-from .fields.check_publisher_field import CheckPublisherField
-from .fields.check_releasecountry_field import CheckReleaseCountryField
-from .fields.check_releasetype_field import CheckReleaseTypeField
-from .fields.check_single_value_tags import CheckSingleValueTags
+from .fields.check_legacy_fields import CheckLegacyFields
+from .fields.check_musicbrainz_fields import CheckMusicBrainzFields
+from .fields.check_publisher import CheckPublisherField
+from .fields.check_releasecountry import CheckReleaseCountryField
+from .fields.check_releasetype import CheckReleaseTypeField
+from .fields.check_single_value_fields import CheckSingleValueFields
 from .fields.check_track_title import CheckTrackTitle
 from .numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from .numbering.check_disc_numbering import CheckDiscNumbering
@@ -48,24 +48,24 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckIllegalPathname,
     CheckFileExtension,
     CheckUnreadableTrack,
-    # tag checks 1
+    # field checks 1
     CheckExtraWhitespace,
-    CheckLegacyTags,
+    CheckLegacyFields,
     # numbering checks
     CheckDiscInTrackNumber,
     CheckInvalidTrackOrDiscNumber,
     CheckDiscNumbering,
     CheckTrackNumbering,
     CheckZeroPadNumbers,
-    # more tag checks
+    # more field checks
     CheckAlbumField,
     CheckAlbumArtist,
-    CheckArtistTag,
+    CheckArtistField,
     CheckDuplicateAlbum,
-    CheckSingleValueTags,
+    CheckSingleValueFields,
     CheckTrackTitle,
     CheckGenrePresent,
-    CheckMusicBrainzTags,
+    CheckMusicBrainzFields,
     CheckPublisherField,
     CheckAlbumSort,
     CheckAlbumArtistSort,

@@ -1,7 +1,7 @@
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.fields.check_musicbrainz_tags import AlbumTagger, CheckMusicBrainzTags
+from albums.checks.fields.check_musicbrainz_fields import AlbumTagger, CheckMusicBrainzFields
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField, TaggerFile
 
@@ -9,15 +9,15 @@ UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
 
 
-class TestCheckMusicBrainzTags:
+class TestCheckMusicBrainzFields:
     def test_none(self):
         album = Album(path="foo", tracks=[Track(filename="1.flac", tag={BasicField.TITLE: "one"})])
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is None
 
     def test_no_deprecated(self):
         album = Album(path="foo", tracks=[Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0})])
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is None
 
     def test_deprecated_allowed(self):
@@ -28,8 +28,8 @@ class TestCheckMusicBrainzTags:
             ],
         )
         ctx = Context()
-        ctx.config.checks[CheckMusicBrainzTags.name]["remove_deprecated"] = False
-        result = CheckMusicBrainzTags(ctx).check(album)
+        ctx.config.checks[CheckMusicBrainzFields.name]["remove_deprecated"] = False
+        result = CheckMusicBrainzFields(ctx).check(album)
         assert result is None
 
     def test_deprecated(self, mocker):
@@ -39,11 +39,11 @@ class TestCheckMusicBrainzTags:
                 Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
             ],
         )
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is not None
-        assert result.message == "Deprecated MusicBrainz tags found and remove_deprecated is enabled"
+        assert result.message == "Deprecated MusicBrainz fields found and remove_deprecated is enabled"
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove deprecated MusicBrainz tags"]
+        assert result.fixer.options == [">> Remove deprecated MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
@@ -64,12 +64,12 @@ class TestCheckMusicBrainzTags:
             ],
         )
         ctx = Context()
-        ctx.config.checks[CheckMusicBrainzTags.name]["remove_all"] = True
-        result = CheckMusicBrainzTags(ctx).check(album)
+        ctx.config.checks[CheckMusicBrainzFields.name]["remove_all"] = True
+        result = CheckMusicBrainzFields(ctx).check(album)
         assert result is not None
-        assert result.message == "MusicBrainz tags found and remove_all is enabled"
+        assert result.message == "MusicBrainz fields found and remove_all is enabled"
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove all MusicBrainz tags"]
+        assert result.fixer.options == [">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
@@ -93,11 +93,11 @@ class TestCheckMusicBrainzTags:
                 ),
             ],
         )
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is not None
         assert result.message == f"MUSICBRAINZ_ALBUMID is not the same on all tracks (values = {UUID1}, none)"
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID tags", ">> Remove all MusicBrainz tags"]
+        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
@@ -124,11 +124,11 @@ class TestCheckMusicBrainzTags:
                 ),
             ],
         )
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is not None
         assert result.message == f"MUSICBRAINZ_ALBUMARTISTID is not the same on all tracks (values = {UUID0}, {UUID1})"
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMARTISTID tags", ">> Remove all MusicBrainz tags"]
+        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMARTISTID fields", ">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
         tagger = TaggerFile()
@@ -152,11 +152,11 @@ class TestCheckMusicBrainzTags:
                 ),
             ],
         )
-        result = CheckMusicBrainzTags(Context()).check(album)
+        result = CheckMusicBrainzFields(Context()).check(album)
         assert result is not None
         assert result.message == f"MUSICBRAINZ_ALBUMID is not the same on all tracks (values = {UUID1}, none)"
         assert result.fixer is not None
-        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID tags", ">> Remove all MusicBrainz tags"]
+        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
 
         tagger = TaggerFile()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")

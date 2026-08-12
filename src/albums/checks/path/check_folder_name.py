@@ -20,7 +20,7 @@ logger: Final = logging.getLogger(__name__)
 class CheckFolderName(Check):
     name = "folder-name"
     default_config = {"enabled": True, "format": "$album", "ignore_folders": ["misc"]}
-    must_pass_checks = {"album-field", "artist-tag"}
+    must_pass_checks = {"album", "artist"}
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
@@ -43,7 +43,7 @@ class CheckFolderName(Check):
             return None
 
         if not self._can_generate_folder_name(album):
-            return None  # TODO: configure behavior when album doesn't have tags to generate folder name
+            return None  # TODO: configure behavior when album tags don't have info to generate folder name
 
         if album.path in {".", "", os.sep}:
             return None  # if --dir or import points to a single album, the album has no path within the temporary library and cannot be renamed

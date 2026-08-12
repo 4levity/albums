@@ -203,8 +203,8 @@ class CheckCoverDimensions(Check):
         return not self._cover_square_enough(w, h) and self._aspect(w, h) >= self.fixable_squareness
 
     def _squarify(self, pic: Picture, album_path: str, filename: str):
-        with self.tagger.get(album_path).open(filename) as tags:
-            image_data = tags.get_image_data(pic)
+        with self.tagger.get(album_path).open(filename) as tag:
+            image_data = tag.get_image_data(pic)
 
         image = Image.open(io.BytesIO(image_data))
         if image.mode not in {"RGB", "L"}:

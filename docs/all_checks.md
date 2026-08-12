@@ -124,7 +124,7 @@ The default template `"$track_auto $title_auto"` generates filenames like this:
 
 !!!success "Dependency"
 
-    Requires the `"album-artist`, `artist-tag`, `track-numbering`, and
+    Requires the `"album-artist`, `artist`, `track-numbering`, and
     `track-title` checks to all pass first.
 
 **Automatic fix**: Rename all tracks according to configuration.
@@ -183,8 +183,8 @@ This check reports when an album has invalid or ambiguous values for track
 number, track total, disc number or disc total. If these fields cannot be
 resolved to a single valid number, they are not useful and should be removed.
 
-Rule: for each track, if present, track/disc number/total tags should each have
-a single value and that value should be a positive number (0 is not valid).
+Rule: for each track, if present, track/disc number/total fields should each
+have a single value and that value should be a positive number (0 is not valid).
 
 !!!success "Dependency"
 
@@ -215,7 +215,7 @@ Rules:
 
 !!!success "Dependency"
 
-    Requires the `invalid-track-or-disc-number` and `legacy-tags` checks to
+    Requires the `invalid-track-or-disc-number` and `legacy-fields` checks to
     pass first.
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
@@ -285,9 +285,9 @@ tracks, set the same total on the others.
 ### zero-pad-numbers
 
 Apply selected policies for zero-padding in the track number/total and disc
-number/total tags. Some media players and many file managers do not show tracks
-in the correct order unless the track numbers are zero-padded, because for
-example "2" comes after "10" when sorted alphabetically.
+number/total fields. Some media players and many file managers do not show
+tracks in the correct order unless the track numbers are zero-padded, because
+for example "2" comes after "10" when sorted alphabetically.
 
 This check does nothing on **M4A** files because track numbers (and track total,
 disc number, disc total) are only stored as plain unformatted numbers.
@@ -330,22 +330,22 @@ have extra spaces or other whitespace characters at the beginning or end.
 **Automatic fix**: Remove whitespace from the beginning and end of all values
 for all supported basic text tags.
 
-### legacy-tags
+### legacy-fields
 
-Some files may contain legacy tag names that map to the standard tags. For
+Some files may contain legacy fields that map to the standard fields. For
 example, `album artist` is a legacy name for the standard `albumartist`. And
 `label` or `publisher` are legacy names for `organization`, while `totaldiscs`
 is a legacy name for `disctotal`.
 
-Some tools may still create these legacy tag names. This check reports when any
-tracks in an album have legacy tags present so they can be converted to the
+Some tools may still create these legacy fields. This check reports when any
+tracks in an album have legacy fields present so they can be converted to the
 standard equivalents.
 
-**Automatic fix**: Remove each legacy tag and set the corresponding standard
-tag. If multiple tracks have values for the same field (from both legacy and
+**Automatic fix**: Remove each legacy field and set the corresponding standard
+field. If multiple tracks have values for the same field (from both legacy and
 standard sources), the values are merged with duplicates removed.
 
-### album-field
+### album
 
 Tracks should have `album` fields. The fix attempts to guess album name from
 fields on other tracks in the folder, and the name of the folder. Choose from
@@ -378,7 +378,7 @@ It can also apply a policy from options below.
 
 !!!success "Dependency"
 
-    Requires the `legacy-tags` check to pass first.
+    Requires the `legacy-fields` check to pass first.
 
 **Automatic fix**: If the album artist is or would be redundant, and one of the
 optional policies below is enabled, apply the policy.
@@ -392,7 +392,7 @@ optional policies below is enabled, apply the policy.
 
 <!-- pyml enable line-length -->
 
-### artist-tag
+### artist
 
 An "artist" should be present on all tracks. If it is _missing_ from any tracks,
 candidates to fix include the values for artist and album artist taken from all
@@ -406,7 +406,7 @@ also a candidate. Prohibited names can be configured with an option.
     Requires the `album-artist` check to pass first.
 
 **Automatic fix**: If there is exactly one candidate for artist name, apply it
-to all tracks that do not have an artist tag.
+to all tracks that do not have an artist field.
 
 <!-- pyml disable line-length -->
 
@@ -416,16 +416,16 @@ to all tracks that do not have an artist tag.
 
 <!-- pyml enable line-length -->
 
-### single-value-tags
+### single-value-fields
 
-If present, the specified tags should not have multiple values _in the same
-track_. Many multiple-value tags are valid, but they might be unintended, and
+If present, the specified fields should not have multiple values _in the same
+track_. Many multiple-value fields are valid, but they might be unintended, and
 might cause unpredictable results with various media players. The fix for this
 check provides options to concatenate multiple values into a single value, after
 removing duplicates.
 
-Other specific checks may enforce a single value for certain tags such as track
-number.
+Other specific checks may enforce a single value for certain fields such as
+track number.
 
 To configure how `albums` will combine multiple values, use the `concatenators`
 option. Pay attention to whether or not the separator includes extra spaces -
@@ -434,7 +434,7 @@ the first option gives "Alice / Bob" and the second is "Alice/Bob".
 By default, whichever concatenator is first will be used when automatic fix is
 requested. To disable this, change the automatic_concatenate option.
 
-**Automatic fix**: If a track has **duplicate** values for the tag, the
+**Automatic fix**: If a track has **duplicate** values for the field, the
 automatic fix will remove them. And if `automatic_concatenate` is enabled
 (default), unique values will be combined into a single value.
 
@@ -488,16 +488,16 @@ genre on the others.
 
 <!-- pyml enable line-length -->
 
-### musicbrainz-tags
+### musicbrainz-fields
 
 !!!note
 
-    Albums reads MusicBrainz tags and checks for consistency, but it doesn't
+    Albums reads MusicBrainz fields and checks for consistency, but it doesn't
     use the MusicBrainz API or check whether IDs are correct. Use a tool like
     [MusicBrainz Picard](https://picard.musicbrainz.org/) or
-    [beets](https://beets.io/) to create and update MusicBrainz tags.
+    [beets](https://beets.io/) to create and update MusicBrainz fields.
 
-Whether or not you use MusicBrainz, inconsistencies in MusicBrainz tags within
+Whether or not you use MusicBrainz, inconsistencies in MusicBrainz fields within
 an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
@@ -505,25 +505,25 @@ interpret this as two separate albums even if Other Fields are all the same.
 This check reports when those tags are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
-MusicBrainz, you might want to remove all MusicBrainz tags to avoid conflicts
+MusicBrainz, you might want to remove all MusicBrainz fields to avoid conflicts
 between them and the standard tags. If you do use MusicBrains, you may want to
-remove deprecated MusicBrainz tags (`MusicBrainz TRM Id`).
+remove deprecated MusicBrainz fields (`MusicBrainz TRM Id`).
 
 **Automatic fix**: If `MusicBrainz Album Id` or `MusicBrainz Album Artist Id` is
 not the same on all tracks (or not set on every track), remove that tag from
 every track.
 
-**Automatic fix**: If `remove_all` is enabled, remove all MusicBrainz tags.
+**Automatic fix**: If `remove_all` is enabled, remove all MusicBrainz fields.
 
 **Automatic fix**: If `remove_deprecated` is enabled, remove deprecated
-MusicBrainz tags.
+MusicBrainz fields.
 
 <!-- pyml disable line-length -->
 
-| Option = default               | Description                                                           |
-| ------------------------------ | --------------------------------------------------------------------- |
-| `remove_all` = **false**       | if enabled, remove all MusicBrainz tags                               |
-| `remove_deprecated` = **true** | if enabled, remove deprecated MusicBrainz tags (`MusicBrainz TRM Id`) |
+| Option = default               | Description                                                             |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `remove_all` = **false**       | if enabled, remove all MusicBrainz fields                               |
+| `remove_deprecated` = **true** | if enabled, remove deprecated MusicBrainz fields (`MusicBrainz TRM Id`) |
 
 <!-- pyml enable line-length -->
 
@@ -552,19 +552,19 @@ tracks, set that value on the tracks which have no value. And if the policy is
 | --------------------------- | --------------------------- |
 | `presence` = `"consistent"` | Set the tag presence policy |
 
-### publisher-field
+### publisher
 
 See "Other Fields: Per Album" above for common behavior of this check.
 
 !!!success "Dependency"
 
-    Requires the `legacy-tags` check to pass first.
+    Requires the `legacy-fields` check to pass first.
 
-### album-sort, album-artist-sort, barcode-field, compilation-field, release-type-field
+### album-sort, album-artist-sort, barcode, compilation, release-type
 
 See "Other Fields: Per Album" above for details on these per-album tag checks.
 
-### release-country-field
+### release-country
 
 See "Other Fields: Per Album" above for common behavior of this check.
 

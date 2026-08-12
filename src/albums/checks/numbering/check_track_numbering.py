@@ -12,8 +12,8 @@ from ...tagger.types import BasicField
 from ...words.make import plural, pluralize
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
+from ..field_policy import Policy, check_policy
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
-from ..tag_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)
 
@@ -107,12 +107,12 @@ class CheckTrackNumbering(Check):
             return None
 
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
-            return None  # this check works for tracks with "tracknumber" tag
+            return None  # this check works for tracks with "tracknumber" field
 
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
             return CheckResult("couldn't arrange tracks by disc - disc-numbering check must pass first")
-        # now, all tracknumber/tracktotal/discnumber/disctotal tags are guaranteed single-valued and numeric if present
+        # now, all tracknumber/tracktotal/discnumber/disctotal fields are guaranteed single-valued and numeric if present
 
         # apply track total policy - will offer automatic fix (remove all track totals) if policy is not "always"
         single_track_total = len(tracks_by_disc) == 1  # fix will allow manual entry if there is only one disc
@@ -127,7 +127,7 @@ class CheckTrackNumbering(Check):
             single_value_for_album,
         )
         if tracktotal_result:
-            # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
+            # TODO if policy is "always" and some fields are missing, we could ignore it and automatically fix them instead
             return tracktotal_result
 
         for disc_number in tracks_by_disc.keys():
@@ -171,7 +171,7 @@ class CheckTrackNumbering(Check):
                 if duplicate_tracks:
                     return CheckResult(f"duplicate track {pluralize('number', duplicate_tracks)}{on_disc_message} {duplicate_tracks}")
                 if len(actual_track_numbers) == len(tracks):
-                    # if all tracks have a unique track number tag and there are no unexpected track numbers but there are missing track numbers,
+                    # if all tracks have a unique track number field and there are no unexpected track numbers but there are missing track numbers,
                     # then it looks like the album is incomplete.
                     return CheckResult(f"{pluralize('track', missing_track_numbers)} missing from album{on_disc_message} {missing_track_numbers}")
 
@@ -184,14 +184,14 @@ class CheckTrackNumbering(Check):
     def _renumber_fixer(self, album: Album, disc_number: int, tracks: list[Track]) -> Fixer | None:
         new_tracknumbers: dict[str, str] = {}
         for track in tracks:
-            tag_tracknumber = int(track.get(BasicField.TRACKNUMBER, default=["0"])[0])
+            field_tracknumber = int(track.get(BasicField.TRACKNUMBER, default=["0"])[0])
             (filename_discnumber, filename_tracknumber, _) = parse_filename(track.filename)
 
             if filename_discnumber and filename_discnumber != disc_number:
                 return None  # track filename indicates unexpected disc number
-            if not tag_tracknumber and not filename_tracknumber:
+            if not field_tracknumber and not filename_tracknumber:
                 return None  # track has no track number and there is no guess from filename
-            if filename_tracknumber and tag_tracknumber != filename_tracknumber:
+            if filename_tracknumber and field_tracknumber != filename_tracknumber:
                 new_tracknumbers[track.filename] = str(filename_tracknumber)
         if not new_tracknumbers:
             return None

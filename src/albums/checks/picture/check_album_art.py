@@ -82,13 +82,13 @@ class CheckAlbumArt(Check):
             self.ctx.console.print(
                 f"Extracting {pic.type.name} {pic.picture_info.mime_type} from {escape(filename)} to {escape(new_file.name)}", highlight=False
             )
-            with tagger.open(filename) as tags:
-                image_data = tags.get_image_data(pic)
+            with tagger.open(filename) as tag:
+                image_data = tag.get_image_data(pic)
             with open(new_file, "wb") as f:
                 f.write(image_data)
             for filename in refs:
-                with tagger.open(filename) as tags:
+                with tagger.open(filename) as tag:
                     self.ctx.console.print(f"Removing {pic.type.name} {pic.picture_info.mime_type} from {escape(filename)}", highlight=False)
-                    tags.remove_picture(pic)
+                    tag.remove_picture(pic)
 
         return FixResult.CHANGED_ALBUM

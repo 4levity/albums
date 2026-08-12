@@ -9,20 +9,20 @@ from ...tagger.types import BasicField
 from ...words.make import pluralize
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
+from ..field_policy import Policy, check_policy
 from ..helpers import describe_track_number, get_tracks_by_disc, ordered_tracks
-from ..tag_policy import Policy, check_policy
 
 logger: Final = logging.getLogger(__name__)
 
 
-OPTION_REMOVE_DISC_TOTAL: Final = ">> Remove disc total tag"
+OPTION_REMOVE_DISC_TOTAL: Final = ">> Remove disc total field"
 OPTION_SET_DISC_TOTAL: Final = ">> Set disc total"
 
 
 class CheckDiscNumbering(Check):
     name = "disc-numbering"
     default_config = {"enabled": True, "discs_in_separate_folders": True, "disctotal_policy": "consistent", "remove_redundant_discnumber": False}
-    must_pass_checks = {"legacy-tags", "invalid-track-or-disc-number"}
+    must_pass_checks = {"legacy-fields", "invalid-track-or-disc-number"}
 
     def init(self, check_config: dict[str, Any]):
         self.discs_in_separate_folders = check_config.get("discs_in_separate_folders", self.default_config["discs_in_separate_folders"])
@@ -38,14 +38,14 @@ class CheckDiscNumbering(Check):
         tracks_by_disc = get_tracks_by_disc(album.tracks)
         if not tracks_by_disc:
             return CheckResult("couldn't arrange tracks by disc - invalid-track-or-disc-number check must pass first")
-        # now, all tracknumber/tracktotal/discnumber/disctotal tags should be single-valued and numeric
+        # now, all tracknumber/tracktotal/discnumber/disctotal fields should be single-valued and numeric
 
         single_value_for_album = self.disctotal_policy != Policy.NEVER
         disctotal_result = check_policy(
             self.ctx, self.tagger.get(album.path), album, self.disctotal_policy, BasicField.DISCTOTAL, BasicField.DISCNUMBER, single_value_for_album
         )
         if disctotal_result:
-            # TODO if policy is "always" and some tags are missing, we could ignore it and automatically fix them instead
+            # TODO if policy is "always" and some fields are missing, we could ignore it and automatically fix them instead
             return disctotal_result
 
         # we look at total before looking at the disc number values in order to extract the most value out of the totals -- a correct total helps
@@ -151,18 +151,18 @@ class CheckDiscNumbering(Check):
         changed = False
         tagger = self.tagger.get(album.path)
         for track in (track for track in album.tracks if (track.has(BasicField.DISCNUMBER) or track.has(BasicField.DISCTOTAL))):
-            remove_tags: list[BasicField] = []
+            remove_fields: list[BasicField] = []
             if track.has(BasicField.DISCNUMBER):
                 if int(track.get(BasicField.DISCNUMBER)[0]) != 1:
                     raise ValueError(f"asked to remove disc number but it was not 1: {track.get(BasicField.DISCNUMBER)}")
-                remove_tags.append(BasicField.DISCNUMBER)
+                remove_fields.append(BasicField.DISCNUMBER)
             if track.has(BasicField.DISCTOTAL):
                 if int(track.get(BasicField.DISCTOTAL)[0]) != 1:
                     raise ValueError(f"asked to remove disc total but it was not 1: {track.get(BasicField.DISCTOTAL)}")
-                remove_tags.append(BasicField.DISCTOTAL)
-            self.ctx.console.print(f"removing {' and '.join(remove_tag.value for remove_tag in remove_tags)} from {escape(track.filename)}")
-            with tagger.open(track.filename) as tags:
-                for remove_tag in remove_tags:
-                    tags.set_field(remove_tag, None)
+                remove_fields.append(BasicField.DISCTOTAL)
+            self.ctx.console.print(f"removing {' and '.join(remove_field.value for remove_field in remove_fields)} from {escape(track.filename)}")
+            with tagger.open(track.filename) as tag:
+                for remove_field in remove_fields:
+                    tag.set_field(remove_field, None)
             changed = True
         return FixResult.of(changed)
