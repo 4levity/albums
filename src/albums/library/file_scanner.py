@@ -23,12 +23,12 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
             if isinstance(target_scan.source, OtherFile):
                 return None
 
-        if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
+        if target_scan is not None and not target_scan.fields and isinstance(target_scan.source, Track):
             fields = [FieldV(field=t.field, value=t.value) for t in target_scan.source.fields]
             legacy_fields = list(target_scan.source.legacy_fields)
         else:
             fields = [FieldV(field=field, value=value) for field, values in file.get_fields() for value in values]
-            legacy_fields = [tag_name for (tag_name, _) in file.get_legacy_fields()]
+            legacy_fields = [field_name for (field_name, _) in file.get_legacy_fields()]
 
         if target_scan is not None and not target_scan.images and isinstance(target_scan.source, Track):
             pictures = [

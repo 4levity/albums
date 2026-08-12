@@ -539,7 +539,7 @@ class TestScanner:
             scan_streams = False
 
             def rescan_only_streams(scanner, file):
-                return TargetRescan(file, tags=False, images=True, streams=scan_streams)
+                return TargetRescan(file, fields=False, images=True, streams=scan_streams)
 
             mock_needs_rescan = mocker.patch("albums.library.album_scanner._needs_rescan", side_effect=rescan_only_streams)
             mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")

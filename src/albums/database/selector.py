@@ -44,7 +44,7 @@ _TRACK_COLUMNS: Final = {
 def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}, invert: bool = False) -> Generator[Album, None, None]:
     """Load albums matching the given filters.
 
-    Filters support keys like ``path``, ``collection``, ``ignore_check``, track columns (``bitrate``, ``codec``, etc.), and ``tag:...`` for tag values.
+    Filters support keys like ``path``, ``collection``, ``ignore_check``, track columns (``bitrate``, ``codec``, etc.), and ``field:...`` for tag values.
 
     Args:
         session: Database session.
@@ -52,16 +52,16 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
         invert: If true, return albums that don't match any filter.
     """
     stmt = select(Album)
-    tags: list[Tuple[str, List[Match]]] = [(k.partition(":")[2], matches) for k, matches in filter.items() if k.startswith("tag:")]
-    if tags:
+    fields: list[Tuple[str, List[Match]]] = [(k.partition(":")[2], matches) for k, matches in filter.items() if k.startswith("field:")]
+    if fields:
         track_match = select(Track.track_id).where(Album.album_id == Track.album_id)
-        for tag, matches in tags:
+        for tag, matches in fields:
             entity = aliased(FieldV)
             clauses = [or_(*(_compare(entity.value, m.comparator, m.value) for m in matches))] if matches else []  # empty = tag exists, any value
             track_match = track_match.join(entity, and_(Track.track_id == entity.track_id, entity.field == BasicField(tag), *clauses))
         stmt = stmt.where(not_(exists(track_match))) if invert else stmt.where(exists(track_match))
 
-    for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("tag:")):
+    for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("field:")):
         if key == "collection":
             # TODO: make this consistent, maybe everything should be "and" instead of some being "or"
             clause = (
