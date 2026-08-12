@@ -10,7 +10,7 @@ MAX_IMAGE_SIZE: Final = 128 * 1024 * 1024  # don't load and scan image files lar
 @dataclass(frozen=True)
 class TargetRescan:
     source: PictureFile | Track | OtherFile
-    tags: bool
+    fields: bool
     images: bool
     streams: bool
 

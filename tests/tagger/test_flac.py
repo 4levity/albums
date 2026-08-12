@@ -8,7 +8,7 @@ from mutagen.flac import Picture as FlacPicture
 from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag, Picture, PictureType
+from albums.tagger.types import BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -27,8 +27,8 @@ track2 = Track(
 )
 track3 = Track(
     filename="3.flac",
-    tag={BasicTag.ORGANIZATION: "ABC", BasicTag.ALBUMARTIST: "foo artist", BasicTag.DISCTOTAL: "2"},
-    legacy_tags=["label", "album artist", "totaldiscs"],
+    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
+    legacy_fields=["label", "album artist", "totaldiscs"],
 )
 
 album = Album(path="bar" + os.sep, tracks=[track1, track2, track3])
@@ -148,26 +148,26 @@ class TestFlac:
             pictures = [pic for (pic, _) in file.get_pictures()]
         assert set(pictures) == {back, replacement}
 
-    def test_get_legacy_tags_empty(self):
+    def test_get_legacy_fields_empty(self):
         with TestFlac.tagger.open(track1.filename) as file:
-            legacy = file.get_legacy_tags()
+            legacy = file.get_legacy_fields()
         assert legacy == ()
 
-    def test_get_legacy_tags_present(self):
+    def test_get_legacy_fields_present(self):
         with TestFlac.tagger.open(track3.filename) as file:
-            legacy = file.get_legacy_tags()
+            legacy = file.get_legacy_fields()
 
         expected = (
-            ("album artist", BasicTag.ALBUMARTIST),
-            ("label", BasicTag.ORGANIZATION),
-            ("totaldiscs", BasicTag.DISCTOTAL),
+            ("album artist", BasicField.ALBUMARTIST),
+            ("label", BasicField.ORGANIZATION),
+            ("totaldiscs", BasicField.DISCTOTAL),
         )
         assert sorted(legacy) == sorted(expected)
 
-    def test_get_tags_legacy_mapping(self):
+    def test_get_fields_legacy_mapping(self):
         with TestFlac.tagger.open(track3.filename) as file:
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
 
-        assert tags[BasicTag.ORGANIZATION] == ("ABC",)
-        assert tags[BasicTag.ALBUMARTIST] == ("foo artist",)
-        assert tags[BasicTag.DISCTOTAL] == ("2",)
+        assert fields[BasicField.ORGANIZATION] == ("ABC",)
+        assert fields[BasicField.ALBUMARTIST] == ("foo artist",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)

@@ -93,8 +93,8 @@ class TestCheckPictureMetadata:
         pic_scan = tagger.get_picture_scanner().scan(image_data)
         # wrong mime type:
         pic_info = PictureInfo("image/jpeg", 400, 400, 24, pic_scan.file_size, pic_scan.file_hash, pic_scan.load_issue)
-        with tagger.open(album.tracks[0].filename) as tags:
-            tags.add_picture(Picture(pic_info, PictureType.COVER_FRONT, ""), image_data)
+        with tagger.open(album.tracks[0].filename) as tag:
+            tag.add_picture(Picture(pic_info, PictureType.COVER_FRONT, ""), image_data)
 
         ctx.db = connection.open(connection.MEMORY)
         try:

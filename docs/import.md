@@ -30,16 +30,16 @@ When importing an album, all of the above folder names are generated, and if any
 of them exist, the process will stop and ask for confirmation.
 
 If `--automatic` is specified, albums uses either `default_import_path` or
-`default_import_path_various` after looking at the Artist and Album Artist tags
-to determine whether it is a compilation. If automatic mode is not enabled, you
-are prompted to select from any of the configured path options.
+`default_import_path_various` after looking at the Artist and Album Artist
+fields to determine whether it is a compilation. If automatic mode is not
+enabled, you are prompted to select from any of the configured path options.
 
 These $variables may be used in the path templates:
 
 | Variable    | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
-| **$album**  | Album tag value                                              |
-| **$artist** | Artist or Album Artist tag value                             |
+| **$album**  | Album field value                                            |
+| **$artist** | Artist or Album Artist field value                           |
 | **$A1**     | First letter of artist or "#" for numeric, not including The |
 | **$a1**     | Lowercase version of **$A1**                                 |
 

@@ -9,8 +9,8 @@ from pathvalidate import sanitize_filename
 from rich.markup import escape
 
 from ...entities import Album
-from ...library.tag_tools import get_album_name_from_tags, get_artist_from_tags
-from ...tagger.types import BasicTag
+from ...library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
+from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
 
@@ -20,7 +20,7 @@ logger: Final = logging.getLogger(__name__)
 class CheckFolderName(Check):
     name = "folder-name"
     default_config = {"enabled": True, "format": "$album", "ignore_folders": ["misc"]}
-    must_pass_checks = {"album-tag", "artist-tag"}
+    must_pass_checks = {"album", "artist"}
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
@@ -43,7 +43,7 @@ class CheckFolderName(Check):
             return None
 
         if not self._can_generate_folder_name(album):
-            return None  # TODO: configure behavior when album doesn't have tags to generate folder name
+            return None  # TODO: configure behavior when album tags don't have info to generate folder name
 
         if album.path in {".", "", os.sep}:
             return None  # if --dir or import points to a single album, the album has no path within the temporary library and cannot be renamed
@@ -82,15 +82,15 @@ class CheckFolderName(Check):
 
     def _can_generate_folder_name(self, album: Album) -> bool:
         ids = self.format.get_identifiers()
-        if "album" in ids and not any(t.has(BasicTag.ALBUM) for t in album.tracks):
+        if "album" in ids and not any(t.has(BasicField.ALBUM) for t in album.tracks):
             return False
-        if "artist" in ids and not any(t.has(BasicTag.ARTIST) or t.has(BasicTag.ALBUMARTIST) for t in album.tracks):
+        if "artist" in ids and not any(t.has(BasicField.ARTIST) or t.has(BasicField.ALBUMARTIST) for t in album.tracks):
             return False
         return True
 
     def _generate_folder_name(self, album: Album) -> str:
-        artist = get_artist_from_tags(album)
-        album_name = get_album_name_from_tags(album)
+        artist = get_artist_from_tracks(album)
+        album_name = get_album_name_from_tracks(album)
         folder_name = self.format.safe_substitute({"artist": artist, "album": album_name})
         folder_name = folder_name.replace("/", self.ctx.config.path_replace_slash)
         folder_name = sanitize_filename(

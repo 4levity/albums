@@ -16,7 +16,7 @@ from albums.library.scanner import scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag, Picture, PictureType
+from albums.tagger.types import BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 
@@ -33,30 +33,30 @@ class TestScanner:
         Album(
             path="bar" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicTag.TITLE: "1"}),
-                Track(filename="2.flac", tag={BasicTag.TITLE: "2"}),
-                Track(filename="3.flac", tag={BasicTag.TITLE: "3"}),
+                Track(filename="1.flac", tag={BasicField.TITLE: "1"}),
+                Track(filename="2.flac", tag={BasicField.TITLE: "2"}),
+                Track(filename="3.flac", tag={BasicField.TITLE: "3"}),
             ],
             picture_files=[PictureFile(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
         ),
         Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1"}), Track(filename="2.mp3", tag={BasicTag.TITLE: "2"})],
+            tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1"}), Track(filename="2.mp3", tag={BasicField.TITLE: "2"})],
         ),
         Album(
             path="baz" + os.sep,
-            tracks=[Track(filename="1.wma", tag={BasicTag.TITLE: "one"}), Track(filename="2.wma", tag={BasicTag.TITLE: "two"})],
+            tracks=[Track(filename="1.wma", tag={BasicField.TITLE: "one"}), Track(filename="2.wma", tag={BasicField.TITLE: "two"})],
         ),
         Album(
             path="eee" + os.sep,
             tracks=[
-                Track(filename="1.m4a", tag={BasicTag.TITLE: "one"}),
-                Track(filename="2.m4a", tag={BasicTag.TITLE: "two"}),
+                Track(filename="1.m4a", tag={BasicField.TITLE: "one"}),
+                Track(filename="2.m4a", tag={BasicField.TITLE: "two"}),
             ],
         ),
         Album(
             path="mob" + os.sep,
-            tracks=[Track(filename="1.aiff", tag={BasicTag.TITLE: "one"}), Track(filename="2.aiff", tag={BasicTag.TITLE: "two"})],
+            tracks=[Track(filename="1.aiff", tag={BasicField.TITLE: "one"}), Track(filename="2.aiff", tag={BasicField.TITLE: "two"})],
         ),
     ]
 
@@ -79,7 +79,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
 
                 # wma files
                 tracks = sorted(result[1].tracks)
@@ -88,7 +88,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicTag.TITLE) == ("one",)
+                assert tracks[0].get(BasicField.TITLE) == ("one",)
 
                 # mp4 files
                 # TODO make sure we know what codec and stream rate is in sample file
@@ -96,7 +96,7 @@ class TestScanner:
                 assert len(result[2].tracks) == 2
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
-                assert tracks[0].get(BasicTag.TITLE) == ("one",)
+                assert tracks[0].get(BasicField.TITLE) == ("one",)
 
                 # mp3 files
                 tracks = sorted(result[3].tracks)
@@ -105,7 +105,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
 
                 # aiff files
                 tracks = sorted(result[4].tracks)
@@ -114,7 +114,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 8000
-                assert tracks[0].get(BasicTag.TITLE) == ("one",)
+                assert tracks[0].get(BasicField.TITLE) == ("one",)
 
                 # image files in folder
                 assert len(result[0].picture_files) == 1
@@ -131,7 +131,7 @@ class TestScanner:
         big_picture = PictureInfo("image/bmp", big_image_dimension, big_image_dimension, 24, 0, b"")
         album = Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp4", tag={BasicTag.TITLE: "1"})],
+            tracks=[Track(filename="1.mp4", tag={BasicField.TITLE: "1"})],
             other_files=[OtherFile(filename="bonus_video.mp4")],  # create_library will make this a video because it's in other_files
             picture_files=[
                 PictureFile(filename="large.bmp", picture_info=big_picture),
@@ -196,16 +196,16 @@ class TestScanner:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
                 tracks = sorted(result[0].tracks)
                 assert tracks[0].filename == "1.flac"
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
 
             file = FLAC(library / result[0].path / "1.flac")
-            file[BasicTag.TITLE] = "new title"
+            file[BasicField.TITLE] = "new title"
             file.save()
             scan(ctx)
 
             with Session(db) as session:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
-                assert sorted(result[0].tracks)[0].get(BasicTag.TITLE) == ("new title",)
+                assert sorted(result[0].tracks)[0].get(BasicField.TITLE) == ("new title",)
         finally:
             db.dispose()
 
@@ -285,7 +285,7 @@ class TestScanner:
         db = connection.open(connection.MEMORY)
         album = Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp4", tag={BasicTag.TITLE: "1"})],
+            tracks=[Track(filename="1.mp4", tag={BasicField.TITLE: "1"})],
             other_files=[OtherFile(filename="bonus_video.mp4")],  # create_library will make this a video because it's in other_files
         )
         try:
@@ -365,21 +365,21 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
-                assert not tracks[0].has(BasicTag.ARTIST)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert not tracks[0].has(BasicField.ARTIST)
                 track_id = tracks[0].track_id
 
                 with AlbumTagger(library / created_album.path).open(tracks[0].filename) as tags:
-                    tags.set_tag(BasicTag.ARTIST, "test replace track")
+                    tags.set_field(BasicField.ARTIST, "test replace track")
 
                 assert scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
-                assert tracks[0].get(BasicTag.ARTIST) == ("test replace track",)
-                assert tracks[1].get(BasicTag.TITLE) == ("2",)
-                assert tracks[2].get(BasicTag.TITLE) == ("3",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[0].get(BasicField.ARTIST) == ("test replace track",)
+                assert tracks[1].get(BasicField.TITLE) == ("2",)
+                assert tracks[2].get(BasicField.TITLE) == ("3",)
 
                 old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None
@@ -398,9 +398,9 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
-                assert tracks[1].get(BasicTag.TITLE) == ("2",)
-                assert tracks[2].get(BasicTag.TITLE) == ("3",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[1].get(BasicField.TITLE) == ("2",)
+                assert tracks[2].get(BasicField.TITLE) == ("3",)
                 track_id = tracks[2].track_id
 
                 os.unlink(library / created_album.path / tracks[2].filename)
@@ -409,8 +409,8 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 2
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicTag.TITLE) == ("1",)
-                assert tracks[1].get(BasicTag.TITLE) == ("2",)
+                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[1].get(BasicField.TITLE) == ("2",)
 
                 old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None
@@ -480,7 +480,7 @@ class TestScanner:
                 tracks=[
                     Track(
                         filename="1.flac",
-                        tag={BasicTag.TITLE: "1"},
+                        tag={BasicField.TITLE: "1"},
                         pictures=[
                             TrackPicture(picture_info=PictureInfo("image/png", 402, 402, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
                             TrackPicture(picture_info=PictureInfo("image/png", 401, 401, 24, 1, b""), picture_type=PictureType.COVER_BACK),
@@ -539,7 +539,7 @@ class TestScanner:
             scan_streams = False
 
             def rescan_only_streams(scanner, file):
-                return TargetRescan(file, tags=False, images=True, streams=scan_streams)
+                return TargetRescan(file, fields=False, images=True, streams=scan_streams)
 
             mock_needs_rescan = mocker.patch("albums.library.album_scanner._needs_rescan", side_effect=rescan_only_streams)
             mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")

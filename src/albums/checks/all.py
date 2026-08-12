@@ -1,6 +1,23 @@
 from typing import Final
 
 from .base_check import Check
+from .fields.check_album import CheckAlbumField
+from .fields.check_album_artist import CheckAlbumArtist
+from .fields.check_album_artist_sort import CheckAlbumArtistSort
+from .fields.check_album_sort import CheckAlbumSort
+from .fields.check_artist import CheckArtistField
+from .fields.check_barcode import CheckBarcodeField
+from .fields.check_compilation import CheckCompilationField
+from .fields.check_duplicate_album import CheckDuplicateAlbum
+from .fields.check_extra_whitespace import CheckExtraWhitespace
+from .fields.check_genre_present import CheckGenrePresent
+from .fields.check_legacy_fields import CheckLegacyFields
+from .fields.check_musicbrainz_fields import CheckMusicBrainzFields
+from .fields.check_publisher import CheckPublisherField
+from .fields.check_releasecountry import CheckReleaseCountryField
+from .fields.check_releasetype import CheckReleaseTypeField
+from .fields.check_single_value_fields import CheckSingleValueFields
+from .fields.check_track_title import CheckTrackTitle
 from .numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from .numbering.check_disc_numbering import CheckDiscNumbering
 from .numbering.check_invalid_track_or_disc_number import CheckInvalidTrackOrDiscNumber
@@ -13,6 +30,7 @@ from .path.check_file_extension import CheckFileExtension
 from .path.check_folder_name import CheckFolderName
 from .path.check_illegal_pathname import CheckIllegalPathname
 from .path.check_track_filename import CheckTrackFilename
+from .path.check_unreadable_track import CheckUnreadableTrack
 from .picture.check_album_art import CheckAlbumArt
 from .picture.check_conflicting_embedded import CheckConflictingEmbedded
 from .picture.check_cover_available import CheckCoverAvailable
@@ -22,24 +40,6 @@ from .picture.check_cover_unique import CheckCoverUnique
 from .picture.check_duplicate_image import CheckDuplicateImage
 from .picture.check_invalid_image import CheckInvalidImage
 from .picture.check_picture_metadata import CheckPictureMetadata
-from .tags.check_album_artist import CheckAlbumArtist
-from .tags.check_album_artist_sort import CheckAlbumArtistSort
-from .tags.check_album_sort import CheckAlbumSort
-from .tags.check_album_tag import CheckAlbumTag
-from .tags.check_artist_tag import CheckArtistTag
-from .tags.check_barcode_tag import CheckBarcodeTag
-from .tags.check_compilation_tag import CheckCompilationTag
-from .tags.check_duplicate_album import CheckDuplicateAlbum
-from .tags.check_extra_whitespace import CheckExtraWhitespace
-from .tags.check_genre_present import CheckGenrePresent
-from .tags.check_legacy_tags import CheckLegacyTags
-from .tags.check_musicbrainz_tags import CheckMusicBrainzTags
-from .tags.check_publisher_tag import CheckPublisherTag
-from .tags.check_releasecountry_tag import CheckReleaseCountryTag
-from .tags.check_releasetype_tag import CheckReleaseTypeTag
-from .tags.check_single_value_tags import CheckSingleValueTags
-from .tags.check_track_title import CheckTrackTitle
-from .tags.check_unreadable_track import CheckUnreadableTrack
 
 # enabled checks will run on an album in this order:
 ALL_CHECKS: Final[tuple[type[Check], ...]] = (
@@ -47,32 +47,32 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckDuplicatePathname,
     CheckIllegalPathname,
     CheckFileExtension,
-    # tag checks 1
     CheckUnreadableTrack,
+    # field checks 1
     CheckExtraWhitespace,
-    CheckLegacyTags,
+    CheckLegacyFields,
     # numbering checks
     CheckDiscInTrackNumber,
     CheckInvalidTrackOrDiscNumber,
     CheckDiscNumbering,
     CheckTrackNumbering,
     CheckZeroPadNumbers,
-    # more tag checks
-    CheckAlbumTag,
+    # more field checks
+    CheckAlbumField,
     CheckAlbumArtist,
-    CheckArtistTag,
+    CheckArtistField,
     CheckDuplicateAlbum,
-    CheckSingleValueTags,
+    CheckSingleValueFields,
     CheckTrackTitle,
     CheckGenrePresent,
-    CheckMusicBrainzTags,
-    CheckPublisherTag,
+    CheckMusicBrainzFields,
+    CheckPublisherField,
     CheckAlbumSort,
     CheckAlbumArtistSort,
-    CheckBarcodeTag,
-    CheckCompilationTag,
-    CheckReleaseTypeTag,
-    CheckReleaseCountryTag,
+    CheckBarcodeField,
+    CheckCompilationField,
+    CheckReleaseTypeField,
+    CheckReleaseCountryField,
     # picture checks
     CheckInvalidImage,
     CheckDuplicateImage,

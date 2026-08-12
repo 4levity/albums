@@ -1,0 +1,78 @@
+from unittest.mock import call
+
+from albums.app import Context
+from albums.checks.base_check_field_per_album import AlbumTagger
+from albums.checks.fields.check_publisher import CheckPublisherField
+from albums.entities import Album, Track
+from albums.tagger.types import BasicField, TaggerFile
+
+
+class TestCheckPublisherField:
+    def test_publisher_ok(self):
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherField(Context()).check(album)
+        assert result is None
+
+    def test_publisher_ok_none(self):
+        tracks = [Track(filename="1.flac"), Track(filename="2.flac")]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherField(Context()).check(album)
+        assert result is None
+
+    def test_publisher_missing(self):
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherField(Context()).check(album)
+        assert result is not None
+        assert "organization policy=CONSISTENT but it is on some tracks and not others" in result.message
+
+    def test_publisher_none_policy_always(self):
+        tracks = [Track(filename="1.flac"), Track(filename="2.flac")]
+        album = Album(path="foo", tracks=tracks)
+        ctx = Context()
+        ctx.config.checks[CheckPublisherField.name]["presence"] = "always"
+        result = CheckPublisherField(ctx).check(album)
+        assert result is not None
+        assert result.fixer is None
+        assert "organization policy=ALWAYS but it is not on all tracks" in result.message
+
+    def test_publisher_different_select(self, mocker):
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherField(Context()).check(album)
+        assert result is not None
+        assert "multiple values for publisher/organization: ABC, XYZ" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
+        assert result.fixer.option_automatic_index is None
+
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        assert result.fixer.fix(result.fixer.options[0])
+
+        assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
+        assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
+
+    def test_publisher_different_remove(self, mocker):
+        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        album = Album(path="foo", tracks=tracks)
+        result = CheckPublisherField(Context()).check(album)
+        assert result is not None
+        assert "multiple values for publisher/organization: ABC, XYZ" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
+        assert result.fixer.option_automatic_index is None
+
+        tagger = TaggerFile()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        assert result.fixer.fix(result.fixer.options[0])
+
+        assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
+        assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]

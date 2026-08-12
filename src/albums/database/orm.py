@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
 schema_table: Final = Table("_schema", Base.metadata, Column("version", Integer, nullable=False, unique=True))
 NO_DEFAULT_VALUE_LIST_STR: Final = [
     "".join(["!", "NO DEFAULT VALUE"])
-]  # Sentinel default for TagList.get() - never a real tag value, used to detect caller omitting default
+]  # Sentinel default for Track.get() - never a real field value, used to detect caller omitting default
 
 
 class IntEnumAsInt[EnumType](TypeDecorator[EnumType]):

@@ -5,7 +5,7 @@ import xxhash
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture.info import PictureInfo
-from albums.tagger.folder import AlbumTagger, BasicTag
+from albums.tagger.folder import AlbumTagger, BasicField
 from albums.tagger.types import Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
@@ -13,16 +13,16 @@ from ..fixtures.create_library import create_library, make_image_data
 track = Track(
     filename="1.aiff",
     tag={
-        BasicTag.ARTIST: "A",
-        BasicTag.TITLE: "T",
-        BasicTag.ALBUM: "baz",
-        BasicTag.ALBUMARTIST: "baz+foo",
-        BasicTag.TRACKNUMBER: "1",
-        BasicTag.TRACKTOTAL: "3",
-        BasicTag.DISCNUMBER: "2",
-        BasicTag.DISCTOTAL: "2",
-        BasicTag.GENRE: "Rock",
-        BasicTag.ORGANIZATION: "ABC",
+        BasicField.ARTIST: "A",
+        BasicField.TITLE: "T",
+        BasicField.ALBUM: "baz",
+        BasicField.ALBUMARTIST: "baz+foo",
+        BasicField.TRACKNUMBER: "1",
+        BasicField.TRACKTOTAL: "3",
+        BasicField.DISCNUMBER: "2",
+        BasicField.DISCTOTAL: "2",
+        BasicField.GENRE: "Rock",
+        BasicField.ORGANIZATION: "ABC",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
@@ -41,7 +41,7 @@ class TestAiff:
     def test_read_write_aiff_tags(self):
         with TestAiff.tagger.open(track.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
-            tags = dict(file.get_tags())
+            fields = dict(file.get_fields())
         assert len(pictures) == 2
         assert any(pic.description.endswith(" ") for pic in pictures)  # aiff frame hash was made unique by modifying description
         assert pictures[0].type == PictureType.COVER_FRONT or pictures[1].type == PictureType.COVER_FRONT
@@ -54,102 +54,102 @@ class TestAiff:
             == 400
         )
         assert pictures[0].picture_info.mime_type == pictures[1].picture_info.mime_type == "image/png"
-        track_tags = track.tag_dict()
-        assert tags[BasicTag.ARTIST] == tuple(track_tags[BasicTag.ARTIST])
-        assert tags[BasicTag.ALBUMARTIST] == tuple(track_tags[BasicTag.ALBUMARTIST])
-        assert tags[BasicTag.ALBUM] == tuple(track_tags[BasicTag.ALBUM])
-        assert tags[BasicTag.TITLE] == tuple(track_tags[BasicTag.TITLE])
-        assert tags[BasicTag.GENRE] == tuple(track_tags[BasicTag.GENRE])
-        assert tags[BasicTag.ORGANIZATION] == tuple(track_tags[BasicTag.ORGANIZATION])
+        track_fields = track.field_dict()
+        assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
+        assert fields[BasicField.ALBUMARTIST] == tuple(track_fields[BasicField.ALBUMARTIST])
+        assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])
+        assert fields[BasicField.TITLE] == tuple(track_fields[BasicField.TITLE])
+        assert fields[BasicField.GENRE] == tuple(track_fields[BasicField.GENRE])
+        assert fields[BasicField.ORGANIZATION] == tuple(track_fields[BasicField.ORGANIZATION])
 
     def test_update_aiff_tags(self):
-        TestAiff.tagger.set_basic_tags(
+        TestAiff.tagger.set_basic_fields(
             TestAiff.library / album.path / track.filename,
             [
-                (BasicTag.ARTIST, "a1"),
-                (BasicTag.ALBUMARTIST, "a2"),
-                (BasicTag.ALBUM, "a3"),
-                (BasicTag.TITLE, "t"),
-                (BasicTag.GENRE, "Country"),
-                (BasicTag.ORGANIZATION, "Q"),
+                (BasicField.ARTIST, "a1"),
+                (BasicField.ALBUMARTIST, "a2"),
+                (BasicField.ALBUM, "a3"),
+                (BasicField.TITLE, "t"),
+                (BasicField.GENRE, "Country"),
+                (BasicField.ORGANIZATION, "Q"),
             ],
         )
         with TestAiff.tagger.open(track.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.ARTIST] == ("a1",)
-        assert tags[BasicTag.ALBUMARTIST] == ("a2",)
-        assert tags[BasicTag.ALBUM] == ("a3",)
-        assert tags[BasicTag.TITLE] == ("t",)
-        assert tags[BasicTag.GENRE] == ("Country",)
-        assert tags[BasicTag.ORGANIZATION] == ("Q",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.ARTIST] == ("a1",)
+        assert fields[BasicField.ALBUMARTIST] == ("a2",)
+        assert fields[BasicField.ALBUM] == ("a3",)
+        assert fields[BasicField.TITLE] == ("t",)
+        assert fields[BasicField.GENRE] == ("Country",)
+        assert fields[BasicField.ORGANIZATION] == ("Q",)
 
     def test_write_aiff_tracktotal(self):
         with TestAiff.tagger.open(track.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.TRACKNUMBER] == ("1",)
-        assert tags[BasicTag.TRACKTOTAL] == ("3",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("1",)
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
 
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.TRACKTOTAL, "02")
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.TRACKNUMBER] == ("1",)
-        assert tags[BasicTag.TRACKTOTAL] == ("02",)
+            file.set_field(BasicField.TRACKTOTAL, "02")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("1",)
+        assert fields[BasicField.TRACKTOTAL] == ("02",)
 
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.TRACKNUMBER, "3")
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.TRACKNUMBER] == ("3",)
-        assert tags[BasicTag.TRACKTOTAL] == ("02",)
+            file.set_field(BasicField.TRACKNUMBER, "3")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("3",)
+        assert fields[BasicField.TRACKTOTAL] == ("02",)
 
         # write both at once
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.TRACKNUMBER, "2")
-            file.set_tag(BasicTag.TRACKTOTAL, "3")
+            file.set_field(BasicField.TRACKNUMBER, "2")
+            file.set_field(BasicField.TRACKTOTAL, "3")
         with TestAiff.tagger.open(track.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.TRACKNUMBER] == ("2",)
-        assert tags[BasicTag.TRACKTOTAL] == ("3",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("2",)
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
 
         # remove total
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.TRACKTOTAL, None)
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.TRACKNUMBER] == ("2",)
-        assert BasicTag.TRACKTOTAL not in tags
+            file.set_field(BasicField.TRACKTOTAL, None)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("2",)
+        assert BasicField.TRACKTOTAL not in fields
 
     def test_write_aiff_disctotal(self):
         with TestAiff.tagger.open(track.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.DISCNUMBER] == ("2",)
-        assert tags[BasicTag.DISCTOTAL] == ("2",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)
 
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.DISCTOTAL, "1")
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.DISCNUMBER] == ("2",)
-        assert tags[BasicTag.DISCTOTAL] == ("1",)
+            file.set_field(BasicField.DISCTOTAL, "1")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("1",)
 
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.DISCNUMBER, "1")
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.DISCNUMBER] == ("1",)
-        assert tags[BasicTag.DISCTOTAL] == ("1",)
+            file.set_field(BasicField.DISCNUMBER, "1")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("1",)
+        assert fields[BasicField.DISCTOTAL] == ("1",)
 
         # write both at once
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.DISCNUMBER, "2")
-            file.set_tag(BasicTag.DISCTOTAL, "2")
+            file.set_field(BasicField.DISCNUMBER, "2")
+            file.set_field(BasicField.DISCTOTAL, "2")
         with TestAiff.tagger.open(track.filename) as file:
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.DISCNUMBER] == ("2",)
-        assert tags[BasicTag.DISCTOTAL] == ("2",)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert fields[BasicField.DISCTOTAL] == ("2",)
 
         # remove total
         with TestAiff.tagger.open(track.filename) as file:
-            file.set_tag(BasicTag.DISCTOTAL, None)
-            tags = dict(file.get_tags())
-        assert tags[BasicTag.DISCNUMBER] == ("2",)
-        assert BasicTag.DISCTOTAL not in tags
+            file.set_field(BasicField.DISCTOTAL, None)
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("2",)
+        assert BasicField.DISCTOTAL not in fields
 
     def test_remove_one_aiff_pic(self):
         with TestAiff.tagger.open(track.filename) as file:

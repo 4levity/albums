@@ -9,8 +9,8 @@ from mutagen.flac import Picture as FlacPicture
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
 from ..helpers import album_picture_to_flac, scan_flac_picture
-from ..types import BasicTag, Picture
-from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
+from ..types import BasicField, Picture
+from ..vorbis import vorbis_comment_fields, vorbis_comment_legacy_fields, vorbis_comment_set_field
 
 
 class FlacTagger(AbstractMutagenTagger[FLAC]):
@@ -49,13 +49,13 @@ class FlacTagger(AbstractMutagenTagger[FLAC]):
             self._add_picture(pic, data)
 
     @override
-    def get_tags(self):
-        return vorbis_comment_tags(self._file.tags)  # pyright: ignore[reportArgumentType]
+    def get_fields(self):
+        return vorbis_comment_fields(self._file.tags)  # pyright: ignore[reportArgumentType]
 
     @override
-    def get_legacy_tags(self):
-        return vorbis_comment_legacy_tags(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
+    def get_legacy_fields(self):
+        return vorbis_comment_legacy_fields(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
-        vorbis_comment_set_tag(self._file.tags, tag, value)  # pyright: ignore[reportArgumentType]
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
+        vorbis_comment_set_field(self._file.tags, field, value)  # pyright: ignore[reportArgumentType]

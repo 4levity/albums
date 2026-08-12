@@ -3,12 +3,12 @@ from typing import Any, Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
 
-from .types import BasicTag, MutagenFileType, Picture, StreamInfo, TaggerFile
+from .types import BasicField, MutagenFileType, Picture, StreamInfo, TaggerFile
 
 logger: Final = logging.getLogger(__name__)
 
-ALL_BASIC_TAGS: Final = frozenset(tag.value for tag in BasicTag)
-MAX_BASIC_TAG_VALUE_LENGTH: Final = 4096
+ALL_BASIC_FIELDS: Final = frozenset(field.value for field in BasicField)
+MAX_BASIC_FIELD_VALUE_LENGTH: Final = 4096
 
 
 class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
@@ -19,10 +19,10 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         self._padding = padding
 
     # subclass must implement
-    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]: ...
+    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]: ...
     def _get_file(self) -> _FT: ...
-    # _set_tag must support BasicTag but may raise an exception if str type tag is provided
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None: ...
+    # _set_field must support BasicField but may raise an exception if str type field is provided
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None) -> None: ...
 
     # subclass must implement if advertising Cap.PICTURES
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
@@ -56,8 +56,8 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         return image_data
 
     @override
-    def set_tag(self, tag: BasicTag | str, value: str | List[str] | None) -> None:
-        self._set_tag(tag, value)
+    def set_field(self, field: BasicField | str, value: str | List[str] | None) -> None:
+        self._set_field(field, value)
         self._changed = True
 
     @override

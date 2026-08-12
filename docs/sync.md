@@ -39,7 +39,7 @@ additional advanced options for the sync:
 
 | Basic Option                   | Description                                         |
 | ------------------------------ | --------------------------------------------------- |
-| `collection`                   | The albums collection tag to sync                   |
+| `collection`                   | The albums collection to filter by for sync         |
 | `path_root`                    | The destination path where files will be copied     |
 | `relpath_template_artist`      | Template for album folder name (albums with artist) |
 | `relpath_template_compilation` | Template for album folder name (compilations)       |

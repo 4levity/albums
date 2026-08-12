@@ -12,8 +12,8 @@ from ..config import ID3v1Policy
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
 from .id3_helpers import format_numbered_value, get_text, must_get_text, parse_numbered_value, set_numbered_frame
-from .id3_mappings import BASIC_ID3_TEXT_FRAMES, TAG_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
-from .types import BasicTag, Picture, PictureType
+from .id3_mappings import BASIC_ID3_TEXT_FRAMES, FIELD_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
+from .types import BasicField, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
         self._id3v1 = id3v1
 
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]:
-        tags: ID3 = self._file.tags  # type: ignore
-        picture_frames: list[APIC] = tags.getall("APIC") if tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        frames = self._ensure_id3()
+        picture_frames: list[APIC] = frames.getall("APIC") if frames else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         for frame in picture_frames:  # pyright: ignore[reportUnknownVariableType]
             image_data: bytes = bytes(frame.data)  # type: ignore
             picture_type = PictureType(frame.type)  # type: ignore
@@ -46,134 +46,134 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
 
     @override
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None:
-        id3 = self._ensure_id3()
+        frames = self._ensure_id3()
         description = new_picture.description
         apic = APIC(mime=new_picture.picture_info.mime_type, type=new_picture.type, data=image_data, desc=description)
         # with future mutagen 1.48 or later, docs indicate we will be able to ensure distinct hash key like this:
         # while apic.HashKey in tags:
         #     apic.salt += "x"
-        while apic.HashKey in id3:  # TODO don't alter description
+        while apic.HashKey in frames:  # TODO don't alter description
             description += " "
             apic = APIC(mime=new_picture.picture_info.mime_type, type=new_picture.type, data=image_data, desc=description)
-        id3.add(apic)  # pyright: ignore[reportUnknownMemberType]
+        frames.add(apic)  # pyright: ignore[reportUnknownMemberType]
 
     @override
     def _remove_picture(self, remove_picture: Picture) -> None:
         if not self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
             logger.warning(f"could not remove {remove_picture.type.name} picture from {self._get_file().filename}: no ID3 tag")
             return
-        id3 = self._ensure_id3()  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        frames = self._ensure_id3()  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         pictures = list((pic, data) for pic, data in self.get_pictures() if pic != remove_picture)
-        id3.delall("APIC")  # pyright: ignore[reportUnknownMemberType]
+        frames.delall("APIC")  # pyright: ignore[reportUnknownMemberType]
         for pic, data in pictures:
             self._add_picture(pic, data)
 
     @override
-    def get_tags(self) -> Tuple[Tuple[BasicTag, Tuple[str, ...]], ...]:
-        basic_tags: list[Tuple[BasicTag, Tuple[str, ...]]] = []
+    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+        basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
-            id3 = self._ensure_id3()
-            basic_tags.extend((tag, tuple(must_get_text(id3, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in id3)
+            frames = self._ensure_id3()
+            basic_fields.extend((tag, tuple(must_get_text(frames, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in frames)
 
-            if "TCON" in id3:
-                basic_tags.append((BasicTag.GENRE, tuple(id3["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            if "TCON" in frames:
+                basic_fields.append((BasicField.GENRE, tuple(frames["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
             ufid_frame = f"UFID:{UFID_MUSICBRAINZ_OWNER}"
-            if ufid_frame in id3:
-                ufid_data = bytes(id3[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-                basic_tags.append((BasicTag.MUSICBRAINZ_TRACKID, (ufid_data.decode("ascii"),)))
+            if ufid_frame in frames:
+                ufid_data = bytes(frames[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                basic_fields.append((BasicField.MUSICBRAINZ_TRACKID, (ufid_data.decode("ascii"),)))
 
             track_number, track_total = self._get_trck()
             if track_number is not None:
-                basic_tags.append((BasicTag.TRACKNUMBER, (track_number,)))
+                basic_fields.append((BasicField.TRACKNUMBER, (track_number,)))
             if track_total is not None:
-                basic_tags.append((BasicTag.TRACKTOTAL, (track_total,)))
+                basic_fields.append((BasicField.TRACKTOTAL, (track_total,)))
 
             disc_number, disc_total = self._get_tpos()
             if disc_number is not None:
-                basic_tags.append((BasicTag.DISCNUMBER, (disc_number,)))
+                basic_fields.append((BasicField.DISCNUMBER, (disc_number,)))
             if disc_total is not None:
-                basic_tags.append((BasicTag.DISCTOTAL, (disc_total,)))
+                basic_fields.append((BasicField.DISCTOTAL, (disc_total,)))
 
-        return tuple(basic_tags)
+        return tuple(basic_fields)
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
-        if not isinstance(tag, BasicTag):
-            raise ValueError("id3 tagger only uses BasicTag")
-        tags = self._ensure_id3()
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
+        if not isinstance(field, BasicField):
+            raise ValueError("id3 tagger only uses BasicField")
+        frames = self._ensure_id3()
         if value is None:
-            match tag:
-                case BasicTag.GENRE:
-                    del tags["TCON"]
-                case BasicTag.DISCNUMBER:
+            match field:
+                case BasicField.GENRE:
+                    del frames["TCON"]
+                case BasicField.DISCNUMBER:
                     _, disc_total = self._get_tpos()
                     self._set_tpos(None, disc_total)
-                case BasicTag.DISCTOTAL:
+                case BasicField.DISCTOTAL:
                     disc_number, _ = self._get_tpos()
                     self._set_tpos(disc_number, None)
-                case BasicTag.MUSICBRAINZ_TRACKID:
-                    del tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
-                case BasicTag.TRACKNUMBER:
+                case BasicField.MUSICBRAINZ_TRACKID:
+                    del frames[f"UFID:{UFID_MUSICBRAINZ_OWNER}"]
+                case BasicField.TRACKNUMBER:
                     _, track_total = self._get_trck()
                     self._set_trck(None, track_total)
-                case BasicTag.TRACKTOTAL:
+                case BasicField.TRACKTOTAL:
                     track_number, _ = self._get_trck()
                     self._set_trck(track_number, None)
-                case BasicTag.UNKNOWN:
+                case BasicField.UNKNOWN:
                     pass
                 case _:
-                    del tags[TAG_TO_ID3_TEXT_FRAME[tag]]
+                    del frames[FIELD_TO_ID3_TEXT_FRAME[field]]
         else:
             value_list = value if isinstance(value, List) else [value]
-            match tag:
-                case BasicTag.ALBUM:
-                    tags["TALB"] = TALB(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.ALBUMSORT:
-                    tags["TSOA"] = TSOA(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.ALBUMARTIST:
-                    tags["TPE2"] = TPE2(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.ALBUMARTISTSORT:
-                    tags["TSO2"] = TSO2(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.ARTIST:
-                    tags["TPE1"] = TPE1(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.ARTISTSORT:
-                    tags["TSOP"] = TSOP(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.COMPILATION:
+            match field:
+                case BasicField.ALBUM:
+                    frames["TALB"] = TALB(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.ALBUMSORT:
+                    frames["TSOA"] = TSOA(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.ALBUMARTIST:
+                    frames["TPE2"] = TPE2(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.ALBUMARTISTSORT:
+                    frames["TSO2"] = TSO2(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.ARTIST:
+                    frames["TPE1"] = TPE1(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.ARTISTSORT:
+                    frames["TSOP"] = TSOP(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.COMPILATION:
                     if value_list and value_list[0]:
-                        tags["TCMP"] = TCMP(encoding=Encoding.UTF8, text=["1"])
-                    elif "TCMP" in tags:
-                        del tags["TCMP"]
-                case BasicTag.DISCNUMBER:
+                        frames["TCMP"] = TCMP(encoding=Encoding.UTF8, text=["1"])
+                    elif "TCMP" in frames:
+                        del frames["TCMP"]
+                case BasicField.DISCNUMBER:
                     _, disc_total = self._get_tpos()
                     self._set_tpos(value_list[0] if value_list[0] else None, disc_total)
-                case BasicTag.DISCTOTAL:
+                case BasicField.DISCTOTAL:
                     disc_number, _ = self._get_tpos()
                     self._set_tpos(disc_number, value_list[0] if value_list[0] else None)
-                case BasicTag.GENRE:
-                    tags["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.MUSICBRAINZ_TRACKID:
-                    tags[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
-                case BasicTag.RELEASECOUNTRY | BasicTag.RELEASETYPE:
-                    raise ValueError(f"cannot set {tag.name} in ID3 tag on {self._get_file().filename}")
-                case BasicTag.ORGANIZATION:
-                    tags["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.TITLE:
-                    tags["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
-                case BasicTag.TRACKNUMBER:
+                case BasicField.GENRE:
+                    frames["TCON"] = TCON(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.MUSICBRAINZ_TRACKID:
+                    frames[f"UFID:{UFID_MUSICBRAINZ_OWNER}"] = UFID(owner=UFID_MUSICBRAINZ_OWNER, data=bytes(value_list[0], "utf-8"))
+                case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
+                    raise ValueError(f"cannot set {field.name} in ID3 tag on {self._get_file().filename}")
+                case BasicField.ORGANIZATION:
+                    frames["TPUB"] = TPUB(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.TITLE:
+                    frames["TIT2"] = TIT2(encoding=Encoding.UTF8, text=value_list)
+                case BasicField.TRACKNUMBER:
                     _, track_total = self._get_trck()
                     self._set_trck(value_list[0] if value_list[0] else None, track_total)
-                case BasicTag.TRACKTOTAL:
+                case BasicField.TRACKTOTAL:
                     track_number, _ = self._get_trck()
                     self._set_trck(track_number, value_list[0] if value_list[0] else None)
-                case BasicTag.UNKNOWN:
+                case BasicField.UNKNOWN:
                     raise ValueError("cannot set tag value UNKNOWN")
                 case _:
-                    frame = TAG_TO_ID3_TEXT_FRAME[tag]
+                    frame = FIELD_TO_ID3_TEXT_FRAME[field]
                     if not frame.startswith("TXXX:"):
                         raise RuntimeError(f"unexpected frame {frame}")
                     [_, description] = frame.split(":", 1)
-                    tags[frame] = TXXX(encoding=Encoding.UTF8, desc=description, text=value_list)
+                    frames[frame] = TXXX(encoding=Encoding.UTF8, desc=description, text=value_list)
 
     def _get_tpos(self) -> Tuple[str | None, str | None]:
         values = get_text(self._ensure_id3(), "TPOS")

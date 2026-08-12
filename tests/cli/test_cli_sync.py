@@ -6,7 +6,7 @@ import pytest
 
 from albums.entities import Album, PictureFile, Track
 from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path
@@ -14,14 +14,14 @@ from ..fixtures.create_library import create_library, test_data_path
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1", BasicTag.ARTIST: "a"})],
+        tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tag={BasicTag.TITLE: "one", BasicTag.ALBUM: "bar", BasicTag.ARTIST: "foo"}),
-            Track(filename="2.flac", tag={BasicTag.TITLE: "two", BasicTag.ALBUM: "bar", BasicTag.ARTIST: "foo"}),
+            Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
+            Track(filename="2.flac", tag={BasicField.TITLE: "two", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
         ],
     ),
 ]

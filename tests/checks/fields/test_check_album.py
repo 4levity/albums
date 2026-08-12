@@ -1,0 +1,100 @@
+import os
+from pathlib import Path
+
+from albums.app import Context
+from albums.checks.fields.check_album import CheckAlbumField
+from albums.entities import Album, Track
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.types import BasicField
+
+
+class TestCheckAlbumField:
+    def test_check_needs_album__all(self):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1.flac"),
+                Track(filename="2.flac"),
+                Track(filename="3.flac"),
+            ],
+        )
+        result = CheckAlbumField(Context()).check(album)
+        assert "3 tracks missing album field" in result.message
+
+    def test_check_needs_album__one(self):
+        album = Album(
+            path="",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.ALBUM: "A"}),
+                Track(filename="2.flac", tag={BasicField.ALBUM: "A"}),
+                Track(filename="3.flac"),
+            ],
+        )
+        result = CheckAlbumField(Context()).check(album)
+        assert "1 track missing album field" in result.message
+
+    def test_check_needs_album__conflicting(self):
+        album = Album(
+            path="A/",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.ALBUM: "A"}),
+                Track(filename="2.flac", tag={BasicField.ALBUM: "A"}),
+                Track(filename="3.flac", tag={BasicField.ALBUM: "B"}),
+            ],
+        )
+        result = CheckAlbumField(Context()).check(album)
+        assert "2 conflicting album field values" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == ["A", "B"]
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_free_text is not None
+
+    def test_check_needs_album__fix_auto(self, mocker):
+        # album can be guessed from folder, no conflicting fields
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[
+                Track(filename="1.flac"),
+                Track(filename="2.flac"),
+                Track(filename="3.flac"),
+            ],
+        )
+        result = CheckAlbumField(Context()).check(album)
+        assert result.fixer is not None
+        assert result.fixer.options[0] == "Foo"
+        assert result.fixer.option_automatic_index == 0
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert fix_result
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")])
+
+    def test_check_needs_album__fix_interactive(self, mocker):
+        # not all tracks have album field, where present it is different than folder name, no automatic fix
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.ALBUM: "Bar"}),
+                Track(filename="2.flac", tag={BasicField.ALBUM: "Bar"}),
+                Track(filename="3.flac"),
+            ],
+        )
+        result = CheckAlbumField(Context()).check(album)
+        assert "1 track missing album field" in str(result.message)
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_free_text
+        assert result.fixer.options == ["Bar", "Foo"]
+        assert "album name to use" in result.fixer.prompt
+        assert result.fixer.table
+        (hh, rr) = result.fixer.get_table() or ([], [])
+        rows = [[c for c in row] for row in rr]
+        assert len(rows) == 3  # tracks
+        assert len([h for h in hh]) == len(rows[0])  # headers
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        fix_result = result.fixer.fix(result.fixer.options[0])
+        assert fix_result
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Bar")])

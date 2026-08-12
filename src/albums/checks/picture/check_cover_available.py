@@ -15,7 +15,7 @@ from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 
 from ...entities import Album
 from ...interactive.image_table import render_image_table
-from ...library.tag_tools import get_album_name_from_tags, get_artist_from_tags
+from ...library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ...tagger.folder import AlbumTagger, Cap
 from ...tagger.types import Picture, PictureType
@@ -84,8 +84,8 @@ class CheckCoverAvailable(Check):
                     ),
                 )
             elif self.cover_required:
-                artist_name = get_artist_from_tags(album)
-                album_name = get_album_name_from_tags(album)
+                artist_name = get_artist_from_tracks(album)
+                album_name = get_album_name_from_tracks(album)
                 if self.get_cover_command and artist_name and album_name:
                     command_preview = self._preview_get_cover_command(album, artist_name, album_name)
                     options = [f">> Try to retrieve cover image with: {command_preview}"]

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import humanize
 
-from albums.entities import Album, OtherFile, PictureFile, TagV, Track, TrackPicture
+from albums.entities import Album, FieldV, OtherFile, PictureFile, Track, TrackPicture
 from albums.picture.format import format_to_mime_type
 from albums.tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
 
@@ -23,12 +23,12 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
             if isinstance(target_scan.source, OtherFile):
                 return None
 
-        if target_scan is not None and not target_scan.tags and isinstance(target_scan.source, Track):
-            tags = [TagV(tag=t.tag, value=t.value) for t in target_scan.source.tags]
-            legacy_tags = list(target_scan.source.legacy_tags)
+        if target_scan is not None and not target_scan.fields and isinstance(target_scan.source, Track):
+            fields = [FieldV(field=t.field, value=t.value) for t in target_scan.source.fields]
+            legacy_fields = list(target_scan.source.legacy_fields)
         else:
-            tags = [TagV(tag=tag, value=value) for tag, values in file.get_tags() for value in values]
-            legacy_tags = [tag_name for (tag_name, _) in file.get_legacy_tags()]
+            fields = [FieldV(field=field, value=value) for field, values in file.get_fields() for value in values]
+            legacy_fields = [field_name for (field_name, _) in file.get_legacy_fields()]
 
         if target_scan is not None and not target_scan.images and isinstance(target_scan.source, Track):
             pictures = [
@@ -52,8 +52,8 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
             modify_timestamp=stat.modify_timestamp,
             stream=stream,
             pictures=pictures,
-            tags=tags,
-            legacy_tags=legacy_tags,
+            fields=fields,
+            legacy_fields=legacy_fields,
         )
 
 

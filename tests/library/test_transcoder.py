@@ -10,7 +10,7 @@ from albums.app import Context
 from albums.entities import Album, Track, TrackPicture
 from albums.library.transcoder import Transcoder
 from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicTag, PictureInfo, PictureType
+from albums.tagger.types import BasicField, PictureInfo, PictureType
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg
@@ -94,7 +94,7 @@ class TestTranscoder:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={BasicTag.TITLE: "one"},
+                    tag={BasicField.TITLE: "one"},
                     pictures=[TrackPicture(picture_info=PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],
@@ -110,7 +110,7 @@ class TestTranscoder:
         with AlbumTagger(mp3.parent).open(mp3.name) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
 
-            assert file.get_tags() == ((BasicTag.TITLE, ("one",)),)
+            assert file.get_fields() == ((BasicField.TITLE, ("one",)),)
             assert len(pictures) == 1
             pic = pictures[0]
             assert pic.type == PictureType.COVER_FRONT

@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from ..app import Context
 from ..entities import Album, Track
-from ..tagger.types import BasicTag
+from ..tagger.types import BasicField
 from .check_types import FixResult
 
 FRONT_COVER_FILENAME: Final = "cover"
@@ -27,11 +27,11 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
     """
     if any(
         not (
-            len(track.get(BasicTag.TRACKNUMBER, default=["0"])) == 1
-            and track.get(BasicTag.TRACKNUMBER, default=["0"])[0].isdecimal()
-            and len(track.get(BasicTag.DISCNUMBER, default=["1"])) == 1
-            and track.get(BasicTag.DISCNUMBER, default=["1"])[0].isdecimal()
-            and int(track.get(BasicTag.DISCNUMBER, default=["1"])[0]) > 0
+            len(track.get(BasicField.TRACKNUMBER, default=["0"])) == 1
+            and track.get(BasicField.TRACKNUMBER, default=["0"])[0].isdecimal()
+            and len(track.get(BasicField.DISCNUMBER, default=["1"])) == 1
+            and track.get(BasicField.DISCNUMBER, default=["1"])[0].isdecimal()
+            and int(track.get(BasicField.DISCNUMBER, default=["1"])[0]) > 0
         )
         for track in tracks
     ):
@@ -39,45 +39,45 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
 
     tracks_by_disc: defaultdict[int, list[Track]] = defaultdict(list)
     for track in tracks:
-        discnumber = int(track.get(BasicTag.DISCNUMBER, default=["0"])[0])
+        discnumber = int(track.get(BasicField.DISCNUMBER, default=["0"])[0])
         tracks_by_disc[discnumber].append(track)
 
     for discnumber in tracks_by_disc.keys():
-        tracks_by_disc[discnumber].sort(key=lambda track: int(track.get(BasicTag.TRACKNUMBER, default=["0"])[0]))
+        tracks_by_disc[discnumber].sort(key=lambda track: int(track.get(BasicField.TRACKNUMBER, default=["0"])[0]))
 
     return tracks_by_disc
 
 
 def ordered_tracks(album: Album):
-    # sort by discnumber/tracknumber tag if all tracks have one
-    has_discnumber = all(len(track.get(BasicTag.DISCNUMBER, default=[])) == 1 for track in album.tracks)
-    if all(len(track.get(BasicTag.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
+    # sort by discnumber/tracknumber field if all tracks have one
+    has_discnumber = all(len(track.get(BasicField.DISCNUMBER, default=[])) == 1 for track in album.tracks)
+    if all(len(track.get(BasicField.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
         if has_discnumber:
-            return sorted(album.tracks, key=lambda t: (t.get(BasicTag.DISCNUMBER)[0], t.get(BasicTag.TRACKNUMBER)[0]))
+            return sorted(album.tracks, key=lambda t: (t.get(BasicField.DISCNUMBER)[0], t.get(BasicField.TRACKNUMBER)[0]))
         else:
-            return sorted(album.tracks, key=lambda t: t.get(BasicTag.TRACKNUMBER)[0])
+            return sorted(album.tracks, key=lambda t: t.get(BasicField.TRACKNUMBER)[0])
     else:  # default album sort is by filename
         return sorted(album.tracks)
 
 
 def describe_track_number(track: Track):
-    tags = track.tag_dict()
+    fields = track.field_dict()
 
-    if BasicTag.DISCNUMBER in tags or BasicTag.DISCTOTAL in tags:
-        s = f"(disc {tags.get(BasicTag.DISCNUMBER, ['<no disc>'])[0]}{('/' + tags[BasicTag.DISCTOTAL][0]) if BasicTag.DISCTOTAL in tags else ''}) "
+    if BasicField.DISCNUMBER in fields or BasicField.DISCTOTAL in fields:
+        s = f"(disc {fields.get(BasicField.DISCNUMBER, ['<no disc>'])[0]}{('/' + fields[BasicField.DISCTOTAL][0]) if BasicField.DISCTOTAL in fields else ''}) "
     else:
         s = ""
 
-    s += f"{tags.get(BasicTag.TRACKNUMBER, ['<no track>'])[0]}{('/' + tags[BasicTag.TRACKTOTAL][0]) if BasicTag.TRACKTOTAL in tags else ''}"
+    s += f"{fields.get(BasicField.TRACKNUMBER, ['<no track>'])[0]}{('/' + fields[BasicField.TRACKTOTAL][0]) if BasicField.TRACKTOTAL in fields else ''}"
     return s
 
 
-def show_tag(tag: Sequence[str] | None) -> str:
-    if tag is None:
+def format_field_values(values: Sequence[str] | None) -> str:
+    if values is None:
         return "[bold italic]None[/bold italic]"
-    if len(tag) == 1:
-        return escape(str(tag[0]))
-    return escape(str(tag))
+    if len(values) == 1:
+        return escape(str(values[0]))
+    return escape(str(values))
 
 
 def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:

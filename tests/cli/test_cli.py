@@ -7,7 +7,7 @@ import pytest
 
 from albums.entities import Album, PictureFile, Track
 from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicTag
+from albums.tagger.types import BasicField
 
 from .. import helpers
 from ..fixtures.create_library import create_library
@@ -15,14 +15,14 @@ from ..fixtures.create_library import create_library
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tag={BasicTag.TITLE: "1", BasicTag.ARTIST: "a"})],
+        tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tag={BasicTag.TITLE: "1"}),
-            Track(filename="2.flac", tag={BasicTag.TITLE: "2"}),
+            Track(filename="1.flac", tag={BasicField.TITLE: "1"}),
+            Track(filename="2.flac", tag={BasicField.TITLE: "2"}),
         ],
     ),
 ]
@@ -74,10 +74,10 @@ class TestCli:
         assert "foo" not in result.output
 
     def test_check(self):
-        result = self.run(["check", "--default", "album-tag"], init=True)
+        result = self.run(["check", "--default", "album"], init=True)
         assert result.exit_code == 0
-        assert f'1 track missing album tag : "foo{os.sep}"' in result.output
-        assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
+        assert f'1 track missing album field : "foo{os.sep}"' in result.output
+        assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
     def test_check_automatically_enabled_dependencies(self):
         result = self.run(["check", "disc-numbering"], init=True)
@@ -86,52 +86,52 @@ class TestCli:
 
     def test_ignore_check(self):
         self.run(["scan"], init=True)
-        result = self.run(["-p", "foo" + os.sep, "ignore", "album-tag"])
+        result = self.run(["-p", "foo" + os.sep, "ignore", "album"])
         assert result.exit_code == 0
-        assert f"album foo{os.sep} - ignore album-tag" in result.output
+        assert f"album foo{os.sep} - ignore album" in result.output
 
-        result = self.run(["check", "--default", "album-tag"])
+        result = self.run(["check", "--default", "album"])
         assert result.exit_code == 0
         assert "foo" + os.sep not in result.output
-        assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
+        assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
     def test_notice_check_not_ignored(self):
         self.run(["scan"], init=True)
-        result = self.run(["-rp", "(foo|bar)", "notice", "--force", "album-tag"])  # filtered so that album names will not be suppressed
+        result = self.run(["-rp", "(foo|bar)", "notice", "--force", "album"])  # filtered so that album names will not be suppressed
         assert result.exit_code == 0
-        assert f"album foo{os.sep} was already not ignoring album-tag" in result.output
-        assert f"album bar{os.sep} was already not ignoring album-tag" in result.output
+        assert f"album foo{os.sep} was already not ignoring album" in result.output
+        assert f"album bar{os.sep} was already not ignoring album" in result.output
 
     def test_notice_check(self):
         self.run(["scan"], init=True)
         result = self.run(["check", "--default"])
-        assert f'1 track missing album tag : "foo{os.sep}"' in result.output
-        assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
-        self.run(["-p", "foo" + os.sep, "ignore", "album-tag"])
+        assert f'1 track missing album field : "foo{os.sep}"' in result.output
+        assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
+        self.run(["-p", "foo" + os.sep, "ignore", "album"])
         result = self.run(["check", "--default"])
-        assert f'1 track missing album tag : "foo{os.sep}"' not in result.output
-        assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
+        assert f'1 track missing album field : "foo{os.sep}"' not in result.output
+        assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
-        result = self.run(["notice", "--force", "album-tag"])
+        result = self.run(["notice", "--force", "album"])
         assert result.exit_code == 0
-        assert f"album foo{os.sep} will stop ignoring album-tag" in result.output
+        assert f"album foo{os.sep} will stop ignoring album" in result.output
 
         result = self.run(["check", "--default"])
-        assert f'1 track missing album tag : "foo{os.sep}"' in result.output
-        assert f'2 tracks missing album tag : "bar{os.sep}"' in result.output
+        assert f'1 track missing album field : "foo{os.sep}"' in result.output
+        assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
     def test_check_automatic_fix(self):
-        result = self.run(["check", "--automatic", "album-tag"], init=True)
+        result = self.run(["check", "--automatic", "album"], init=True)
         assert result.exit_code == 0
-        assert f'"foo{os.sep}" - 1 track missing album tag' in result.output
-        assert f'"bar{os.sep}" - 2 tracks missing album tag' in result.output
+        assert f'"foo{os.sep}" - 1 track missing album field' in result.output
+        assert f'"bar{os.sep}" - 2 tracks missing album field' in result.output
         assert "setting album on 1.flac" in result.output
 
         result = self.run(["--verbose", "scan"])
         assert result.exit_code == 0
         assert "unchanged: 2" in result.output
 
-        result = self.run(["check", "--automatic", "album-tag"])
+        result = self.run(["check", "--automatic", "album"])
         assert result.exit_code == 0
         assert "foo" + os.sep not in result.output
         assert "bar" + os.sep not in result.output
@@ -222,13 +222,19 @@ class TestCli:
             Album(
                 path="foobar" + os.sep,
                 tracks=[
-                    Track(filename="01.flac", tag={BasicTag.TITLE: "1", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "foobar", BasicTag.ARTIST: "baz"})
+                    Track(
+                        filename="01.flac",
+                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foobar", BasicField.ARTIST: "baz"},
+                    )
                 ],
             ),
             Album(
                 path="baz" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicTag.TITLE: "1", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "baz", BasicTag.ARTIST: "baz"})
+                    Track(
+                        filename="1.flac",
+                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "baz", BasicField.ARTIST: "baz"},
+                    )
                 ],
             ),
         ]
@@ -243,7 +249,7 @@ class TestCli:
         assert "foobar" in result.output
 
     def test_import_automatic_conflict(self):
-        result = self.run(["check", "--automatic", "album-tag"], init=True)
+        result = self.run(["check", "--automatic", "album"], init=True)
         assert len(json.loads(self.run(["list", "-j"]).output)) == 2
 
         result = self.run(["list"])
@@ -253,7 +259,10 @@ class TestCli:
         new_album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="01 one.flac", tag={BasicTag.TITLE: "one", BasicTag.TRACKNUMBER: "01", BasicTag.ALBUM: "foo", BasicTag.ARTIST: "a"})
+                Track(
+                    filename="01 one.flac",
+                    tag={BasicField.TITLE: "one", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foo", BasicField.ARTIST: "a"},
+                )
             ],
         )
 

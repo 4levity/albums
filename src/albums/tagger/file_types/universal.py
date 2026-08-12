@@ -6,8 +6,8 @@ import mutagen
 from mutagen._tags import PaddingInfo
 
 from ..base_mutagen import AbstractMutagenTagger
-from ..types import BasicTag, MutagenFileType, Picture
-from ..vorbis import vorbis_comment_legacy_tags, vorbis_comment_set_tag, vorbis_comment_tags
+from ..types import BasicField, MutagenFileType, Picture
+from ..vorbis import vorbis_comment_fields, vorbis_comment_legacy_fields, vorbis_comment_set_field
 
 logger: Final = logging.getLogger(__name__)
 
@@ -39,24 +39,24 @@ class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
         raise NotImplementedError(f"unsupported file: cannot remove {remove_picture.type.name} picture from {self._file.filename}")
 
     @override
-    def get_tags(self):
+    def get_fields(self):
         try:
-            return vorbis_comment_tags(self._file)  # pyright: ignore[reportArgumentType]
+            return vorbis_comment_fields(self._file)  # pyright: ignore[reportArgumentType]
         except Exception as ex:
             logger.warning(f"error reading tags from {self._file.filename}: {repr(ex)}")
             return ()
 
     @override
-    def get_legacy_tags(self):
+    def get_legacy_fields(self):
         try:
-            return vorbis_comment_legacy_tags(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
+            return vorbis_comment_legacy_fields(self._file.tags)  # pyright: ignore[reportUnknownMemberType, reportArgumentType]
         except Exception as ex:
-            logger.warning(f"error reading legacy tags from {self._file.filename}: {repr(ex)}")
+            logger.warning(f"error reading legacy fields from {self._file.filename}: {repr(ex)}")
             return ()
 
     @override
-    def _set_tag(self, tag: BasicTag | str, value: str | List[str] | None):
+    def _set_field(self, field: BasicField | str, value: str | List[str] | None):
         try:
-            vorbis_comment_set_tag(self._file, tag, value)  # pyright: ignore[reportArgumentType]
+            vorbis_comment_set_field(self._file, field, value)  # pyright: ignore[reportArgumentType]
         except Exception as ex:
-            logger.warning(f"error setting {tag} in {self._file.filename}: {repr(ex)}")
+            logger.warning(f"error setting {field} in {self._file.filename}: {repr(ex)}")

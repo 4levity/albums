@@ -27,7 +27,7 @@ rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_lengt
 
 
 @click.group(cls=OrderedGroup, epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
-@click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m tag=artist:Foo")  # pyright: ignore[reportUnknownMemberType]
+@click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m field:artist=Foo")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--path", "-p", "paths", metavar="PATH", multiple=True, help="match album path (same as -m path=...)")  # pyright: ignore[reportUnknownMemberType]
