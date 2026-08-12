@@ -307,12 +307,12 @@ Choose a policy for each tag. The policy options are:
 - **"two_digit_minimum"**: all values should be at least two digits (three if
   more than 99 values)
 
-| Option = default                          |
-| ----------------------------------------- |
-| `tracknumber_pad` = `"two_digit_minimum"` |
-| `tracktotal_pad` = `"two_digit_minimum"`  |
-| `discnumber_pad` = `"if_needed"`          |
-| `disctotal_pad` = `"never"`               |
+| Option            | Default               |
+| ----------------- | --------------------- |
+| `tracknumber_pad` | `"two_digit_minimum"` |
+| `tracktotal_pad`  | `"two_digit_minimum"` |
+| `discnumber_pad`  | `"if_needed"`         |
+| `disctotal_pad`   | `"never"`             |
 
 > The default settings will result in, for example, track **04** of **07** and
 > disc **1** of **1**. If you set all policies to "if_needed" instead, you get,
@@ -438,11 +438,15 @@ requested. To disable this, change the automatic_concatenate option.
 automatic fix will remove them. And if `automatic_concatenate` is enabled
 (default), unique values will be combined into a single value.
 
-| Option = default                        |
-| --------------------------------------- |
-| `tags` = `["artist", "title"]`          |
-| `concatenators` = `[" / ", "/", " - "]` |
-| `automatic_concatenate` = **true**      |
+<!-- pyml disable line-length -->
+
+| Option                  | Default               | Description                                                     |
+| ----------------------- | --------------------- | --------------------------------------------------------------- |
+| `fields`                | `["artist", "title"]` | List of fields that should have single values                   |
+| `concatenators`         | `[" / ", "/", " - "]` | Separator strings used when combining duplicate values into one |
+| `automatic_concatenate` | **true**              | If enabled, automatically concatenate unique values             |
+
+<!-- pyml enable line-length -->
 
 ### track-title
 
@@ -560,20 +564,21 @@ See "Other Fields: Per Album" above for common behavior of this check.
 
     Requires the `legacy-fields` check to pass first.
 
-### album-sort, album-artist-sort, barcode, compilation, release-type
+### album-sort, album-artist-sort, barcode, compilation
 
 See "Other Fields: Per Album" above for details on these per-album tag checks.
 
-### release-country
+### release-country, release-type
 
 See "Other Fields: Per Album" above for common behavior of this check.
 
 !!!warning
 
-    The `releasecountry` value is only mapped for files that use Vorbis Comment
-    tags (e.g. FLAC, Ogg). So if one album has a mix of track types where some
-    use Vorbis Comment and others don't, the `presence` setting will be ignored
-    for that album and `releasecountry` will be removed if present.
+    The `release country` and `release type` fields are only mapped for files
+    that use Vorbis Comment tags (e.g. FLAC, Ogg). So if one album has a mix of
+    track types where some use Vorbis Comment and others don't, the `presence`
+    setting will be ignored for that album and the field will be **removed** if
+    present.
 
 ## Pictures
 
