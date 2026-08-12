@@ -84,8 +84,8 @@ class TestDatabase:
                 track_id = album.tracks[0].track_id
                 session.commit()
             with db.begin() as conn:
-                conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'invalid1', 'bar');"))
-                conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'invalid2', 'baz');"))
+                conn.execute(text(f"INSERT INTO track_field (track_id, name, value) VALUES ({track_id}, 'invalid1', 'bar');"))
+                conn.execute(text(f"INSERT INTO track_field (track_id, name, value) VALUES ({track_id}, 'invalid2', 'baz');"))
             with Session(db) as session:
                 (album,) = session.execute(select(Album)).tuples().one()
                 tag = album.tracks[0].field_dict()

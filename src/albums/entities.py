@@ -20,17 +20,17 @@ class FieldV(Base):
     When multiple frames share the same field name (e.g., duplicate ``TCON`` genres), each gets its own row.
 
     Attributes:
-        track_tag_id: Primary key.
+        track_field_id: Primary key.
         track_id: Foreign key linking to the owning :class:`Track`.
         track: ORM back-reference to the parent track.
         field: Canonicalized field name from :class:`~.tagger.types.BasicField`.
         value: Decoded text content of this single metadata frame.
     """
 
-    __tablename__ = "track_tag"
-    __table_args__ = (Index("idx_track_tag_track_id", "track_id"),)
+    __tablename__ = "track_field"
+    __table_args__ = (Index("idx_track_field_track_id", "track_id"),)
 
-    track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    track_field_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
     track: Mapped[Optional[Track]] = relationship("Track", back_populates="fields")
 
@@ -42,20 +42,20 @@ class LegacyFieldEntity(Base):
     """Stores legacy/deprecated field names used by a track, indicating the field should be updated.
 
     Attributes:
-        track_legacy_tag_id: Primary key.
+        track_legacy_field_id: Primary key.
         track_id: Foreign key linking to the owning ``track`` row.
         track: ORM back-reference to the :class:`Track`.
         field_name: Free-form raw field label (as present in the original media file).
     """
 
-    __tablename__ = "track_legacy_tag"
-    __table_args__ = (Index("idx_legacy_tag_track_id", "track_id"),)
+    __tablename__ = "track_legacy_field"
+    __table_args__ = (Index("idx_legacy_field_track_id", "track_id"),)
 
-    track_legacy_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    track_legacy_field_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
     track: Mapped[Optional[Track]] = relationship("Track", back_populates="legacy_field_entities")
 
-    field_name: Mapped[str] = mapped_column("tag_name", Text, nullable=False)
+    field_name: Mapped[str] = mapped_column(Text, nullable=False)
 
     def __init__(self, field_name: str):
         self.field_name = field_name
