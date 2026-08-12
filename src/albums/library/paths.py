@@ -29,7 +29,7 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
 
     tag_values: defaultdict[BasicField, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
     for track in album.tracks:
-        for tag, values in ((k, v) for k, v in track.tag_dict().items() if k in {BasicField.ALBUM, BasicField.ALBUMARTIST, BasicField.ARTIST}):
+        for tag, values in ((k, v) for k, v in track.field_dict().items() if k in {BasicField.ALBUM, BasicField.ALBUMARTIST, BasicField.ARTIST}):
             for value in values:
                 tag_values[tag][value] += 1
     tag_values_by_freq = dict(

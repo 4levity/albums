@@ -62,7 +62,7 @@ class TestMp3:
             == 400
         )
         assert pictures[0].picture_info.mime_type == pictures[1].picture_info.mime_type == "image/png"
-        track_tags = track.tag_dict()
+        track_tags = track.field_dict()
         assert fields[BasicField.ARTIST] == tuple(track_tags[BasicField.ARTIST])
         assert fields[BasicField.ALBUMARTIST] == tuple(track_tags[BasicField.ALBUMARTIST])
         assert fields[BasicField.ALBUM] == tuple(track_tags[BasicField.ALBUM])

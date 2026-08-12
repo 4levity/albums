@@ -6,7 +6,7 @@ from typing import Final, Generator, List, Mapping, Tuple
 from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
-from ..entities import Album, AlbumCollectionAssociation, CollectionEntity, IgnoreCheckEntity, TagV, Track
+from ..entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
 from ..tagger.types import BasicField
 
 logger: Final = logging.getLogger(__name__)
@@ -56,9 +56,9 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
     if tags:
         track_match = select(Track.track_id).where(Album.album_id == Track.album_id)
         for tag, matches in tags:
-            entity = aliased(TagV)
+            entity = aliased(FieldV)
             clauses = [or_(*(_compare(entity.value, m.comparator, m.value) for m in matches))] if matches else []  # empty = tag exists, any value
-            track_match = track_match.join(entity, and_(Track.track_id == entity.track_id, entity.tag == BasicField(tag), *clauses))
+            track_match = track_match.join(entity, and_(Track.track_id == entity.track_id, entity.field == BasicField(tag), *clauses))
         stmt = stmt.where(not_(exists(track_match))) if invert else stmt.where(exists(track_match))
 
     for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("tag:")):

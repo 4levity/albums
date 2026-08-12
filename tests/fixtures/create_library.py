@@ -42,22 +42,22 @@ def create_track_file(path: Path, spec: Track):
             file.write(EMPTY_OGG_VORBIS_FILE_BYTES)
         elif filename.suffix == ".aiff":
             file.write(EMPTY_AIFF_FILE_BYTES)
-    if spec.tags or spec.pictures:
+    if spec.fields or spec.pictures:
         tagger = AlbumTagger(path, padding=lambda _: 0)
-        with tagger.open(spec.filename) as tags:
+        with tagger.open(spec.filename) as tag:
             for pic in spec.pictures:
                 image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, mime_type_to_format(pic.picture_info.mime_type))
                 picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
-                tags.add_picture(picture, image_data)
-            spec_tags = spec.tag_dict()
-            represented_by_legacy_tags: Set[BasicField] = set()
-            for tag_name in spec.legacy_tags:
-                basic_tag = LEGACY_TAG_MAP[tag_name]
-                tags.set_field(tag_name, spec_tags[basic_tag])
-                represented_by_legacy_tags.add(basic_tag)
-            for tag_name, values in spec_tags.items():
-                if tag_name not in represented_by_legacy_tags:
-                    tags.set_field(tag_name, list(values))
+                tag.add_picture(picture, image_data)
+            spec_tags = spec.field_dict()
+            represented_by_legacy_fields: Set[BasicField] = set()
+            for field_name in spec.legacy_fields:
+                basic_field = LEGACY_TAG_MAP[field_name]
+                tag.set_field(field_name, spec_tags[basic_field])
+                represented_by_legacy_fields.add(basic_field)
+            for field_name, values in spec_tags.items():
+                if field_name not in represented_by_legacy_fields:
+                    tag.set_field(field_name, list(values))
 
 
 def create_picture_file(path: Path, width: int = 400, height: int = 400, color: str = "blue"):

@@ -78,7 +78,7 @@ class TestMp4:
         assert pictures[1].type == PictureType.COVER_FRONT  # always
         assert pictures[1].picture_info.mime_type == "image/jpeg"
         assert pictures[1].picture_info.width == pictures[1].picture_info.height == 401
-        track_fields = track1.tag_dict()
+        track_fields = track1.field_dict()
         assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
         assert fields[BasicField.ALBUMARTIST] == tuple(track_fields[BasicField.ALBUMARTIST])
         assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])
@@ -95,7 +95,7 @@ class TestMp4:
         with TestMp4.tagger.open(track2.filename) as file:
             fields = dict(file.get_fields())
             assert not file.has_video()
-        track_fields = track2.tag_dict()
+        track_fields = track2.field_dict()
         assert fields[BasicField.TRACKNUMBER] == tuple(track_fields[BasicField.TRACKNUMBER])
 
     def test_mp4_video(self):

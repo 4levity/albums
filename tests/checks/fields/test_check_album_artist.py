@@ -2,7 +2,7 @@ from pathlib import Path
 
 from albums.app import Context
 from albums.checks.fields.check_album_artist import CheckAlbumArtist
-from albums.entities import Album, TagV, Track
+from albums.entities import Album, FieldV, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField
 
@@ -303,6 +303,6 @@ class TestCheckAlbumArtist:
         assert result is None
 
         # same artists, all albumartist the same
-        album.tracks[1].tags = [TagV(tag=BasicField.ARTIST, value="A"), TagV(tag=BasicField.ALBUMARTIST, value="A")]
+        album.tracks[1].fields = [FieldV(field=BasicField.ARTIST, value="A"), FieldV(field=BasicField.ALBUMARTIST, value="A")]
         result = checker.check(album)
         assert result is None

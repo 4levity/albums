@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, aliased
 from albums.tagger.types import BasicField
 
 from ..app import Context
-from ..entities import Album, TagV
+from ..entities import Album, FieldV
 from .tag_tools import get_album_name_from_tags, get_artist_from_tags
 
 
@@ -17,16 +17,16 @@ def album_in_library(ctx: Context, album: Album) -> str | None:
     artist = get_artist_from_tags(album)
     if album_name and artist:
         with Session(library_ctx.db) as session:
-            TagV2 = aliased(TagV)
+            FieldV2 = aliased(FieldV)
             stmt = (
-                select(TagV)
-                .filter(and_(TagV.tag == BasicField.ALBUM, func.lower(TagV.value) == str.lower(album_name)))
+                select(FieldV)
+                .filter(and_(FieldV.field == BasicField.ALBUM, func.lower(FieldV.value) == str.lower(album_name)))
                 .join(
-                    TagV2,
+                    FieldV2,
                     and_(
-                        TagV.track_id == TagV2.track_id,
-                        func.lower(TagV2.value) == str.lower(artist),
-                        or_(TagV2.tag == BasicField.ARTIST, TagV2.tag == BasicField.ALBUMARTIST),
+                        FieldV.track_id == FieldV2.track_id,
+                        func.lower(FieldV2.value) == str.lower(artist),
+                        or_(FieldV2.field == BasicField.ARTIST, FieldV2.field == BasicField.ALBUMARTIST),
                     ),
                 )
             )

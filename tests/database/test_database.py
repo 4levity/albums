@@ -88,7 +88,7 @@ class TestDatabase:
                 conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES ({track_id}, 'invalid2', 'baz');"))
             with Session(db) as session:
                 (album,) = session.execute(select(Album)).tuples().one()
-                tag = album.tracks[0].tag_dict()
+                tag = album.tracks[0].field_dict()
                 assert len(tag) == 2
                 assert tag[BasicField.ALBUM] == ["foo"]
                 assert sorted(tag[BasicField.UNKNOWN]) == ["bar", "baz"]

@@ -54,7 +54,7 @@ class TestAiff:
             == 400
         )
         assert pictures[0].picture_info.mime_type == pictures[1].picture_info.mime_type == "image/png"
-        track_fields = track.tag_dict()
+        track_fields = track.field_dict()
         assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
         assert fields[BasicField.ALBUMARTIST] == tuple(track_fields[BasicField.ALBUMARTIST])
         assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])

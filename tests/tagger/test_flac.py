@@ -28,7 +28,7 @@ track2 = Track(
 track3 = Track(
     filename="3.flac",
     tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
-    legacy_tags=["label", "album artist", "totaldiscs"],
+    legacy_fields=["label", "album artist", "totaldiscs"],
 )
 
 album = Album(path="bar" + os.sep, tracks=[track1, track2, track3])
@@ -148,12 +148,12 @@ class TestFlac:
             pictures = [pic for (pic, _) in file.get_pictures()]
         assert set(pictures) == {back, replacement}
 
-    def test_get_legacy_tags_empty(self):
+    def test_get_legacy_fields_empty(self):
         with TestFlac.tagger.open(track1.filename) as file:
             legacy = file.get_legacy_fields()
         assert legacy == ()
 
-    def test_get_legacy_tags_present(self):
+    def test_get_legacy_fields_present(self):
         with TestFlac.tagger.open(track3.filename) as file:
             legacy = file.get_legacy_fields()
 

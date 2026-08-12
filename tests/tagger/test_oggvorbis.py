@@ -37,7 +37,7 @@ track = Track(
 track_legacy = Track(
     filename="2.ogg",
     tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
-    legacy_tags=["label", "album artist", "totaldiscs"],
+    legacy_fields=["label", "album artist", "totaldiscs"],
 )
 album = Album(path="foobar" + os.sep, tracks=[track, track_legacy])
 
@@ -61,7 +61,7 @@ class TestOggVorbis:
         assert pictures[1].picture_info.mime_type == "image/jpeg"
         assert pictures[1].picture_info.width == pictures[1].picture_info.height == 300
 
-        track_fields = track.tag_dict()
+        track_fields = track.field_dict()
         assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
         assert fields[BasicField.TITLE] == tuple(track_fields[BasicField.TITLE])
         assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])
@@ -169,7 +169,7 @@ class TestOggVorbis:
         with TestOggVorbis.tagger.open(track.filename) as file:
             assert set(pic for (pic, _) in file.get_pictures()) == {replacement, back}
 
-    def test_get_legacy_tags_present(self):
+    def test_get_legacy_fields_present(self):
         with TestOggVorbis.tagger.open(track_legacy.filename) as file:
             legacy = file.get_legacy_fields()
 

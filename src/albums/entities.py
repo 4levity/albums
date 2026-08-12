@@ -14,16 +14,16 @@ from albums.picture.info import PictureInfo
 from albums.tagger.types import BasicField, Picture, PictureType, StreamInfo
 
 
-class TagV(Base):
-    """Single metadata tag value belonging to a track.
+class FieldV(Base):
+    """Single metadata field value belonging to a track.
 
-    When multiple frames share the same tag name (e.g., duplicate ``TCON`` genres), each gets its own row.
+    When multiple frames share the same field name (e.g., duplicate ``TCON`` genres), each gets its own row.
 
     Attributes:
         track_tag_id: Primary key.
         track_id: Foreign key linking to the owning :class:`Track`.
         track: ORM back-reference to the parent track.
-        tag: Canonicalized tag name from :class:`~.tagger.types.BasicField`.
+        field: Canonicalized field name from :class:`~.tagger.types.BasicField`.
         value: Decoded text content of this single metadata frame.
     """
 
@@ -32,20 +32,20 @@ class TagV(Base):
 
     track_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[Track]] = relationship("Track", back_populates="tags")
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="fields")
 
-    tag: Mapped[BasicField] = mapped_column("name", SafeStringEnum[BasicField](BasicField, BasicField.UNKNOWN), nullable=False)
+    field: Mapped[BasicField] = mapped_column("name", SafeStringEnum[BasicField](BasicField, BasicField.UNKNOWN), nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-class LegacyTagEntity(Base):
-    """Stores legacy/deprecated tag field names used by a track, indicating why the tag should be updated.
+class LegacyFieldEntity(Base):
+    """Stores legacy/deprecated field names used by a track, indicating the tag should be updated.
 
     Attributes:
         track_legacy_tag_id: Primary key.
         track_id: Foreign key linking to the owning ``track`` row.
         track: ORM back-reference to the :class:`Track`.
-        tag_name: Free-form raw tag label (as present in the original media file).
+        field_name: Free-form raw field label (as present in the original media file).
     """
 
     __tablename__ = "track_legacy_tag"
@@ -53,12 +53,12 @@ class LegacyTagEntity(Base):
 
     track_legacy_tag_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
     track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[Track]] = relationship("Track", back_populates="legacy_tag_entities")
+    track: Mapped[Optional[Track]] = relationship("Track", back_populates="legacy_field_entities")
 
-    tag_name: Mapped[str] = mapped_column(Text, nullable=False)
+    field_name: Mapped[str] = mapped_column("tag_name", Text, nullable=False)
 
-    def __init__(self, tag_name: str):
-        self.tag_name = tag_name
+    def __init__(self, field_name: str):
+        self.field_name = field_name
 
 
 class TrackPicture(Base):
@@ -117,8 +117,8 @@ class Track(Base):
         modify_timestamp: UNIX epoch when this file was last written.
         stream: Composite property wrapping :class:`~.tagger.types.StreamInfo` with codec and duration details.
         pictures: Collection of embedded :class:`TrackPicture` objects.
-        tags: Collection of decoded metadata as :class:`TagV` rows.
-        legacy_tags: Association proxy mapping to non-standard :class:`LegacyTagEntity` field names.
+        fields: Collection of decoded metadata as :class:`FieldV` rows.
+        legacy_fields: Association proxy mapping to non-standard :class:`LegacyFieldEntity` field names.
     """
 
     __tablename__ = "track"
@@ -143,9 +143,9 @@ class Track(Base):
     )
 
     pictures: Mapped[List[TrackPicture]] = relationship("TrackPicture", back_populates="track", cascade="all, delete-orphan")
-    tags: Mapped[List[TagV]] = relationship("TagV", back_populates="track", cascade="all, delete-orphan")
-    legacy_tag_entities: Mapped[List[LegacyTagEntity]] = relationship("LegacyTagEntity", back_populates="track", cascade="all, delete-orphan")
-    legacy_tags: AssociationProxy[List[str]] = association_proxy("legacy_tag_entities", "tag_name")
+    fields: Mapped[List[FieldV]] = relationship("FieldV", back_populates="track", cascade="all, delete-orphan")
+    legacy_field_entities: Mapped[List[LegacyFieldEntity]] = relationship("LegacyFieldEntity", back_populates="track", cascade="all, delete-orphan")
+    legacy_fields: AssociationProxy[List[str]] = association_proxy("legacy_field_entities", "field_name")
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize track and embedded metadata for JSON/CLI export."""
@@ -155,56 +155,56 @@ class Track(Base):
             "modify_timestamp": self.modify_timestamp,
             "pictures": [picture.to_dict() for picture in sorted(self.pictures, key=lambda pic: pic.embed_ix)],
             "stream": self.stream.to_dict() if self.stream else {},
-            "tags": self.tag_dict(),
+            "fields": self.field_dict(),
         }
 
-    def tag_dict(self) -> Mapping[BasicField, List[str]]:
-        """Return all stored tags grouped by :class:`~.tagger.types.BasicField` key.
+    def field_dict(self) -> Mapping[BasicField, List[str]]:
+        """Return all stored fields grouped by :class:`~.tagger.types.BasicField` key.
 
         Returns:
             Mapping where each value is a list of frame text for that tag name.
         """
-        tags: dict[BasicField, List[str]] = {}
-        for tag_entity in self.tags:
-            tags.setdefault(tag_entity.tag, []).append(tag_entity.value)
-        return tags
+        map_fields: dict[BasicField, List[str]] = {}
+        for tag_entity in self.fields:
+            map_fields.setdefault(tag_entity.field, []).append(tag_entity.value)
+        return map_fields
 
-    def has(self, tag: BasicField) -> bool:
+    def has(self, field: BasicField) -> bool:
         """Return ``True`` when at least one value for *tag* exists.
 
         Args:
-            tag: The :class:`~.tagger.types.BasicField` to check for.
+            field: The :class:`~.tagger.types.BasicField` to check for.
         """
-        return any(t.tag == tag for t in self.tags)
+        return any(v.field == field for v in self.fields)
 
     @overload
-    def get(self, tag: BasicField, default: None) -> Sequence[str] | None: ...
+    def get(self, field: BasicField, default: None) -> Sequence[str] | None: ...
     @overload
-    def get(self, tag: BasicField, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
-    def get(self, tag: BasicField, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
+    def get(self, field: BasicField, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
+    def get(self, field: BasicField, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
         """Retrieve all values for *tag*, optionally with a default if no values available.
 
         If no default is specified and no values exist, raises ``KeyError``.
 
         Args:
-            tag: The :class:`~.tagger.types.BasicField` to look up.
+            field: The :class:`~.tagger.types.BasicField` to look up.
             default: Substitute value when no frames exist; raises ``KeyError`` if left unset explicitly.
 
         Returns:
             Tuple of decoded text values or the provided fallback sequence.
         """
-        result = tuple(t.value for t in self.tags if t.tag == tag)
+        result = tuple(t.value for t in self.fields if t.field == field)
         if len(result) == 0:
             if default is NO_DEFAULT_VALUE_LIST_STR:
-                raise KeyError(f"{tag.value} is not in tags")
+                raise KeyError(f"{field.value} is not in fields")
             return default
         return result
 
     def __init__(self, **kw: Any):
-        """Construct a track row, accepting ``tags`` entity list or (for tests/convenience) a BasicField->List mapping"""
-        if "tags" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
+        """Construct a track row, accepting ``fields`` entity list or (for tests/convenience) a BasicField->List mapping"""
+        if "fields" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
             t: Mapping[BasicField, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
-            kw["tags"] = [TagV(tag=tag, value=v) for tag, values in t.items() for v in ([values] if isinstance(values, str) else values)]
+            kw["fields"] = [FieldV(field=field, value=v) for field, values in t.items() for v in ([values] if isinstance(values, str) else values)]
             del kw["tag"]
         super().__init__(**kw)
 

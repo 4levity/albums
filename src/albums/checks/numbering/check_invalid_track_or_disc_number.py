@@ -52,7 +52,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
             file = self.ctx.config.library / album.path / track.filename
             new_values: list[tuple[BasicField, str | list[str] | None]] = []
             for field in SINGLE_POSITIVE_NUMBER_FIELDS:
-                track_fields = track.tag_dict()
+                track_fields = track.field_dict()
                 if field in track_fields:
                     # gather all values for this field that are numeric and > 0, if any
                     valid_values: set[str] = set()
@@ -78,7 +78,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
 def get_issues_invalid_disc_or_track_number(tracks: Sequence[Track]):
     issues: set[str] = set()
     for track in tracks:
-        track_fields = track.tag_dict()
+        track_fields = track.field_dict()
         if _has_multi_value(track_fields, SINGLE_POSITIVE_NUMBER_FIELDS):
             issues.add("track/disc numbering fields with multiple values")
         if _has_non_numeric(track_fields, SINGLE_POSITIVE_NUMBER_FIELDS):

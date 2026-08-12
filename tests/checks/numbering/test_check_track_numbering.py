@@ -4,7 +4,7 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
-from albums.entities import Album, TagV, Track
+from albums.entities import Album, FieldV, Track
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField
 
@@ -115,8 +115,8 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tags=[TagV(tag=BasicField.DISCNUMBER, value="1")]),
-                Track(filename="1-2.flac", tags=[TagV(tag=BasicField.DISCNUMBER, value="1")]),
+                Track(filename="1-1.flac", fields=[FieldV(field=BasicField.DISCNUMBER, value="1")]),
+                Track(filename="1-2.flac", fields=[FieldV(field=BasicField.DISCNUMBER, value="1")]),
                 Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
             ],
         )

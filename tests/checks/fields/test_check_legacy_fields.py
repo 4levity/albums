@@ -16,12 +16,12 @@ class TestCheckLegacyFields:
         track1 = Track(
             filename="1.flac",
             tag={BasicField.ORGANIZATION: "ABC"},
-            legacy_tags=["label"],
+            legacy_fields=["label"],
         )
         track2 = Track(
             filename="2.flac",
             tag={BasicField.ALBUMARTIST: "Artist X"},
-            legacy_tags=["album artist"],
+            legacy_fields=["album artist"],
         )
         album = Album(path="foo", tracks=[track1, track2])
         result = CheckLegacyFields(Context()).check(album)
@@ -37,12 +37,12 @@ class TestCheckLegacyFields:
         track1 = Track(
             filename="1.flac",
             tag={BasicField.ORGANIZATION: "ABC"},
-            legacy_tags=["label"],
+            legacy_fields=["label"],
         )
         track2 = Track(
             filename="2.flac",
             tag={BasicField.ALBUMARTIST: "Artist X"},
-            legacy_tags=["album artist"],
+            legacy_fields=["album artist"],
         )
         album = Album(path="foo", tracks=[track1, track2])
         result = CheckLegacyFields(Context()).check(album)
@@ -72,7 +72,7 @@ class TestCheckLegacyFields:
         track1 = Track(
             filename="1.flac",
             tag={BasicField.DISCTOTAL: "2"},
-            legacy_tags=["totaldiscs"],
+            legacy_fields=["totaldiscs"],
         )
         album = Album(path="foo", tracks=[track1])
         result = CheckLegacyFields(Context()).check(album)

@@ -61,7 +61,7 @@ def ordered_tracks(album: Album):
 
 
 def describe_track_number(track: Track):
-    fields = track.tag_dict()
+    fields = track.field_dict()
 
     if BasicField.DISCNUMBER in fields or BasicField.DISCTOTAL in fields:
         s = f"(disc {fields.get(BasicField.DISCNUMBER, ['<no disc>'])[0]}{('/' + fields[BasicField.DISCTOTAL][0]) if BasicField.DISCTOTAL in fields else ''}) "

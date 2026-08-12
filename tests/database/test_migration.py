@@ -11,7 +11,7 @@ from albums.tagger.types import BasicField
 class TestMigration16LegacyTags:
     """Test that migration 16 migrates legacy vorbis field names to canonical BasicField field names."""
 
-    def test_legacy_tags_migrated(self):
+    def test_legacy_fields_migrated(self):
         """Test basic migration of legacy fields to canonical names."""
         db = connection.open(connection.MEMORY, version=15)
         try:
@@ -43,12 +43,12 @@ class TestMigration16LegacyTags:
 
             with Session(db) as session:
                 # Verify legacy fields were recorded in track_legacy_tag
-                legacy_tags = session.execute(text("SELECT track_id, tag_name FROM track_legacy_tag ORDER BY track_id, tag_name;")).fetchall()
-                assert len(legacy_tags) == 4
-                assert (track1_id, "album artist") in [(r.track_id, r.tag_name) for r in legacy_tags]
-                assert (track1_id, "publisher") in [(r.track_id, r.tag_name) for r in legacy_tags]
-                assert (track2_id, "label") in [(r.track_id, r.tag_name) for r in legacy_tags]
-                assert (track2_id, "totaldiscs") in [(r.track_id, r.tag_name) for r in legacy_tags]
+                legacy_fields = session.execute(text("SELECT track_id, tag_name FROM track_legacy_tag ORDER BY track_id, tag_name;")).fetchall()
+                assert len(legacy_fields) == 4
+                assert (track1_id, "album artist") in [(r.track_id, r.tag_name) for r in legacy_fields]
+                assert (track1_id, "publisher") in [(r.track_id, r.tag_name) for r in legacy_fields]
+                assert (track2_id, "label") in [(r.track_id, r.tag_name) for r in legacy_fields]
+                assert (track2_id, "totaldiscs") in [(r.track_id, r.tag_name) for r in legacy_fields]
 
             # Verify values were migrated to canonical names
             with Session(db) as session:
@@ -106,7 +106,7 @@ class TestMigration16LegacyTags:
         finally:
             db.dispose()
 
-    def test_noop_when_no_legacy_tags(self):
+    def test_noop_when_no_legacy_fields(self):
         """Migration should be a no-op when there are no legacy fields."""
         db = connection.open(connection.MEMORY, version=15)
         try:

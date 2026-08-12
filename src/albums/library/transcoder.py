@@ -92,9 +92,9 @@ class Transcoder:
     def _transcode(self, album_path: Path, track: Track, dest: Path):
         run_ffmpeg(["-i", track.filename, *self._ffmpeg_options, str(dest)], album_path)
 
-        if track.tags or track.pictures:
+        if track.fields or track.pictures:
             with self._tagger.get(dest.parent).open(dest.name) as dest_tags:
-                for tag, value in track.tag_dict().items():
+                for tag, value in track.field_dict().items():
                     dest_tags.set_field(tag, value)
                 if track.pictures:
                     with self._tagger.get(album_path).open(track.filename) as src_tags:

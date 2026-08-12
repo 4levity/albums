@@ -19,23 +19,23 @@ class CheckLegacyFields(Check):
 
     @override
     def check(self, album: Album):
-        if not any(track.legacy_tags for track in album.tracks):
+        if not any(track.legacy_fields for track in album.tracks):
             return None
 
         all_legacy_names: set[str] = set()
         for track in album.tracks:
-            all_legacy_names.update(track.legacy_tags)
+            all_legacy_names.update(track.legacy_fields)
 
         option_automatic_index = 0
         table = (
             ["filename", "convert fields"],
-            [[escape(track.filename), ", ".join(track.legacy_tags)] for track in sorted(album.tracks)],
+            [[escape(track.filename), ", ".join(track.legacy_fields)] for track in sorted(album.tracks)],
         )
 
         return CheckResult(
             f"Legacy fields {', '.join(sorted(all_legacy_names))} found",
             Fixer(
-                lambda option: self._fix_legacy_tags(album),
+                lambda option: self._fix_legacy_fields(album),
                 [OPTION_CONVERT_LEGACY],
                 False,
                 option_automatic_index,
@@ -43,22 +43,22 @@ class CheckLegacyFields(Check):
             ),
         )
 
-    def _fix_legacy_tags(self, album: Album):
+    def _fix_legacy_fields(self, album: Album):
         changed = False
         tagger = self.tagger.get(album.path)
 
-        for track in sorted(track for track in album.tracks if track.legacy_tags):
-            track_tags = track.tag_dict()
-            with tagger.open(track.filename) as file:
-                basic_tags = set(filter(None, (LEGACY_TO_BASIC.get(legacy_name) for legacy_name in track.legacy_tags)))
-                for tag in basic_tags:
-                    values = track_tags[tag]
-                    self.ctx.console.print(f"setting {tag.name}={values} on {escape(track.filename)}", highlight=False)
-                    file.set_field(tag, values)
+        for track in sorted(track for track in album.tracks if track.legacy_fields):
+            track_fields = track.field_dict()
+            with tagger.open(track.filename) as tag:
+                basic_fields = set(filter(None, (LEGACY_TO_BASIC.get(legacy_name) for legacy_name in track.legacy_fields)))
+                for field in basic_fields:
+                    values = track_fields[field]
+                    self.ctx.console.print(f"setting {field.name}={values} on {escape(track.filename)}", highlight=False)
+                    tag.set_field(field, values)
 
-                for legacy_name in track.legacy_tags:
+                for legacy_name in track.legacy_fields:
                     self.ctx.console.print(f"removing {legacy_name} from {escape(track.filename)}", highlight=False)
-                    file.set_field(legacy_name, None)
+                    tag.set_field(legacy_name, None)
 
             changed = True
 
