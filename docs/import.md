@@ -38,7 +38,7 @@ These $variables may be used in the path templates:
 
 | Variable    | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
-| **$album**  | Album tag value                                              |
+| **$album**  | Album field value                                            |
 | **$artist** | Artist or Album Artist field value                           |
 | **$A1**     | First letter of artist or "#" for numeric, not including The |
 | **$a1**     | Lowercase version of **$A1**                                 |

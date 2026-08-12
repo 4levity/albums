@@ -84,10 +84,11 @@ The folder name format is a template string. The template substitutions are:
 
 ### track-filename
 
-Track filenames should match tag fields. Typically they include the track number
-and title. They start with the disc number if part of a set, and include the
-artist name if the album is a compilation. Filenames should be valid, as
-described by `path_compatibility` and related settings in [Usage](./usage.md).
+Track filenames should match relevant field values. Typically they include the
+track number and title. They start with the disc number if part of a set, and
+include the artist name if the album is a compilation. Filenames should be
+valid, as described by `path_compatibility` and related settings in
+[Usage](./usage.md).
 
 The filename format is a template string. The template substitutions are:
 

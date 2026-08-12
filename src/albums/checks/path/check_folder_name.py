@@ -9,7 +9,7 @@ from pathvalidate import sanitize_filename
 from rich.markup import escape
 
 from ...entities import Album
-from ...library.tag_tools import get_album_name_from_tags, get_artist_from_tags
+from ...library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 from ...tagger.types import BasicField
 from ..base_check import Check
 from ..check_types import CheckResult, Fixer, FixResult
@@ -89,8 +89,8 @@ class CheckFolderName(Check):
         return True
 
     def _generate_folder_name(self, album: Album) -> str:
-        artist = get_artist_from_tags(album)
-        album_name = get_album_name_from_tags(album)
+        artist = get_artist_from_tracks(album)
+        album_name = get_album_name_from_tracks(album)
         folder_name = self.format.safe_substitute({"artist": artist, "album": album_name})
         folder_name = folder_name.replace("/", self.ctx.config.path_replace_slash)
         folder_name = sanitize_filename(

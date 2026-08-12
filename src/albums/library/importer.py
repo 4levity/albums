@@ -81,7 +81,7 @@ class Importer:
 
                 if not issues:
                     library_paths = self._make_library_paths(album)
-                    if not exists:  # check again in case tag fixes changed the destination paths
+                    if not exists:  # check again in case field fixes changed the destination paths
                         (exists, ok) = self._check_existing_destination(album, library_paths)
                         if not ok:
                             continue

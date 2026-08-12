@@ -8,13 +8,13 @@ from albums.tagger.types import BasicField
 
 from ..app import Context
 from ..entities import Album, FieldV
-from .tag_tools import get_album_name_from_tags, get_artist_from_tags
+from .tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 
 
 def album_in_library(ctx: Context, album: Album) -> str | None:
     library_ctx = ctx.parent if ctx.parent is not None else ctx
-    album_name = get_album_name_from_tags(album)
-    artist = get_artist_from_tags(album)
+    album_name = get_album_name_from_tracks(album)
+    artist = get_artist_from_tracks(album)
     if album_name and artist:
         with Session(library_ctx.db) as session:
             FieldV2 = aliased(FieldV)
@@ -43,16 +43,16 @@ class DuplicateFinder:
         # this takes several seconds on a large library, but when checking the whole library, this way is 6x faster than querying per album
         albums: defaultdict[tuple[str, str], list[int]] = defaultdict(list[int])
         for (album,) in session.execute(select(Album).order_by(Album.path)).tuples():
-            add_album_name = get_album_name_from_tags(album)
-            add_artist = get_artist_from_tags(album)
+            add_album_name = get_album_name_from_tracks(album)
+            add_artist = get_artist_from_tracks(album)
             if add_album_name and add_artist and album.album_id is not None:
                 albums[(str.lower(add_artist), str.lower(add_album_name))].append(album.album_id)
         self._duplicates = dict((k, ids) for k, ids in albums.items() if len(ids) > 1)
         return self
 
     def find(self, album: Album) -> Sequence[int] | None:
-        album_name = get_album_name_from_tags(album)
-        artist = get_artist_from_tags(album)
+        album_name = get_album_name_from_tracks(album)
+        artist = get_artist_from_tracks(album)
         if not artist or not album_name:
             return None
 
@@ -65,8 +65,8 @@ class DuplicateFinder:
         return ids[1:]
 
     def remove(self, album: Album):
-        album_name = get_album_name_from_tags(album)
-        artist = get_artist_from_tags(album)
+        album_name = get_album_name_from_tracks(album)
+        artist = get_artist_from_tracks(album)
         if artist is None or album_name is None or album.album_id is None:
             raise RuntimeError(f'remove: target not fully identified (album="{album_name}", artist="{artist}", album_id={album.album_id})')
 

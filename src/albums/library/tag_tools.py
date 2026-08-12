@@ -4,7 +4,7 @@ from albums.entities import Album
 from albums.tagger.types import BasicField
 
 
-def get_artist_from_tags(album: Album) -> str | None:
+def get_artist_from_tracks(album: Album) -> str | None:
     artists: defaultdict[str, int] = defaultdict(int)
     for track in album.tracks:
         for artist in track.get(BasicField.ARTIST, []):
@@ -15,7 +15,7 @@ def get_artist_from_tags(album: Album) -> str | None:
     return artist_list[0][0] if len(artist_list) else None
 
 
-def get_album_name_from_tags(album: Album) -> str | None:
+def get_album_name_from_tracks(album: Album) -> str | None:
     album_names: defaultdict[str, int] = defaultdict(int)
     for track in album.tracks:
         for album_name in track.get(BasicField.ALBUM, []):

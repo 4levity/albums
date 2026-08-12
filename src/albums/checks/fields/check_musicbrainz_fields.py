@@ -76,20 +76,20 @@ class CheckMusicBrainzFields(Check):
             )
 
         return (
-            self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMID)
-            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMARTISTID)
-            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
-            or self._check_consistent_tag(album, BasicField.MUSICBRAINZ_ALBUMRELEASETYPE)
+            self._check_consistent_field(album, BasicField.MUSICBRAINZ_ALBUMID)
+            or self._check_consistent_field(album, BasicField.MUSICBRAINZ_ALBUMARTISTID)
+            or self._check_consistent_field(album, BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY)
+            or self._check_consistent_field(album, BasicField.MUSICBRAINZ_ALBUMRELEASETYPE)
         )
 
-    def _check_consistent_tag(self, album: Album, check_tag: BasicField) -> CheckResult | None:
-        values = set(v for track in album.tracks for v in track.get(check_tag, ["none"]))
+    def _check_consistent_field(self, album: Album, check_field: BasicField) -> CheckResult | None:
+        values = set(v for track in album.tracks for v in track.get(check_field, ["none"]))
         if len(values) > 1:
-            options = [f">> Remove {check_tag.name} fields", ">> Remove all MusicBrainz fields"]
+            options = [f">> Remove {check_field.name} fields", ">> Remove all MusicBrainz fields"]
             option_automatic_index = 0  # automatic/default: only remove the conflicting MBID
             return CheckResult(
-                f"{check_tag.name} is not the same on all tracks (values = {', '.join(sorted(values))})",
-                Fixer(lambda option: self._remove_fields(album, ALL_MBID_FIELDS, option, check_tag), options, False, option_automatic_index),
+                f"{check_field.name} is not the same on all tracks (values = {', '.join(sorted(values))})",
+                Fixer(lambda option: self._remove_fields(album, ALL_MBID_FIELDS, option, check_field), options, False, option_automatic_index),
             )
 
     def _remove_fields(
@@ -107,7 +107,7 @@ class CheckMusicBrainzFields(Check):
             if remove:
                 self.ctx.console.print(f"Removing MusicBrainz fields ({', '.join(remove)}) from {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tag:
-                    for tag_to_remove in remove:
-                        tag.set_field(tag_to_remove, None)
+                    for field_to_remove in remove:
+                        tag.set_field(field_to_remove, None)
                 changed = True
         return FixResult.of(changed)
