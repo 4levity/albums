@@ -4,7 +4,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
 from albums.checks.helpers import album_display_name
 from albums.entities import Album
-from albums.words.make import a_plural, is_plural
+from albums.words import a_plural, is_plural
 
 
 class CheckAlbumUnderAlbum(Check):

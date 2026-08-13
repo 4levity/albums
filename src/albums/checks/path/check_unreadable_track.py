@@ -7,7 +7,7 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.words.make import plural
+from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
 

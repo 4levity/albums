@@ -19,7 +19,7 @@ from albums.entities import Album
 from albums.library.duplicates import DuplicateFinder, album_in_library
 from albums.library.paths import make_template_paths
 from albums.library.scanner import scan
-from albums.words.make import plural
+from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ from albums.picture.format import mime_type_to_format
 from albums.picture.info import PictureInfo
 from albums.tagger.folder import Cap
 from albums.tagger.types import Picture, PictureType
-from albums.words.make import is_plural, plural, pluralize
+from albums.words import is_plural, plural, pluralize
 
 logger: Final = logging.getLogger(__name__)
 

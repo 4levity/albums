@@ -7,7 +7,7 @@ from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
 from albums.tagger.folder import AlbumTagger, Cap
 from albums.tagger.types import BasicField
-from albums.words.make import plural
+from albums.words import plural
 
 
 class CheckExtraWhitespace(Check):

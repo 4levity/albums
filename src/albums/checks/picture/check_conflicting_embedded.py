@@ -8,7 +8,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
 from albums.entities import Album
 from albums.tagger.types import Picture, PictureType
-from albums.words.make import is_plural
+from albums.words import is_plural
 
 
 class CheckConflictingEmbedded(Check):

@@ -20,7 +20,7 @@ from albums.database.selector import Match, load_album_entities
 from albums.entities import Album
 from albums.library.paths import make_template_path
 from albums.library.transcoder import Transcoder
-from albums.words.make import plural
+from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
 

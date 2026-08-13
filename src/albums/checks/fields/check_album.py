@@ -11,7 +11,7 @@ from albums.checks.helpers import format_field_values
 from albums.entities import Album
 from albums.tagger.folder import AlbumTagger, Cap
 from albums.tagger.types import BasicField
-from albums.words.make import plural, pluralize
+from albums.words import plural, pluralize
 
 logger: Final = logging.getLogger(__name__)
 

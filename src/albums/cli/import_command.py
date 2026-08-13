@@ -3,7 +3,7 @@ import rich_click as click
 from albums.app import Context
 from albums.library import scanner
 from albums.library.importer import Importer
-from albums.words.make import plural
+from albums.words import plural
 
 from .cli_context import enter_folder_context, pass_context, require_configured, require_library, require_persistent_context
 

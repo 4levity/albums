@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.helpers import album_display_name
-from albums.words.make import pluralize
+from albums.words import pluralize
 
 from .cli_context import pass_context, require_configured, require_persistent_context
 

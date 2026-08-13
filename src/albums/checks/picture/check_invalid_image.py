@@ -11,7 +11,7 @@ from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
 from albums.picture.format import SUPPORTED_IMAGE_SUFFIXES
 from albums.tagger.folder import Cap
-from albums.words.make import pluralize
+from albums.words import pluralize
 
 logger: Final = logging.getLogger(__name__)
 
