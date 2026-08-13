@@ -57,7 +57,7 @@ class TestSelector:
         )
 
     def test_select_empty(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 result = list(load_album_entities(session))
@@ -66,7 +66,7 @@ class TestSelector:
             db.dispose()
 
     def test_add_and_select(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -96,7 +96,7 @@ class TestSelector:
             db.dispose()
 
     def test_operators_strings(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -129,7 +129,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_multiple_and_regex(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             re_sep = re.escape(os.sep)
             with Session(db) as session:
@@ -143,7 +143,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_collection(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -160,7 +160,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_collection_invert(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -177,7 +177,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_ignore_check(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -194,7 +194,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_ignore_check_invert(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -211,7 +211,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_multiple_ignore_check(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -240,7 +240,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_tags(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -287,7 +287,7 @@ class TestSelector:
             db.dispose()
 
     def test_compare_any_track_bitrate(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -323,7 +323,7 @@ class TestSelector:
             db.dispose()
 
     def test_compare_any_track_stream_props(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)

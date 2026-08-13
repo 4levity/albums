@@ -12,7 +12,7 @@ class TestMigration17CheckRename:
 
     def test_check_name_renamed_in_ignore_table(self):
         """Test that album_ignore_check entries with old check name are updated."""
-        db = connection.open(connection.MEMORY, version=16)
+        db = connection.db_open(connection.MEMORY, version=16)
         try:
             # Use raw SQL for track creation to avoid ORM table name mismatch
             with db.begin() as conn:
@@ -35,7 +35,7 @@ class TestMigration17CheckRename:
 
     def test_check_config_renamed_in_setting_table(self):
         """Test that setting entries with old check prefix are updated."""
-        db = connection.open(connection.MEMORY, version=16)
+        db = connection.db_open(connection.MEMORY, version=16)
         try:
             # Insert old check config keys into setting table manually
             with db.begin() as conn:
@@ -67,7 +67,7 @@ class TestMigration17CheckRename:
 
     def test_multiple_albums_with_same_ignore(self):
         """Test that multiple albums ignoring the same old check name are all updated."""
-        db = connection.open(connection.MEMORY, version=16)
+        db = connection.db_open(connection.MEMORY, version=16)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT OR IGNORE INTO album (album_id, path) VALUES (1, 'album1/');"))
@@ -92,7 +92,7 @@ class TestMigration17CheckRename:
 
     def test_noop_when_no_old_check_references(self):
         """Migration should handle databases with no old check name references gracefully."""
-        db = connection.open(connection.MEMORY, version=16)
+        db = connection.db_open(connection.MEMORY, version=16)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})
@@ -120,7 +120,7 @@ class TestMigration17CheckRename:
 
     def test_single_setting_renamed(self):
         """Test that single-value-fields.tags setting is updated (the check is also renamed)."""
-        db = connection.open(connection.MEMORY, version=16)
+        db = connection.db_open(connection.MEMORY, version=16)
         try:
             # Insert old check config keys into setting table manually
             with db.begin() as conn:

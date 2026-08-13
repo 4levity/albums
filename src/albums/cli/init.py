@@ -38,11 +38,11 @@ def init(ctx: Context, library_path: str | None):
         raise SystemExit(1)
 
     os.makedirs(ctx.db_path.parent, exist_ok=True)
-    ctx.db = connection.open(ctx.db_path, echo=ctx.verbose > 1)
+    ctx.db = connection.db_open(ctx.db_path, echo=ctx.verbose > 1)
     try:
-        ctx.config = db_config.load(ctx.db)
+        ctx.config = db_config.config_load(ctx.db)
         ctx.config.library = library
-        db_config.save(ctx.db, ctx.config)
+        db_config.config_save(ctx.db, ctx.config)
         ctx.console.print(f"scanning library {escape(str(library))}", highlight=False)
         scanner.scan(ctx)
     finally:

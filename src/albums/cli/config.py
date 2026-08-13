@@ -107,7 +107,7 @@ def _import(ctx: Context, import_file: str):
             ctx.console.print(f"Aborted configuration import: cannot access library directory at {str(new_config.library)}")
             raise SystemExit(1)
 
-    db_config.save(ctx.db, new_config)
+    db_config.config_save(ctx.db, new_config)
     ctx.console.print(f"imported configuration from {escape(import_file)}")
 
 
@@ -130,5 +130,5 @@ def _reset(ctx: Context):
         raise SystemExit(1)
     new_config = Configuration()
     new_config.library = ctx.config.library
-    db_config.save(ctx.db, new_config)
+    db_config.config_save(ctx.db, new_config)
     ctx.console.print(f'Configuration reset to default except for library directory "{escape(str(ctx.config.library))}"')

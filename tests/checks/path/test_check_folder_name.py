@@ -78,7 +78,7 @@ class TestCheckFolderName:
         ctx.config.library = create_library(
             "folder_name", [Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])]
         )
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 scanner.scan(ctx, session)

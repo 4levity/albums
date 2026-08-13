@@ -73,7 +73,7 @@ class TestCheckCoverUnique:
         )
         ctx = Context()
         ctx.config.library = create_library("front_cover", [album])
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 scanner.scan(ctx, session)

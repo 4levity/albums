@@ -19,7 +19,7 @@ class TestCheckUnreadable:
         ctx.config.library = create_library("unreadable_track", [album])
         with open(ctx.config.library / album.path / "2.mp3", "wb") as f:
             f.write(b"not a valid mp3")
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             scanner.scan(ctx, session)
             [(album,)] = session.execute(select(Album)).tuples()

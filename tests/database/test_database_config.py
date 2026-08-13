@@ -17,14 +17,14 @@ from albums.config import (
     SettingEntity,
 )
 from albums.database import connection
-from albums.database.db_config import load, save
+from albums.database.db_config import config_load, config_save
 
 
 class TestDatabaseConfig:
     def test_database_config_load_default(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
-            config = load(db)
+            config = config_load(db)
             assert len(config.checks) == len(ALL_CHECK_NAMES)
             assert config.checks[CheckAlbumField.name]["enabled"]
             assert len(config.checks[CheckAlbumField.name]) == len(CheckAlbumField.default_config)
@@ -40,7 +40,7 @@ class TestDatabaseConfig:
             db.dispose()
 
     def test_database_config_save_load(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             config = Configuration(
                 checks={"disc-numbering": {"enabled": False, "discs_in_separate_folders": False, "disctotal_policy": "never"}},
@@ -54,8 +54,8 @@ class TestDatabaseConfig:
                 tagger="puddletag",
             )
 
-            save(db, config)
-            loaded = load(db)
+            config_save(db, config)
+            loaded = config_load(db)
 
             check = loaded.checks["disc-numbering"]
             assert not check["enabled"]
@@ -75,7 +75,7 @@ class TestDatabaseConfig:
             db.dispose()
 
     def test_database_config_load_ignored_values(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
             with Session(db) as session:
                 session.add(SettingEntity(name="foo.bar", value=True))
@@ -83,7 +83,7 @@ class TestDatabaseConfig:
                 assert len(retr) == 1
                 assert isinstance(retr[0][0], SettingEntity)
                 assert retr[0][0].value
-            load(db)
+            config_load(db)
             with Session(db) as session:
                 # ignored setting removed from db
                 retr = session.execute(select(SettingEntity).where(SettingEntity.name == "foo.bar")).tuples().all()
@@ -92,17 +92,17 @@ class TestDatabaseConfig:
             db.dispose()
 
     def test_database_config_save_overwrite(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
-            save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}, library=Path("/path/to")))
-            loaded = load(db)
+            config_save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}, library=Path("/path/to")))
+            loaded = config_load(db)
             assert loaded.library == Path("/path/to")
             assert loaded.checks["cover-filename"]["enabled"]
             assert loaded.checks["cover-filename"]["filename"] == "cover.*"
             assert loaded.checks["cover-filename"]["jpeg_quality"] == 90
 
-            save(db, Configuration({"cover-filename": {"enabled": False, "filename": "cover.jpg", "jpeg_quality": 95}}, library=Path("/new")))
-            loaded = load(db)
+            config_save(db, Configuration({"cover-filename": {"enabled": False, "filename": "cover.jpg", "jpeg_quality": 95}}, library=Path("/new")))
+            loaded = config_load(db)
             assert loaded.library == Path("/new")
             assert not loaded.checks["cover-filename"]["enabled"]
             assert loaded.checks["cover-filename"]["filename"] == "cover.jpg"
@@ -111,14 +111,14 @@ class TestDatabaseConfig:
             db.dispose()
 
     def test_database_config_save_invalid(self):
-        db = connection.open(connection.MEMORY)
+        db = connection.db_open(connection.MEMORY)
         try:
-            save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))  # ok
+            config_save(db, Configuration({"cover-filename": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))  # ok
             with pytest.raises(ValueError):
-                save(db, Configuration({"cover-filename": {"enabled": True, "filename": True, "jpeg_quality": 90}}))  # type: ignore
+                config_save(db, Configuration({"cover-filename": {"enabled": True, "filename": True, "jpeg_quality": 90}}))  # type: ignore
             with pytest.raises(ValueError):
-                save(db, Configuration({"INVALID": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))
+                config_save(db, Configuration({"INVALID": {"enabled": True, "filename": "cover.*", "jpeg_quality": 90}}))
             with pytest.raises(ValueError):
-                save(db, Configuration({"cover-filename": {"enabled": True, "INVALID": "cover.*", "jpeg_quality": 90}}))
+                config_save(db, Configuration({"cover-filename": {"enabled": True, "INVALID": "cover.*", "jpeg_quality": 90}}))
         finally:
             db.dispose()

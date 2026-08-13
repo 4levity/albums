@@ -16,7 +16,7 @@ class TestCheckDuplicateAlbum:
             Album(path="two" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Two", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -31,7 +31,7 @@ class TestCheckDuplicateAlbum:
             Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -62,7 +62,7 @@ class TestCheckDuplicateAlbum:
             Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -96,7 +96,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -120,7 +120,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -151,7 +151,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])

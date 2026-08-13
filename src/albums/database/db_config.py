@@ -10,7 +10,7 @@ from albums.config import Configuration, SettingEntity
 logger: Final = logging.getLogger(__name__)
 
 
-def load(db: Engine) -> Configuration:
+def config_load(db: Engine) -> Configuration:
     """Load configuration from the database.
 
     Returns valid settings and discards any unknown keys with a warning.
@@ -19,11 +19,11 @@ def load(db: Engine) -> Configuration:
         (config, ignored_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
 
     if ignored_values:
-        save(db, config)  # showed warnings, now save valid config
+        config_save(db, config)  # showed warnings, now save valid config
     return config
 
 
-def save(db: Engine, configuration: Configuration):
+def config_save(db: Engine, configuration: Configuration):
     """Persist configuration to the database, replacing all stored settings."""
     settings = configuration.to_values()
     with Session(db) as session:

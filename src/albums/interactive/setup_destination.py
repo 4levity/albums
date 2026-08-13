@@ -155,4 +155,4 @@ def _configure_destination(ctx: Context, destination_ix: int):
     if option in {"save", "delete"}:
         if option == "delete":
             del ctx.config.sync_destinations[destination_ix]
-        db_config.save(ctx.db, ctx.config)
+        db_config.config_save(ctx.db, ctx.config)

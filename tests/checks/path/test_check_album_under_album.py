@@ -17,7 +17,7 @@ class TestCheckAlbumUnderAlbum:
         ]
 
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 checker = CheckAlbumUnderAlbum(ctx, session=session)
@@ -42,7 +42,7 @@ class TestCheckAlbumUnderAlbum:
         ]
 
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 checker = CheckAlbumUnderAlbum(ctx, session=session)

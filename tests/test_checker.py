@@ -34,7 +34,7 @@ class TestChecker:
             ],
         )
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
         try:
             with Session(ctx.db) as session:
@@ -59,7 +59,7 @@ class TestChecker:
         )
         ctx = Context()
         ctx.config.library = create_library("checker_automatic", [album])
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = connection.db_open(connection.MEMORY, True)
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
@@ -90,7 +90,7 @@ class TestChecker:
             ],
         )
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
         ctx.config.library = create_library("dependent_check_failures", [album])
         try:
@@ -114,7 +114,7 @@ class TestChecker:
         checks["invalid-track-or-disc-number"] = {"enabled": False}
         ctx.config.checks = checks
         print_spy = mocker.spy(ctx.console, "print")
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 with pytest.raises(SystemExit):
@@ -143,7 +143,7 @@ class TestChecker:
         ]
         ctx = Context()
         ctx.config.library = create_library("checker_delete_album", albums)
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = connection.db_open(connection.MEMORY, True)
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
@@ -191,7 +191,7 @@ class TestChecker:
         ]
         ctx = Context()
         ctx.config.library = create_library("checker_delete_album", albums)
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = connection.db_open(connection.MEMORY, True)
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda s: selector.load_album_entities(s)

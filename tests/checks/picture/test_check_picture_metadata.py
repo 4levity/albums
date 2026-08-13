@@ -52,7 +52,7 @@ class TestCheckPictureMetadata:
         flac.add_picture(pic)
         flac.save()
 
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
@@ -95,7 +95,7 @@ class TestCheckPictureMetadata:
         with tagger.open(album.tracks[0].filename) as tag:
             tag.add_picture(Picture(pic_info, PictureType.COVER_FRONT, ""), image_data)
 
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
@@ -128,7 +128,7 @@ class TestCheckPictureMetadata:
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)

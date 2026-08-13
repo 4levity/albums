@@ -48,7 +48,7 @@ class TestSynchronizer:
         ctx = Context()
         ctx.config.transcoder_cache = TestSynchronizer.transcoder_cache
         ctx.config.library = create_library("sync", albums)
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add_all(albums)
@@ -124,7 +124,7 @@ class TestSynchronizer:
         ctx = Context()
         ctx.config.transcoder_cache = TestSynchronizer.transcoder_cache
         ctx.config.library = create_library("sync2", albums)
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = connection.db_open(connection.MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add_all(albums)
