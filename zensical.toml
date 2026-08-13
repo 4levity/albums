@@ -15,7 +15,29 @@ copyright = """
 Copyright &copy; 2026 Ivan Cooper
 """
 
-nav = ["index.md", "usage.md", "check_and_fix.md", "all_checks.md", "import.md", "sync.md", "technical.md", "developing.md", "ideas.md", "changelog.md"]
+nav = [
+    "index.md",
+    "usage.md",
+    { "Check And Fix" = [
+        "check_and_fix.md",
+        "checks_ordering.md",
+        "checks_path_and_file.md",
+        "checks_fields_numbering.md",
+        "checks_fields_general.md",
+        "checks_fields_per_album.md",
+        "checks_pictures.md",
+    ] },
+    { "More Features" = [
+        "import.md",
+        "sync.md",
+    ] },
+    {"Technical Information" = [
+        "tag_technical.md",
+        "developing.md",
+        "ideas.md",
+        "changelog.md",
+    ]},
+]
 
 [project.theme]
 #favicon = "images/favicon.png"

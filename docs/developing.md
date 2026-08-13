@@ -38,40 +38,57 @@ the db used by a regular installation of `albums`).
 
 ### Python Project Structure
 
-<!-- pyml disable line-length -->
+| Package       | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| `app`         | App context (db, config, console) shared across functions |
+| `config`      | Configuration types, defaults, serialization              |
+| `entities`    | ORM models (Album, Track, PictureFile, OtherFile)         |
+| `checks`      | Check/fixer implementations and orchestration             |
+| `cli`         | Entry point and command implementations                   |
+| `database`    | DB creation, migrations, queries                          |
+| `interactive` | UI for interacting with checks \u0026 configuration       |
+| `library`     | Scan library, import album, sync to destination           |
+| `picture`     | Get picture info, caching picture scanner                 |
+| `tagger`      | Read/write metadata in media files                        |
+| `words`       | Simple text generation e.g. pluralize words               |
 
-| Package           | Uses Within Project\*           | Description                                     |
-| ----------------- | ------------------------------- | ----------------------------------------------- |
-| **`app`**         | -                               | App context type shared across functions        |
-| **`config`**      | `database`                      | Types for app configuration                     |
-| **`types`**       | `database`, `picture`, `tagger` | Types for app entities and check results        |
-| **`checks`**      | everything except `cli`         | Implementations of checks and fixers            |
-| **`cli`**         | everything                      | Entry point and command implementations         |
-| **`database`**    | `picture`, `tagger`             | Create/update db, store config, build queries   |
-| **`interactive`** | `database`, `library`, `tagger` | UI for interacting with checks & configuration  |
-| **`library`**     | `picture`, `tagger`, `words`    | Scan library, import album, sync to destination |
-| **`picture`**     | _none_                          | Get picture info, caching picture scanner       |
-| **`tagger`**      | `picture`                       | Read/write metadata in media files              |
-| **`words`**       | _none_                          | Simple text generation e.g. pluralize words     |
+### Key Types to Know
 
-<!-- pyml enable line-length -->
-
-\* - not including ubiquitous `app`/`config`/`types`
+- **`Context`** (`app.py`) - Carries shared state (db engine, config, console)
+  across invocation.
+- **`Album`/`Track`/`PictureFile`/`OtherFile`** (`entities.py`) - SQLAlchemy ORM
+  models representing the data model.
+- **`CheckConfiguration`** (`checks/check_types.py`) - Per-check config dict
+  type.
+- **`Fixer`/`CheckResult`** (`checks/check_types.py`) - Problem reporting and
+  fix contracts.
 
 ## Adding Functionality
 
 ### Checks
 
-To add a new check, create a class file in `src/albums/checks/<category>/`.
-Extend `albums.checks.base_check.Check` and define `name` and `default-config`.
-Implement `check(album)`. Add the new class to the list in `albums.checks.all`,
-placing it in the ordered list where it should run. Optionally, define
-`must_pass_checks` to prevent the check from running when certain earlier checks
-were disabled or didn't pass.
+Checks are grouped into categories under `src/albums/checks/`:
 
-`check()` returns `None` to indicate the check passed (including when it isn't
-relevant), or a `CheckResult` to indicate a problem. The `CheckResult` has a
-message and optionally (hopefully!) a `Fixer` with a solution.
+- **`fields/`** - Metadata field presence and consistency checks
+- **`numbering/`** - Track/disc numbering validation
+- **`path/`** - Filename and path structure checks
+- **`picture/`** - Album art embedding, dimensions, duplicates
+
+Each check file defines one class. Extend `base_check.Check` for general checks
+or `base_check_field_per_album` for field-consistency checks.
+
+To add a new check:
+
+1. Create a class in the appropriate `checks/<category>/` subdirectory
+2. Define `name`, `default_config` (dict with `"enabled": True` plus any custom
+   options)
+3. Implement `check(album: Album) -> CheckResult | None`
+4. Add to `ALL_CHECKS` tuple in [`checks/all.py`](src/albums/checks/all.py)
+5. Optionally define `must_pass_checks` to depend on earlier checks
+
+The `check()` method gets an ORM `Album` with loaded tracks. Check and fix via
+`self.session`, `self.tagger`, and `self.ctx`. Return `None` if passed, or a
+`CheckResult` with a message and optional `Fixer`.
 
 #### Fixers
 
@@ -93,6 +110,37 @@ Tips:
 - If returning one result is limiting, maybe the check should be two checks.
 - Consider checking for "pass" conditions first in some cases.
 
+### Writing Tests
+
+Tests live in `tests/`, mirroring `src/albums/`. Use `pytest` with class-based
+tests. Construct Albums and Tracks directly; use `Context()` for app state.
+Example:
+
+```python
+from albums.app import Context
+from albums.entities import Album, Track
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.types import BasicField
+
+class TestMyCheck:
+    def test_missing_field(self, mocker):
+        album = Album(
+            path="foo/",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"}),
+                Track(filename="2.flac"),  # missing album field
+            ],
+        )
+        result = MyCheck(Context()).check(album)
+        assert result.fixer
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        result.fixer.fix(result.fixer.options[0])
+        assert mock_set_basic_fields.call_count == 1
+```
+
+Library fixture data is in `tests/fixtures/libraries/`. Run `make test` for full
+suite, or `poetry run pytest tests/path/to/test.py -v` for targeted runs.
+
 ### Music File Tag Support
 
 An `AlbumTaggerProvider` instance provides configured `AlbumTagger` instances.
@@ -108,17 +156,17 @@ File types that use ID3 extend `AbstractId3Tagger`.
 
 ### Common Tags
 
-The tagger in `albums` only uses the values in `albums.tagger.types.BasicField`.
-In general, all files that advertise basic field capability are expected to be
-able to read and write values corresponding to each of these.
+The tagger only uses values in [`BasicField`](src/albums/tagger/types.py). All
+files with basic fields must read/write each one. Add a tag field by:
 
-To add support for a new field:
-
-- Add the new common field to `BasicField`.
-- For FLAC and Ogg Vorbis support, simply use the same name as the Vorbis
-  Comment, or edit `vorbis_comment_fields()` and `vorbis_comment_set_field()`.
-- For MP3 and AIFF support, add to `AbstractId3Tagger`.
-- Add to all other implementations in `albums.tagger.file_types`
+1. Add to the `BasicField` enum with comments showing ID3/vorbis/M4A equivalents
+2. For FLAC/Ogg Vorbis, use same name or edit functions in
+   [`tagger/vorbis.py`](src/albums/tagger/vorbis.py)
+3. For MP3/AIFF: add to [`tagger/base_id3.py`](src/albums/tagger/base_id3.py)
+   `AbstractId3Tagger`
+4. For other types: implement in
+   [`tagger/file_types/`](src/albums/tagger/file_types/)
+5. Add a test exercise in the appropriate `tests/checks/fields/` test file
 
 ## Tips
 
@@ -148,13 +196,23 @@ supports ruff/Black formatting and a
 [cSpell](https://cspell.org/). [Prettier](https://prettier.io/) can reflow
 Markdown text.
 
-### Other Tips
-
-- `make preview` to preview these docs (requires
-  [GraphViz](https://graphviz.org/))
-- Query `albums.db` directly with `albums sql "SELECT * FROM album LIMIT 10;"`
-  or try `albums list --json`
-
 ### Database Schema
 
+Database migrations are SQL files in
+[`database/migrations/`](src/albums/database/migrations/). Scanner version
+(`SCANNER_VERSION` in `app.py`) tracks changes. To refresh the ER diagram run:
+
+```bash
+make docs/database_diagram.png
+```
+
 ![albums database schema diagram](./database_diagram.png)
+
+### Querying the Database
+
+Use `albums sql "SELECT * FROM album LIMIT 10;"` or `albums list --json` to
+inspect library data.
+
+### Previewing Docs
+
+`make preview` requires [GraphViz](https://graphviz.org/).

@@ -34,7 +34,10 @@ test: test-no-warnings install ## Run all tests with coverage (depends on test-n
 	$(POETRY) run pytest --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
-sample/albums.db: src/albums/database/schema.py
+# regenerate sample db if schema changed
+SCHEMA_FILES := $(wildcard src/albums/database/migrations/*)
+
+sample/albums.db: $(SCHEMA_FILES)
 	@rm -rf sample/albums.db
 	@mkdir -p sample
 	$(POETRY) run python src/albums/database/connection.py sample/albums.db

@@ -1,8 +1,8 @@
 ---
-icon: lucide/search-check
+icon: lucide/check
 ---
 
-# Check and Fix
+# About Checks
 
 A _check_ is a module that can report on problems with albums, such as tags,
 filenames or directory structure. Some checks provide options to fix the problem
