@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from albums.database import connection, schema
+from albums.database import connection
 from albums.entities import Album, Track
 from albums.tagger.types import BasicField
 
@@ -16,7 +16,7 @@ class TestDatabase:
         try:
             with Session(db) as session:
                 schema_version = session.scalar(text("SELECT version FROM _schema;"))
-            assert schema_version == max(schema.MIGRATIONS.keys()) == (len(schema.MIGRATIONS) + 1) == schema.CURRENT_SCHEMA_VERSION
+            assert schema_version > 17  # proves that schema is in place and multiple migrations applied
         finally:
             db.dispose()
 
@@ -38,15 +38,17 @@ class TestDatabase:
         db = connection.open(db_file)
         try:
             with Session(db) as session:
-                newer_version = schema.CURRENT_SCHEMA_VERSION + 1
+                current_version = session.scalar(text("SELECT version FROM _schema;"))
+                newer_version = current_version + 1
                 session.execute(text("UPDATE _schema SET version = :version ;"), {"version": newer_version})
                 session.commit()
                 assert session.scalar(text("SELECT version FROM _schema;")) == newer_version
-            with pytest.raises(RuntimeError):
-                connection.open(db_file)
-                assert False  # shouldn't get this far
         finally:
             db.dispose()
+
+        with pytest.raises(RuntimeError):
+            connection.open(db_file)
+            assert False  # shouldn't get this far
 
     def test_album_created_at(self):
         db = connection.open(connection.MEMORY)

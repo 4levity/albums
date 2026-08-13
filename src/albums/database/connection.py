@@ -10,7 +10,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 # don't put any relative imports here, will make this file not runnable
-from albums.database.schema import SQL_INIT_SCHEMA, migrate
+from albums.database.migrations import get_init_schema, migrate
 
 logger: Final = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def open(filename: str | Path, echo: bool = False, version: int | None = None):
         if filename == MEMORY:
             with db.begin() as conn:
                 connection = conn.connection
-                connection.executescript(SQL_INIT_SCHEMA)
+                connection.executescript(get_init_schema())
 
             migrate(db, True, target_version=version)
         else:
@@ -60,7 +60,7 @@ def open(filename: str | Path, echo: bool = False, version: int | None = None):
                 print(f"creating database {filename}")
                 with db.begin() as conn:
                     connection = conn.connection
-                    connection.executescript(SQL_INIT_SCHEMA)
+                    connection.executescript(get_init_schema())
 
             migrate(db, False, target_version=version)
             with Session(db) as session:
