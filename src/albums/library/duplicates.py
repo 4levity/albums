@@ -4,10 +4,10 @@ from typing import Sequence
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
+from albums.app import Context
+from albums.entities import Album, FieldV
 from albums.tagger.types import BasicField
 
-from ..app import Context
-from ..entities import Album, FieldV
 from .tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 
 

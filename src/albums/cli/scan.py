@@ -4,8 +4,9 @@ from typing import Final
 import rich_click as click
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..library import scanner
+from albums.app import Context
+from albums.library import scanner
+
 from .cli_context import pass_context, require_configured, require_library
 
 logger: Final = logging.getLogger(__name__)

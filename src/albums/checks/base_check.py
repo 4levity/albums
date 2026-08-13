@@ -4,9 +4,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..entities import Album
-from ..tagger.provider import AlbumTaggerProvider
+from albums.app import Context
+from albums.entities import Album
+from albums.tagger.provider import AlbumTaggerProvider
+
 from .check_types import CheckConfiguration, CheckResult
 
 

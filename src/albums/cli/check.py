@@ -1,11 +1,12 @@
 import rich_click as click
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..checks.all import ALL_CHECK_NAMES
-from ..checks.checker import Checker
-from ..config import RescanOption, default_checks_config
-from ..library.scanner import scan
+from albums.app import Context
+from albums.checks.all import ALL_CHECK_NAMES
+from albums.checks.checker import Checker
+from albums.config import RescanOption, default_checks_config
+from albums.library.scanner import scan
+
 from .cli_context import pass_context, require_library, require_real_context
 
 

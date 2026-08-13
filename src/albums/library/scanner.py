@@ -12,12 +12,12 @@ from rich.progress import Progress
 from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session
 
+from albums.app import SCANNER_VERSION, Context
+from albums.entities import Album, ScanHistoryEntity
 from albums.library.album_scanner import scan_album
+from albums.tagger.folder import AlbumTagger
+from albums.words.make import plural
 
-from ..app import SCANNER_VERSION, Context
-from ..entities import Album, ScanHistoryEntity
-from ..tagger.folder import AlbumTagger
-from ..words.make import plural
 from .album_scanner import picture_cache
 from .scanner_types import AlbumScanResult
 

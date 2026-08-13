@@ -4,11 +4,11 @@ from typing import Any
 
 from rich.markup import escape
 
-from ...entities import Album
-from ...tagger.types import Picture, PictureType
-from ...words.make import is_plural
-from ..base_check import Check
-from ..check_types import CheckResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult
+from albums.entities import Album
+from albums.tagger.types import Picture, PictureType
+from albums.words.make import is_plural
 
 
 class CheckConflictingEmbedded(Check):

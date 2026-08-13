@@ -2,10 +2,10 @@ import rich.traceback
 import rich_click as click
 
 import albums
+from albums import app
+from albums.database.selector import Comparator
+from albums.library import scanner
 
-from .. import app
-from ..database.selector import Comparator
-from ..library import scanner
 from .check import check
 from .checks_ignore import checks_ignore
 from .checks_notice import checks_notice

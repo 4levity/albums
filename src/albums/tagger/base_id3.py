@@ -8,12 +8,11 @@ from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TIT2, TPE1, TPE2, TPOS, 
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
-from ..config import ID3v1Policy
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
 from .id3_helpers import format_numbered_value, get_text, must_get_text, parse_numbered_value, set_numbered_frame
 from .id3_mappings import BASIC_ID3_TEXT_FRAMES, FIELD_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
-from .types import BasicField, Picture, PictureType
+from .types import BasicField, ID3v1Policy, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 

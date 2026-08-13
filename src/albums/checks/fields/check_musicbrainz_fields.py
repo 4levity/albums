@@ -3,12 +3,11 @@ from typing import Any, Collection, Final
 
 from rich.markup import escape
 
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.entities import Album
+from albums.tagger.folder import AlbumTagger, Cap
 from albums.tagger.types import BasicField
-
-from ...entities import Album
-from ...tagger.folder import AlbumTagger, Cap
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
 
 logger: Final = logging.getLogger(__name__)
 

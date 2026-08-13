@@ -1,8 +1,9 @@
 import rich_click as click
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..checks.helpers import album_display_name
+from albums.app import Context
+from albums.checks.helpers import album_display_name
+
 from .cli_context import pass_context, require_configured, require_persistent_context
 
 

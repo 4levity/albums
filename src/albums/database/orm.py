@@ -6,7 +6,7 @@ from typing import Any, Final, override
 from sqlalchemy import Column, Dialect, Integer, String, Table, Text, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase
 
-from ..picture.info import LoadIssuesType
+from albums.picture.info import LoadIssuesType
 
 
 class Base(DeclarativeBase):

@@ -4,8 +4,8 @@ from prompt_toolkit import prompt
 from prompt_toolkit.shortcuts import choice
 from rich.prompt import FloatPrompt, IntPrompt
 
-from ..app import Context
-from ..database import db_config
+from albums.app import Context
+from albums.database import db_config
 
 
 def set_enabled_checks(ctx: Context, enabled_checks: Collection[str]):

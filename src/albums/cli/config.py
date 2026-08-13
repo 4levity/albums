@@ -10,10 +10,11 @@ from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 from rich.table import Table
 
-from ..app import Context
-from ..config import Configuration, SettingValueType
-from ..database import db_config
-from ..interactive.configurator import interactive_config
+from albums.app import Context
+from albums.config import Configuration, SettingValueType
+from albums.database import db_config
+from albums.interactive.configurator import interactive_config
+
 from .cli_context import pass_context, require_configured, require_persistent_context
 from .config_settings import render_setting, set_setting
 

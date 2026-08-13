@@ -5,7 +5,7 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
-from ..config import Configuration, SettingEntity
+from albums.config import Configuration, SettingEntity
 
 logger: Final = logging.getLogger(__name__)
 

@@ -12,9 +12,9 @@ from rich.table import Table
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..checks.check_types import CheckResult, FixResult
-from ..entities import Album
+from albums.app import Context
+from albums.checks.check_types import CheckResult, FixResult
+from albums.entities import Album
 
 logger: Final = logging.getLogger(__name__)
 

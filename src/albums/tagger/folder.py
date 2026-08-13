@@ -5,7 +5,8 @@ from typing import Any, Callable, Collection, Final, Generator, List, Mapping, S
 
 from mutagen._tags import PaddingInfo
 
-from ..config import ID3v1Policy
+from albums.tagger.types import ID3v1Policy
+
 from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ..picture.scan import PictureScanner, PictureScannerCache
 from .file_types.aiff import AiffTagger

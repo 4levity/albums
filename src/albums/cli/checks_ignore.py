@@ -2,10 +2,11 @@ import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..checks.all import ALL_CHECK_NAMES
-from ..checks.helpers import album_display_name
-from ..words.make import pluralize
+from albums.app import Context
+from albums.checks.all import ALL_CHECK_NAMES
+from albums.checks.helpers import album_display_name
+from albums.words.make import pluralize
+
 from .cli_context import pass_context, require_configured, require_persistent_context
 
 

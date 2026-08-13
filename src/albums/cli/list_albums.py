@@ -8,8 +8,9 @@ import rich_click as click
 from rich.table import Table
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..checks.helpers import album_display_name
+from albums.app import Context
+from albums.checks.helpers import album_display_name
+
 from .cli_context import pass_context, require_real_context
 
 

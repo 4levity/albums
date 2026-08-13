@@ -5,9 +5,9 @@ from typing import Final, Sequence
 
 from pathvalidate import sanitize_filename, sanitize_filepath
 
-from ..app import Context
-from ..entities import Album
-from ..tagger.types import BasicField
+from albums.app import Context
+from albums.entities import Album
+from albums.tagger.types import BasicField
 
 logger: Final = logging.getLogger(__name__)
 

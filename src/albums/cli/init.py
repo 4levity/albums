@@ -5,10 +5,11 @@ import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 
-from ..app import Context
-from ..config import PLATFORM_DIRS
-from ..database import connection, db_config
-from ..library import scanner
+from albums.app import Context
+from albums.config import PLATFORM_DIRS
+from albums.database import connection, db_config
+from albums.library import scanner
+
 from .cli_context import pass_context
 
 

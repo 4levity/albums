@@ -5,12 +5,13 @@ from typing import Final, Mapping, Sequence
 from rich.markup import escape
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..database.selector import Match, load_album_entities
-from ..entities import Album
-from ..interactive.interact import interact, prompt_ignore_checks
-from ..library import scanner
-from ..tagger.provider import AlbumTaggerProvider
+from albums.app import Context
+from albums.database.selector import Match, load_album_entities
+from albums.entities import Album
+from albums.interactive.interact import interact, prompt_ignore_checks
+from albums.library import scanner
+from albums.tagger.provider import AlbumTaggerProvider
+
 from .all import ALL_CHECKS
 from .base_check import Check
 from .check_types import CheckResult, FixResult

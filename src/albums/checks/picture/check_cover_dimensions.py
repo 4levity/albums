@@ -8,13 +8,13 @@ from typing import Any, Callable, Dict, Final, List, Tuple
 from PIL import Image
 from rich.markup import escape
 
-from ...entities import Album, PictureFile
-from ...interactive.image_table import render_image_table
-from ...picture.format import SUPPORTED_IMAGE_MIME_TYPES, format_to_mime_type, get_depth_bpp, mime_type_to_format
-from ...picture.info import PictureInfo
-from ...tagger.types import Picture, PictureType
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.entities import Album, PictureFile
+from albums.interactive.image_table import render_image_table
+from albums.picture.format import SUPPORTED_IMAGE_MIME_TYPES, format_to_mime_type, get_depth_bpp, mime_type_to_format
+from albums.picture.info import PictureInfo
+from albums.tagger.types import Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 

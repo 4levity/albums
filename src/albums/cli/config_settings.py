@@ -4,9 +4,10 @@ from string import Template
 from rich.markup import escape
 
 from albums.app import Context
-from albums.config import ID3v1Policy, PathCompatibilityOption, RescanOption, SettingValueType
+from albums.config import PathCompatibilityOption, RescanOption, SettingValueType
 from albums.database import db_config
 from albums.interactive.setup_settings import set_library
+from albums.tagger.types import ID3v1Policy
 
 
 def render_setting(key: str, value: SettingValueType):

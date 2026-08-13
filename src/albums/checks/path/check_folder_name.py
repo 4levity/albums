@@ -8,11 +8,11 @@ from typing import Any, Final
 from pathvalidate import sanitize_filename
 from rich.markup import escape
 
-from ...entities import Album
-from ...library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
-from ...tagger.types import BasicField
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.entities import Album
+from albums.library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
+from albums.tagger.types import BasicField
 
 logger: Final = logging.getLogger(__name__)
 

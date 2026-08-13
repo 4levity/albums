@@ -6,8 +6,8 @@ from typing import Final, Generator, List, Mapping, Tuple
 from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
-from ..entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
-from ..tagger.types import BasicField
+from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
+from albums.tagger.types import BasicField
 
 logger: Final = logging.getLogger(__name__)
 

@@ -16,10 +16,10 @@ import humanize
 import xxhash
 from rich.markup import escape
 
-from ..app import Context
-from ..entities import Album, Track
-from ..tagger.folder import AUDIO_FILE_SUFFIXES
-from ..tagger.provider import AlbumTaggerProvider
+from albums.app import Context
+from albums.entities import Album, Track
+from albums.tagger.folder import AUDIO_FILE_SUFFIXES
+from albums.tagger.provider import AlbumTaggerProvider
 
 logger: Final = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from enum import IntEnum, StrEnum, auto
+from enum import StrEnum, auto
 from pathlib import Path
 from string import Template
 from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
@@ -17,6 +17,8 @@ from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
 from platformdirs import PlatformDirs
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
+
+from albums.tagger.types import ID3v1Policy
 
 from .checks.check_types import CheckConfiguration
 from .database.orm import Base, SerializableValueAsJson
@@ -95,17 +97,6 @@ def default_checks_config() -> Mapping[str, CheckConfiguration]:
     from .checks.all import ALL_CHECKS  # local import because .checks.all imports every check, which will import this module
 
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
-
-
-class ID3v1Policy(IntEnum):
-    """Strategy for handling legacy ID3v1 tags when saving MP3 files.
-
-    Values map directly to the numeric codes expected by ``mutagen.mp3.MP3.save``'s ``v1`` parameter.
-    """
-
-    REMOVE = 0  # Strip any existing ID3v1 tag on save.
-    UPDATE = 1  # Update existing ID3v1 in-place if present; otherwise leave absent.
-    CREATE = 2  # Always write an ID3v1 tag (creating one when none exists).
 
 
 # Audio file conversion profile used by default when syncing to destinations that require transcoding.

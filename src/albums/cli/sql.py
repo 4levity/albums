@@ -7,7 +7,8 @@ from rich.table import Table
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from ..app import Context
+from albums.app import Context
+
 from .cli_context import pass_context, require_real_context
 
 

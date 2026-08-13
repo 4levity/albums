@@ -6,12 +6,12 @@ from typing import Any, Final, Mapping
 import humanize
 from rich.markup import escape
 
-from ...checks.helpers import FRONT_COVER_FILENAME
-from ...entities import Album
-from ...interactive.image_table import render_image_table
-from ...tagger.types import Picture, PictureType
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.helpers import FRONT_COVER_FILENAME
+from albums.entities import Album
+from albums.interactive.image_table import render_image_table
+from albums.tagger.types import Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 

@@ -10,9 +10,9 @@ from rich.console import RenderableType
 from rich_pixels import Pixels
 from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
 
-from ..app import Context
-from ..tagger.folder import AlbumTagger
-from ..tagger.types import Picture
+from albums.app import Context
+from albums.tagger.folder import AlbumTagger
+from albums.tagger.types import Picture
 
 logger: Final = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from typing import Final
 from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
-from ..orm import schema_table
+from albums.database.orm import schema_table
 
 logger: Final = logging.getLogger(__name__)
 

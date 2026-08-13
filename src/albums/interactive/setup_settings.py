@@ -8,10 +8,11 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.shortcuts import choice, confirm
 
-from ..app import Context
-from ..config import ID3v1Policy, PathCompatibilityOption, RescanOption
-from ..database import db_config
-from ..library.paths import show_template_path_help
+from albums.app import Context
+from albums.config import PathCompatibilityOption, RescanOption
+from albums.database import db_config
+from albums.library.paths import show_template_path_help
+from albums.tagger.types import ID3v1Policy
 
 
 def configure_settings(ctx: Context):

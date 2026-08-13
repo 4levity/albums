@@ -10,10 +10,10 @@ from typing import Final, List, Sequence
 import click
 from rich.logging import RichHandler
 
-from ..app import Context
-from ..config import PLATFORM_DIRS, RescanOption
-from ..database import connection, db_config
-from ..database.selector import Comparator, Match, load_album_entities
+from albums.app import Context
+from albums.config import PLATFORM_DIRS, RescanOption
+from albums.database import connection, db_config
+from albums.database.selector import Comparator, Match, load_album_entities
 
 logger: Final = logging.getLogger(__name__)
 

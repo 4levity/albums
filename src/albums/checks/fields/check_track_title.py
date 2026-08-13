@@ -3,13 +3,13 @@ from typing import Final
 
 from rich.markup import escape
 
-from ...entities import Album, Track
-from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicField
-from ...words.make import plural
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import format_field_values, parse_filename
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.helpers import format_field_values, parse_filename
+from albums.entities import Album, Track
+from albums.tagger.folder import AlbumTagger, Cap
+from albums.tagger.types import BasicField
+from albums.words.make import plural
 
 logger: Final = logging.getLogger(__name__)
 
