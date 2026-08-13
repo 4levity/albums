@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.picture.check_picture_metadata import CheckPictureMetadata
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.picture import PictureInfo
@@ -52,7 +52,7 @@ class TestCheckPictureMetadata:
         flac.add_picture(pic)
         flac.save()
 
-        ctx.db = connection.db_open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
@@ -95,7 +95,7 @@ class TestCheckPictureMetadata:
         with tagger.open(album.tracks[0].filename) as tag:
             tag.add_picture(Picture(pic_info, PictureType.COVER_FRONT, ""), image_data)
 
-        ctx.db = connection.db_open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)
@@ -128,7 +128,7 @@ class TestCheckPictureMetadata:
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
-        ctx.db = connection.db_open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 scan(ctx, session)

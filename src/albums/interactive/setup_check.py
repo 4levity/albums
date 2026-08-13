@@ -5,7 +5,7 @@ from prompt_toolkit.shortcuts import choice
 from rich.prompt import FloatPrompt, IntPrompt
 
 from albums.app import Context
-from albums.database import db_config
+from albums.config import config_save
 
 
 def set_enabled_checks(ctx: Context, enabled_checks: Collection[str]):
@@ -16,7 +16,7 @@ def set_enabled_checks(ctx: Context, enabled_checks: Collection[str]):
             config["enabled"] = value
             changed = True
     if changed:
-        db_config.config_save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)
 
 
 def configure_check(ctx: Context, check_name: str):
@@ -41,4 +41,4 @@ def configure_check(ctx: Context, check_name: str):
             default_items = str(",".join(config[option]))  # type: ignore
             items = prompt(f"Enter new values separated by comma for {option}: ", default=default_items)
             config[option] = items.split(",")
-        db_config.config_save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)

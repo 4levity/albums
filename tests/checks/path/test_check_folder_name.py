@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context, Path
 from albums.checks.path.check_folder_name import CheckFolderName
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.library import scanner
 from albums.tagger import BasicField
@@ -78,7 +78,7 @@ class TestCheckFolderName:
         ctx.config.library = create_library(
             "folder_name", [Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])]
         )
-        ctx.db = connection.db_open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 scanner.scan(ctx, session)

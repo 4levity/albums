@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.path.check_unreadable_track import CheckUnreadableTrack
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.library import scanner
 
@@ -19,7 +19,7 @@ class TestCheckUnreadable:
         ctx.config.library = create_library("unreadable_track", [album])
         with open(ctx.config.library / album.path / "2.mp3", "wb") as f:
             f.write(b"not a valid mp3")
-        ctx.db = connection.db_open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             scanner.scan(ctx, session)
             [(album,)] = session.execute(select(Album)).tuples()

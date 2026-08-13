@@ -9,8 +9,7 @@ from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
 from albums.app import SCANNER_VERSION, Context
-from albums.database import connection
-from albums.database.selector import load_album_entities
+from albums.database import MEMORY, db_open, load_album_entities
 from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
@@ -60,7 +59,7 @@ class TestScanner:
     ]
 
     def test_initial_scan(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_initial_scan", self.sample_library)
             scan(context(db, library))
@@ -125,7 +124,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_other_files(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         big_image_dimension = int(1 + (MAX_IMAGE_SIZE / 3) ** 0.5)  # square 24bpp uncompressed bitmap that is just slightly too large to load
         big_picture = PictureInfo("image/bmp", big_image_dimension, big_image_dimension, 24, 0, b"")
         album = Album(
@@ -156,7 +155,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_empty(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_empty", [])
             scan(context(db, library))
@@ -167,7 +166,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_no_tags(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library(
                 "test_scan_no_tags",
@@ -186,7 +185,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_update(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_update", self.sample_library)
             ctx = context(db, library)
@@ -209,7 +208,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_add(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_add", [self.sample_library[1]])
             ctx = context(db, library)
@@ -230,7 +229,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_remove_album(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
@@ -262,7 +261,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_remove_picture(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_remove_picture", [self.sample_library[0]])
             ctx = context(db, library)
@@ -281,7 +280,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_remove_other(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         album = Album(
             path="foo" + os.sep,
             tracks=[Track(filename="1.mp4", tag={BasicField.TITLE: "1"})],
@@ -304,7 +303,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_filtered(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scan_filtered", self.sample_library)
             ctx = context(db, library)
@@ -325,7 +324,7 @@ class TestScanner:
             db.dispose()
 
     def test_scanner_version(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scanner_version", self.sample_library[:2])
             ctx = context(db, library)
@@ -356,7 +355,7 @@ class TestScanner:
     def test_scanner_replace_track(self):
         created_album = self.sample_library[0]
         library = create_library("test_scanner_replace_track", [created_album])
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             ctx = context(db, library)
             with Session(db) as session:
@@ -389,7 +388,7 @@ class TestScanner:
     def test_scanner_remove_track(self):
         created_album = self.sample_library[0]
         library = create_library("test_scanner_remove_track", [created_album])
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             ctx = context(db, library)
             with Session(db) as session:
@@ -420,7 +419,7 @@ class TestScanner:
     def test_scanner_replace_picture_file(self):
         created_album = self.sample_library[0]
         library = create_library("test_scanner_replace_picture_file", [created_album])
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             ctx = context(db, library)
             with Session(db) as session:
@@ -448,7 +447,7 @@ class TestScanner:
     def test_scanner_remove_picture_file(self):
         created_album = self.sample_library[0]
         library = create_library("test_scanner_replace_picture_file", [created_album])
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             ctx = context(db, library)
             with Session(db) as session:
@@ -472,7 +471,7 @@ class TestScanner:
             db.dispose()
 
     def test_scan_preload_picture_cache(self, mocker):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             album = Album(
                 path="bar" + os.sep,
@@ -531,7 +530,7 @@ class TestScanner:
             db.dispose()
 
     def test_partial_rescan(self, mocker):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_partial_rescan", [self.sample_library[3]])
             ctx = context(db, library)
@@ -562,7 +561,7 @@ class TestScanner:
             db.dispose()
 
     def test_scanner_library_modified_at(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scanner_modified_at", self.sample_library[:2])
             ctx = context(db, library)
@@ -586,7 +585,7 @@ class TestScanner:
             db.dispose()
 
     def test_scanner_album_rescan_modified_at(self):
-        db = connection.db_open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             library = create_library("test_scanner_modified_at", self.sample_library[:2])
             ctx = context(db, library)

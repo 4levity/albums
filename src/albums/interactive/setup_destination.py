@@ -10,8 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.config import ALL_ALBUMS, SyncDestination
-from albums.database import db_config
+from albums.config import ALL_ALBUMS, SyncDestination, config_save
 from albums.entities import CollectionEntity
 from albums.library.paths import show_template_path_help
 from albums.tagger import AUDIO_FILE_SUFFIXES
@@ -155,4 +154,4 @@ def _configure_destination(ctx: Context, destination_ix: int):
     if option in {"save", "delete"}:
         if option == "delete":
             del ctx.config.sync_destinations[destination_ix]
-        db_config.config_save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)

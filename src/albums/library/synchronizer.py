@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.config import ALL_ALBUMS, SyncDestination
-from albums.database.selector import Match, load_album_entities
+from albums.database import Match, load_album_entities
 from albums.entities import Album
 from albums.library.paths import make_template_path
 from albums.library.transcoder import Transcoder

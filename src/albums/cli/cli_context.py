@@ -11,9 +11,8 @@ import click
 from rich.logging import RichHandler
 
 from albums.app import Context
-from albums.config import PLATFORM_DIRS, RescanOption
-from albums.database import connection, db_config
-from albums.database.selector import Comparator, Match, load_album_entities
+from albums.config import PLATFORM_DIRS, RescanOption, config_load
+from albums.database import MEMORY, Comparator, Match, db_open, load_album_entities
 
 logger: Final = logging.getLogger(__name__)
 
@@ -97,7 +96,7 @@ def setup(
     elif not has_database:
         # it's simpler to always give app_context a database than to allow it to be Engine | None
         app_context.is_persistent = False
-        app_context.db = connection.db_open(connection.MEMORY, echo=False)
+        app_context.db = db_open(MEMORY, echo=False)
         ctx.call_on_close(lambda: app_context.db.dispose())
     return bool(dir) or app_context.config.rescan == RescanOption.ALWAYS
 
@@ -114,7 +113,7 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
         raise SystemExit(1)
     logger.info(f"using in-memory context, library is {folder}")
 
-    ctx.db = connection.db_open(connection.MEMORY, echo=ctx.verbose > 1)
+    ctx.db = db_open(MEMORY, echo=ctx.verbose > 1)
     if ctx.click_ctx:
         ctx.click_ctx.call_on_close(lambda: ctx.db.dispose())
     ctx.is_filtered = False
@@ -136,9 +135,9 @@ def _get_albums_db_path(db_file: str | None):
 
 def _open_db_and_set_context_config(ctx: click.Context, app_context: Context):
     logger.info(f"using database {str(app_context.db_path)}")
-    db = connection.db_open(app_context.db_path, echo=app_context.verbose > 1)
+    db = db_open(app_context.db_path, echo=app_context.verbose > 1)
     ctx.call_on_close(lambda: db.dispose())
-    app_context.config = db_config.config_load(db)
+    app_context.config = config_load(db)
     return db
 
 

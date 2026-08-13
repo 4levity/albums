@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.helpers import album_display_name
-from albums.database.selector import collections_by_name
+from albums.database import collections_by_name
 from albums.entities import Album, AlbumCollectionAssociation
 
 from .cli_context import pass_context, require_configured, require_persistent_context

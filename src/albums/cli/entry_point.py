@@ -3,7 +3,7 @@ import rich_click as click
 
 import albums
 from albums import app
-from albums.database.selector import Comparator
+from albums.database import Comparator
 from albums.library import scanner
 
 from .check import check

@@ -15,13 +15,14 @@ from string import Template
 from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
 
 from platformdirs import PlatformDirs
-from sqlalchemy import Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Engine, Text, delete, select
+from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
+from albums.database import Base, SerializableValueAsJson
 from albums.tagger import ID3v1Policy
 
 from .checks.check_types import CheckConfiguration
-from .database.orm import Base, SerializableValueAsJson
 
 logger: Final = logging.getLogger(__name__)
 
@@ -343,3 +344,27 @@ class Configuration:
                 elif not isinstance(value, list) or all(isinstance(item, str) for item in value):
                     config.checks[section][name] = value  # pyright: ignore[reportArgumentType]
         return (config, ignored_values)
+
+
+def config_save(db: Engine, configuration: Configuration):
+    """Persist configuration to the database, replacing all stored settings."""
+    settings = configuration.to_values()
+    with Session(db) as session:
+        stmt = insert(SettingEntity).values([{"name": k, "value": v} for k, v in settings.items()])
+        stmt = stmt.on_conflict_do_update(index_elements=[SettingEntity.name], set_=dict(value_json=stmt.excluded.value_json))
+        session.execute(stmt)
+        session.execute(delete(SettingEntity).where(SettingEntity.name.not_in(settings.keys())))
+        session.commit()
+
+
+def config_load(db: Engine) -> Configuration:
+    """Load configuration from the database.
+
+    Returns valid settings and discards any unknown keys with a warning.
+    """
+    with Session(db) as session:
+        (config, ignored_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
+
+    if ignored_values:
+        config_save(db, config)  # showed warnings, now save valid config
+    return config

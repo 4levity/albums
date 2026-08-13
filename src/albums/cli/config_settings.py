@@ -4,8 +4,7 @@ from string import Template
 from rich.markup import escape
 
 from albums.app import Context
-from albums.config import PathCompatibilityOption, RescanOption, SettingValueType
-from albums.database import db_config
+from albums.config import PathCompatibilityOption, RescanOption, SettingValueType, config_save
 from albums.interactive.setup_settings import set_library
 from albums.tagger import ID3v1Policy
 
@@ -62,39 +61,39 @@ def set_setting(ctx: Context, setting_name: str, value: str) -> bool:
     if section == "settings":
         if name == "default_import_path":
             ctx.config.default_import_path = Template(value)
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "default_import_path_various":
             ctx.config.default_import_path_various = Template(value)
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "id3v1":
             ctx.config.id3v1 = ID3v1Policy[str.upper(value)]
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "import_scan_max_paths":
             ctx.config.import_scan_max_paths = int(value)
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "library":
             set_library(ctx, value)
         elif name == "more_import_paths":
             ctx.config.more_import_paths = [Template(v) for v in value.split(",")]
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "open_folder_command":
             ctx.config.open_folder_command = value
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "path_compatibility":
             ctx.config.path_compatibility = PathCompatibilityOption(value)
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "path_replace_invalid":
             ctx.config.path_replace_invalid = value
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "path_replace_slash":
             ctx.config.path_replace_slash = value
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "rescan":
             ctx.config.rescan = RescanOption(value)
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "tagger":
             ctx.config.tagger = value
-            db_config.config_save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         elif name == "sync_destinations":
             ctx.console.print("Use interactive config or import to create or update sync destinations")
             return False
@@ -104,5 +103,5 @@ def set_setting(ctx: Context, setting_name: str, value: str) -> bool:
 
     else:
         _set_check(ctx, section, name, value)
-        db_config.config_save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)
     return True
