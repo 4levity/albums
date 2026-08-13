@@ -5,7 +5,7 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.path.check_file_extension import CheckFileExtension
 from albums.entities import Album, OtherFile, PictureFile, Track
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 
 
 class TestCheckFileExtension:

@@ -11,7 +11,7 @@ from albums.checks.picture.check_cover_unique import CheckCoverUnique
 from albums.database import connection
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.library import scanner
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.types import PictureType
 
 from ...fixtures.create_library import create_library

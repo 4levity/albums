@@ -10,7 +10,7 @@ from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
 from albums.database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.types import BasicField, Picture, PictureType, StreamInfo
 
 

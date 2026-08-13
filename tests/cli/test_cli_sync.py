@@ -5,7 +5,7 @@ import shutil
 import pytest
 
 from albums.entities import Album, PictureFile, Track
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.types import BasicField
 
 from .. import helpers

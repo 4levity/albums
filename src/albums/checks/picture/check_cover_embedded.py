@@ -13,8 +13,7 @@ from albums.checks.helpers import FRONT_COVER_FILENAME
 from albums.entities import Album, PictureFile
 from albums.interactive.image_table import render_image_table
 from albums.library.folder import read_binary_file
-from albums.picture.format import mime_type_to_format
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo, mime_type_to_format
 from albums.tagger.folder import Cap
 from albums.tagger.types import Picture, PictureType
 from albums.words import is_plural, plural, pluralize

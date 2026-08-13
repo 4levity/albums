@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Generator, Tuple
 
-from albums.picture.format import SUPPORTED_IMAGE_SUFFIXES
+from albums.picture import SUPPORTED_IMAGE_SUFFIXES
 from albums.tagger.folder import AUDIO_FILE_SUFFIXES
 
 SCAN_SUFFIXES: Final = frozenset(AUDIO_FILE_SUFFIXES | SUPPORTED_IMAGE_SUFFIXES)

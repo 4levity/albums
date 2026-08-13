@@ -10,7 +10,7 @@ from albums.checks.picture.check_picture_metadata import CheckPictureMetadata
 from albums.database import connection
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import Picture, PictureType
 

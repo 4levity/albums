@@ -14,7 +14,7 @@ from albums.database.selector import load_album_entities
 from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import BasicField, Picture, PictureType
 

@@ -4,7 +4,7 @@ import pytest
 import xxhash
 
 from albums.entities import Album, OtherFile, Track, TrackPicture
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.folder import AlbumTagger, BasicField
 from albums.tagger.types import Picture, PictureType
 

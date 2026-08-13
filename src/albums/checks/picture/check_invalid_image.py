@@ -9,7 +9,7 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.picture.format import SUPPORTED_IMAGE_SUFFIXES
+from albums.picture import SUPPORTED_IMAGE_SUFFIXES
 from albums.tagger.folder import Cap
 from albums.words import pluralize
 

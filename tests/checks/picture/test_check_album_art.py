@@ -4,7 +4,7 @@ from unittest.mock import call, mock_open, patch
 from albums.app import Context
 from albums.checks.picture.check_album_art import CheckAlbumArt
 from albums.entities import Album, Track, TrackPicture
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 from albums.tagger.folder import AlbumTagger
 from albums.tagger.types import PictureType, TaggerFile
 
