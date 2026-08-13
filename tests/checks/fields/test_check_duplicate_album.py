@@ -6,7 +6,7 @@ from albums.app import Context, Session
 from albums.checks.fields.check_duplicate_album import CheckDuplicateAlbum
 from albums.database import connection
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 class TestCheckDuplicateAlbum:

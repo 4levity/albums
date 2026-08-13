@@ -5,7 +5,7 @@ import humanize
 
 from albums.entities import Album, FieldV, OtherFile, PictureFile, Track, TrackPicture
 from albums.picture import format_to_mime_type
-from albums.tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
+from albums.tagger import AUDIO_FILE_SUFFIXES, AlbumTagger
 
 from .folder import MiniStat, read_binary_file
 from .remove_file import remove_file

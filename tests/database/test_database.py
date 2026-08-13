@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.database import connection
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 class TestDatabase:

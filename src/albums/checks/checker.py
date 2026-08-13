@@ -10,7 +10,7 @@ from albums.database.selector import Match, load_album_entities
 from albums.entities import Album
 from albums.interactive.interact import interact, prompt_ignore_checks
 from albums.library import scanner
-from albums.tagger.provider import AlbumTaggerProvider
+from albums.tagger import AlbumTaggerProvider
 
 from .all import ALL_CHECKS
 from .base_check import Check

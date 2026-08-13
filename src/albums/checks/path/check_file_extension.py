@@ -9,7 +9,7 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckConfiguration, CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.tagger.folder import AUDIO_FILE_SUFFIXES
+from albums.tagger import AUDIO_FILE_SUFFIXES
 from albums.words import pluralize
 
 logger: Final = logging.getLogger(__name__)

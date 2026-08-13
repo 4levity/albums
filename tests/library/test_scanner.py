@@ -15,8 +15,7 @@ from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
 from albums.picture import PictureInfo
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, Picture, PictureType
+from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_album_in_library, create_library, create_picture_file, make_image_data
 

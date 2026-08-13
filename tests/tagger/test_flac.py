@@ -7,8 +7,7 @@ from mutagen.flac import Picture as FlacPicture
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, Picture, PictureType
+from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
 

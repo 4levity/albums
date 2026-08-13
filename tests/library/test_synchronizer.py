@@ -12,8 +12,7 @@ from albums.config import ALL_ALBUMS, DEFAULT_FILE_CONVERT_PROFILE
 from albums.database import connection
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, Track
 from albums.library.synchronizer import SyncDestination, Synchronizer
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, StreamInfo
+from albums.tagger import AlbumTagger, BasicField, StreamInfo
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg

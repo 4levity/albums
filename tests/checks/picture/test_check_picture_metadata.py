@@ -11,8 +11,7 @@ from albums.database import connection
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.library.scanner import scan
 from albums.picture import PictureInfo
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureType
+from albums.tagger import AlbumTagger, Picture, PictureType
 
 from ...fixtures.create_library import create_library, make_image_data
 

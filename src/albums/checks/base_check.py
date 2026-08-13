@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.entities import Album
-from albums.tagger.provider import AlbumTaggerProvider
+from albums.tagger import AlbumTaggerProvider
 
 from .check_types import CheckConfiguration, CheckResult
 

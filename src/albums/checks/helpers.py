@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from albums.app import Context
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from .check_types import FixResult
 

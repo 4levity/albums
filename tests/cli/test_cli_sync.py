@@ -6,7 +6,7 @@ import pytest
 
 from albums.entities import Album, PictureFile, Track
 from albums.picture import PictureInfo
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from .. import helpers
 from ..fixtures.create_library import create_library, test_data_path

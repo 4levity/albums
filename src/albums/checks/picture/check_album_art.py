@@ -11,7 +11,7 @@ from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.helpers import FRONT_COVER_FILENAME
 from albums.entities import Album
 from albums.interactive.image_table import render_image_table
-from albums.tagger.types import Picture, PictureType
+from albums.tagger import Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 

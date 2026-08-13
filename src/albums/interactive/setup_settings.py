@@ -12,7 +12,7 @@ from albums.app import Context
 from albums.config import PathCompatibilityOption, RescanOption
 from albums.database import db_config
 from albums.library.paths import show_template_path_help
-from albums.tagger.types import ID3v1Policy
+from albums.tagger import ID3v1Policy
 
 
 def configure_settings(ctx: Context):

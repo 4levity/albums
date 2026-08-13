@@ -3,9 +3,8 @@ import os
 import pytest
 
 from albums.entities import Album, Track
+from albums.tagger import AlbumTagger, BasicField, PictureType
 from albums.tagger.file_types.asf import WmPicture
-from albums.tagger.folder import AlbumTagger, BasicField
-from albums.tagger.types import PictureType
 
 from ..fixtures.create_library import create_library
 

@@ -5,8 +5,7 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.tagger.types import BasicField
-from albums.tagger.vorbis import LEGACY_VORBIS_FIELDS
+from albums.tagger import LEGACY_VORBIS_FIELDS, BasicField
 
 LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_FIELDS)
 

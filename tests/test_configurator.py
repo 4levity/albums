@@ -5,7 +5,7 @@ from albums.app import Context, Path
 from albums.config import PathCompatibilityOption, RescanOption
 from albums.database import connection, db_config
 from albums.interactive.configurator import interactive_config
-from albums.tagger.types import ID3v1Policy
+from albums.tagger import ID3v1Policy
 
 
 class TestConfigurator:

@@ -9,8 +9,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.helpers import get_tracks_by_disc
 from albums.entities import Album, Track
-from albums.tagger.folder import AlbumTagger, Cap
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField, Cap
 
 from .check_track_numbering import describe_track_number
 

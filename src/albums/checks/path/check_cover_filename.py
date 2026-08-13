@@ -10,7 +10,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
 from albums.library.folder import read_binary_file
-from albums.tagger.types import PictureType
+from albums.tagger import PictureType
 
 
 class CheckCoverFilename(Check):

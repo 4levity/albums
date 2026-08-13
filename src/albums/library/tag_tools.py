@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from albums.entities import Album
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 def get_artist_from_tracks(album: Album) -> str | None:

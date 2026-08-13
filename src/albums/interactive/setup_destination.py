@@ -14,7 +14,7 @@ from albums.config import ALL_ALBUMS, SyncDestination
 from albums.database import db_config
 from albums.entities import CollectionEntity
 from albums.library.paths import show_template_path_help
-from albums.tagger.folder import AUDIO_FILE_SUFFIXES
+from albums.tagger import AUDIO_FILE_SUFFIXES
 
 _USE_ALL_ALBUMS = ">> Use all albums"
 

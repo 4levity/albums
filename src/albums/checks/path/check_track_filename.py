@@ -11,8 +11,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
 from albums.entities import Album, Track
-from albums.tagger.folder import Cap
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField, Cap
 
 
 class CheckTrackFilename(Check):

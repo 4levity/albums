@@ -12,7 +12,7 @@ from albums.database import connection
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.library import scanner
 from albums.picture import PictureInfo
-from albums.tagger.types import PictureType
+from albums.tagger import PictureType
 
 from ...fixtures.create_library import create_library
 

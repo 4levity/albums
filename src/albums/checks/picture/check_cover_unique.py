@@ -12,7 +12,7 @@ from albums.checks.helpers import delete_files_except
 from albums.entities import Album
 from albums.interactive.image_table import render_image_table
 from albums.picture import SUPPORTED_IMAGE_SUFFIXES
-from albums.tagger.types import Picture, PictureType
+from albums.tagger import Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
 

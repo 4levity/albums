@@ -11,8 +11,7 @@ from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.field_policy import Policy, check_policy
 from albums.checks.helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
 from albums.entities import Album, Track
-from albums.tagger.folder import AlbumTagger, Cap
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural, pluralize
 
 logger: Final = logging.getLogger(__name__)

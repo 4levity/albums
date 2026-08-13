@@ -8,8 +8,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.helpers import describe_track_number, ordered_tracks
 from albums.entities import Album
-from albums.tagger.folder import AlbumTagger, Cap
-from albums.tagger.types import BASIC_FIELDS, BasicField
+from albums.tagger import BASIC_FIELDS, AlbumTagger, BasicField, Cap
 
 OPTION_CONCATENATE_WITH: Final = ">> Concatenate unique values into one with "
 OPTION_REMOVE_DUPLICATES_ONLY: Final = ">> Remove duplicate values (preserve unique multiple values)"

@@ -9,7 +9,7 @@ from albums.checks.path.check_folder_name import CheckFolderName
 from albums.database import connection
 from albums.entities import Album, Track
 from albums.library import scanner
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from ...fixtures.create_library import create_library
 

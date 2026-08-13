@@ -3,8 +3,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.entities import Album, FieldV, Track
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 
 class TestZeroPadNumbers:

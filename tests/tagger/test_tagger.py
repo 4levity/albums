@@ -5,8 +5,7 @@ from mutagen.mp3 import MP3
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger.folder import AlbumTagger, BasicField
-from albums.tagger.types import PictureType
+from albums.tagger import AlbumTagger, BasicField, PictureType
 
 from ..fixtures.create_library import create_library
 

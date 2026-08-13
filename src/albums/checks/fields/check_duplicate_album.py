@@ -14,7 +14,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album, OtherFile, PictureFile, Track
 from albums.library.duplicates import DuplicateFinder
-from albums.tagger.provider import AlbumTaggerProvider
+from albums.tagger import AlbumTaggerProvider
 
 OPTION_DELETE_OTHER: Final = ">> KEEP left (THIS album) and DELETE right (other): "
 OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): "

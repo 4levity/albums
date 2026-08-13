@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from albums.database import connection
 from albums.database.migrations import migrate
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from .sql_helpers import make_track_sql
 

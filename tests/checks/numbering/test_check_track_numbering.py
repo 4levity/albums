@@ -5,8 +5,7 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
 from albums.entities import Album, FieldV, Track
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 
 class TestCheckTrackNumbering:

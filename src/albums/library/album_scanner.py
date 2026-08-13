@@ -5,7 +5,7 @@ from typing import List, Tuple
 from albums.app import Context
 from albums.entities import Album, OtherFile, PictureFile, Track
 from albums.picture import PictureScannerCache
-from albums.tagger.folder import AlbumTagger
+from albums.tagger import AlbumTagger
 
 from .file_scanner import scan_file
 from .folder import MiniStat, stat_dir

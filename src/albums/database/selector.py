@@ -7,7 +7,7 @@ from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 logger: Final = logging.getLogger(__name__)
 

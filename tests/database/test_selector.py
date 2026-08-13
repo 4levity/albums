@@ -8,7 +8,7 @@ from albums.database import connection
 from albums.database.selector import Comparator, Match, load_album_entities
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger.types import BasicField, PictureType, StreamInfo
+from albums.tagger import BasicField, PictureType, StreamInfo
 
 
 class TestSelector:

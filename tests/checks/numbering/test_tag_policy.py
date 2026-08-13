@@ -4,8 +4,7 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.field_policy import Policy, check_policy
 from albums.entities import Album, Track
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 
 class TestFieldPolicy:

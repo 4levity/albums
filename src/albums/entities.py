@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
 from albums.database.orm import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
 from albums.picture import PictureInfo
-from albums.tagger.types import BasicField, Picture, PictureType, StreamInfo
+from albums.tagger import BasicField, Picture, PictureType, StreamInfo
 
 
 class FieldV(Base):

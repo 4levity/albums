@@ -5,8 +5,7 @@ from albums.app import Context
 from albums.checks.picture.check_album_art import CheckAlbumArt
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import PictureType, TaggerFile
+from albums.tagger import AlbumTagger, PictureType, TaggerFile
 
 from ...fixtures.create_library import make_image_data
 

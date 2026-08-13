@@ -6,8 +6,7 @@ from rich.markup import escape
 
 from albums.app import Context
 from albums.entities import Album
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 from .check_types import CheckResult, Fixer, FixResult
 from .helpers import describe_track_number, ordered_tracks

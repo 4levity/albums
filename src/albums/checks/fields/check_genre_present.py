@@ -7,8 +7,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.field_policy import Policy, check_policy
 from albums.entities import Album
-from albums.tagger.folder import AlbumTagger, Cap
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField, Cap
 
 logger: Final = logging.getLogger(__name__)
 

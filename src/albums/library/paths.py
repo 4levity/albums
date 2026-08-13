@@ -7,7 +7,7 @@ from pathvalidate import sanitize_filename, sanitize_filepath
 
 from albums.app import Context
 from albums.entities import Album
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 logger: Final = logging.getLogger(__name__)
 

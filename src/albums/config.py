@@ -18,7 +18,7 @@ from platformdirs import PlatformDirs
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from albums.tagger.types import ID3v1Policy
+from albums.tagger import ID3v1Policy
 
 from .checks.check_types import CheckConfiguration
 from .database.orm import Base, SerializableValueAsJson

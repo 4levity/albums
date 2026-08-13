@@ -9,7 +9,7 @@ from albums.checks.checker import Checker
 from albums.database import connection, selector
 from albums.entities import Album, Track
 from albums.library import scanner
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from .fixtures.create_library import create_library
 

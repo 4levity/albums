@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, aliased
 
 from albums.app import Context
 from albums.entities import Album, FieldV
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 from .tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 
