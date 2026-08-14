@@ -4,10 +4,11 @@ from pathlib import Path
 import humanize
 
 from albums.entities import Album, FieldV, OtherFile, PictureFile, Track, TrackPicture
-from albums.picture.format import format_to_mime_type
-from albums.tagger.folder import AUDIO_FILE_SUFFIXES, AlbumTagger
+from albums.picture import format_to_mime_type
+from albums.tagger import AUDIO_FILE_SUFFIXES, AlbumTagger
+from albums.utility import read_binary_file
 
-from .folder import MiniStat, read_binary_file
+from .folder import MiniStat
 from .remove_file import remove_file
 from .scanner_types import MAX_IMAGE_SIZE, TargetRescan
 

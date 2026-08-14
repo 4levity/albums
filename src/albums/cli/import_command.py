@@ -1,9 +1,9 @@
 import rich_click as click
 
-from ..app import Context
-from ..library import scanner
-from ..library.importer import Importer
-from ..words.make import plural
+from albums.app import Context
+from albums.library import Importer, run_scan
+from albums.words import plural
+
 from .cli_context import enter_folder_context, pass_context, require_configured, require_library, require_persistent_context
 
 
@@ -27,4 +27,4 @@ def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, 
     importer.run()
 
     ctx.console.print("importing complete! scanning library...")
-    scanner.scan(parent_context)
+    run_scan(parent_context)

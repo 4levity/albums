@@ -7,12 +7,11 @@ from pathvalidate import sanitize_filename
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ...entities import Album, Track
-from ...tagger.folder import Cap
-from ...tagger.types import BasicField
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
-from ..numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
+from albums.entities import Album, Track
+from albums.tagger import BasicField, Cap
 
 
 class CheckTrackFilename(Check):

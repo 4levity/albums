@@ -11,17 +11,16 @@ from typing import Any, Dict, Final, List, Mapping, Sequence
 
 from rich.markup import escape
 
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.helpers import FRONT_COVER_FILENAME
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
+from albums.entities import Album
+from albums.interactive import render_image_table
+from albums.picture import SUPPORTED_IMAGE_SUFFIXES
+from albums.tagger import AlbumTagger, Cap, Picture, PictureType
+from albums.utility import get_album_name_from_tracks, get_artist_from_tracks
 
-from ...entities import Album
-from ...interactive.image_table import render_image_table
-from ...library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
-from ...picture.format import SUPPORTED_IMAGE_SUFFIXES
-from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import Picture, PictureType
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import FRONT_COVER_FILENAME
 from ..path.check_cover_filename import CheckCoverFilename, parse_config_cover_filename
 
 logger: Final = logging.getLogger(__name__)

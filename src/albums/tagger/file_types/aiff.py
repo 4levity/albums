@@ -6,9 +6,9 @@ from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
 
-from ...config import ID3v1Policy
 from ...picture.scan import PictureScanner
 from ..base_id3 import AbstractId3Tagger
+from ..types import ID3v1Policy
 
 logger: Final = logging.getLogger(__name__)
 

@@ -250,3 +250,14 @@ class TaggerFile:
 
     def get_legacy_fields(self) -> Tuple[Tuple[str, BasicField], ...]:
         return ()
+
+
+class ID3v1Policy(IntEnum):
+    """Strategy for handling legacy ID3v1 tags when saving MP3 files.
+
+    Values map directly to the numeric codes expected by ``mutagen.mp3.MP3.save``'s ``v1`` parameter.
+    """
+
+    REMOVE = 0  # Strip any existing ID3v1 tag on save.
+    UPDATE = 1  # Update existing ID3v1 in-place if present; otherwise leave absent.
+    CREATE = 2  # Always write an ID3v1 tag (creating one when none exists).

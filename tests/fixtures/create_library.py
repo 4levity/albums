@@ -7,10 +7,8 @@ from typing import Collection, Mapping, Set
 from PIL import Image
 
 from albums.entities import Album, Track, TrackPicture
-from albums.picture.format import mime_type_to_format
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, Picture
-from albums.tagger.vorbis import LEGACY_VORBIS_FIELDS
+from albums.picture import mime_type_to_format
+from albums.tagger import LEGACY_VORBIS_FIELDS, AlbumTagger, BasicField, Picture
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,

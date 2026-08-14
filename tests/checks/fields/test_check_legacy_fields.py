@@ -2,7 +2,7 @@ from albums.app import Context
 from albums.checks.base_check_field_per_album import AlbumTagger
 from albums.checks.fields.check_legacy_fields import OPTION_CONVERT_LEGACY, CheckLegacyFields
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField, TaggerFile
+from albums.tagger import BasicField, TaggerFile
 
 
 class TestCheckLegacyFields:

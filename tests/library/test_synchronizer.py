@@ -9,11 +9,10 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.config import ALL_ALBUMS, DEFAULT_FILE_CONVERT_PROFILE
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, Track
 from albums.library.synchronizer import SyncDestination, Synchronizer
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, StreamInfo
+from albums.tagger import AlbumTagger, BasicField, StreamInfo
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg
@@ -49,7 +48,7 @@ class TestSynchronizer:
         ctx = Context()
         ctx.config.transcoder_cache = TestSynchronizer.transcoder_cache
         ctx.config.library = create_library("sync", albums)
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add_all(albums)
@@ -125,7 +124,7 @@ class TestSynchronizer:
         ctx = Context()
         ctx.config.transcoder_cache = TestSynchronizer.transcoder_cache
         ctx.config.library = create_library("sync2", albums)
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add_all(albums)

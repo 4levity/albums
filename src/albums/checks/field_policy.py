@@ -4,10 +4,10 @@ from typing import Final
 
 from rich.markup import escape
 
-from ..app import Context
-from ..entities import Album
-from ..tagger.folder import AlbumTagger
-from ..tagger.types import BasicField
+from albums.app import Context
+from albums.entities import Album
+from albums.tagger import AlbumTagger, BasicField
+
 from .check_types import CheckResult, Fixer, FixResult
 from .helpers import describe_track_number, ordered_tracks
 

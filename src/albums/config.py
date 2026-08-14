@@ -9,17 +9,20 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from enum import IntEnum, StrEnum, auto
+from enum import StrEnum, auto
 from pathlib import Path
 from string import Template
 from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
 
 from platformdirs import PlatformDirs
-from sqlalchemy import Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Engine, Text, delete, select
+from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.orm import Mapped, Session, mapped_column
+
+from albums.database import Base, SerializableValueAsJson
+from albums.tagger import ID3v1Policy
 
 from .checks.check_types import CheckConfiguration
-from .database.orm import Base, SerializableValueAsJson
 
 logger: Final = logging.getLogger(__name__)
 
@@ -95,17 +98,6 @@ def default_checks_config() -> Mapping[str, CheckConfiguration]:
     from .checks.all import ALL_CHECKS  # local import because .checks.all imports every check, which will import this module
 
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
-
-
-class ID3v1Policy(IntEnum):
-    """Strategy for handling legacy ID3v1 tags when saving MP3 files.
-
-    Values map directly to the numeric codes expected by ``mutagen.mp3.MP3.save``'s ``v1`` parameter.
-    """
-
-    REMOVE = 0  # Strip any existing ID3v1 tag on save.
-    UPDATE = 1  # Update existing ID3v1 in-place if present; otherwise leave absent.
-    CREATE = 2  # Always write an ID3v1 tag (creating one when none exists).
 
 
 # Audio file conversion profile used by default when syncing to destinations that require transcoding.
@@ -352,3 +344,27 @@ class Configuration:
                 elif not isinstance(value, list) or all(isinstance(item, str) for item in value):
                     config.checks[section][name] = value  # pyright: ignore[reportArgumentType]
         return (config, ignored_values)
+
+
+def config_save(db: Engine, configuration: Configuration):
+    """Persist configuration to the database, replacing all stored settings."""
+    settings = configuration.to_values()
+    with Session(db) as session:
+        stmt = insert(SettingEntity).values([{"name": k, "value": v} for k, v in settings.items()])
+        stmt = stmt.on_conflict_do_update(index_elements=[SettingEntity.name], set_=dict(value_json=stmt.excluded.value_json))
+        session.execute(stmt)
+        session.execute(delete(SettingEntity).where(SettingEntity.name.not_in(settings.keys())))
+        session.commit()
+
+
+def config_load(db: Engine) -> Configuration:
+    """Load configuration from the database.
+
+    Returns valid settings and discards any unknown keys with a warning.
+    """
+    with Session(db) as session:
+        (config, ignored_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
+
+    if ignored_values:
+        config_save(db, config)  # showed warnings, now save valid config
+    return config

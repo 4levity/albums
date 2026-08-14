@@ -1,6 +1,7 @@
 from prompt_toolkit.shortcuts import checkboxlist_dialog, choice
 
-from ..app import Context
+from albums.app import Context
+
 from .setup_check import configure_check, set_enabled_checks
 from .setup_destination import configure_destinations
 from .setup_settings import configure_settings

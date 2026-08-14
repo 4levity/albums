@@ -7,12 +7,11 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.picture.check_picture_metadata import CheckPictureMetadata
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
-from albums.library.scanner import scan
-from albums.picture.info import PictureInfo
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import Picture, PictureType
+from albums.library import run_scan
+from albums.picture import PictureInfo
+from albums.tagger import AlbumTagger, Picture, PictureType
 
 from ...fixtures.create_library import create_library, make_image_data
 
@@ -53,10 +52,10 @@ class TestCheckPictureMetadata:
         flac.add_picture(pic)
         flac.save()
 
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album)).tuples().one()[0]
                 assert result.tracks[0].pictures[0].picture_info.load_issue
 
@@ -70,7 +69,7 @@ class TestCheckPictureMetadata:
                 assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
                 session.flush()
 
-                scan(ctx, session, reread=True)
+                run_scan(ctx, session, reread=True)
 
                 result = session.execute(select(Album)).tuples().one()[0]
                 assert len(result.tracks[0].pictures) == 1
@@ -96,10 +95,10 @@ class TestCheckPictureMetadata:
         with tagger.open(album.tracks[0].filename) as tag:
             tag.add_picture(Picture(pic_info, PictureType.COVER_FRONT, ""), image_data)
 
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album)).tuples().one()[0]
                 assert result.tracks[0].pictures[0].picture_info.load_issue
                 result = CheckPictureMetadata(ctx).check(result)
@@ -109,7 +108,7 @@ class TestCheckPictureMetadata:
                 assert result.fixer.option_automatic_index is not None
                 assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-                scan(ctx, session, reread=True)
+                run_scan(ctx, session, reread=True)
 
                 result = session.execute(select(Album)).tuples().one()[0]
                 assert len(result.tracks[0].pictures) == 1
@@ -129,10 +128,10 @@ class TestCheckPictureMetadata:
         ctx = Context()
         ctx.config.library = create_library("picture_metadata_file_ext", [album])
         os.rename(ctx.config.library / album.path / "cover.png", ctx.config.library / album.path / "cover.gif")
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album)).tuples().one()[0]
                 gif = next(file for file in result.picture_files if file.filename == "cover.gif")
                 assert gif.picture_info.mime_type == "image/png"
@@ -145,7 +144,7 @@ class TestCheckPictureMetadata:
                 assert result.fixer.option_automatic_index is not None
                 assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
 
-                scan(ctx, session, reread=True)
+                run_scan(ctx, session, reread=True)
 
                 result = session.execute(select(Album)).tuples().one()[0]
                 png = next(file for file in result.picture_files if file.filename == "cover.png")

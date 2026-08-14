@@ -7,7 +7,7 @@ from PIL import Image
 from albums.app import Context
 from albums.checks.path.check_cover_filename import CheckCoverFilename
 from albums.entities import Album, PictureFile, Track
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 
 from ...fixtures.create_library import make_image_data
 

@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.checker import Checker
-from albums.database import connection, selector
+from albums.database import MEMORY, db_open, load_album_entities
 from albums.entities import Album, Track
-from albums.library import scanner
-from albums.tagger.types import BasicField
+from albums.library import run_scan
+from albums.tagger import BasicField
 
 from .fixtures.create_library import create_library
 
@@ -34,8 +34,8 @@ class TestChecker:
             ],
         )
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
-        ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
+        ctx.db = db_open(MEMORY)
+        ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
         try:
             with Session(ctx.db) as session:
                 session.add(album)
@@ -59,11 +59,11 @@ class TestChecker:
         )
         ctx = Context()
         ctx.config.library = create_library("checker_automatic", [album])
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
-                scanner.scan(ctx, session)
+                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                run_scan(ctx, session)
                 session.commit()
 
                 showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(
@@ -90,8 +90,8 @@ class TestChecker:
             ],
         )
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
-        ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
+        ctx.db = db_open(MEMORY)
+        ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
         ctx.config.library = create_library("dependent_check_failures", [album])
         try:
             with Session(ctx.db) as session:
@@ -114,7 +114,7 @@ class TestChecker:
         checks["invalid-track-or-disc-number"] = {"enabled": False}
         ctx.config.checks = checks
         print_spy = mocker.spy(ctx.console, "print")
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 with pytest.raises(SystemExit):
@@ -143,11 +143,11 @@ class TestChecker:
         ]
         ctx = Context()
         ctx.config.library = create_library("checker_delete_album", albums)
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": selector.load_album_entities(session)
-                scanner.scan(ctx, session)
+                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
                     "albums.interactive.interact.choice",
@@ -191,11 +191,11 @@ class TestChecker:
         ]
         ctx = Context()
         ctx.config.library = create_library("checker_delete_album", albums)
-        ctx.db = connection.open(connection.MEMORY, True)
+        ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda s: selector.load_album_entities(s)
-                scanner.scan(ctx, session)
+                ctx.select_album_entities = lambda s: load_album_entities(s)
+                run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
                     "albums.interactive.interact.choice",

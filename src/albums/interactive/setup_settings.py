@@ -8,10 +8,10 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.shortcuts import choice, confirm
 
-from ..app import Context
-from ..config import ID3v1Policy, PathCompatibilityOption, RescanOption
-from ..database import db_config
-from ..library.paths import show_template_path_help
+from albums.app import Context
+from albums.config import PathCompatibilityOption, RescanOption, config_save
+from albums.library import show_template_path_help
+from albums.tagger import ID3v1Policy
 
 
 def configure_settings(ctx: Context):
@@ -47,7 +47,7 @@ def configure_settings(ctx: Context):
 def set_library(ctx: Context, new_library: str):
     if new_library and Path(new_library).is_dir():
         ctx.config.library = Path(new_library)
-        db_config.save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)
     else:
         ctx.console.print("Error: library must be a directory that exists and is accessible")
 
@@ -80,49 +80,49 @@ def _configure_setting(
             options = [(opt, opt.value) for opt in PathCompatibilityOption]
             option = choice(message="select file system compatibility level", options=options, default=ctx.config.path_compatibility.value)
             ctx.config.path_compatibility = PathCompatibilityOption(option)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "path_replace_slash":
             ctx.config.path_replace_slash = prompt("Replace slash '/' character in path element with: ", default=ctx.config.path_replace_slash)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "path_replace_invalid":
             ctx.config.path_replace_invalid = prompt("Replace invalid character in path or filename with: ", default=ctx.config.path_replace_invalid)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "rescan":
             options = [(opt, opt.value) for opt in RescanOption]
             option = choice(message="select when to rescan the library", options=options, default=ctx.config.rescan.value)
             ctx.config.rescan = RescanOption(option)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "tagger":
             ctx.config.tagger = prompt("Command to run external tagger: ", default=ctx.config.tagger)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "open_folder_command":
             ctx.config.open_folder_command = prompt("Command to open a folder: ", default=ctx.config.open_folder_command)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "default_import_path":
             show_template_path_help(ctx)
             ctx.config.default_import_path = Template(
                 prompt("Template for default (not compilation) import path: ", default=ctx.config.default_import_path.template)
             )
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "default_import_path_various":
             show_template_path_help(ctx)
             ctx.config.default_import_path_various = Template(
                 prompt("Template for compilation import path: ", default=ctx.config.default_import_path_various.template)
             )
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "more_import_paths":
             show_template_path_help(ctx)
             default_str = ",".join(t.template for t in ctx.config.more_import_paths)
             more_paths = prompt("Enter more import path templates separated by comma: ", default=default_str)
             ctx.config.more_import_paths = [Template(path.strip()) for path in more_paths.split(",")]
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "import_scan_max_paths":
             while not str.isdecimal(
                 max_paths := prompt("Maximum number of paths to scan for import command: ", default=str(ctx.config.import_scan_max_paths))
             ):
                 pass
             ctx.config.import_scan_max_paths = int(max_paths)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "id3v1":
             options = [(opt, opt.name) for opt in ID3v1Policy]
             option = choice(
@@ -131,7 +131,7 @@ def _configure_setting(
                 default=ctx.config.id3v1,
             )
             ctx.config.id3v1 = ID3v1Policy(option)
-            db_config.save(ctx.db, ctx.config)
+            config_save(ctx.db, ctx.config)
         case "transcoder_cache":
             path_completer = PathCompleter()
             cache = Path(prompt("Location/path for transcoder cache: ", completer=path_completer, default=str(ctx.config.transcoder_cache)))

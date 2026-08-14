@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context, Path
 from albums.checks.path.check_folder_name import CheckFolderName
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
-from albums.library import scanner
-from albums.tagger.types import BasicField
+from albums.library import run_scan
+from albums.tagger import BasicField
 
 from ...fixtures.create_library import create_library
 
@@ -78,10 +78,10 @@ class TestCheckFolderName:
         ctx.config.library = create_library(
             "folder_name", [Album(path="Foo (2026)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Foo"})])]
         )
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                scanner.scan(ctx, session)
+                run_scan(ctx, session)
                 (album,) = session.execute(select(Album)).tuples().one()
                 album.ignore_checks.append("cover-unique")
                 session.commit()
@@ -99,7 +99,7 @@ class TestCheckFolderName:
                 assert not (ctx.config.library / "Foo (2026)").exists()
                 assert (ctx.config.library / "Foo").exists()
 
-                (_, any_changes) = scanner.scan(ctx, session)
+                (_, any_changes) = run_scan(ctx, session)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert "cover-unique" in album.ignore_checks
                 assert not any_changes

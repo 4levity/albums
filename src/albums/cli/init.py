@@ -5,10 +5,11 @@ import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 
-from ..app import Context
-from ..config import PLATFORM_DIRS
-from ..database import connection, db_config
-from ..library import scanner
+from albums.app import Context
+from albums.config import PLATFORM_DIRS, config_load, config_save
+from albums.database import db_open
+from albums.library import run_scan
+
 from .cli_context import pass_context
 
 
@@ -37,12 +38,12 @@ def init(ctx: Context, library_path: str | None):
         raise SystemExit(1)
 
     os.makedirs(ctx.db_path.parent, exist_ok=True)
-    ctx.db = connection.open(ctx.db_path, echo=ctx.verbose > 1)
+    ctx.db = db_open(ctx.db_path, echo=ctx.verbose > 1)
     try:
-        ctx.config = db_config.load(ctx.db)
+        ctx.config = config_load(ctx.db)
         ctx.config.library = library
-        db_config.save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)
         ctx.console.print(f"scanning library {escape(str(library))}", highlight=False)
-        scanner.scan(ctx)
+        run_scan(ctx)
     finally:
         ctx.db.dispose()

@@ -3,8 +3,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.fields.check_single_value_fields import CheckSingleValueFields
 from albums.entities import Album, Track
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 
 def context(checks, db=None):

@@ -4,9 +4,9 @@ from unittest.mock import call
 
 from albums.app import Context, Session
 from albums.checks.fields.check_duplicate_album import CheckDuplicateAlbum
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 class TestCheckDuplicateAlbum:
@@ -16,7 +16,7 @@ class TestCheckDuplicateAlbum:
             Album(path="two" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Two", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -31,7 +31,7 @@ class TestCheckDuplicateAlbum:
             Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -62,7 +62,7 @@ class TestCheckDuplicateAlbum:
             Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -96,7 +96,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -120,7 +120,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])
@@ -151,7 +151,7 @@ class TestCheckDuplicateAlbum:
             ),
         ]
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
             session.add(albums[0])
             session.add(albums[1])

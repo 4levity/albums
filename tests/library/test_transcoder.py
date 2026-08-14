@@ -9,8 +9,8 @@ import pytest
 from albums.app import Context
 from albums.entities import Album, Track, TrackPicture
 from albums.library.transcoder import Transcoder
-from albums.tagger.folder import AlbumTagger
-from albums.tagger.types import BasicField, PictureInfo, PictureType
+from albums.picture import PictureInfo
+from albums.tagger import AlbumTagger, BasicField, PictureType
 
 from ..fixtures.create_library import create_library, test_data_path
 from ..helpers import fake_ffmpeg

@@ -6,10 +6,10 @@ from typing import Final
 import rich_click as click
 from prompt_toolkit import choice
 
-from ..app import Context
-from ..config import RescanOption, SyncDestination
-from ..library.scanner import scan
-from ..library.synchronizer import Synchronizer
+from albums.app import Context
+from albums.config import RescanOption, SyncDestination
+from albums.library import Synchronizer, run_scan
+
 from .cli_context import pass_context, require_configured, require_library, require_persistent_context
 
 logger: Final = logging.getLogger(__name__)
@@ -76,6 +76,6 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
 
     if ctx.config.rescan == RescanOption.AUTO:
         ctx.console.print("Scanning library before sync (see config settings.rescan to disable this)")
-        scan(ctx)
+        run_scan(ctx)
 
     Synchronizer(ctx, dest).do_sync(delete, force)

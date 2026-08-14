@@ -6,11 +6,11 @@ from typing import Final, Sequence, Tuple, override
 
 from rich.markup import escape
 
-from ...entities import Album
-from ...tagger.folder import AUDIO_FILE_SUFFIXES
-from ...words.make import pluralize
-from ..base_check import Check
-from ..check_types import CheckConfiguration, CheckResult, Fixer, FixResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckConfiguration, CheckResult, Fixer, FixResult
+from albums.entities import Album
+from albums.tagger import AUDIO_FILE_SUFFIXES
+from albums.words import pluralize
 
 logger: Final = logging.getLogger(__name__)
 

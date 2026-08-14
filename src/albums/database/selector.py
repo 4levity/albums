@@ -1,13 +1,13 @@
 import logging
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Final, Generator, List, Mapping, Tuple
+from typing import Final, Generator, List, Mapping, Sequence, Tuple
 
 from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
 from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
 
-from ..entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
-from ..tagger.types import BasicField
+from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
+from albums.tagger import BasicField
 
 logger: Final = logging.getLogger(__name__)
 
@@ -117,3 +117,21 @@ def _compare(
             return value > target
         case Comparator.GTE:
             return value >= target
+
+
+# It shouldn't be (and isn't strictly) necessary to look up collections or explicitly create them. But the association_proxy creator implementation
+# in Album creates a duplicate CollectionEntity if the collection already exists, causing the following warning even though the operation succeeds:
+# SAWarning: Identity map already had an identity for (<class 'albums.types.CollectionEntity'>, (1,), None), replacing it with newly flushed object.
+#     Are there load operations occurring inside of an event handler within the flush?
+def collections_by_name(session: Session, collection_names: Sequence[str]):
+    """Look up existing collections or create new ones by name, returning a name-to-entity mapping."""
+    return dict(
+        (
+            name,
+            (
+                session.execute(select(CollectionEntity).where(CollectionEntity.collection_name == name)).tuples().one_or_none()
+                or (CollectionEntity(collection_name=name),)
+            )[0],
+        )
+        for name in collection_names
+    )

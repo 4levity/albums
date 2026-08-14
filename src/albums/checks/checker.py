@@ -5,12 +5,13 @@ from typing import Final, Mapping, Sequence
 from rich.markup import escape
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..database.selector import Match, load_album_entities
-from ..entities import Album
-from ..interactive.interact import interact, prompt_ignore_checks
-from ..library import scanner
-from ..tagger.provider import AlbumTaggerProvider
+from albums.app import Context
+from albums.database import Match, load_album_entities
+from albums.entities import Album
+from albums.interactive import interact, prompt_ignore_checks
+from albums.library import run_scan
+from albums.tagger import AlbumTaggerProvider
+
 from .all import ALL_CHECKS
 from .base_check import Check
 from .check_types import CheckResult, FixResult
@@ -68,7 +69,7 @@ class Checker:
         for album in self.ctx.select_album_entities(session):
             if not (self.ctx.config.library / album.path).is_dir():
                 logger.info(f"album was deleted: {album.path}")
-                scanner.scan(self.ctx, session, iter([album]))
+                run_scan(self.ctx, session, iter([album]))
                 session.commit()
                 continue
             logger.info(f"checking album: {album.path}")
@@ -150,10 +151,10 @@ class Checker:
                 if not deleted and disposition.maybe_changed:
                     session.flush()
                     path = album.path
-                    (_, any_changes) = scanner.scan(self.ctx, session, load_album_entities(session, {"path": [Match(path)]}), reread=True)
+                    (_, any_changes) = run_scan(self.ctx, session, load_album_entities(session, {"path": [Match(path)]}), reread=True)
                     maybe_fixable = any_changes
                 elif deleted:
-                    scanner.scan(self.ctx, session, iter([album]))  # delete immediately
+                    run_scan(self.ctx, session, iter([album]))  # delete immediately
                 else:
                     maybe_fixable = False
             else:

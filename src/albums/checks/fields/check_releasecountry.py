@@ -1,6 +1,5 @@
-from albums.tagger.types import BasicField
-
-from ..base_check_field_per_album import BaseCheckFieldPerAlbum
+from albums.checks.base_check_field_per_album import BaseCheckFieldPerAlbum
+from albums.tagger import BasicField
 
 
 class CheckReleaseCountryField(BaseCheckFieldPerAlbum):

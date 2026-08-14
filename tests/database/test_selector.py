@@ -4,11 +4,10 @@ import re
 import pytest
 from sqlalchemy.orm import Session
 
-from albums.database import connection
-from albums.database.selector import Comparator, Match, load_album_entities
+from albums.database import MEMORY, Comparator, Match, db_open, load_album_entities
 from albums.entities import Album, PictureFile, Track, TrackPicture
-from albums.picture.info import PictureInfo
-from albums.tagger.types import BasicField, PictureType, StreamInfo
+from albums.picture import PictureInfo
+from albums.tagger import BasicField, PictureType, StreamInfo
 
 
 class TestSelector:
@@ -57,7 +56,7 @@ class TestSelector:
         )
 
     def test_select_empty(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 result = list(load_album_entities(session))
@@ -66,7 +65,7 @@ class TestSelector:
             db.dispose()
 
     def test_add_and_select(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -96,7 +95,7 @@ class TestSelector:
             db.dispose()
 
     def test_operators_strings(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -129,7 +128,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_multiple_and_regex(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             re_sep = re.escape(os.sep)
             with Session(db) as session:
@@ -143,7 +142,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_collection(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -160,7 +159,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_collection_invert(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -177,7 +176,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_ignore_check(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -194,7 +193,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_ignore_check_invert(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -211,7 +210,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_multiple_ignore_check(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -240,7 +239,7 @@ class TestSelector:
             db.dispose()
 
     def test_select_by_tags(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -287,7 +286,7 @@ class TestSelector:
             db.dispose()
 
     def test_compare_any_track_bitrate(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)
@@ -323,7 +322,7 @@ class TestSelector:
             db.dispose()
 
     def test_compare_any_track_stream_props(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(TestSelector.album)

@@ -1,7 +1,7 @@
 from albums.app import Context
 from albums.checks.fields.check_genre_present import CheckGenrePresent
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 class TestCheckGenrePresent:

@@ -1,9 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from albums.database import connection
-from albums.database.migrations import migrate
-from albums.tagger.types import BasicField
+from albums.database import MEMORY, db_open, migrate
+from albums.tagger import BasicField
 
 from .sql_helpers import make_track_sql
 
@@ -13,7 +12,7 @@ class TestMigration18TableNameRenamed:
 
     def test_track_tag_renamed_to_track_field(self):
         """Test that track_tag table is renamed to track_field with data preserved."""
-        db = connection.open(connection.MEMORY, version=17)
+        db = db_open(MEMORY, version=17)
         try:
             # Insert rows into old track_tag table using raw SQL
             with db.begin() as conn:
@@ -44,7 +43,7 @@ class TestMigration18TableNameRenamed:
 
     def test_track_legacy_tag_renamed_to_track_legacy_field(self):
         """Test that track_legacy_tag table is renamed to track_legacy_field with column rename."""
-        db = connection.open(connection.MEMORY, version=17)
+        db = db_open(MEMORY, version=17)
         try:
             # Insert a minimal album + track
             with db.begin() as conn:
@@ -74,7 +73,7 @@ class TestMigration18TableNameRenamed:
 
     def test_indexes_renamed(self):
         """Test that old indexes are gone and new ones exist."""
-        db = connection.open(connection.MEMORY, version=17)
+        db = db_open(MEMORY, version=17)
         try:
             # Insert data to make sure tables/indexes have rows
             with db.begin() as conn:
@@ -101,7 +100,7 @@ class TestMigration18TableNameRenamed:
 
     def test_pk_columns_renamed(self):
         """Test that primary key columns are renamed correctly."""
-        db = connection.open(connection.MEMORY, version=17)
+        db = db_open(MEMORY, version=17)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT INTO album (path) VALUES ('test_album');"))

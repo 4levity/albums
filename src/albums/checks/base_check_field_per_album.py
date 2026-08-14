@@ -3,9 +3,9 @@ from typing import Any, Final
 
 from rich.markup import escape
 
-from ..entities import Album
-from ..tagger.folder import AlbumTagger, Cap
-from ..tagger.types import BasicField
+from albums.entities import Album
+from albums.tagger import AlbumTagger, BasicField, Cap
+
 from .base_check import Check
 from .check_types import CheckResult, Fixer, FixResult
 from .field_policy import Policy, check_policy

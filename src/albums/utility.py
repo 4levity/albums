@@ -1,7 +1,10 @@
+"""Utilities shared between checks and library management"""
+
 from collections import defaultdict
+from pathlib import Path
 
 from albums.entities import Album
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 def get_artist_from_tracks(album: Album) -> str | None:
@@ -22,3 +25,8 @@ def get_album_name_from_tracks(album: Album) -> str | None:
             album_names[album_name] += 1
     album_name_list = sorted(((k, v) for k, v in album_names.items()), key=lambda i: i[1], reverse=True)
     return album_name_list[0][0] if len(album_name_list) else None
+
+
+def read_binary_file(path: Path) -> bytes:
+    with open(path, "rb") as f:
+        return f.read()

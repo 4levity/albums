@@ -1,8 +1,6 @@
 import xxhash
 
-from albums.picture.format import mime_type_to_format
-from albums.picture.info import PictureInfo
-from albums.picture.scan import PictureScanner
+from albums.picture import PictureInfo, PictureScanner, mime_type_to_format
 
 from ..fixtures.create_library import make_image_data
 

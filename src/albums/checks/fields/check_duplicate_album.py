@@ -10,12 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.library.duplicates import DuplicateFinder
-from albums.tagger.provider import AlbumTaggerProvider
-
-from ...entities import Album, OtherFile, PictureFile, Track
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.entities import Album, OtherFile, PictureFile, Track
+from albums.tagger import AlbumTaggerProvider
 
 OPTION_DELETE_OTHER: Final = ">> KEEP left (THIS album) and DELETE right (other): "
 OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): "
@@ -25,11 +23,13 @@ class CheckDuplicateAlbum(Check):
     name = "duplicate-album"
     default_config = {"enabled": True}
     must_pass_checks = {"album", "artist"}
-    _duplicates = DuplicateFinder()
 
     def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
         super().__init__(ctx, tagger, session)
 
+        from albums.library import DuplicateFinder  # avoid circular import when all checks are imported
+
+        self._duplicates = DuplicateFinder()
         # tell user about the delay so the check can be disabled if unwanted
         with ctx.console.status(f"Initializing [bold]{self.name}[/bold] check [italic](disable check to skip)[/italic]", spinner="bouncingBar"):
             self._duplicates.start(self.session)

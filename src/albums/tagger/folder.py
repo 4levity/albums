@@ -5,7 +5,6 @@ from typing import Any, Callable, Collection, Final, Generator, List, Mapping, S
 
 from mutagen._tags import PaddingInfo
 
-from ..config import ID3v1Policy
 from ..picture.format import SUPPORTED_IMAGE_SUFFIXES
 from ..picture.scan import PictureScanner, PictureScannerCache
 from .file_types.aiff import AiffTagger
@@ -16,7 +15,7 @@ from .file_types.mp3 import Mp3Tagger
 from .file_types.mp4 import Mp4Tagger
 from .file_types.oggvorbis import OggVorbisTagger
 from .file_types.universal import UniversalTagger
-from .types import BasicField, TaggerFile
+from .types import BasicField, ID3v1Policy, TaggerFile
 from .unreadable import UnreadableTagger
 
 

@@ -1,6 +1,6 @@
 from typing import Final, Tuple
 
-from albums.tagger.types import BasicField
+from .types import BasicField
 
 BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.ALBUM, "TALB"),

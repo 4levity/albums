@@ -3,7 +3,7 @@ import os
 from albums.app import Context
 from albums.checks.path.check_duplicate_pathname import CheckDuplicatePathname
 from albums.entities import Album, PictureFile, Track
-from albums.picture.info import PictureInfo
+from albums.picture import PictureInfo
 
 
 class TestCheckDuplicatePathname:

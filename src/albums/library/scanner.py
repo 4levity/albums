@@ -12,19 +12,19 @@ from rich.progress import Progress
 from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session
 
+from albums.app import SCANNER_VERSION, Context
+from albums.entities import Album, ScanHistoryEntity
 from albums.library.album_scanner import scan_album
+from albums.tagger import AlbumTagger
+from albums.words import plural
 
-from ..app import SCANNER_VERSION, Context
-from ..entities import Album, ScanHistoryEntity
-from ..tagger.folder import AlbumTagger
-from ..words.make import plural
 from .album_scanner import picture_cache
 from .scanner_types import AlbumScanResult
 
 logger = logging.getLogger(__name__)
 
 
-def scan(
+def run_scan(
     ctx: Context,
     session: Session | None = None,
     scan_albums: Iterator[Album] | None = None,
@@ -34,7 +34,7 @@ def scan(
     if session is None:
         with Session(ctx.db) as session:
             try:
-                (albums_total, any_changes) = scan(ctx, session, scan_albums, reread)
+                (albums_total, any_changes) = run_scan(ctx, session, scan_albums, reread)
                 if any_changes:
                     session.commit()
                 return (albums_total, any_changes)

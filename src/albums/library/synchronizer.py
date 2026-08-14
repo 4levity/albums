@@ -14,13 +14,13 @@ from rich.progress import Progress, TransferSpeedColumn
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..config import ALL_ALBUMS, SyncDestination
-from ..database.selector import Match, load_album_entities
-from ..entities import Album
-from ..library.paths import make_template_path
-from ..library.transcoder import Transcoder
-from ..words.make import plural
+from albums.app import Context
+from albums.config import ALL_ALBUMS, SyncDestination
+from albums.database import Match, load_album_entities
+from albums.entities import Album
+from albums.library.paths import make_template_path
+from albums.library.transcoder import Transcoder
+from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
 

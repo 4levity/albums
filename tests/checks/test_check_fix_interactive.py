@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.interactive.interact import OPTION_IGNORE_CHECK, OPTION_MORE_OPTIONS, interact
 
@@ -27,7 +27,7 @@ class TestCheckFixInteractive:
     def test_fix_interactive(self, mocker):
         album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         fixer = MockFixer(ctx, album)
         mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=fixer.options[0])
 
@@ -41,7 +41,7 @@ class TestCheckFixInteractive:
     def test_fix_ignore_check(self, mocker):
         album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add(album)
@@ -66,7 +66,7 @@ class TestCheckFixInteractive:
         album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
         # only on Python 3.14.2, only when tests run with pytest-cov, this line causes ResourceWarning: unclosed database although it's closed below?
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 session.add(album)

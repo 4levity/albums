@@ -10,10 +10,10 @@ from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 from rich.table import Table
 
-from ..app import Context
-from ..config import Configuration, SettingValueType
-from ..database import db_config
-from ..interactive.configurator import interactive_config
+from albums.app import Context
+from albums.config import Configuration, SettingValueType, config_save
+from albums.interactive import interactive_config
+
 from .cli_context import pass_context, require_configured, require_persistent_context
 from .config_settings import render_setting, set_setting
 
@@ -106,7 +106,7 @@ def _import(ctx: Context, import_file: str):
             ctx.console.print(f"Aborted configuration import: cannot access library directory at {str(new_config.library)}")
             raise SystemExit(1)
 
-    db_config.save(ctx.db, new_config)
+    config_save(ctx.db, new_config)
     ctx.console.print(f"imported configuration from {escape(import_file)}")
 
 
@@ -129,5 +129,5 @@ def _reset(ctx: Context):
         raise SystemExit(1)
     new_config = Configuration()
     new_config.library = ctx.config.library
-    db_config.save(ctx.db, new_config)
+    config_save(ctx.db, new_config)
     ctx.console.print(f'Configuration reset to default except for library directory "{escape(str(ctx.config.library))}"')

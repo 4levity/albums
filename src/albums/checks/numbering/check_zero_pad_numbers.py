@@ -5,12 +5,12 @@ from typing import Any, Final, Mapping, Sequence
 from rich.console import RenderableType
 from rich.markup import escape
 
-from ...entities import Album, Track
-from ...tagger.folder import AlbumTagger, Cap
-from ...tagger.types import BasicField
-from ..base_check import Check
-from ..check_types import CheckResult, Fixer, FixResult
-from ..helpers import get_tracks_by_disc
+from albums.checks.base_check import Check
+from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.helpers import get_tracks_by_disc
+from albums.entities import Album, Track
+from albums.tagger import AlbumTagger, BasicField, Cap
+
 from .check_track_numbering import describe_track_number
 
 logger: Final = logging.getLogger(__name__)

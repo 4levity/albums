@@ -1,9 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from albums.database import connection
-from albums.database.migrations import migrate
-from albums.tagger.types import BasicField
+from albums.database import MEMORY, db_open, migrate
+from albums.tagger import BasicField
 
 from .sql_helpers import make_track_sql
 
@@ -13,7 +12,7 @@ class TestMigration16LegacyTags:
 
     def test_legacy_fields_migrated(self):
         """Test basic migration of legacy fields to canonical names."""
-        db = connection.open(connection.MEMORY, version=15)
+        db = db_open(MEMORY, version=15)
         try:
             with db.begin() as conn:
                 # Use raw SQL instead of ORM - avoids track_field vs track_tag name mismatch at old schema versions
@@ -71,7 +70,7 @@ class TestMigration16LegacyTags:
 
     def test_duplicate_values_not_created(self):
         """Verify migration doesn't create duplicate values when legacy and canonical have same value."""
-        db = connection.open(connection.MEMORY, version=15)
+        db = db_open(MEMORY, version=15)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})
@@ -102,7 +101,7 @@ class TestMigration16LegacyTags:
 
     def test_noop_when_no_legacy_fields(self):
         """Migration should be a no-op when there are no legacy fields."""
-        db = connection.open(connection.MEMORY, version=15)
+        db = db_open(MEMORY, version=15)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})
@@ -126,7 +125,7 @@ class TestMigration16LegacyTags:
 
     def test_both_label_and_publisher_migrate_to_organization(self):
         """Verify both 'label' and 'publisher' legacy fields migrate to ORGANIZATION without creating duplicates."""
-        db = connection.open(connection.MEMORY, version=15)
+        db = db_open(MEMORY, version=15)
         try:
             with db.begin() as conn:
                 conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})

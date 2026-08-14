@@ -6,9 +6,8 @@ from mutagen.id3._frames import TXXX
 from mutagen.id3._specs import Encoding
 
 from albums.entities import Album, Track, TrackPicture
-from albums.picture.info import PictureInfo
-from albums.tagger.folder import AlbumTagger, BasicField
-from albums.tagger.types import Picture, PictureType
+from albums.picture import PictureInfo
+from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
 
 from ..fixtures.create_library import create_library, make_image_data
 

@@ -4,12 +4,11 @@ from pathlib import Path
 from sqlite3 import Connection as SQLite3Connection
 from typing import Any, Final
 
-import humanize
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 
 # don't put any relative imports here, will make this file not runnable
+from albums.database.maintain import maintain
 from albums.database.migrations import get_init_schema, migrate
 
 logger: Final = logging.getLogger(__name__)
@@ -17,22 +16,16 @@ logger: Final = logging.getLogger(__name__)
 # Sentinel for in-memory database
 MEMORY: Final = ":memory:"
 
-SQL_INIT_CONNECTION: Final = """
-PRAGMA foreign_keys = ON;
-"""
-
-SQL_CLEANUP: Final = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
-
 
 @event.listens_for(Engine, "connect")
 def enable_foreign_keys(connection: Any, _):
     if isinstance(connection, SQLite3Connection):
         cursor = connection.cursor()
-        cursor.execute(SQL_INIT_CONNECTION)
+        cursor.execute("PRAGMA foreign_keys = ON;")
         cursor.close()
 
 
-def open(filename: str | Path, echo: bool = False, version: int | None = None):
+def db_open(filename: str | Path, echo: bool = False, version: int | None = None):
     """Open or create a database.
 
     Args:
@@ -54,17 +47,14 @@ def open(filename: str | Path, echo: bool = False, version: int | None = None):
 
             migrate(db, True, target_version=version)
         else:
-            if existing_db:
-                _maintain(db)
-            else:
+            if not existing_db:
                 print(f"creating database {filename}")
                 with db.begin() as conn:
                     connection = conn.connection
                     connection.executescript(get_init_schema())
 
             migrate(db, False, target_version=version)
-            with Session(db) as session:
-                session.execute(text(SQL_CLEANUP))
+            maintain(db)
         return db
     except Exception as ex:
         # Ensure all connections are disposed on error to prevent resource warnings
@@ -75,21 +65,5 @@ def open(filename: str | Path, echo: bool = False, version: int | None = None):
         raise ex
 
 
-def _maintain(db: Engine):
-    with Session(db) as session:
-        (page_size, page_count, freelist_count) = session.execute(
-            text("SELECT page_size, page_count, freelist_count FROM pragma_page_size, pragma_page_count, pragma_freelist_count;")
-        ).one()
-        size = page_size * page_count
-        wasted = page_size * freelist_count
-        logger.debug(
-            f"database size approx {humanize.naturalsize(size, binary=True)} (wasted space approx {humanize.naturalsize(wasted, binary=True)})"
-        )
-        # if wasted space is > 10 MB or 20% of the total size, vacuum
-        if wasted > max(10 * 1024 * 1024, 0.2 * size):
-            logger.debug("vacuuming database")
-            session.execute(text("VACUUM;"))
-
-
 if __name__ == "__main__":
-    open(sys.argv[1]).dispose()  # create empty database for diagram
+    db_open(sys.argv[1]).dispose()  # create empty database for diagram

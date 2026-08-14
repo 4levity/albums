@@ -4,8 +4,8 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.picture.check_duplicate_image import CheckDuplicateImage
 from albums.entities import Album, PictureFile, Track, TrackPicture
-from albums.picture.info import PictureInfo
-from albums.tagger.types import PictureType
+from albums.picture import PictureInfo
+from albums.tagger import PictureType
 
 
 class TestCheckDuplicateImage:

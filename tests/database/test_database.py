@@ -5,14 +5,14 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
-from albums.tagger.types import BasicField
+from albums.tagger import BasicField
 
 
 class TestDatabase:
     def test_init_schema(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 schema_version = session.scalar(text("SELECT version FROM _schema;"))
@@ -21,7 +21,7 @@ class TestDatabase:
             db.dispose()
 
     def test_foreign_key(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 foreign_keys = session.scalar(text("PRAGMA foreign_keys;"))
@@ -35,7 +35,7 @@ class TestDatabase:
         db_file = test_data_path / "test_database.db"
         if db_file.exists():
             db_file.unlink()
-        db = connection.open(db_file)
+        db = db_open(db_file)
         try:
             with Session(db) as session:
                 current_version = session.scalar(text("SELECT version FROM _schema;"))
@@ -47,11 +47,11 @@ class TestDatabase:
             db.dispose()
 
         with pytest.raises(RuntimeError):
-            connection.open(db_file)
+            db_open(db_file)
             assert False  # shouldn't get this far
 
     def test_album_created_at(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 album = Album(path="foo" + os.sep)
@@ -64,7 +64,7 @@ class TestDatabase:
 
     def test_album_modified_at_default(self):
         album = Album(path="foo" + os.sep)
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 session.add(album)
@@ -77,7 +77,7 @@ class TestDatabase:
             db.dispose()
 
     def test_unknown_tag_in_db(self):
-        db = connection.open(connection.MEMORY)
+        db = db_open(MEMORY)
         try:
             with Session(db) as session:
                 album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "foo"})])

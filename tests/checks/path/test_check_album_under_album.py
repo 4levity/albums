@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.path.check_album_under_album import CheckAlbumUnderAlbum
-from albums.database import connection
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 
 
@@ -17,7 +17,7 @@ class TestCheckAlbumUnderAlbum:
         ]
 
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 checker = CheckAlbumUnderAlbum(ctx, session=session)
@@ -42,7 +42,7 @@ class TestCheckAlbumUnderAlbum:
         ]
 
         ctx = Context()
-        ctx.db = connection.open(connection.MEMORY)
+        ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 checker = CheckAlbumUnderAlbum(ctx, session=session)

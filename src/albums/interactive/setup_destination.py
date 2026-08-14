@@ -9,12 +9,11 @@ from rich.markup import escape
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..app import Context
-from ..config import ALL_ALBUMS, SyncDestination
-from ..database import db_config
-from ..entities import CollectionEntity
-from ..library.paths import show_template_path_help
-from ..tagger.folder import AUDIO_FILE_SUFFIXES
+from albums.app import Context
+from albums.config import ALL_ALBUMS, SyncDestination, config_save
+from albums.entities import CollectionEntity
+from albums.library import show_template_path_help
+from albums.tagger import AUDIO_FILE_SUFFIXES
 
 _USE_ALL_ALBUMS = ">> Use all albums"
 
@@ -155,4 +154,4 @@ def _configure_destination(ctx: Context, destination_ix: int):
     if option in {"save", "delete"}:
         if option == "delete":
             del ctx.config.sync_destinations[destination_ix]
-        db_config.save(ctx.db, ctx.config)
+        config_save(ctx.db, ctx.config)
