@@ -5,7 +5,7 @@ from rich.markup import escape
 
 from albums.app import Context
 from albums.config import PathCompatibilityOption, RescanOption, SettingValueType, config_save
-from albums.interactive.setup_settings import set_library
+from albums.interactive import set_library
 from albums.tagger import ID3v1Policy
 
 

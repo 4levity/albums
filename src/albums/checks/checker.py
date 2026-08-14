@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.database import Match, load_album_entities
 from albums.entities import Album
-from albums.interactive.interact import interact, prompt_ignore_checks
+from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
 from albums.tagger import AlbumTaggerProvider
 

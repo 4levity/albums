@@ -4,7 +4,7 @@ import platform
 from albums.app import Context, Path
 from albums.config import PathCompatibilityOption, RescanOption, config_load
 from albums.database import MEMORY, db_open
-from albums.interactive.configurator import interactive_config
+from albums.interactive import interactive_config
 from albums.tagger import ID3v1Policy
 
 

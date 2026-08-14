@@ -11,7 +11,7 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album, PictureFile
-from albums.interactive.image_table import render_image_table
+from albums.interactive import render_image_table
 from albums.picture import SUPPORTED_IMAGE_MIME_TYPES, PictureInfo, format_to_mime_type, get_depth_bpp, mime_type_to_format
 from albums.tagger import Picture, PictureType
 

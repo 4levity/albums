@@ -12,7 +12,7 @@ from rich.table import Table
 
 from albums.app import Context
 from albums.config import Configuration, SettingValueType, config_save
-from albums.interactive.configurator import interactive_config
+from albums.interactive import interactive_config
 
 from .cli_context import pass_context, require_configured, require_persistent_context
 from .config_settings import render_setting, set_setting
