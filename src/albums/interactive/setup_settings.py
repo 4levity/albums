@@ -10,7 +10,7 @@ from prompt_toolkit.shortcuts import choice, confirm
 
 from albums.app import Context
 from albums.config import PathCompatibilityOption, RescanOption, config_save
-from albums.library.paths import show_template_path_help
+from albums.library import show_template_path_help
 from albums.tagger import ID3v1Policy
 
 

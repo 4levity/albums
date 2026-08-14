@@ -5,7 +5,7 @@ from albums.app import Context
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.checker import Checker
 from albums.config import RescanOption, default_checks_config
-from albums.library.scanner import scan
+from albums.library import run_scan
 
 from .cli_context import pass_context, require_library, require_real_context
 
@@ -28,7 +28,7 @@ def check(ctx: Context, default: bool, automatic: bool, preview: bool, fix: bool
     require_library(ctx)
     if ctx.config.rescan == RescanOption.AUTO and ctx.is_persistent:
         ctx.console.print("Scanning library before check (see config settings.rescan to disable this)")
-        scan(ctx)
+        run_scan(ctx)
 
     if default:
         ctx.console.print("using default check config")

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from albums.app import SCANNER_VERSION, Context
 from albums.database import MEMORY, db_open, load_album_entities
 from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
-from albums.library.scanner import scan
+from albums.library import run_scan
 from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
 from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
@@ -62,7 +62,7 @@ class TestScanner:
         db = db_open(MEMORY)
         try:
             library = create_library("test_initial_scan", self.sample_library)
-            scan(context(db, library))
+            run_scan(context(db, library))
             with Session(db) as session:
                 result = [album for (album,) in session.execute(select(Album).order_by(Album.path)).tuples()]
 
@@ -139,7 +139,7 @@ class TestScanner:
 
         try:
             library = create_library("test_scan_other", [album])
-            scan(context(db, library))
+            run_scan(context(db, library))
             with Session(db) as session:
                 [result] = [album for (album,) in session.execute(select(Album).order_by(Album.path)).tuples()]
                 assert len(result.tracks) == 1  # one of the .mp4 files is not included because it has video
@@ -158,7 +158,7 @@ class TestScanner:
         db = db_open(MEMORY)
         try:
             library = create_library("test_scan_empty", [])
-            scan(context(db, library))
+            run_scan(context(db, library))
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 0
@@ -177,7 +177,7 @@ class TestScanner:
                     Album(path="foobar" + os.sep, tracks=[Track(filename="1.ogg")]),
                 ],
             )
-            scan(context(db, library))
+            run_scan(context(db, library))
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 4
@@ -189,7 +189,7 @@ class TestScanner:
         try:
             library = create_library("test_scan_update", self.sample_library)
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
                 tracks = sorted(result[0].tracks)
@@ -199,7 +199,7 @@ class TestScanner:
             file = FLAC(library / result[0].path / "1.flac")
             file[BasicField.TITLE] = "new title"
             file.save()
-            scan(ctx)
+            run_scan(ctx)
 
             with Session(db) as session:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
@@ -212,7 +212,7 @@ class TestScanner:
         try:
             library = create_library("test_scan_add", [self.sample_library[1]])
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 1
@@ -220,7 +220,7 @@ class TestScanner:
 
             create_album_in_library(library, self.sample_library[0])
 
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 2
@@ -234,7 +234,7 @@ class TestScanner:
             library = create_library("test_scan_remove", self.sample_library)
             ctx = context(db, library)
             with Session(db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 assert result[0][0].path == "bar" + os.sep
@@ -243,7 +243,7 @@ class TestScanner:
             # remove a folder that contains an album (removed without scanning)
             shutil.rmtree(library / "bar", ignore_errors=True)
             with Session(db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 4
                 assert result[0][0].path == "baz" + os.sep
@@ -253,7 +253,7 @@ class TestScanner:
             shutil.rmtree(library / "baz", ignore_errors=True)
             os.mkdir(library / "baz")
             with Session(db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 3
                 assert result[0][0].path == "eee" + os.sep
@@ -265,14 +265,14 @@ class TestScanner:
         try:
             library = create_library("test_scan_remove_picture", [self.sample_library[0]])
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].picture_files) == 1
 
             (library / self.sample_library[0].path / "cover.jpg").unlink()
 
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].picture_files) == 0
@@ -290,13 +290,13 @@ class TestScanner:
             library = create_library("test_scan_remove_other", [album])
             ctx = context(db, library)
             with Session(db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].other_files) == 1
 
                 os.unlink(library / album.path / album.other_files[0].filename)
 
-                scan(ctx, session)
+                run_scan(ctx, session)
                 result = session.execute(select(Album)).tuples().one()
                 assert len(result[0].other_files) == 0
         finally:
@@ -307,14 +307,14 @@ class TestScanner:
         try:
             library = create_library("test_scan_filtered", self.sample_library)
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
                 assert len(result) == 5
                 delete_album = result[0][0].path
                 shutil.rmtree(library / delete_album, ignore_errors=True)
 
-                scan(ctx, session, iter([result[1][0]]))
+                run_scan(ctx, session, iter([result[1][0]]))
 
                 # deleted path was not scanned, so album is still there
                 result = session.execute(select(Album).order_by(Album.path)).tuples().all()
@@ -328,7 +328,7 @@ class TestScanner:
         try:
             library = create_library("test_scanner_version", self.sample_library[:2])
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 2
@@ -344,7 +344,7 @@ class TestScanner:
                 assert len(result) == 2  # third not scanned yet
                 assert all(album.scanner == 0 for [album] in result)
 
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert len(result) == 3
@@ -359,7 +359,7 @@ class TestScanner:
         try:
             ctx = context(db, library)
             with Session(db) as session:
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
@@ -370,7 +370,7 @@ class TestScanner:
                 with AlbumTagger(library / created_album.path).open(tracks[0].filename) as tags:
                     tags.set_field(BasicField.ARTIST, "test replace track")
 
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
@@ -392,7 +392,7 @@ class TestScanner:
         try:
             ctx = context(db, library)
             with Session(db) as session:
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
@@ -403,7 +403,7 @@ class TestScanner:
 
                 os.unlink(library / created_album.path / tracks[2].filename)
 
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 2
                 tracks = sorted(album.tracks)
@@ -423,7 +423,7 @@ class TestScanner:
         try:
             ctx = context(db, library)
             with Session(db) as session:
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
@@ -432,7 +432,7 @@ class TestScanner:
 
                 create_picture_file(library / album.path / "cover.jpg", 123, 321, "pink")
 
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
@@ -451,7 +451,7 @@ class TestScanner:
         try:
             ctx = context(db, library)
             with Session(db) as session:
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 1
                 assert album.picture_files[0].filename == "cover.jpg"
@@ -460,7 +460,7 @@ class TestScanner:
 
                 os.unlink(library / album.path / "cover.jpg")
 
-                assert scan(ctx, session) == (1, True)
+                assert run_scan(ctx, session) == (1, True)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.picture_files) == 0
 
@@ -495,11 +495,11 @@ class TestScanner:
             ctx = context(db, library)
             spy_image_open = mocker.spy(Image, "open")
             with Session(db) as session:
-                scan(ctx, session)
+                run_scan(ctx, session)
                 assert spy_image_open.call_count == 4
                 spy_image_open.reset_mock()
 
-                scan(ctx, session, reread=True)
+                run_scan(ctx, session, reread=True)
                 assert spy_image_open.call_count == 4  # reread=True so cache was not used
                 spy_image_open.reset_mock()
 
@@ -507,7 +507,7 @@ class TestScanner:
                 os.rename(library / album.path / album.picture_files[0].filename, library / album.path / f"foo - {album.picture_files[0].filename}")
                 os.rename(library / album.path / album.picture_files[1].filename, library / album.path / f"foo - {album.picture_files[1].filename}")
 
-                scan(ctx, session)
+                run_scan(ctx, session)
                 assert spy_image_open.call_count == 0  # files were renamed but image data was the same, cache was used
                 spy_image_open.reset_mock()
                 album = next(session.execute(select(Album)).tuples())[0]
@@ -524,7 +524,7 @@ class TestScanner:
                     f.write(make_image_data(333, 333, "JPEG"))
 
                 spy_image_open.reset_mock()
-                scan(ctx, session)
+                run_scan(ctx, session)
                 assert spy_image_open.call_count == 2  # 1 embedded image and 1 file were edited, cache was used for others
         finally:
             db.dispose()
@@ -542,18 +542,18 @@ class TestScanner:
             mock_needs_rescan = mocker.patch("albums.library.album_scanner._needs_rescan", side_effect=rescan_only_streams)
             mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")
 
-            scan(ctx)
+            run_scan(ctx)
 
             assert mock_needs_rescan.call_count == 0
             assert mock_find_codec.call_count == 2
 
-            scan(ctx)  # rescan target images only
+            run_scan(ctx)  # rescan target images only
 
             assert mock_needs_rescan.call_count == 2
             assert mock_find_codec.call_count == 2  # streams not scanned
 
             scan_streams = True
-            scan(ctx)
+            run_scan(ctx)
 
             assert mock_needs_rescan.call_count == 4
             assert mock_find_codec.call_count == 4  # streams re-scanned
@@ -565,7 +565,7 @@ class TestScanner:
         try:
             library = create_library("test_scanner_modified_at", self.sample_library[:2])
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert all(album.modified_at > 1_000_000_000 for [album] in result)
@@ -574,7 +574,7 @@ class TestScanner:
 
             (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # album changed
 
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 (album,) = session.execute(select(Album).where(Album.path != self.sample_library[1].path)).tuples().one()
                 assert album.modified_at == 0  # not updated during scan, modified_at unchanged
@@ -589,7 +589,7 @@ class TestScanner:
         try:
             library = create_library("test_scanner_modified_at", self.sample_library[:2])
             ctx = context(db, library)
-            scan(ctx)
+            run_scan(ctx)
             with Session(db) as session:
                 result = session.execute(select(Album)).tuples().all()
                 assert all(album.modified_at > 1_000_000_000 for [album] in result)
@@ -598,7 +598,7 @@ class TestScanner:
 
             (library / self.sample_library[1].path / self.sample_library[1].tracks[0].filename).unlink()  # album changed
             with Session(db) as session:
-                scan(ctx, session, load_album_entities(session))
+                run_scan(ctx, session, load_album_entities(session))
 
             with Session(db) as session:
                 (album,) = session.execute(select(Album).where(Album.path != self.sample_library[1].path)).tuples().one()

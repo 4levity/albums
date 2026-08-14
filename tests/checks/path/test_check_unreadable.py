@@ -7,7 +7,7 @@ from albums.app import Context
 from albums.checks.path.check_unreadable_track import CheckUnreadableTrack
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
-from albums.library import scanner
+from albums.library import run_scan
 
 from ...fixtures.create_library import create_library
 
@@ -21,7 +21,7 @@ class TestCheckUnreadable:
             f.write(b"not a valid mp3")
         ctx.db = db_open(MEMORY)
         with Session(ctx.db) as session:
-            scanner.scan(ctx, session)
+            run_scan(ctx, session)
             [(album,)] = session.execute(select(Album)).tuples()
             result = CheckUnreadableTrack(ctx).check(album)
             assert result is not None

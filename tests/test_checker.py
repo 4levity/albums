@@ -8,7 +8,7 @@ from albums.app import Context
 from albums.checks.checker import Checker
 from albums.database import MEMORY, db_open, load_album_entities
 from albums.entities import Album, Track
-from albums.library import scanner
+from albums.library import run_scan
 from albums.tagger import BasicField
 
 from .fixtures.create_library import create_library
@@ -63,7 +63,7 @@ class TestChecker:
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
-                scanner.scan(ctx, session)
+                run_scan(ctx, session)
                 session.commit()
 
                 showed_issues = Checker(ctx, automatic=True, preview=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(
@@ -147,7 +147,7 @@ class TestChecker:
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
-                scanner.scan(ctx, session)
+                run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
                     "albums.interactive.interact.choice",
@@ -195,7 +195,7 @@ class TestChecker:
         try:
             with Session(ctx.db) as session:
                 ctx.select_album_entities = lambda s: load_album_entities(s)
-                scanner.scan(ctx, session)
+                run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
                     "albums.interactive.interact.choice",

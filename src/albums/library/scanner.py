@@ -24,7 +24,7 @@ from .scanner_types import AlbumScanResult
 logger = logging.getLogger(__name__)
 
 
-def scan(
+def run_scan(
     ctx: Context,
     session: Session | None = None,
     scan_albums: Iterator[Album] | None = None,
@@ -34,7 +34,7 @@ def scan(
     if session is None:
         with Session(ctx.db) as session:
             try:
-                (albums_total, any_changes) = scan(ctx, session, scan_albums, reread)
+                (albums_total, any_changes) = run_scan(ctx, session, scan_albums, reread)
                 if any_changes:
                     session.commit()
                 return (albums_total, any_changes)

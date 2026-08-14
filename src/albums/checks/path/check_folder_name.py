@@ -11,8 +11,8 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 from albums.tagger import BasicField
+from albums.utility import get_album_name_from_tracks, get_artist_from_tracks
 
 logger: Final = logging.getLogger(__name__)
 

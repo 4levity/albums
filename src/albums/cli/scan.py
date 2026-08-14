@@ -5,7 +5,7 @@ import rich_click as click
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.library import scanner
+from albums.library import run_scan
 
 from .cli_context import pass_context, require_configured, require_library
 
@@ -23,6 +23,6 @@ def scan(ctx: Context, reread: bool):
         logger.debug("scan already done, not scanning again")
         return
     with Session(ctx.db) as session:
-        (_, any_changes) = scanner.scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
+        (_, any_changes) = run_scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
         if any_changes:
             session.commit()

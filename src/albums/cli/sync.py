@@ -8,8 +8,7 @@ from prompt_toolkit import choice
 
 from albums.app import Context
 from albums.config import RescanOption, SyncDestination
-from albums.library.scanner import scan
-from albums.library.synchronizer import Synchronizer
+from albums.library import Synchronizer, run_scan
 
 from .cli_context import pass_context, require_configured, require_library, require_persistent_context
 
@@ -77,6 +76,6 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
 
     if ctx.config.rescan == RescanOption.AUTO:
         ctx.console.print("Scanning library before sync (see config settings.rescan to disable this)")
-        scan(ctx)
+        run_scan(ctx)
 
     Synchronizer(ctx, dest).do_sync(delete, force)

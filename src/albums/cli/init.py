@@ -8,7 +8,7 @@ from rich.markup import escape
 from albums.app import Context
 from albums.config import PLATFORM_DIRS, config_load, config_save
 from albums.database import db_open
-from albums.library import scanner
+from albums.library import run_scan
 
 from .cli_context import pass_context
 
@@ -44,6 +44,6 @@ def init(ctx: Context, library_path: str | None):
         ctx.config.library = library
         config_save(ctx.db, ctx.config)
         ctx.console.print(f"scanning library {escape(str(library))}", highlight=False)
-        scanner.scan(ctx)
+        run_scan(ctx)
     finally:
         ctx.db.dispose()

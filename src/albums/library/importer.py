@@ -14,11 +14,10 @@ from rich.progress import Progress, TransferSpeedColumn
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.checks.checker import Checker
 from albums.entities import Album
 from albums.library.duplicates import DuplicateFinder, album_in_library
 from albums.library.paths import make_template_paths
-from albums.library.scanner import scan
+from albums.library.scanner import run_scan
 from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ class Importer:
         self._automatic = automatic
 
     def scan(self):
-        (albums_total, _) = scan(self.ctx, check_first_full_scan_path_count=lambda ct: self._check_path_count(ct))
+        (albums_total, _) = run_scan(self.ctx, check_first_full_scan_path_count=lambda ct: self._check_path_count(ct))
         if albums_total == 0:
             self.ctx.console.print(f"Album not found at {escape(str(self.ctx.config.library))}")
             raise SystemExit(1)
@@ -61,6 +60,8 @@ class Importer:
         return albums_total
 
     def run(self):
+        from albums.checks.checker import Checker  # avoid circular dependency
+
         checker = Checker(self.ctx, self._automatic, preview=False, fix=False, interactive=True, show_ignore_option=True)
         non_interactive_checker = Checker(self.ctx, False, False, False, False, False)
         with Session(self.ctx.db) as session:

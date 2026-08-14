@@ -10,7 +10,7 @@ from albums.app import Context
 from albums.checks.picture.check_cover_unique import CheckCoverUnique
 from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
-from albums.library import scanner
+from albums.library import run_scan
 from albums.picture import PictureInfo
 from albums.tagger import PictureType
 
@@ -76,7 +76,7 @@ class TestCheckCoverUnique:
         ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                scanner.scan(ctx, session)
+                run_scan(ctx, session)
                 (album,) = session.execute(select(Album)).tuples().one()
                 result = CheckCoverUnique(ctx).check(album)
                 assert result is not None

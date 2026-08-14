@@ -17,9 +17,9 @@ from albums.checks.helpers import FRONT_COVER_FILENAME
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 from albums.entities import Album
 from albums.interactive.image_table import render_image_table
-from albums.library.tag_tools import get_album_name_from_tracks, get_artist_from_tracks
 from albums.picture import SUPPORTED_IMAGE_SUFFIXES
 from albums.tagger import AlbumTagger, Cap, Picture, PictureType
+from albums.utility import get_album_name_from_tracks, get_artist_from_tracks
 
 from ..path.check_cover_filename import CheckCoverFilename, parse_config_cover_filename
 

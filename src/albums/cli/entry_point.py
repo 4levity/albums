@@ -4,7 +4,7 @@ import rich_click as click
 import albums
 from albums import app
 from albums.database import Comparator
-from albums.library import scanner
+from albums.library import run_scan
 
 from .check import check
 from .checks_ignore import checks_ignore
@@ -60,7 +60,7 @@ def albums_group(
     initial_scan = setup(ctx, app_context, verbose, filter_criteria, dir, invert, db_file)
 
     if initial_scan:
-        scanner.scan(app_context)
+        run_scan(app_context)
         app_context.prescanned = True
 
 

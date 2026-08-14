@@ -8,7 +8,7 @@ from albums.app import Context
 from albums.entities import Album, FieldV
 from albums.tagger import BasicField
 
-from .tag_tools import get_album_name_from_tracks, get_artist_from_tracks
+from ..utility import get_album_name_from_tracks, get_artist_from_tracks
 
 
 def album_in_library(ctx: Context, album: Album) -> str | None:
