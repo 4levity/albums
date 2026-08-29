@@ -34,7 +34,7 @@ def interact(
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
     deleted = False
-    user_quit = False  # user explicitly quit this checkRenderableType
+    user_quit = False  # user explicitly quit this check
 
     OPTION_RUN_TAGGER = f">> Edit tags with {ctx.config.tagger or 'external tagger'}"
 

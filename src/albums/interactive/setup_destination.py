@@ -124,7 +124,7 @@ def _configure_destination(ctx: Context, destination_ix: int):
             dest.allow_file_types = [str.lower(file_type) for file_type in file_types]
         elif option == "max_kbps":
             while not str.isdecimal(
-                max_kbps := prompt("Max average bitrate in kbps (kilobytes per second) or 0 to allow all: ", default=str(dest.max_kbps))
+                max_kbps := prompt("Max average bitrate in kbps (kilobits per second) or 0 to allow all: ", default=str(dest.max_kbps))
             ):
                 pass
             dest.max_kbps = int(max_kbps)

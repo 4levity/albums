@@ -134,7 +134,7 @@ class CheckCoverAvailable(Check):
         command = self._generate_get_cover_command(album, artist_name, album_name)
         expect_pattern = str(self.ctx.config.library / album.path / self.filename_pattern)
         if any(iglob(expect_pattern)):
-            logger.error(f"_fix_get_cover was called but there is already a file at {expect_pattern}")
+            logger.error(f"_fix_retrieve_cover was called but there is already a file at {expect_pattern}")
             return FixResult.NO_CHANGE
 
         self.ctx.console.print(f"Trying to retrieve album cover with: {self._preview_get_cover_command(album, artist_name, album_name)}")

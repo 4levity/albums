@@ -68,10 +68,10 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
             albums = values_by_freq[BasicField.ALBUM]
             album_v = safe_path_element(albums[0][0])
             if len(albums) > 1:
-                logger.warning(f"generating library path: more than one album artist value, using {album_v}")
+                logger.warning(f"generating library path: more than one album value, using {album_v}")
         if not album_v:
             album_v = "Unknown Album"
-            logger.warning(f"generating library path: no album artist or artist fields, using {artist_v}")
+            logger.warning(f"generating library path: no album field, using {album_v}")
 
     a1_v = str.lower(safe_path_element(artist_v[4] if artist_v.lower().startswith("the ") and len(artist_v) > 4 else artist_v[0]))
     if a1_v.isnumeric():

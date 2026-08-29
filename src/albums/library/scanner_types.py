@@ -4,7 +4,7 @@ from typing import Final
 
 from albums.entities import OtherFile, PictureFile, Track
 
-MAX_IMAGE_SIZE: Final = 128 * 1024 * 1024  # don't load and scan image files larger than this. 16 MB is the max for ID3v2 and FLAC tags.
+MAX_IMAGE_SIZE: Final = 128 * 1024 * 1024  # don't load and scan image files larger than this
 
 
 @dataclass(frozen=True)

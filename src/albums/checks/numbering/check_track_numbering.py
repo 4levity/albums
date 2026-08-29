@@ -67,7 +67,7 @@ class TrackTotalFixer(Fixer):
         elif option.startswith(OPTION_USE_MAX):
             new_tracktotal = self.max_tracktotal
         else:
-            logger.error(f"invalid option for fix_interactive: {option}")
+            logger.error(f"invalid option for TrackTotalFixer: {option}")
             return FixResult.NO_CHANGE
 
         changed = False

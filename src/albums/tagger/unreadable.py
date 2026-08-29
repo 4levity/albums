@@ -37,7 +37,7 @@ class UnreadableTagger(TaggerFile):
 
     @override
     def remove_picture(self, remove_picture: Picture) -> None:
-        raise ValueError(f"cannot add picture - unreadable file {self._filename}")
+        raise ValueError(f"cannot remove picture - unreadable file {self._filename}")
 
     @override
     def close(self) -> None:

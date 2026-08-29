@@ -26,7 +26,6 @@ def sql(ctx: Context, sql_command: str, json: bool):
                 if json:
                     json_dump = dumps([[v for v in row] for row in cursor.fetchall()])
                     ctx.console.print_json(json_dump)
-                    # more compact: ctx.console.print(dumps(json_dump))
                 else:
                     column_names = list(
                         [

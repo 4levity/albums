@@ -24,7 +24,7 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
             error = False
             for target_check in check_names:
                 if target_check not in ALL_CHECK_NAMES:
-                    ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help')
+                    ctx.console.print(f'"{target_check}" is not a valid check name. See [bold]albums check --help[/bold]')
                     error = True
                 if target_check in album.ignore_checks:
                     ctx.console.print(f"album {album_display_name(ctx, album)} is already configured to ignore {target_check}")

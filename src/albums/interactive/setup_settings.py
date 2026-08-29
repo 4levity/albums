@@ -140,7 +140,7 @@ def _configure_setting(
                     ctx.console.print("[bold red]Error: the specified path exists and is not a directory[/bold red]")
                     return
                 if not (cache / "index.json").exists():
-                    if not confirm("This destination already exists. Any files here may be deleted! Are you sure you want to use this path?"):
+                    if not confirm("This transcoder cache already exists. Any files here may be deleted! Are you sure you want to use this path?"):
                         return
             elif not cache.parent.exists():
                 ctx.console.print("[bold red]Error: The parent directory of the transcoder cache does not exist.[/bold red]")

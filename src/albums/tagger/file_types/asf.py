@@ -198,7 +198,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     (disc_number, _) = self._get_wm_partofset()
                     self._set_wm_partofset(disc_number, value_list[0] if value_list[0] else None)
                 case BasicField.RELEASECOUNTRY | BasicField.RELEASETYPE:
-                    raise ValueError(f"cannot set {field.name} in ID3 tag on {self._get_file().filename}")
+                    raise ValueError(f"cannot set {field.name} in ASF tag on {self._get_file().filename}")
                 case BasicField.TRACKNUMBER:
                     (_, track_total) = self._get_wm_tracknumber()
                     self._set_wm_tracknumber(value_list[0] if value_list[0] else None, track_total)
