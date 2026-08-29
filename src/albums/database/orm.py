@@ -92,7 +92,7 @@ class SafeStringEnum[EnumType](TypeDecorator[EnumType]):
         return None if value is None else value.value  # type: ignore
 
     @override
-    def process_result_value(self, value: int | None, dialect: Dialect) -> EnumType:
+    def process_result_value(self, value: str | None, dialect: Dialect) -> EnumType:
         try:
             return self._enum_type(value)
         except ValueError:
