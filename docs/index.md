@@ -5,8 +5,8 @@ icon: lucide/target
 # Overview
 
 `albums` is an interactive tool to manage music: validate and fix tags and
-metadata, rename files, reformat and embed album art, import albums, and sync
-parts of the library to digital audio players or portable storage
+metadata, rename files, adjust and embed album art, import albums, and sync
+parts of the library to digital audio players or portable storage.
 
 This documentation is for `albums` version **%%version_placeholder%%**.
 
@@ -37,7 +37,7 @@ default settings, run: `albums --dir /path/to/an/album check`. Add `--fix` at
 the end to see repair options or `--help` for more choices. Using the `--dir`
 (or `-d`) option, no data is stored between runs.
 
-Albums can store information about a library of music in its database. Run
+`albums` can store information about a library of music in its database. Run
 `albums init` to get started. It may take several minutes to index a large
 collection. Configuration settings are also stored in the database and can be
 customized by running `albums config`. See [Usage](./usage.md).
@@ -56,7 +56,7 @@ x86 or ARM system with Linux, macOS or Windows.
 
 Binary releases for 64-bit Linux or Windows do not have any Python requirement.
 
-Albums is primarily tested on Linux and Windows.
+`albums` is primarily tested on Linux and Windows.
 
 ## Risks
 
@@ -70,7 +70,7 @@ By using this software, you voluntarily assume the risk that it might:
   computer via hypothetical vulnerabilities in libraries or your OS.
 - corrupt files while changing tags due to hypothetical Mutagen bugs.
 - make incomplete copies of albums if there are bugs in the sync code.
-- delete entire directory trees if you use the `sync` command incorrectly with
-  `--delete` **and** confirmation or use `--force`.
+- delete entire directory trees if you use the `sync` command incorrectly —
+  with `--delete` and confirmation, or with `--force`.
     - Even if you set the correct `sync` location, the `--delete` option could
       delete files from your digital audio player that you wanted to keep.

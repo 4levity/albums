@@ -9,7 +9,7 @@ Track number and disc number field issues.
 ## disc-in-track-number
 
 If the disc number and track number are combined in the track number field with
-a dash (i.e. track number="2-03") instead of being in separate fields, this is
+a dash (e.g. track number="2-03") instead of being in separate fields, this is
 treated as an error. Subsequent checks require track numbers to be numeric.
 
 **Automatic fix**: Split the values into track number and disc number fields.
@@ -34,7 +34,7 @@ Otherwise, delete the field.
 ## disc-numbering
 
 Reports on issues with disc number and disc total (`TPOS` in ID3). Optionally,
-removes redundant disc number field for sets of one. See configuration to
+removes redundant disc number field for sets of one. Use the options below to
 control whether multiple disc sets should be required to have all tracks in one
 folder. Mismatching disc total values are one reason players incorrectly split
 albums.
@@ -76,11 +76,11 @@ tracks, set the same total on the others.
     be true. If discs are in separate folders, disc 1 might be part of a set.
 
 > When `discs_in_separate_folders` is enabled (default), this check will
-> **ignore** when an album has only one disc of a multiple disc set. But that
+> **ignore** albums that have only one disc of a multiple disc set. But that
 > also means it cannot tell whether an album is missing a disc number or whether
 > disc total is correct. If you can put multiple-disc albums together in one
-> folder, do that and set `discs_in_separate_folders` to **false**. Then, if
-> wanted, you can also set `remove_redundant_discnumber` to **true**.
+> folder, do that and set `discs_in_separate_folders` to **false**. Then,
+> if desired, you can also set `remove_redundant_discnumber` to **true**.
 
 ## track-numbering
 

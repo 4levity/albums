@@ -23,7 +23,7 @@ Each check applies a user-defined policy for the corresponding field. The
 
 If any track has a value, then all values must be the same.
 
-**Automatic fix** If the policy is "never", always remove the field. If the
+**Automatic fix**: If the policy is "never", always remove the field. If the
 policy is "consistent" or "always", and a consistent value is set but only on
 some tracks, set that value on the tracks which have no value. And if the policy
 is "consistent" but no single value is identified, remove the field from all

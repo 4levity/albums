@@ -75,7 +75,7 @@ other formats.
 
 ## album-art
 
-Image files embedded in tracks should be a reasonable size and in a
+Embedded images should be a reasonable size and in a
 widely-supported format.
 
 Rules:
@@ -104,7 +104,7 @@ checks to re-embed proper cover art.
 
 If any track has embedded pictures, or if there are any image files in the
 folder, the album is expected to have front cover art, meaning one of the
-embedded images or filenames should indicate that it's cover art. Optionally,
+embedded images or image files should be recognizable as cover art. Optionally,
 cover art can be required for all albums (see settings).
 
 If there are any non-cover images available, this check offers a fix to select
@@ -167,7 +167,7 @@ If [SACAD](https://github.com/desbma/sacad) is installed (assumed if the command
 
 ## cover-unique
 
-Usually, albums should have a single unique image as cover art, or, one cover
+Usually, albums should have a single unique image as cover art, or one cover
 image embedded in the tracks plus a higher-resolution image file.
 
 Rules:
@@ -239,7 +239,7 @@ square as the `squareness` setting but at least as square as the
 `fixable_squareness` setting, fix it by cropping first (see options), and if
 necessary squashing it the rest of the way. The new square cover image will be
 saved as a file with the configured type and marked as "front cover source" for
-the album. If the unsquare source was an image file, it will be deleted.
+the album. If the unsquare source is an image file, it will be deleted.
 
 If **embedded** front cover images are present they are **not** changed by this
 fix. The new cover image file is set as "front cover source".
@@ -274,14 +274,14 @@ When there are existing embedded covers that do not meet the above requirements,
 the presence of more than one unique front cover image will prevent automatic
 fixes by this check, to avoid automatically overwriting per-track cover art.
 
-When the above requirements above **are** met, this check will pass. To cause
+When the above requirements **are** met, this check will pass. To cause
 `albums` to embed new cover art when there is "good enough" cover art already,
 place high resolution cover art in the folder named `cover.jpg` (or another
 recognized front cover filename) and run the `cover-unique` check, which should
-offer to mark the new art as "front cover source". Subsequently, as long as the
-size or MIME type of the previous embedded cover is not exactly the same as what
-this check is configured to generate, the new cover can be embedded into tracks
-by this check.
+offer to mark the new art as "front cover source". Afterwards, this check will
+embed the new cover into the tracks, as long as the previously embedded
+cover's size or MIME type differs from what this check is configured to
+generate.
 
 !!!success "Dependency"
 

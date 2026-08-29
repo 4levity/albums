@@ -24,7 +24,7 @@ Usage: **albums** \[**OPTIONS**\] **COMMAND** \[**ARGS**\]
 1. **Options** come _before_ the command. Some options are for selecting which
    albums or folders the following command will operate on.
 1. **Command** must be specified, like "list" or "check".
-1. **Args** some commands take arguments which come _after_ the command.
+1. **Args**: some commands take arguments that come _after_ the command.
 
 ## Basic Commands
 
@@ -93,7 +93,8 @@ the specified conditions will be included.
 
 `add` and `remove` - These commands add or remove associations between the
 selected albums and arbitrary named "collections," which can be used to filter
-future operations. Or use `select` to interactively add/remove from a list.
+future operations. Or use `select` to interactively add or remove albums
+from a list.
 
 `ignore` and `notice` - These commands cause the selected albums to ignore or
 stop ignoring certain checks.
@@ -109,7 +110,8 @@ the library - see [Import](./import.md).
 
 To set up `albums` configuration options interactively, run `albums config`. See
 `albums config --help` for other ways to configure. Configuration options for
-individual checks are described in [All Checks](./all_checks.md).
+individual checks are described on the individual check pages (see [About
+Checks](./check_and_fix.md)).
 
 #### Global Settings
 
@@ -149,14 +151,14 @@ filenames. The compatibility options come from
 **`rescan`**: Rescan the library before performing other operations. If the
 operation is filtered then only selected albums will be re-scanned. Options:
 
-- `always`: always scan the library so you never need to run "albums scan" but
-  may be slow
+- `always`: always scan the library so you never need to run "albums scan"
+  (but scanning may be slow)
 - `never`: never automatically scan the library, you must run "albums scan" if
   it has changed
 - `auto` _(default)_: scan on first run and before "check" or "sync" operations
 
 **`tagger`**: If this option is set or if EasyTAG is installed, the fix menu
-will have a menu option to execute an external tagging program. The path of the
+will have an option to execute an external tagging program. The path of the
 album will be the first parameter.
 
 **`id3v1`**: ID3 version 2 tags are always used. This setting describes what to

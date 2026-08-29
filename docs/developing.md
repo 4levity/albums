@@ -12,8 +12,8 @@ icon: lucide/computer
 
 ## Overview
 
-Run `make` to install dependencies + lint + test. The first time dependencies
-are installed, it needs to be running in an environment with Python 3.12+.
+Run `make` to install dependencies + lint + test. The first run requires
+Python 3.12+.
 
 ### Run
 
@@ -166,7 +166,7 @@ files with basic fields must read/write each one. Add a tag field by:
    `AbstractId3Tagger`
 4. For other types: implement in
    [`tagger/file_types/`](src/albums/tagger/file_types/)
-5. Add a test exercise in the appropriate `tests/checks/fields/` test file
+5. Add a test case in the appropriate `tests/checks/fields/` test file
 
 ## Tips
 

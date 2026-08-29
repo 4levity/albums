@@ -96,7 +96,7 @@ The default template `"$track_auto $title_auto"` generates filenames like this:
 
 !!!success "Dependency"
 
-    Requires the `"album-artist`, `artist`, `track-numbering`, and
+    Requires the `album-artist`, `artist`, `track-numbering`, and
     `track-title` checks to all pass first.
 
 **Automatic fix**: Rename all tracks according to configuration.
@@ -107,10 +107,11 @@ The default template `"$track_auto $title_auto"` generates filenames like this:
 
 ## cover-filename
 
-If the front cover image is in a file with a recognizable name, it should have a
-consistent name. For example, `albums` recognizes `.folder.png` and
-`AlbumArtSmall.jpg` and other variations as front cover images. This check flags
-if one of those files exists, but the "standard" cover image file does not.
+If the front cover image is in a file with a recognizable name, that file
+should have the standard name. For example, `albums` recognizes `.folder.png`
+and `AlbumArtSmall.jpg` and other variations as front cover images. This check
+flags if one of those files exists, but the "standard" cover image file does
+not.
 
 **Automatic fix**: If there is exactly one front cover file, rename or convert
 it according to the options.

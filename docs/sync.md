@@ -24,10 +24,10 @@ to a digital audio player, phone or memory card. The command
 
 If albums are removed from the collection, or folders/files are renamed, running
 another sync to the same destination could leave unwanted or duplicate files.
-Alternatively, the `--delete` option and `albums` will **delete every file in
-the destination that is not being synced!** This is good if the destination is,
-for example, a folder on a memory card for a digital audio player, which doesn't
-contain any other data, and `albums sync` will manage everything there.
+Alternatively, with the `--delete` option, `albums` will **delete every file
+in the destination that is not being synced!** This is good if the destination
+is, for example, a folder on a memory card for a digital audio player, which
+doesn't contain any other data, and `albums sync` will manage everything there.
 
 ## Sync Destination
 
@@ -89,9 +89,8 @@ Example convert profile for 320kbps MP3: `-b:a 320k mp3`
 
 When the transcoder is used, all converted files are stored in the "transcoder
 cache" before copying. By default this cache is in the user data directory. The
-transcoder cache size limit is set to 16 gigabytes by default, and this is a
-soft limit: size limits are only applied before and after sync, and while older
-caches are removed, the most recently used per-format cache is retained
-regardless of size.
+transcoder cache size limit is set to 16 gigabytes by default. This is a soft
+limit, applied only before and after sync. Older caches are removed, but the
+most recently used per-format cache is retained regardless of size.
 
 The transcoder cache location and soft limit are set in `albums config`.

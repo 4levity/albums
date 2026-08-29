@@ -4,7 +4,8 @@ icon: lucide/list-checks
 
 # Checks: General Fields
 
-Field checks not related to numbering, pictures or general per-album fields.
+Field checks not related to numbering, pictures or the per-album fields on
+the [Album Fields](./checks_fields_per_album.md) page.
 
 ## extra-whitespace
 
@@ -82,8 +83,9 @@ An "artist" should be present on all tracks. If it is _missing_ from any tracks,
 candidates to fix include the values for artist and album artist taken from all
 tracks in the album.
 
-If the parent folder containing the album folder is not a prohibited name, it is
-also a candidate. Prohibited names can be configured with an option.
+If the name of the parent folder containing the album folder is not in the
+ignore list, the parent folder name is also a candidate. Ignored names can be
+configured with an option.
 
 !!!success "Dependency"
 
@@ -113,7 +115,7 @@ track number.
 
 To configure how `albums` will combine multiple values, use the `concatenators`
 option. Pay attention to whether or not the separator includes extra spaces -
-the first option gives "Alice / Bob" and the second is "Alice/Bob".
+the first option gives "Alice / Bob" and the second gives "Alice/Bob".
 
 By default, whichever concatenator is first will be used when automatic fix is
 requested. To disable this, change the automatic_concatenate option.
@@ -146,8 +148,8 @@ examples:
 - `the title.flac` _(if nothing else matches)_
 
 If the filename looks like a track number only, no title guess will be made.
-However, if the title doesn't match any recognized pattern, the guess will be
-the whole filename except for the extension.
+However, if the filename doesn't match any recognized pattern, the guess will
+be the whole filename except for the extension.
 
 **Automatic fix**: If every file that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
@@ -162,7 +164,7 @@ album. The presence policy options are:
 - **"always"**: all tracks should have genre
 - **"never"**: genre should be removed
 
-**Automatic fix** If the policy is "never", always remove the genre. If the
+**Automatic fix**: If the policy is "never", always remove the genre. If the
 policy is "always", and a consistent genre is set on some tracks, set the same
 genre on the others.
 
@@ -180,7 +182,7 @@ genre on the others.
 
 !!!note
 
-    Albums reads MusicBrainz fields and checks for consistency, but it doesn't
+    `albums` reads MusicBrainz fields and checks for consistency, but it doesn't
     use the MusicBrainz API or check whether IDs are correct. Use a tool like
     [MusicBrainz Picard](https://picard.musicbrainz.org/) or
     [beets](https://beets.io/) to create and update MusicBrainz fields.
@@ -189,12 +191,13 @@ Whether or not you use MusicBrainz, inconsistencies in MusicBrainz fields within
 an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
-interpret this as two separate albums even if Other Fields are all the same.
+interpret this as two separate albums even if all the other (non-MusicBrainz)
+fields are the same.
 This check reports when those fields are not set consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
 MusicBrainz, you might want to remove all MusicBrainz fields to avoid conflicts
-between them and the standard fields. If you do use MusicBrains, you may want to
+between them and the standard fields. If you do use MusicBrainz, you may want to
 remove deprecated MusicBrainz fields (`MusicBrainz TRM Id`).
 
 **Automatic fix**: If `MusicBrainz Album Id` or `MusicBrainz Album Artist Id` is

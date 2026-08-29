@@ -15,9 +15,13 @@ unintended results. If it goes very badly, simply restore your backup.
 !!!note
 
     Check configuration is stored in the `albums` database. Every check may be
-    enabled or disabled. Some checks have other settings, described in
-    [All Checks](./all_checks.md). To enable, disable or configure checks, run
-    `albums config`.
+    enabled or disabled. Some checks have other settings, described on the
+    individual check pages ([Path and File](./checks_path_and_file.md),
+    [Numbering](./checks_fields_numbering.md),
+    [General Fields](./checks_fields_general.md),
+    [Album Fields](./checks_fields_per_album.md) and
+    [Pictures](./checks_pictures.md)). To enable, disable or configure checks,
+    run `albums config`.
 
 ## Check Command
 
@@ -29,7 +33,7 @@ specified. You can filter what albums are examined. See `albums --help` and
 
 Run checks on any directory (outside the library) with the `--dir` option, which
 can fix files but will not store data (such as ignoring certain checks or
-marking front cover image files) Otherwise, checks will run against the most
+marking front cover image files). Otherwise, checks will run against the most
 recent scan of the library.
 
 !!!tip
