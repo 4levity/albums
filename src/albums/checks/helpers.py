@@ -1,3 +1,5 @@
+"""Shared helpers for checks: track ordering and numbering, field value formatting, filename parsing and file deletion."""
+
 import re
 from collections import defaultdict
 from os import unlink
@@ -19,11 +21,7 @@ def album_display_name(ctx: Context, album: Album) -> str:
 
 
 def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | None:
-    """
-    Return a dict mapping a list of tracks to discnumber values if possible. Tracks with no discnumber are mapped to 0.
-
-    Result will be None if any track has multiple or non-numeric tracknumber or discnumber values, or a discnumber of 0.
-    """
+    """Group tracks by disc number (tracks without a disc number go to disc 0). Return None if any track has missing, multiple, non-numeric, or zero track/disc numbers."""
     if any(
         not (
             len(track.get(BasicField.TRACKNUMBER, default=["0"])) == 1
@@ -48,6 +46,7 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
 
 
 def ordered_tracks(album: Album):
+    """Return album tracks in playback order: by disc/track number fields when every track has a track number, falling back to filename sort otherwise."""
     # sort by discnumber/tracknumber field if all tracks have one
     has_discnumber = all(len(track.get(BasicField.DISCNUMBER, default=[])) == 1 for track in album.tracks)
     if all(len(track.get(BasicField.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
@@ -60,6 +59,7 @@ def ordered_tracks(album: Album):
 
 
 def describe_track_number(track: Track):
+    """Format a track's disc/track number as a human-readable string, noting missing numbers."""
     fields = track.field_dict()
 
     if BasicField.DISCNUMBER in fields or BasicField.DISCTOTAL in fields:
@@ -72,6 +72,7 @@ def describe_track_number(track: Track):
 
 
 def format_field_values(values: Sequence[str] | None) -> str:
+    """Format field values for display: ``None`` as "None", a single value as-is, multiple values as a list."""
     if values is None:
         return "[bold italic]None[/bold italic]"
     if len(values) == 1:
@@ -80,6 +81,7 @@ def format_field_values(values: Sequence[str] | None) -> str:
 
 
 def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
+    """Parse ``disc-track title`` or ``track title`` from a filename; returns (disc, track, title), with missing parts as ``None``."""
     filename_parser = "(?P<track1>\\d+)?(?:-(?P<track2>\\d+)?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
     match = re.fullmatch(filename_parser, filename)
     if not match:
@@ -102,6 +104,7 @@ def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
 
 
 def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, filenames: Collection[str]):
+    """Delete the given album files from disk except for the kept filename; returns a FixResult for whether anything changed."""
     if keep_filename is not None and keep_filename not in filenames:
         raise ValueError(f"invalid option {keep_filename} is not one of {filenames}")
 

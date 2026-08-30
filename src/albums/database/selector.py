@@ -1,3 +1,5 @@
+"""Query the database for albums and collections, including filterable album selection."""
+
 import logging
 from dataclasses import dataclass
 from enum import StrEnum
@@ -102,6 +104,7 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
 def _compare(
     value: InstrumentedAttribute[str] | InstrumentedAttribute[int] | ScalarSelect[str] | ScalarSelect[int], comparator: Comparator, target: str | int
 ):
+    """Build a SQLAlchemy comparison clause for the given comparator."""
     match comparator:
         case Comparator.EQ:
             return value == target

@@ -1,3 +1,5 @@
+"""Interactive menus for reviewing check issues and choosing fixes."""
+
 import logging
 import os
 import platform
@@ -30,6 +32,12 @@ OPTION_IGNORE_CHECK: Final = ">> Ignore this check for this album"
 def interact(
     ctx: Context, session: Session, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool
 ) -> Tuple[bool, bool, bool]:
+    """Prompt the user to fix a check issue (fixer options, free text, ignore, open folder, etc.) until resolved or skipped.
+
+    Returns:
+        Tuple of (maybe_changed, deleted, user_quit): whether a fix changed anything, whether the album was deleted,
+        and whether the user chose to do nothing (skip) rather than fix.
+    """
     fixer = check_result.fixer
     done = False  # allow user to start over if canceled by accident or not confirmed
     maybe_changed = False
@@ -126,6 +134,7 @@ def interact(
 
 
 def prompt_ignore_checks(session: Session, album_id: int, check_name: str):
+    """Ask whether to ignore the given check for the album, persisting the choice; returns whether the check is now ignored."""
     album = session.execute(select(Album).where(Album.album_id == album_id)).tuples().one()[0]
     if check_name in album.ignore_checks:
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')

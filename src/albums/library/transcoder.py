@@ -1,3 +1,5 @@
+"""Transcode audio with ffmpeg into a persistent, size-managed cache of transcoded files."""
+
 from __future__ import annotations
 
 import glob
@@ -25,6 +27,8 @@ logger: Final = logging.getLogger(__name__)
 
 @dataclass
 class CacheStat:
+    """Name, total size and last-modified timestamp of a transcoder cache; orders by timestamp (oldest first)."""
+
     name: str
     size: int
     timestamp: int
@@ -34,6 +38,8 @@ class CacheStat:
 
 
 class Transcoder:
+    """Transcode tracks on demand into a per-profile cache, shrinking older profile caches to fit the configured size."""
+
     ctx: Context
     file_type: str
     initialized = False
@@ -54,11 +60,13 @@ class Transcoder:
         self._this_cache = self.ctx.config.transcoder_cache / xxhash.xxh3_64_hexdigest(self._descriptor)
 
     def in_cache(self, album: Album, track: Track) -> Path | None:
+        """Return the cached transcoded path for a track if it exists, else ``None``."""
         self._initialize()
         cache_path = self._cache_path(album.path, track.filename)
         return cache_path if cache_path.exists() else None
 
     def get_transcoded(self, album: Album, track: Track) -> Path:
+        """Return the cached transcoded path for a track, transcoding it first if not already cached."""
         self._initialize()
         cache_path = self._cache_path(album.path, track.filename)
         if cache_path.exists():
@@ -70,6 +78,7 @@ class Transcoder:
         return cache_path
 
     def shrink_cache(self):
+        """Delete entire older profile caches until the total cache size fits the configured maximum."""
         if sum(c.size for c in self._cache_stats.values()) == 0:
             self._scan_cache()
         cache_max = self.ctx.config.transcoder_cache_size
@@ -194,12 +203,14 @@ class Transcoder:
 
 
 def ensure_ffmpeg() -> None:
+    """Abort with an error message if ffmpeg is not on the path."""
     if not which("ffmpeg"):
         logger.error("ffmpeg not found on path - aborting because transcoding is unavailable")
         raise SystemExit(1)
 
 
 def run_ffmpeg(args: Sequence[str], cwd: Path) -> None:
+    """Run ffmpeg with the given arguments in the given directory, logging errors on nonzero exit."""
     result = subprocess.run(["ffmpeg", *args], cwd=cwd)
     if result.returncode != 0:
         logger.error(f"failed to run ffmpeg, exit code = {result.returncode}")

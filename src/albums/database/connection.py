@@ -1,3 +1,5 @@
+"""Open or create the application database engine, running migrations and maintenance as needed."""
+
 import logging
 import sys
 from pathlib import Path
@@ -19,6 +21,7 @@ MEMORY: Final = ":memory:"
 
 @event.listens_for(Engine, "connect")
 def enable_foreign_keys(connection: Any, _):
+    """Enable SQLite foreign key enforcement on every new connection."""
     if isinstance(connection, SQLite3Connection):
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = ON;")

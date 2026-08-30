@@ -1,3 +1,5 @@
+"""Import albums from outside the library: scan, fix, check and copy them into the library."""
+
 import glob
 import logging
 import os
@@ -24,6 +26,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 class Importer:
+    """Import a folder of audio into the library, running checks/fixes first and detecting duplicate albums."""
+
     ctx: Context
     _parent_context: Context
     _library: Path
@@ -45,6 +49,7 @@ class Importer:
         self._automatic = automatic
 
     def scan(self):
+        """Scan the import folder into the child context's database and initialize the duplicate finder."""
         (albums_total, _) = run_scan(self.ctx, check_first_full_scan_path_count=lambda ct: self._check_path_count(ct))
         if albums_total == 0:
             self.ctx.console.print(f"Album not found at {escape(str(self.ctx.config.library))}")
@@ -60,6 +65,7 @@ class Importer:
         return albums_total
 
     def run(self):
+        """Check and fix each scanned album interactively, then copy it into the library at a chosen path."""
         from albums.checks.checker import Checker  # avoid circular dependency
 
         checker = Checker(self.ctx, self._automatic, preview=False, fix=False, interactive=True, show_ignore_option=True)
@@ -124,6 +130,7 @@ class Importer:
             raise SystemExit(1)
 
     def import_album(self, source_path: Path, destination_path_in_library: str, album: Album):
+        """Copy the album's files (tracks, picture files, optionally extras) into the library at the destination path."""
         src = source_path.resolve()
         if not src.is_dir():
             logger.error(f"import_album: not a directory: {str(src)}")

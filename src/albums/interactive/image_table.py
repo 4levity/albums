@@ -1,3 +1,5 @@
+"""Render terminal pixel-art tables of images for visual comparison of covers."""
+
 import io
 import logging
 from math import sqrt
@@ -22,6 +24,7 @@ def render_image_table(
     pictures: Sequence[Picture | Tuple[Picture, Image.Image, bytes]],  # type: ignore
     picture_sources: Dict[Picture, List[str]],
 ) -> Sequence[Sequence[RenderableType]]:
+    """Render a table row of scaled pixel images with size/dimension captions, noting similarity to a reference image when comparing multiple pictures."""
     pixels_images: list[RenderableType] = []
     target_width = int((ctx.console.width - 3) / len(pictures))
     target_height = (ctx.console.height - 10) * 2

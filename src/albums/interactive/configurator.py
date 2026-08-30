@@ -1,3 +1,5 @@
+"""Interactive configuration menu: settings, checks, and sync destinations."""
+
 from prompt_toolkit.shortcuts import checkboxlist_dialog, choice
 
 from albums.app import Context
@@ -8,6 +10,7 @@ from .setup_settings import configure_settings
 
 
 def interactive_config(ctx: Context):
+    """Run the interactive configuration menu until the user exits."""
     done = False
     while not done:
         option = choice(

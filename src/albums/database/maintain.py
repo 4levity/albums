@@ -1,3 +1,5 @@
+"""Post-maintenance of the database: clean up orphaned rows and reclaim disk space."""
+
 import logging
 from typing import Final
 
@@ -12,6 +14,7 @@ SQL_CLEANUP: Final = "DELETE FROM collection WHERE collection_id NOT IN (SELECT 
 
 
 def maintain(db: Engine):
+    """Delete orphan collections, log the database size, and VACUUM when wasted space exceeds a threshold."""
     with Session(db) as session:
         session.execute(text(SQL_CLEANUP))
 

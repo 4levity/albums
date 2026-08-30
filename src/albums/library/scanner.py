@@ -1,3 +1,5 @@
+"""Scan the library (or a set of albums) into the database, tracking added, updated and removed albums."""
+
 import glob
 import itertools
 import logging
@@ -31,6 +33,15 @@ def run_scan(
     reread: bool = False,
     check_first_full_scan_path_count: Callable[[int], None] = lambda _: None,
 ) -> tuple[int, bool]:
+    """Scan the library (full scan, or a specific set of albums) and record the results.
+
+    Args:
+        session: If ``None``, a session is opened on ``ctx.db`` and committed (when changes occurred)
+            and closed when the scan is complete; otherwise the caller owns the transaction.
+
+    Returns:
+        Tuple of total album count and whether anything changed.
+    """
     if session is None:
         with Session(ctx.db) as session:
             try:
@@ -106,6 +117,7 @@ def run_scan(
 def scan_library(
     ctx: Context, session: Session, paths: Iterator[str], update_progress: Callable[[], None], reread: bool = False
 ) -> Mapping[AlbumScanResult, int]:
+    """Scan every folder path in the library, adding, updating or removing albums as needed."""
     current_album_paths = Bloom(100000, 0.01)
     unvisited_album_ids: set[int] = set()
     for (
@@ -158,6 +170,7 @@ def scan_library(
 def rescan_albums(
     ctx: Context, session: Session, scan_albums: Iterator[Album], update_progress: Callable[[], None], reread: bool = False
 ) -> Mapping[AlbumScanResult, int]:
+    """Re-scan a specific set of albums already in the database."""
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for album in scan_albums:
         tagger = AlbumTagger(ctx.config.library / album.path, preload={} if reread else picture_cache(album))

@@ -1,3 +1,5 @@
+"""Shared presence-policy check (consistent/always/never) used by the field checks."""
+
 from collections import defaultdict
 from enum import Enum, auto
 from typing import Final
@@ -15,6 +17,8 @@ OPTION_REMOVE_FIELD: Final = ">> Remove field"
 
 
 class Policy(Enum):
+    """Field presence policy: field should be on all tracks (ALWAYS), on no tracks (NEVER), or either all or none (CONSISTENT)."""
+
     CONSISTENT = auto()
     ALWAYS = auto()
     NEVER = auto()
@@ -36,6 +40,7 @@ def check_policy(
     required_field: BasicField | None,
     single_value_for_album: bool = False,
 ) -> CheckResult | None:
+    """Check that a field's presence on an album's tracks matches the given policy; return a CheckResult (with fixer) on violation, else ``None``."""
     if policy == Policy.NEVER and single_value_for_album:
         raise ValueError("check_policy: Policy.NEVER cannot be used with single_value_for_album")
     on_all_tracks = all(t.has(field) for t in album.tracks)

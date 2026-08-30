@@ -1,3 +1,5 @@
+"""Read and write basic fields from Vorbis comment tags, including legacy field name mapping."""
+
 from typing import Final, Tuple
 
 from mutagen._vorbis import VCommentDict
@@ -19,6 +21,7 @@ LEGACY_VORBIS_FIELDS: Final[Tuple[Tuple[str, BasicField], ...]] = (
 
 
 def vorbis_comment_legacy_fields(file_tags: VCommentDict) -> Tuple[Tuple[str, BasicField], ...]:
+    """Return the legacy Vorbis comment names present in the tags, mapped to their canonical BasicFields."""
     legacy_fields: list[tuple[str, BasicField]] = []
     for legacy_name, basic_field in LEGACY_VORBIS_FIELDS:
         if legacy_name in file_tags:
@@ -27,6 +30,7 @@ def vorbis_comment_legacy_fields(file_tags: VCommentDict) -> Tuple[Tuple[str, Ba
 
 
 def vorbis_comment_fields(file_tags: VCommentDict) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+    """Extract the basic fields from Vorbis comment tags, merging in values from legacy field names."""
     # Use dict to track tags by BasicField with list of values (for easy deduplication)
     fields: dict[BasicField, list[str]] = {}
 
@@ -53,6 +57,7 @@ def vorbis_comment_fields(file_tags: VCommentDict) -> Tuple[Tuple[BasicField, Tu
 
 
 def vorbis_comment_set_field(file_fields: VCommentDict, field: BasicField | str, value: str | list[str] | None):
+    """Set (or remove, when value is ``None``) a field in Vorbis comment tags; COMPILATION is stored as the standard "1"/absent form."""
     field_name = field.value if isinstance(field, BasicField) else field
     if value is None:
         if field != BasicField.UNKNOWN and field_name in file_fields:

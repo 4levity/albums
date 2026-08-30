@@ -41,7 +41,7 @@ class SettingEntity(Base):
 
     Attributes:
         name: Configuration key in ``"section.option"`` format (primary key).
-        value: JSON-serializable setting value. The raw type is stored as-is for simple scalars,
+        value: JSON-serializable setting value. The raw type is stored as-is for simple scalars;
                complex structures are round-tripped through the :class:`~.orm.SerializableValueAsJson` type.
     """
 
@@ -54,7 +54,7 @@ class SettingEntity(Base):
 class PathCompatibilityOption(StrEnum):
     """Target platform restrictions applied when constructing safe file/folder names.
 
-    Choosing a stricter target (e.g. ``WINDOWS``) prevents generation path components that
+    Choosing a stricter target (e.g. ``WINDOWS``) prevents generating path components that
     would be rejected by that OS's filesystem rules.
     """
 
@@ -85,7 +85,7 @@ DEFAULT_IMPORT_PATH_VARIOUS: Final = Template("Compilations/$album")
 # Additional import path template options to present by default.
 DEFAULT_MORE_IMPORT_PATHS: Final = (Template("$A1/$artist/$album"), Template("Soundtracks/$album"))
 
-# Maximum number of directories scanned during ``import --scan`` before proceeding to import.
+# Maximum number of paths ``import --scan`` may find; exceeding it aborts the import.
 DEFAULT_IMPORT_SCAN_MAX_PATHS: Final = 250
 
 
@@ -197,7 +197,7 @@ class Configuration:
         library: Root directory scanned and managed as the music library.
         transcoder_cache: On-disk folder caching transcoded audio files to avoid repeated work.
         transcoder_cache_size: Maximum cache size in bytes (default 16 GiB).
-        open_folder_command: Shell command to run to open a file manager on a folder.
+        open_folder_command: Shell command used to open a folder in a file manager.
         path_compatibility: Filesystem character restrictions applied to generated filenames.
         path_replace_slash: Replacement character used for ``/`` and ``\\`` in folder names.
         path_replace_invalid: Replacement substring for other filesystem-illegal characters (empty to strip).

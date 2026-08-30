@@ -1,3 +1,5 @@
+"""M4A/MP4 file tagging via mutagen MP4 atoms."""
+
 import logging
 from copy import copy
 from pathlib import Path
@@ -60,6 +62,8 @@ TAG_TO_M4A_FRAME = TAG_TO_M4A_BYTES_FRAME | TAG_TO_M4A_TEXT_FRAME | _TAG_CPIL  #
 
 
 class Mp4Tagger(AbstractMutagenTagger[MP4]):
+    """Tagger for M4A/MP4 files; ``has_video`` reports whether a .mp4 file contains a video stream (such files are not tracks)."""
+
     _file: MP4
     _picture_scanner: PictureScanner
     _has_video: bool

@@ -1,4 +1,4 @@
-"""Utilities shared between checks and library management"""
+"""Utilities shared between checks and library management."""
 
 from collections import defaultdict
 from pathlib import Path

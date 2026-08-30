@@ -48,7 +48,7 @@ def plural(items: int | Sized, single_thing: str) -> str:
         single_thing: A singular noun.
 
     Returns:
-        A count with the number and the noun.
+        A string of the form N noun(s).
     """
 
     count = items if isinstance(items, int) else len(items)

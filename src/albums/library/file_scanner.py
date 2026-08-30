@@ -1,3 +1,5 @@
+"""Scan individual files in an album folder into Track, PictureFile or OtherFile entries."""
+
 import logging
 from pathlib import Path
 
@@ -16,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan: TargetRescan | None) -> Track | None:
+    """Read the tags of an audio file; returns ``None`` if it is not a usable track (e.g. it contains video)."""
     with tagger.open(filename) as file:
         if target_scan is None or target_scan.streams:
             if file.has_video():  # check file streams
@@ -59,6 +62,7 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
 
 
 def _scan_picture_file(tagger: AlbumTagger, filename: str, stat: MiniStat, scan_target: TargetRescan | None) -> PictureFile | None:
+    """Scan an image file's dimensions/metadata; returns ``None`` if the file is not a usable picture (e.g. too large)."""
     if scan_target is not None and not scan_target.images and isinstance(scan_target.source, PictureFile):
         p = scan_target.source
         return PictureFile(filename=p.filename, modify_timestamp=p.modify_timestamp, cover_source=p.cover_source, picture_info=p.picture_info)
@@ -75,6 +79,7 @@ def _scan_picture_file(tagger: AlbumTagger, filename: str, stat: MiniStat, scan_
 
 
 def scan_file(album: Album, tagger: AlbumTagger, path: Path, stat: MiniStat, target_scan: TargetRescan | None) -> None:
+    """Scan one folder entry, adding it to the album as a track, picture file or other file as appropriate."""
     cover_source = remove_file(album, path.name)
 
     if str.lower(path.suffix) in AUDIO_FILE_SUFFIXES:

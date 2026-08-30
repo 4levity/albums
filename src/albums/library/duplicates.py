@@ -1,3 +1,5 @@
+"""Find duplicate albums (same artist and album name) in the library."""
+
 from collections import defaultdict
 from typing import Sequence
 
@@ -12,6 +14,7 @@ from ..utility import get_album_name_from_tracks, get_artist_from_tracks
 
 
 def album_in_library(ctx: Context, album: Album) -> str | None:
+    """Look up an album by artist and album name in the library database; returns its path or ``None``."""
     library_ctx = ctx.parent if ctx.parent is not None else ctx
     album_name = get_album_name_from_tracks(album)
     artist = get_artist_from_tracks(album)
@@ -37,6 +40,8 @@ def album_in_library(ctx: Context, album: Album) -> str | None:
 
 
 class DuplicateFinder:
+    """Index albums by (artist, album name) so duplicates can be looked up without re-querying the database per album."""
+
     _duplicates: dict[tuple[str, str], list[int]] = {}
 
     def start(self, session: Session):  # TODO make initializing DuplicateFinder faster
@@ -51,6 +56,14 @@ class DuplicateFinder:
         return self
 
     def find(self, album: Album) -> Sequence[int] | None:
+        """Return the ids of duplicate albums, or ``None``. Only the first album (by path order) of a duplicate set is considered a duplicate.
+
+        Args:
+            album: The album to check.
+
+        Returns:
+            The ids of the other albums sharing its artist and name if ``album`` is the first of the set, else ``None``.
+        """
         album_name = get_album_name_from_tracks(album)
         artist = get_artist_from_tracks(album)
         if not artist or not album_name:

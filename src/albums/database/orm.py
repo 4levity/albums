@@ -1,3 +1,5 @@
+"""SQLAlchemy declarative base, schema table, and custom column types for the database models."""
+
 from __future__ import annotations
 
 import json

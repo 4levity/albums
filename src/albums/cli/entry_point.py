@@ -1,3 +1,5 @@
+"""CLI entry point: the root ``albums`` click group and its global options."""
+
 import rich.traceback
 import rich_click as click
 
@@ -51,6 +53,7 @@ def albums_group(
     db_file: str,
     verbose: int,
 ):
+    """Manage a library of music albums: scan, check and fix tags, import albums, manage collections, and sync to players or storage."""
     default_cmp = Comparator.MATCH_REGEX if regex else Comparator.EQ
     filter_criteria = (
         [FilterCriteria("collection", c, default_cmp) for c in (collections or [])]

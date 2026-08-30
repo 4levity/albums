@@ -1,3 +1,5 @@
+"""AlbumTagger: open media files in an album folder with format-appropriate taggers, and track per-format capabilities."""
+
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
@@ -53,6 +55,7 @@ class AlbumTagger:
 
     @staticmethod
     def supports(filename: str, *needs: Cap) -> bool:
+        """Return whether the file's format supports all of the given capabilities (``False`` if no capabilities are given)."""
         if not needs:
             return False
         caps = SUFFIX_SUPPORT.get(Path(filename).suffix, set())
@@ -77,6 +80,7 @@ class AlbumTagger:
 
     @contextmanager
     def open(self, filename: str) -> Generator[TaggerFile, Any, None]:
+        """Context manager yielding a TaggerFile for a file in this album folder; ``filename`` must be a bare filename (no path)."""
         file = Path(filename)
         if str(file.parent) != ".":
             raise ValueError(f"parameter must be a filename only, this AlbumTagger only works in {str(self._folder)}")
@@ -96,6 +100,7 @@ class AlbumTagger:
         return self._folder
 
     def set_basic_fields(self, path: Path, field_values: Collection[Tuple[BasicField, str | List[str] | None]]):
+        """Set (or remove, when the value is ``None``) basic fields on a file in this album folder."""
         if path.parent != self._folder:
             raise ValueError(f"invalid path {str(path)} this AlbumTagger only works in {str(self._folder)}")
         with self.open(path.name) as f:

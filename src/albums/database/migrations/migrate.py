@@ -1,3 +1,5 @@
+"""Apply numbered SQL migration files to bring the database schema up to date."""
+
 import logging
 from pathlib import Path
 from typing import Final

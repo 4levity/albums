@@ -1,3 +1,5 @@
+"""Run the enabled checks (and fixes) against selected albums, in automatic, preview, fix or interactive modes."""
+
 import logging
 from dataclasses import dataclass
 from typing import Final, Mapping, Sequence
@@ -22,6 +24,8 @@ logger: Final = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class CheckDisposition:
+    """Outcome of running one check on one album: pass/fail, whether files changed or the album was deleted, user interaction results."""
+
     passed: bool
     maybe_changed: bool
     deleted: bool
@@ -31,6 +35,8 @@ class CheckDisposition:
 
 
 class Checker:
+    """Orchestrate the enabled checks for a context, fixing issues and re-running checks until the album is stable."""
+
     ctx: Context
     _automatic: bool
     _preview: bool
@@ -50,6 +56,7 @@ class Checker:
         self._show_ignore_option = show_ignore_option
 
     def run_enabled(self, session: Session) -> int:
+        """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed."""
         need_checks = self.get_required_disabled_checks()
         if need_checks:
             self.ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")

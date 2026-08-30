@@ -1,3 +1,5 @@
+"""Fallback TaggerFile for any file mutagen can open, with Vorbis-like tag handling."""
+
 import logging
 from pathlib import Path
 from typing import Callable, Final, Generator, List, Tuple, override
@@ -13,6 +15,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 class UniversalTagger(AbstractMutagenTagger[MutagenFileType]):
+    """Fallback tagger for unhandled file types that mutagen can open, treating tags Vorbis-comment-like."""
+
     _file: MutagenFileType
 
     def __init__(self, path: Path, padding: Callable[[PaddingInfo], int]):

@@ -1,3 +1,5 @@
+"""Generate library file paths from artist/album name templates, choosing between artist and various-artist layouts."""
+
 import logging
 from collections import defaultdict
 from string import Template
@@ -17,10 +19,18 @@ def show_template_path_help(ctx: Context):
 
 
 def make_template_path(ctx: Context, album: Album, t_artist: Template, t_various: Template) -> str:
+    """Return the best single library path for an album, per the configured path templates."""
     return make_template_paths(ctx, album, t_artist, t_various)[0]
 
 
 def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_various: Template, t_more: Sequence[Template] = []) -> Sequence[str]:
+    """Render the path templates for an album, preferring the various-artist path when the album has multiple artists.
+
+    Args:
+        t_artist: Template for the path when the album has a single artist (typically also the album artist).
+        t_various: Template for the path when the album has multiple artists and no album artist.
+        t_more: Additional templates appended after the primary path.
+    """
     used_identifiers = set(t_artist.get_identifiers() + t_various.get_identifiers())
     used_identifiers.update(identifier for path_T in t_more for identifier in path_T.get_identifiers())
     unknown_identifiers = used_identifiers - {"artist", "a1", "A1", "album"}

@@ -1,3 +1,5 @@
+"""MP3 file tagging via mutagen ID3 frames."""
+
 import logging
 from pathlib import Path
 from typing import Callable, Final, override
@@ -14,6 +16,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 class Mp3Tagger(AbstractId3Tagger[MP3]):
+    """Tagger for MP3 files (ID3v2 tags)."""
+
     _file: MP3
 
     def __init__(self, path: Path, picture_scanner: PictureScanner, padding: Callable[[PaddingInfo], int], id3v1: ID3v1Policy):

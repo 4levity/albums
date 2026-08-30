@@ -1,9 +1,13 @@
+"""TaggerFile placeholder for files that could not be opened."""
+
 from typing import Generator, List, Tuple, override
 
 from .types import BasicField, Picture, StreamInfo, TaggerFile
 
 
 class UnreadableTagger(TaggerFile):
+    """TaggerFile used when a file cannot be opened; all operations fail or report an error in the stream info."""
+
     _filename: str
     _error: str
 

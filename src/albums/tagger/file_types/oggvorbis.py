@@ -1,3 +1,5 @@
+"""Ogg Vorbis file tagging via mutagen, using Vorbis comments and base64-embedded FLAC pictures."""
+
 import base64
 from pathlib import Path
 from typing import Callable, Generator, List, Tuple, override
@@ -14,6 +16,8 @@ from ..vorbis import vorbis_comment_fields, vorbis_comment_legacy_fields, vorbis
 
 
 class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
+    """Tagger for Ogg Vorbis files (Vorbis comments; pictures embedded as base64 METADATA_BLOCK_PICTURE)."""
+
     _file: OggVorbis
     _picture_scanner: PictureScanner
 

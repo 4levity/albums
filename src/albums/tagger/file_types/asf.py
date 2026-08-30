@@ -1,3 +1,5 @@
+"""ASF/WMA file tagging via mutagen; embedded picture support is read-only."""
+
 import logging
 import struct
 from dataclasses import dataclass
@@ -96,6 +98,8 @@ class WmPicture:
 
 
 class AsfTagger(AbstractMutagenTagger[ASF]):
+    """Tagger for ASF/WMA files; reading embedded pictures is supported, but writing pictures is not."""
+
     _file: ASF
     _picture_scanner: PictureScanner
 

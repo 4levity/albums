@@ -104,6 +104,10 @@ class CheckCoverFilename(Check):
 
 
 def parse_config_cover_filename(filename: str) -> Tuple[str, str | None]:
+    """Parse a configured cover filename (``stem.suffix``) into a stem and optional (``.jpg``/``.png``) suffix.
+
+    A ``*`` suffix means the image file type does not matter; any other suffix is invalid.
+    """
     parts = filename.split(".")
     if len(parts) != 2:
         raise ValueError('cover-filename.filename must be in the form "filename.suffix"')

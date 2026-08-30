@@ -1,3 +1,5 @@
+"""Sync albums from the library to a destination (digital audio player or portable storage), copying or transcoding as needed."""
+
 from __future__ import annotations
 
 import logging
@@ -27,6 +29,8 @@ logger: Final = logging.getLogger(__name__)
 
 @dataclass
 class SyncOperations:
+    """Accumulated work from analyzing a sync: albums to copy or transcode, and destination files to delete."""
+
     copy_album_paths: list[str] = field(default_factory=list[str])
     copy_bytes: int = 0
     transcode_album_paths: list[str] = field(default_factory=list[str])
@@ -35,6 +39,8 @@ class SyncOperations:
 
 
 class Synchronizer:
+    """Sync a collection of albums to a destination, reusing a transcoder cache for transcoded albums."""
+
     _ctx: Context
     _dest: SyncDestination
     _transcoder: Transcoder
@@ -47,6 +53,7 @@ class Synchronizer:
         self._transcoder = Transcoder(self._ctx, self._dest.convert_profile)
 
     def do_sync(self, delete: bool, force: bool):
+        """Perform the full sync: analyze, delete extraneous destination files (if requested), transcode and copy albums."""
         with Session(self._ctx.db) as session:
             ops = self._analyze(session)
             if ops.transcode_album_paths:
@@ -67,6 +74,7 @@ class Synchronizer:
             self._transcoder.shrink_cache()
 
     def _analyze(self, session: Session) -> SyncOperations:
+        """Compare source albums against destination contents and plan the copy/transcode/delete operations."""
         existing_dest_paths = set(self._dest.path_root.rglob("*"))  # loads all paths in destination into a set in memory!
         if self._dest.collection == ALL_ALBUMS:
             source_albums = load_album_entities(session)
@@ -204,6 +212,7 @@ class Synchronizer:
         return str(Path(original_filename).with_suffix(suffix))
 
     def _use_transcoded_album(self, album: Album) -> bool:
+        """Decide whether an album should be transcoded instead of copied, based on the destination's file-type/bitrate/sample-rate limits."""
         if self._dest.allow_file_types and any(
             str.lower(Path(track.filename).suffix[1:]) not in self._dest.allow_file_types for track in album.tracks
         ):

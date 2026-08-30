@@ -166,9 +166,7 @@ type MutagenFileType = (
 
 
 class PictureType(IntEnum):
-    """
-    ID3 picture type, also used with other tag systems
-    """
+    """ID3 picture type, also used with other tag systems."""
 
     OTHER = 0
     FILE_ICON = 1
@@ -194,6 +192,11 @@ class PictureType(IntEnum):
 
     @staticmethod
     def from_filename(filename: str):
+        """Heuristically derive a picture type from *filename*.
+
+        Filenames containing common cover-art terms (``folder``, ``cover``, ``album``, ``front``, ``thumbnail``) map
+        to :attr:`COVER_FRONT`; everything else maps to :attr:`OTHER`.
+        """
         if any(match in str.lower(filename) for match in ["folder", ".folder", "cover", "album", "front", "thumbnail"]):
             return PictureType.COVER_FRONT
         return PictureType.OTHER

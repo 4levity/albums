@@ -1,3 +1,5 @@
+"""AIFF file tagging via mutagen ID3 frames."""
+
 import logging
 from pathlib import Path
 from typing import Callable, Final, override
@@ -14,6 +16,8 @@ logger: Final = logging.getLogger(__name__)
 
 
 class AiffTagger(AbstractId3Tagger[AIFF]):
+    """Tagger for AIFF files (ID3 tags)."""
+
     _file: AIFF
 
     def __init__(self, path: Path, picture_scanner: PictureScanner, padding: Callable[[PaddingInfo], int], id3v1: ID3v1Policy):

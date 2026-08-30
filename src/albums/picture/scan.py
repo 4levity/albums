@@ -16,9 +16,6 @@ class PictureScanner:
 
     Use this class when scanning many images to avoid redundant Pillow parsing of identical content.
     The constructor accepts a pre-populated cache (e.g. loaded from the database) to further skip work.
-
-    Attributes:
-        _cache: Internal dictionary mapping ``(file_size, file_hash)`` tuples to ``PictureInfo`` objects.
     """
 
     _cache: PictureScannerCache

@@ -1,3 +1,5 @@
+"""Scan a single album folder and update its in-database representation."""
+
 import itertools
 import logging
 from typing import List, Tuple
@@ -16,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def picture_cache(album: Album | None) -> PictureScannerCache:
+    """Build a PictureScanner cache from the album's known pictures (tracks and picture files)."""
     if not album:
         return {}
     return dict(
@@ -31,6 +34,7 @@ def picture_cache(album: Album | None) -> PictureScannerCache:
 
 
 def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> TargetRescan | None:
+    """Determine what aspects of a file need re-scanning given the scanner version that last scanned it."""
     if scanner < 6:
         return TargetRescan(file, fields=True, images=True, streams=True)
     if scanner < 7:
@@ -43,6 +47,7 @@ def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> Target
 
 
 def scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = False) -> AlbumScanResult:
+    """Compare the album folder contents against the database and update the album; returns an AlbumScanResult."""
     album_path = ctx.config.library / album.path
     stored_files_list: List[Tuple[str, Tuple[MiniStat, PictureFile | Track | OtherFile]]] = [
         (t.filename, (MiniStat(t.file_size, t.modify_timestamp), t)) for t in album.tracks

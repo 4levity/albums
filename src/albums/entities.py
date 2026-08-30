@@ -32,7 +32,7 @@ class FieldV(Base):
 
 
 class LegacyFieldEntity(Base):
-    """Stores legacy/deprecated field names used by a track, indicating the field should be updated."""
+    """Stores legacy/deprecated field names used by a track, flagged for conversion to a canonical field by the legacy-fields check."""
 
     __tablename__ = "track_legacy_field"
     __table_args__ = (Index("idx_legacy_field_track_id", "track_id"),)
@@ -161,7 +161,7 @@ class Track(Base):
 
         Args:
             field: The :class:`~.tagger.types.BasicField` to look up.
-            default: Substitute value when no frames exist; raises ``KeyError`` if left unset explicitly.
+            default: Value returned when the field is absent; if omitted, ``KeyError`` is raised.
 
         Returns:
             Tuple of decoded text values or the provided fallback sequence.
@@ -174,7 +174,7 @@ class Track(Base):
         return result
 
     def __init__(self, **kw: Any):
-        """Construct a track row, accepting ``fields`` entity list or (for tests/convenience) a BasicField->List mapping"""
+        """Construct a track row. ``fields`` is passed through unchanged; for tests/convenience a ``tag`` keyword (BasicField to str or sequence of str) may be given and is converted to a ``fields`` entity list."""
         if "fields" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
             t: Mapping[BasicField, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
             kw["fields"] = [FieldV(field=field, value=v) for field, values in t.items() for v in ([values] if isinstance(values, str) else values)]
@@ -234,8 +234,8 @@ class PictureFile(Base):
 class OtherFile(Base):
     """Non-audio, non-image file encountered inside an album directory during a scan.
 
-    These include audio or image files that were unreadable, and have been recorded so the scanner doesn't try to read
-    them again. Or If the scanner detects other files like track lists or log files, they can be represented this way.
+    These are audio or image files that were unreadable, recorded so the scanner doesn't try to read them again, or
+    other files the scanner detects, such as track lists or log files.
     """
 
     __tablename__ = "album_other_file"
@@ -359,7 +359,7 @@ class IgnoreCheckEntity(Base):
 
 
 class ScanHistoryEntity(Base):
-    """Per-full-scan audit row. Can be used to decide whether a full rescan is needed on next launch."""
+    """Per-full-scan audit row. Can be used to decide whether a full rescan is needed on the next launch."""
 
     __tablename__ = "scan_history"
     __table_args__ = (Index("idx_scan_history_timestamp", "timestamp"),)

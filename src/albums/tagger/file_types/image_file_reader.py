@@ -1,3 +1,5 @@
+"""Read-only TaggerFile for standalone image files in an album folder."""
+
 from pathlib import Path
 from typing import Generator, Sequence, Tuple, override
 
@@ -6,6 +8,8 @@ from ..types import BasicField, Picture, PictureType, StreamInfo, TaggerFile
 
 
 class ImageFileReader(TaggerFile):
+    """Read-only TaggerFile for image files: exposes the image as a picture, has no tags."""
+
     _path: Path
     _picture_scanner: PictureScanner
     _image: Tuple[Picture, bytes] | None = None

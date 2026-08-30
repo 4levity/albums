@@ -1,3 +1,5 @@
+"""Build and manage the application context for CLI commands, including album filtering and database setup."""
+
 import logging
 import os
 from collections import defaultdict
@@ -25,12 +27,15 @@ DEFAULT_DB_LOCATION: Final = str(PLATFORM_DIRS.user_config_path / "albums.db")
 
 @dataclass(frozen=True)
 class FilterCriteria:
+    """A single filter on album fields, built from a ``K[op]V`` expression such as ``artist=Some Artist`` or ``path~=^sub/``."""
+
     field: str
     value: str
     comparator: Comparator = Comparator.EQ
 
     @classmethod
     def from_expr(cls, expr: str):
+        """Parse a ``K[op]V`` expression (field, optional Comparator operator, value) into FilterCriteria; a bare ``K`` means the field must exist."""
         comparator = next((comparator for comparator in Comparator if comparator.value in expr), None)
         (field, _, value) = expr.partition(comparator.value) if comparator else (expr, "", "")
         return cls(field, value, comparator or Comparator.EQ)
@@ -69,6 +74,16 @@ def setup(
     invert: bool,
     db_file: str | None,
 ):
+    """Prepare the application context for a command run.
+
+    Configures logging, resolves and opens the albums database (falling back to an in-memory database when none is
+    found), and installs the album-entity filter built from *filter_criteria*. When *dir* is given, the context is
+    reconfigured via :func:`enter_folder_context` to operate on that folder instead of the library database.
+
+    Returns:
+        ``True`` when an initial full library scan should be run first (a ``--dir`` folder context was used, or the
+        rescan policy is ``ALWAYS``).
+    """
     app_context.click_ctx = ctx
     app_context.verbose = verbose
     _setup_logging(app_context, verbose)
@@ -102,6 +117,11 @@ def setup(
 
 
 def enter_folder_context(ctx: Context, folder: str) -> Context:
+    """Reconfigure *ctx* to operate on *folder* with a fresh in-memory database.
+
+    A shallow copy of the original context is taken before any changes and stored in ``ctx.parent``; that untouched
+    parent copy (not the reconfigured context) is returned.
+    """
     if ctx.parent:
         raise RuntimeError("enter_folder_context called on subcontext")
     parent = copy(ctx)

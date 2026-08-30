@@ -1,3 +1,5 @@
+"""FLAC file tagging via mutagen, using Vorbis comments and embedded pictures."""
+
 from copy import copy
 from pathlib import Path
 from typing import Callable, Generator, List, Tuple, override
@@ -14,6 +16,8 @@ from ..vorbis import vorbis_comment_fields, vorbis_comment_legacy_fields, vorbis
 
 
 class FlacTagger(AbstractMutagenTagger[FLAC]):
+    """Tagger for FLAC files (Vorbis comments and FLAC pictures)."""
+
     _file: FLAC
     _picture_scanner: PictureScanner
 
