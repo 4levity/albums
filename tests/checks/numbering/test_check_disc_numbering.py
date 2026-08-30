@@ -5,7 +5,9 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.entities import Album, Track
-from albums.tagger import AlbumTagger, BasicField, TaggerFile
+from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import MockTagger
 
 
 class TestCheckDiscNumbering:
@@ -178,7 +180,7 @@ class TestCheckDiscNumbering:
         assert result.fixer.options == [">> Remove disc number 1 from all tracks"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -205,7 +207,7 @@ class TestCheckDiscNumbering:
         assert result.fixer.options == [">> Remove disc number 1 and disc total 1 from all tracks"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")

@@ -9,9 +9,10 @@ from albums.app import Context
 from albums.checks.picture.check_cover_embedded import CheckCoverEmbedded
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, Picture, PictureType, TaggerFile
+from albums.tagger import AlbumTagger, Picture, PictureType
 
 from ...fixtures.create_library import make_image_data
+from ...helpers import MockTagger
 
 
 class TestCheckCoverEmbedded:
@@ -52,7 +53,7 @@ class TestCheckCoverEmbedded:
         assert result.fixer
         assert result.fixer.options == [">> Extract embedded cover and mark as front cover source"]
         assert result.fixer.option_automatic_index == 0
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data(400, 400, "PNG")
         mock_read_image = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
@@ -93,7 +94,7 @@ class TestCheckCoverEmbedded:
         assert result.fixer.options == [">> Embed new cover art in all tracks"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data(400, 400, "PNG")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger

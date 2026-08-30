@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
@@ -17,12 +18,23 @@ from .types import BasicField, ID3v1Policy, Picture, PictureType
 logger: Final = logging.getLogger(__name__)
 
 
-class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT]):
+class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
+    """Abstract base class for TaggerFile implementations that use ID3 tags (MP3, AIFF).
+
+    This is a base class and should not be instantiated directly. Subclasses must
+    implement the abstract methods below.
+    """
+
     _picture_scanner: PictureScanner
     _id3v1: ID3v1Policy
 
+    # subclass must implement
+    @abstractmethod
     def _get_file(self) -> _FT: ...
+    @abstractmethod
     def _ensure_id3(self) -> ID3: ...
+    # ID3 files save with the configured ID3v1 policy, so the default _save does not apply
+    @abstractmethod
     def _save(self) -> None: ...
 
     def __init__(self, picture_scanner: PictureScanner, padding: Callable[[PaddingInfo], int], id3v1: ID3v1Policy):

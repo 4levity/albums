@@ -4,7 +4,9 @@ from albums.app import Context
 from albums.checks.base_check_field_per_album import AlbumTagger
 from albums.checks.fields.check_publisher import CheckPublisherField
 from albums.entities import Album, Track
-from albums.tagger import BasicField, TaggerFile
+from albums.tagger import BasicField
+
+from ...helpers import MockTagger
 
 
 class TestCheckPublisherField:
@@ -47,7 +49,7 @@ class TestCheckPublisherField:
         assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
         assert result.fixer.option_automatic_index is None
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -67,7 +69,7 @@ class TestCheckPublisherField:
         assert result.fixer.options == ["ABC", "XYZ", ">> Remove publisher/organization from all tracks"]
         assert result.fixer.option_automatic_index is None
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")

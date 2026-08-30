@@ -5,9 +5,10 @@ from albums.app import Context
 from albums.checks.picture.check_album_art import CheckAlbumArt
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, PictureType, TaggerFile
+from albums.tagger import AlbumTagger, PictureType
 
 from ...fixtures.create_library import make_image_data
+from ...helpers import MockTagger
 
 
 class TestCheckAlbumArt:
@@ -41,7 +42,7 @@ class TestCheckAlbumArt:
         assert result.fixer.options == [">> Extract images to files and remove embedded"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data(400, 400, "GIF")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger

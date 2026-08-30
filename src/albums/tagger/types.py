@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum, auto
 from typing import Final, Generator, List, Tuple
@@ -226,25 +227,61 @@ class StreamInfo:
         return result
 
 
-class TaggerFile:
-    """Abstract interface for reading and writing tags/images on a single media file."""
+class TaggerFile(ABC):
+    """Abstract interface for reading and writing tags/images on a single media file.
 
-    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]: ...
-    def get_stream_info(self) -> StreamInfo: ...
-    def get_image_data(self, picture: Picture) -> bytes: ...
-    def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
+    This is a base class and should not be instantiated directly. Subclasses must
+    implement every abstract method. The non-abstract methods are optional hooks
+    with default behavior, which subclasses may override to support video streams
+    or legacy (non-standard) fields.
+    """
 
-    # set_field must support BasicField but may raise an exception if str-typed field is provided
-    def set_field(self, field: BasicField | str, value: str | List[str] | None) -> None: ...
-    def add_picture(self, new_picture: Picture, image_data: bytes) -> None: ...
-    def remove_picture(self, remove_picture: Picture) -> None: ...
-    def close(self) -> None: ...
+    @abstractmethod
+    def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
+        """Return the fields present in the tag as (field, values) pairs."""
+        ...
 
-    # file types that may be video streams (e.g. mp4) should implement this:
+    @abstractmethod
+    def get_stream_info(self) -> StreamInfo:
+        """Return properties of the audio stream, like length, bitrate, and codec."""
+        ...
+
+    @abstractmethod
+    def get_image_data(self, picture: Picture) -> bytes:
+        """Return the image data for the given picture."""
+        ...
+
+    @abstractmethod
+    def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]:
+        """Yield (picture, image_data) for each image associated with the file."""
+        ...
+
+    # set_field must support BasicField but may raise an exception if a str-typed field is provided
+    @abstractmethod
+    def set_field(self, field: BasicField | str, value: str | List[str] | None) -> None:
+        """Set a field to a value, or remove the field if value is None."""
+        ...
+
+    @abstractmethod
+    def add_picture(self, new_picture: Picture, image_data: bytes) -> None:
+        """Add an image to the file."""
+        ...
+
+    @abstractmethod
+    def remove_picture(self, remove_picture: Picture) -> None:
+        """Remove an image from the file, matching the given picture."""
+        ...
+
+    @abstractmethod
+    def close(self) -> None:
+        """Save any pending changes and release the file."""
+        ...
+
+    # file types that may contain video streams (e.g. mp4) should override this:
     def has_video(self) -> bool:
         return False
 
-    # file types that may have automatically-convertible legacy fields (e.g. FLAC, Ogg Vorbis) should implement these:
+    # file types that may have automatically-convertible legacy fields (e.g. FLAC, Ogg Vorbis) should override these:
     def set_legacy_field(self, field: str, value: str | List[str] | None) -> None:
         raise NotImplementedError()
 

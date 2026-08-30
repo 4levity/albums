@@ -5,7 +5,9 @@ from albums.app import Context
 from albums.checks.picture.check_invalid_image import CheckInvalidImage
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, PictureType, TaggerFile
+from albums.tagger import AlbumTagger, PictureType
+
+from ...helpers import MockTagger
 
 
 class TestCheckCheckInvalidImage:
@@ -32,7 +34,7 @@ class TestCheckCheckInvalidImage:
         assert len(result.fixer.options) == 1
         assert "Remove/delete all invalid images" in result.fixer.options[0]
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_remove_picture = mocker.patch.object(tagger, "remove_picture")
         bad_pic = TrackPicture(
             picture_info=PictureInfo("", 0, 0, 0, 0, b"", (("error", dict(pic.picture_info.load_issue)["error"]),)),

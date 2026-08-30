@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Callable, Final, Generator, List, Tuple, override
 
 from mutagen._tags import PaddingInfo
@@ -11,7 +12,15 @@ ALL_BASIC_FIELDS: Final = frozenset(field.value for field in BasicField)
 MAX_BASIC_FIELD_VALUE_LENGTH: Final = 4096
 
 
-class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
+class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile, ABC):
+    """Abstract base class for TaggerFile implementations backed by a mutagen file.
+
+    This is a base class and should not be instantiated directly. It implements the
+    TaggerFile interface in terms of the abstract methods below, which subclasses
+    must implement. If a file type does not support pictures, get_pictures should
+    yield nothing and _add_picture/_remove_picture should raise NotImplementedError.
+    """
+
     _changed = False
     _padding: Callable[[PaddingInfo], int]
 
@@ -19,17 +28,23 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
         self._padding = padding
 
     # subclass must implement
+    @abstractmethod
     def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]: ...
+    @abstractmethod
     def _get_file(self) -> _FT: ...
-    # _set_field must support BasicField but may raise an exception if str type field is provided
+    # _set_field must support BasicField but may raise an exception if a str-typed field is provided
+    @abstractmethod
     def _set_field(self, field: BasicField | str, value: str | List[str] | None) -> None: ...
 
-    # subclass must implement if advertising Cap.PICTURES
+    # subclass must implement
+    @abstractmethod
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]: ...
+    @abstractmethod
     def _add_picture(self, new_picture: Picture, image_data: bytes) -> None: ...
+    @abstractmethod
     def _remove_picture(self, remove_picture: Picture) -> None: ...
 
-    # subclass MAY implement
+    # subclass MAY override
     def _get_codec(self) -> str:
         file = self._get_file()
         codec = _find_codec(file.info)  # pyright: ignore[reportUnknownMemberType]
@@ -39,6 +54,7 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
             logger.warning(f"couldn't determine codec in {file.filename}")
             return "unknown"
 
+    # subclass MAY override
     def _save(self):
         self._get_file().save(padding=self._padding)  # pyright: ignore[reportUnknownMemberType]
 

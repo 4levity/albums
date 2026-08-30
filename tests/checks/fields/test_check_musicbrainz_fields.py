@@ -3,7 +3,9 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.fields.check_musicbrainz_fields import AlbumTagger, CheckMusicBrainzFields
 from albums.entities import Album, Track
-from albums.tagger import BasicField, TaggerFile
+from albums.tagger import BasicField
+
+from ...helpers import MockTagger
 
 UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
@@ -46,7 +48,7 @@ class TestCheckMusicBrainzFields:
         assert result.fixer.options == [">> Remove deprecated MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -72,7 +74,7 @@ class TestCheckMusicBrainzFields:
         assert result.fixer.options == [">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -100,7 +102,7 @@ class TestCheckMusicBrainzFields:
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -131,7 +133,7 @@ class TestCheckMusicBrainzFields:
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMARTISTID fields", ">> Remove all MusicBrainz fields"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -158,7 +160,7 @@ class TestCheckMusicBrainzFields:
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")

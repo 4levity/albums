@@ -8,9 +8,10 @@ from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, PictureType, TaggerFile
+from albums.tagger import AlbumTagger, PictureType
 
 from ...fixtures.create_library import make_image_data
+from ...helpers import MockTagger
 
 
 class TestCheckCoverAvailable:
@@ -61,7 +62,7 @@ class TestCheckCoverAvailable:
         assert result.fixer.options == ["1.flac (and 1 more) image/png COVER_BACK"]
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger

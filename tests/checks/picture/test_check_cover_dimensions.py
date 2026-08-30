@@ -9,9 +9,10 @@ from albums.app import Context
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, PictureType, TaggerFile
+from albums.tagger import AlbumTagger, PictureType
 
 from ...fixtures.create_library import make_image_data
+from ...helpers import MockTagger
 
 
 class TestCheckCoverDimensions:
@@ -50,7 +51,7 @@ class TestCheckCoverDimensions:
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
@@ -86,7 +87,7 @@ class TestCheckCoverDimensions:
         assert result.fixer
         assert result.fixer.option_automatic_index == 0
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
@@ -127,7 +128,7 @@ class TestCheckCoverDimensions:
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(picture_info.width, picture_info.height, "JPEG")
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
@@ -166,7 +167,7 @@ class TestCheckCoverDimensions:
         assert len(result.fixer.options) == 1
         assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(cover_info.width, cover_info.height, "PNG")
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)

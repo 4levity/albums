@@ -2,7 +2,9 @@ from albums.app import Context
 from albums.checks.base_check_field_per_album import AlbumTagger
 from albums.checks.fields.check_legacy_fields import OPTION_CONVERT_LEGACY, CheckLegacyFields
 from albums.entities import Album, Track
-from albums.tagger import BasicField, TaggerFile
+from albums.tagger import BasicField
+
+from ...helpers import MockTagger
 
 
 class TestCheckLegacyFields:
@@ -50,7 +52,7 @@ class TestCheckLegacyFields:
         assert result is not None
         assert result.fixer is not None
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
@@ -80,7 +82,7 @@ class TestCheckLegacyFields:
         assert result is not None
         assert result.fixer is not None
 
-        tagger = TaggerFile()
+        tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
