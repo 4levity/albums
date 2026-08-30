@@ -227,8 +227,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
         values = self._file.tags["trkn"]  # pyright: ignore[reportUnknownVariableType]
         if not isinstance(values, list) or len(values) < 1 or not isinstance(values[0], tuple):  # pyright: ignore[reportUnknownArgumentType]
             return (None, None)
-        disk: Tuple[int, int] = values[0]  # pyright: ignore[reportUnknownVariableType]
-        (track_number, track_total) = disk
+        trkn: Tuple[int, int] = values[0]  # pyright: ignore[reportUnknownVariableType]
+        (track_number, track_total) = trkn
         return (track_number if track_number else None, track_total if track_total else None)
 
     def _set_disk(self, disc_number: int | None, disc_total: int | None):

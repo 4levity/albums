@@ -24,9 +24,9 @@ class CheckFolderName(Check):
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
-        for id in self.format.get_identifiers():
-            if id not in {"artist", "album"}:
-                raise ValueError(f"invalid substitution '{id}' in folder-name.format")
+        for identifier in self.format.get_identifiers():
+            if identifier not in {"artist", "album"}:
+                raise ValueError(f"invalid substitution '{identifier}' in folder-name.format")
         ignore_folders: list[Any] = check_config.get("ignore_folders", CheckFolderName.default_config["ignore_folders"])
         if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
             not isinstance(f, str) or f == "" for f in ignore_folders

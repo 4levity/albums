@@ -21,9 +21,9 @@ class CheckTrackFilename(Check):
 
     def init(self, check_config: dict[str, Any]):
         self.format = Template(check_config.get("format", self.default_config["format"]))
-        for id in self.format.get_identifiers():
-            if id not in {"tracknumber", "discnumber", "track_auto", "title", "artist", "title_auto"}:
-                raise ValueError(f"invalid substitution '{id}' in track-filename.format")
+        for identifier in self.format.get_identifiers():
+            if identifier not in {"tracknumber", "discnumber", "track_auto", "title", "artist", "title_auto"}:
+                raise ValueError(f"invalid substitution '{identifier}' in track-filename.format")
         self.join_multiple = str(check_config.get("join_multiple", self.default_config["join_multiple"]))
 
     def check(self, album: Album):

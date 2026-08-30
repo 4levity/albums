@@ -45,8 +45,13 @@ class CheckCoverAvailable(Check):
             cmd_str = f"sacad --preserve-format --size-tolerance 60 $artist $album {target_size} $filename"
 
         self.get_cover_command = [Template(part) for part in cmd_str.split(" ")] if cmd_str else []
-        for id in (id for part in self.get_cover_command for id in part.get_identifiers() if id not in {"artist", "album", "filename", "path"}):
-            raise ValueError(f"invalid substitution '{id}' in cover-available.get_cover_command")
+        for identifier in (
+            identifier
+            for part in self.get_cover_command
+            for identifier in part.get_identifiers()
+            if identifier not in {"artist", "album", "filename", "path"}
+        ):
+            raise ValueError(f"invalid substitution '{identifier}' in cover-available.get_cover_command")
 
     def check(self, album: Album) -> CheckResult | None:
         if self.cover_required and not all(AlbumTagger.supports(track.filename, Cap.PICTURES) for track in album.tracks):
