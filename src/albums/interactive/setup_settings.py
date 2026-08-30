@@ -146,9 +146,11 @@ def _configure_setting(
                 ctx.console.print("[bold red]Error: The parent directory of the transcoder cache does not exist.[/bold red]")
                 return
             ctx.config.transcoder_cache = Path(cache)
+            config_save(ctx.db, ctx.config)
         case "transcoder_cache_size":
             gb = prompt("Transcoder cache soft limit in gigabytes: ", default=f"{ctx.config.transcoder_cache_size / pow(2, 30):.1f}")
             if not re.match("\\d+(\\.\\d+)?$", gb):
                 ctx.console.print("[bold red]Error: Enter a number of gigabytes.[/bold red]")
                 return
             ctx.config.transcoder_cache_size = int(float(gb) * pow(2, 30))
+            config_save(ctx.db, ctx.config)

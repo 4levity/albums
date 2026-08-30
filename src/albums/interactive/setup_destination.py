@@ -129,13 +129,13 @@ def _configure_destination(ctx: Context, destination_ix: int):
                 pass
             dest.max_kbps = int(max_kbps)
         elif option == "max_sample_rate":
-            while not str.isdecimal(max_sample_rate := prompt("Max sample rate in Hz or 0 to allow all: ", default=str(dest.max_kbps))):
+            while not str.isdecimal(max_sample_rate := prompt("Max sample rate in Hz or 0 to allow all: ", default=str(dest.max_sample_rate))):
                 pass
             dest.max_sample_rate = int(max_sample_rate)
         elif option == "max_bits_per_sample":
             while not str.isdecimal(
                 max_bits_per_sample := prompt(
-                    "Max bits per sample (for formats that have bits per sample) or 0 to allow all: ", default=str(dest.max_kbps)
+                    "Max bits per sample (for formats that have bits per sample) or 0 to allow all: ", default=str(dest.max_bits_per_sample)
                 )
             ):
                 pass
