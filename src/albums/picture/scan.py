@@ -64,9 +64,9 @@ class PictureScanner:
 
         Args:
             image_data: Raw binary bytes of the image to analyze.
-            expect_mime_type: Expected MIME type. Triggers a mismatch notice if actual value differs.
-            expect_width: Expected width in pixels. Triggers a mismatch notice if actual value differs.
-            expect_height: Expected height in pixels. Triggers a mismatch notice if actual value differs.
+            expect_mime_type: Expected MIME type.
+            expect_width: Expected width in pixels.
+            expect_height: Expected height in pixels.
 
         Returns:
             A ``PictureInfo`` describing the scanned image, potentially augmented with mismatch notes.

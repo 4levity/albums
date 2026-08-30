@@ -36,9 +36,8 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.MUSICBRAINZ_WORKID, "TXXX:MusicBrainz Work Id"),
     (BasicField.ORGANIZATION, "TPUB"),
     # nonstandard: this tagger will read and remove it but will not set it
-    (BasicField.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),  # nonstandard
-    (BasicField.RELEASETYPE, "TXXX:RELEASETYPE"),  # nonstandard
-    #
+    (BasicField.RELEASECOUNTRY, "TXXX:RELEASECOUNTRY"),
+    (BasicField.RELEASETYPE, "TXXX:RELEASETYPE"),
     (BasicField.TITLE, "TIT2"),
     # TCON too but we use .genres instead of .text
     # TRCK and TPOS too but they are not 1:1

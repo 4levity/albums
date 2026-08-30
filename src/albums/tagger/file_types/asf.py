@@ -231,7 +231,6 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         if str.count(value, "/") == 1:
             (disc_number, disc_total) = value.split("/")
             return (disc_number, disc_total)
-        # else
         return (value, None)
 
     def _get_wm_tracknumber(self) -> Tuple[str | None, str | None]:
@@ -244,7 +243,6 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         if str.count(value, "/") == 1:
             (track_number, track_total) = value.split("/")
             return (track_number, track_total)
-        # else
         return (value, None)
 
     def _set_wm_partofset(self, disc_number: str | None, disc_total: str | None):

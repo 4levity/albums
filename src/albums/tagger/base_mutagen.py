@@ -77,7 +77,7 @@ class AbstractMutagenTagger[_FT: MutagenFileType](TaggerFile):
 
 
 def _get_stream_info(filename: str, mutagen_file_info: Any, codec: str) -> StreamInfo:
-    # maybe this isn't necessary but I don't think there's a guarantee that these attributes exist
+    # Mutagen doesn't guarantee these attributes exist on all file-info objects.
     if hasattr(mutagen_file_info, "length"):
         length = float(mutagen_file_info.length)
     else:

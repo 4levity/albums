@@ -119,10 +119,8 @@ class CheckCoverEmbedded(Check):
                         ),
                     ),
                 )
-            # else: all done
             return None
 
-        # else: there is no cover_source marked
         def good_enough(cover: Picture):
             return (
                 (cover.picture_info.mime_type == self.require_mime_type or not self.require_mime_type)
@@ -141,7 +139,6 @@ class CheckCoverEmbedded(Check):
                 return CheckResult(
                     f"{problem_summary}, but there {is_plural(unique_covers, 'unique front cover')} and no cover_source (enable cover-unique for fixes)",
                 )
-            # else
             if len(unique_covers) == 1:
                 # there is one unique cover. if we just mark it as cover_source, embedded images can be automatically fixed on recheck
                 cover = next(iter(unique_covers))
@@ -154,7 +151,6 @@ class CheckCoverEmbedded(Check):
                         f"{problem_summary}, but the file {filename} can be marked as cover_source (afterwards, a recheck can fix tracks)",
                         Fixer(lambda _: self._fix_mark_cover_source(album, filename), options, False, option_automatic_index, table),
                     )
-                # else
                 # create a cover.jpg/.png file and mark it as cover source
                 (filename, cover) = next(filter(None, track_covers))
                 options = [">> Extract embedded cover and mark as front cover source"]
@@ -167,8 +163,6 @@ class CheckCoverEmbedded(Check):
                     f"{problem_summary}, but the cover can be extracted and marked as cover_source (afterwards, a recheck can fix tracks)",
                     Fixer(lambda _: self._fix_extract_cover_source(album, filename, cover), options, False, option_automatic_index, table),
                 )
-            # else: no covers available, cover not required by earlier checks
-        # else: no cover_source + all tracks have "good enough" embedded cover art
         return None
 
     def _embedded_image_spec(self, cover_source: PictureInfo):

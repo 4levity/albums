@@ -22,7 +22,6 @@ logger: Final = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class CheckDisposition:
-    # album: Album
     passed: bool
     maybe_changed: bool
     deleted: bool
@@ -106,7 +105,7 @@ class Checker:
                                 logger.debug(f"commit changes after running {check.name}")
                                 session.commit()
                                 check_all = True  # re-run all checks
-                                break  # from the beginning
+                                break
                             elif disposition.passed:
                                 checks_passed.add(check.name)
                             elif disposition.suppressed_failure_message:

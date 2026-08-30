@@ -22,9 +22,7 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
     """
     Return a dict mapping a list of tracks to discnumber values if possible. Tracks with no discnumber are mapped to 0.
 
-    Result will be None if a track has multiple values for tracknumber or discnumber.
-    Result will be None if a track has a non-numeric tracknumber or discnumber.
-    Result will be None if a track has discnumber 0.
+    Result will be None if any track has multiple or non-numeric tracknumber or discnumber values, or a discnumber of 0.
     """
     if any(
         not (

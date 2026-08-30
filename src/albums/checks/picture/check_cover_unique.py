@@ -103,7 +103,6 @@ class CheckCoverUnique(Check):
                         table,
                     ),
                 )
-            # else
             if cover_source_filename is not None and len(cover_image_files) > 1:
                 other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
                 option_automatic_index = 0  # YOLO
@@ -118,7 +117,6 @@ class CheckCoverUnique(Check):
                         table,
                     ),
                 )
-            # else
             if cover_source_filename is None or len(cover_image_files) > 1 or len(cover_embedded) > 1:
                 tracks_have_covers = all(
                     any(pic for pic in track.pictures if pic.picture_type == PictureType.COVER_FRONT) for track in sorted(album.tracks)
@@ -131,11 +129,8 @@ class CheckCoverUnique(Check):
                             lambda _: FixResult.NO_CHANGE, [], False, None, table
                         ),  # Don't know how to fix, but let's show the pics and the option to ignore
                     )
-                # else
                 return CheckResult("tracks do not all have cover pictures and not all cover pictures are the same")
 
-            # else the reason there's more than one cover is just that there's a single front cover source different from the single embedded cover
-        # else only one cover
         return None
 
     def _describe_album_art(self, picture: Picture, picture_sources: dict[Picture, list[str]]):

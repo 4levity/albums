@@ -23,7 +23,6 @@ def vorbis_comment_legacy_fields(file_tags: VCommentDict) -> Tuple[Tuple[str, Ba
     for legacy_name, basic_field in LEGACY_VORBIS_FIELDS:
         if legacy_name in file_tags:
             legacy_fields.append((legacy_name, basic_field))
-    # Basic tags as first item of tuple, legacy fields as second item
     return tuple(legacy_fields)
 
 
@@ -50,7 +49,6 @@ def vorbis_comment_fields(file_tags: VCommentDict) -> Tuple[Tuple[BasicField, Tu
 
     fields_flat = ((basic_field, tuple(values)) for basic_field, values in fields.items())
 
-    # Basic tags as first item of tuple, legacy fields as second item
     return tuple(fields_flat)
 
 

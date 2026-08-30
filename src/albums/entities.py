@@ -18,13 +18,6 @@ class FieldV(Base):
     """Single metadata field value belonging to a track.
 
     When multiple frames share the same field name (e.g., duplicate ``TCON`` genres), each gets its own row.
-
-    Attributes:
-        track_field_id: Primary key.
-        track_id: Foreign key linking to the owning :class:`Track`.
-        track: ORM back-reference to the parent track.
-        field: Canonicalized field name from :class:`~.tagger.types.BasicField`.
-        value: Decoded text content of this single metadata frame.
     """
 
     __tablename__ = "track_field"
@@ -39,14 +32,7 @@ class FieldV(Base):
 
 
 class LegacyFieldEntity(Base):
-    """Stores legacy/deprecated field names used by a track, indicating the field should be updated.
-
-    Attributes:
-        track_legacy_field_id: Primary key.
-        track_id: Foreign key linking to the owning ``track`` row.
-        track: ORM back-reference to the :class:`Track`.
-        field_name: Free-form raw field label (as present in the original media file).
-    """
+    """Stores legacy/deprecated field names used by a track, indicating the field should be updated."""
 
     __tablename__ = "track_legacy_field"
     __table_args__ = (Index("idx_legacy_field_track_id", "track_id"),)
@@ -65,12 +51,7 @@ class TrackPicture(Base):
     """Embedded artwork stored within a single audio track file.
 
     Attributes:
-        track_picture_id: Primary key.
-        track_id: Foreign key linking to the owning :class:`Track`.
-        track: ORM back-reference to the parent track.
-        picture_type: Image purpose (front cover, lyric text, etc.) per :class:`~.tagger.types.PictureType`.
         embed_ix: Numeric ordering when a track carries multiple embedded images.
-        description: Human-readable caption for the artwork, if any.
         picture_info: Composite property exposing ``(format, width, height, depth_bpp, file_size, file_hash, load_issue)`` via :class:`~.picture.info.PictureInfo`.
     """
 
@@ -109,15 +90,7 @@ class Track(Base):
     """Represents one audio file and its embedded metadata.
 
     Attributes:
-        track_id: Primary key (auto-generated).
-        album_id: Foreign key linking to the parent :class:`Album` row.
-        album: ORM back-reference to the owning album.
-        filename: Basename of the audio file as scanned from disk.
-        file_size: Size on disk in bytes.
-        modify_timestamp: UNIX epoch when this file was last written.
         stream: Composite property wrapping :class:`~.tagger.types.StreamInfo` with codec and duration details.
-        pictures: Collection of embedded :class:`TrackPicture` objects.
-        fields: Collection of decoded metadata as :class:`FieldV` rows.
         legacy_fields: Association proxy mapping to non-standard :class:`LegacyFieldEntity` field names.
     """
 
@@ -218,12 +191,6 @@ class PictureFile(Base):
     These files are candidates for embedding (or removal) when running cover-art checks.
 
     Attributes:
-        album_picture_file_id: Primary key.
-        album_id: Foreign key linking the image to its parent :class:`Album`.
-        album: ORM back-reference to the owning album folder.
-        filename: Basename of the image file on disk.
-        file_size: Size in bytes.
-        modify_timestamp: UNIX epoch last-write time.
         cover_source: ``True`` when this file was designated by the user as the album cover art source.
         picture_info: Composite property exposing resolution and format via :class:`~.picture.info.PictureInfo`.
     """
@@ -269,14 +236,6 @@ class OtherFile(Base):
 
     These include audio or image files that were unreadable, and have been recorded so the scanner doesn't try to read
     them again. Or If the scanner detects other files like track lists or log files, they can be represented this way.
-
-    Attributes:
-        album_other_file_id: Primary key.
-        album_id: Foreign key linking to the owning :class:`Album`.
-        album: ORM back-reference to the parent album folder.
-        filename: Basename on disk.
-        file_size: Size in bytes.
-        modify_timestamp: UNIX epoch last-write time.
     """
 
     __tablename__ = "album_other_file"
@@ -306,16 +265,9 @@ class Album(Base):
     """Top-level entity representing a physical album folder in the music library.
 
     Attributes:
-        album_id: Primary key (auto-generated).
-        path: Relative filesystem root for this album's files.
         scanner: Version of the library scanner that last modified this row; used to detect stale scans.
-        collection_associations: Join rows linking this album to named :class:`CollectionEntity` groups.
         collections: Association proxy shortcut returning collection name strings.
-        ignore_check_entities: Rows indicating which checks should be skipped for this album.
         ignore_checks: Association proxy shortcut returning suppressed check names as strings.
-        other_files: Corrupt or non-audio/non-image files discovered during the scan.
-        picture_files: Standalone :class:`PictureFile` images sitting in the folder.
-        tracks: List of :class:`Track` audio files belonging to this album.
         created_at: UNIX timestamp when the row was first inserted (seconds since epoch).
         modified_at: UNIX timestamp marking last data mutation via checks or explicit edits.
     """
@@ -360,12 +312,7 @@ class Album(Base):
 
 
 class CollectionEntity(Base):
-    """Named group used to bucket albums so sync and filter commands can target a subset of the library.
-
-    Attributes:
-        collection_id: Primary key (auto-generated).
-        collection_name: Unique display name for this collection.
-    """
+    """Named group used to bucket albums so sync and filter commands can target a subset of the library."""
 
     __tablename__ = "collection"
 
@@ -380,12 +327,7 @@ class AlbumCollectionAssociation(Base):
     """Many-to-many join table linking albums to named collections.
 
     Attributes:
-        album_collection_id: Primary key.
-        album_id: Foreign key to :class:`Album`.
-        collection_id: Foreign key to :class:`CollectionEntity`.
-        collection: ORM back-reference to the target collection row.
         collection_name: Association proxy shortcut exposing the collection name.
-        album: ORM back-reference to the linked album.
     """
 
     __tablename__ = "album_collection"
@@ -401,14 +343,7 @@ class AlbumCollectionAssociation(Base):
 
 
 class IgnoreCheckEntity(Base):
-    """Row recording that one or more checks should be skipped for a specific album.
-
-    Attributes:
-        album_ignore_check_id: Primary key.
-        album_id: Foreign key linking to the ``album`` row.
-        album: ORM back-reference to the owning :class:`Album`.
-        check_name: Name of the check to suppress (matches a registered check's *name*).
-    """
+    """Row recording that one or more checks should be skipped for a specific album."""
 
     __tablename__ = "album_ignore_check"
     __table_args__ = (Index("idx_ignore_check_album_id", "album_id"),)
@@ -424,14 +359,7 @@ class IgnoreCheckEntity(Base):
 
 
 class ScanHistoryEntity(Base):
-    """Per-full-scan audit row. Can be used to decide whether a full rescan is needed on next launch.
-
-    Attributes:
-        scan_history_id: Primary key.
-        timestamp: UNIX epoch when the scan completed.
-        folders_scanned: Number of top-level directories walked during this pass.
-        albums_total: Count of unique album rows in the database after scanning finished.
-    """
+    """Per-full-scan audit row. Can be used to decide whether a full rescan is needed on next launch."""
 
     __tablename__ = "scan_history"
     __table_args__ = (Index("idx_scan_history_timestamp", "timestamp"),)
