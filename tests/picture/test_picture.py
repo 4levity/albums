@@ -75,6 +75,23 @@ class TestPicture:
         assert result.height == 200
         assert result.depth_bpp == 24
 
+    def test_scan_tga(self):
+        # Pillow loads TGA but no MIME type is known; should record an error rather than raise KeyError
+        image_data = make_image_data(100, 200, "TGA")
+        result = PictureScanner().scan(image_data)
+        assert result.mime_type == ""
+        assert result.width == 100
+        assert result.height == 200
+        assert result.depth_bpp == 24
+        assert result.load_issue == (("error", "couldn't guess MIME type for image format TGA"),)
+
+    def test_scan_unknown_format_with_expected_mime_type(self):
+        # e.g. an MP3 APIC frame (or a mislabeled foo.png) holding TGA data must not crash the scan
+        image_data = make_image_data(100, 200, "TGA")
+        result = PictureScanner().scan(image_data, "image/png")
+        assert result.mime_type == ""
+        assert result.load_issue == (("error", "couldn't guess MIME type for image format TGA"),)
+
     def test_get_picture_metadata_error(self):
         image_data = b"not an image file"
         result = PictureScanner().scan(image_data)

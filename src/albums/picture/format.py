@@ -76,14 +76,17 @@ def mime_type_to_format(mime_type: str) -> str:
     return MIME_PILLOW_FORMAT[mime_type]
 
 
-def format_to_mime_type(image_format: str) -> str:
+def format_to_mime_type(image_format: str) -> str | None:
     """Convert a Pillow format name to its MIME image type.
 
     Args:
         image_format: A Pillow format name (e.g. ``"JPEG"``).
 
     Returns:
-        The corresponding MIME type string (e.g. ``"image/jpeg"``).
+        The corresponding MIME type string (e.g. ``"image/jpeg"``), or ``None`` if no
+        MIME type is known for *image_format* (e.g. ``"TGA"``, ``"QOI"`` or ``"DDS"``).
     """
     mime_type, _ = mimetypes.guess_type(f"_.{image_format}")
-    return mime_type or PILLOW_FORMAT_MIME[str.upper(image_format)]
+    if mime_type:
+        return mime_type
+    return PILLOW_FORMAT_MIME.get(str.upper(image_format))
