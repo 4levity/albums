@@ -112,6 +112,68 @@ class TestCheckMusicBrainzFields:
         assert mock_tagger_open.call_args_list == [call(album.tracks[1].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMID, None)]
 
+    def test_only_albumrelease_type(self, mocker):
+        # an album whose only MB field is album-release-type must not be skipped, and its consistency must be checked
+        album = Album(
+            path="foo",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.TITLE: "one"}),
+                Track(filename="2.flac", tag={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMRELEASETYPE: "album"}),
+            ],
+        )
+        result = CheckMusicBrainzFields(Context()).check(album)
+        assert result is not None
+        assert result.message == "MUSICBRAINZ_ALBUMRELEASETYPE is not the same on all tracks (values = album, none)"
+        assert result.fixer is not None
+        assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMRELEASETYPE fields", ">> Remove all MusicBrainz fields"]
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = MockTagger()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        # removing all MB fields must remove the release type field too
+        assert result.fixer.fix(result.fixer.options[1])
+
+        assert mock_tagger_open.call_args_list == [call(album.tracks[1].filename)]
+        assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMRELEASETYPE, None)]
+
+    def test_remove_all_includes_albumrelease_type(self, mocker):
+        album = Album(
+            path="foo",
+            tracks=[
+                Track(
+                    filename="1.flac",
+                    tag={
+                        BasicField.TITLE: "one",
+                        BasicField.MUSICBRAINZ_TRACKID: UUID0,
+                        BasicField.MUSICBRAINZ_ALBUMRELEASETYPE: "soundtrack",
+                    },
+                )
+            ],
+        )
+        ctx = Context()
+        ctx.config.checks[CheckMusicBrainzFields.name]["remove_all"] = True
+        result = CheckMusicBrainzFields(ctx).check(album)
+        assert result is not None
+        assert result.message == "MusicBrainz fields found and remove_all is enabled"
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = MockTagger()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+
+        assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
+        assert mock_set_field.call_args_list == [
+            call(BasicField.MUSICBRAINZ_ALBUMRELEASETYPE, None),
+            call(BasicField.MUSICBRAINZ_TRACKID, None),
+        ]
+
     def test_varying_albumartist_mbid(self, mocker):
         album = Album(
             path="foo",
