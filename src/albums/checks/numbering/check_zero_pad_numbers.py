@@ -20,6 +20,8 @@ OPTION_APPLY_POLICY: Final = ">> Apply policy"
 
 
 class ZeroPadPolicy(Enum):
+    """Zero padding policy for track/disc numbers and totals; parses case-insensitively from configuration strings."""
+
     IGNORE = auto()
     NEVER = auto()
     IF_NEEDED = auto()
@@ -27,11 +29,11 @@ class ZeroPadPolicy(Enum):
 
     @classmethod
     def from_str(cls, selection: str):
+        """Case-insensitive parse of a policy name; raises ``ValueError`` for an unknown value (bad configuration must fail loudly, like :class:`Policy.from_str`)."""
         for policy in cls:
             if str.lower(policy.name) == str.lower(selection):
                 return policy
-        logger.warning(f'invalid zero pad policy "{selection}", using "ignore"')
-        return cls.IGNORE
+        raise ValueError(f'invalid zero pad policy "{selection}"')
 
 
 def apply_pad_policy(number_str: str, policy: ZeroPadPolicy, total_item_count: int) -> str:
