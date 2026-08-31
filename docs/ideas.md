@@ -32,3 +32,4 @@ icon: lucide/flask-conical
 - parent folder doesn't match artist if using artist/album
 - automatic visual similarity check for front cover art, so it can be stored in
   multiple formats and resolutions without disabling uniqueness check
+- repair combined tracknumber/tracktotal and discnumber/disctotal in FLAC/Ogg

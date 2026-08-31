@@ -142,11 +142,17 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
             asf_fields = self._ensure_tagged_asf()
-            basic_fields.extend(
-                (tag, tuple(self._property_to_text(p) for p in asf_fields[prop]))  # pyright: ignore[reportUnknownVariableType]
-                for tag, prop in BASIC_ASF_PROPERTIES
-                if prop in asf_fields
-            )
+            for tag, prop in BASIC_ASF_PROPERTIES:
+                if prop not in asf_fields:
+                    continue
+                if tag == BasicField.COMPILATION:
+                    # WM/IsCompilation is defined as a Boolean attribute by MS-ASF, but the standard value in
+                    # albums is "1" when true and absent when false
+                    comp_values = asf_fields[prop]  # pyright: ignore[reportUnknownVariableType]
+                    if comp_values and comp_values[0].value:  # pyright: ignore[reportUnknownMemberType]
+                        basic_fields.append((tag, ("1",)))
+                else:
+                    basic_fields.append((tag, tuple(self._property_to_text(p) for p in asf_fields[prop])))  # pyright: ignore[reportUnknownVariableType]
 
             (track_number, track_total) = self._get_wm_tracknumber()
             if track_number:
@@ -192,7 +198,9 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
             match field:
                 case BasicField.COMPILATION:
                     if value_list and value_list[0]:
-                        fields[FIELD_TO_ASF_PROPERTY[field]] = ["1"]
+                        # WM/IsCompilation is defined as a Boolean attribute by MS-ASF; a Python bool makes
+                        # mutagen write an ASFBoolAttribute (a string would become a non-conformant ASFUnicodeAttribute)
+                        fields[FIELD_TO_ASF_PROPERTY[field]] = [True]
                     elif FIELD_TO_ASF_PROPERTY[field] in fields:
                         del fields[FIELD_TO_ASF_PROPERTY[field]]
                 case BasicField.DISCNUMBER:

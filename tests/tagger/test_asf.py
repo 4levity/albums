@@ -1,10 +1,14 @@
 import os
+import shutil
 
 import pytest
+from mutagen.asf import ASF
+from mutagen.asf._attrs import ASFBoolAttribute
 
 from albums.entities import Album, Track
+from albums.picture import PictureScanner
 from albums.tagger import AlbumTagger, BasicField, PictureType
-from albums.tagger.file_types.asf import WmPicture
+from albums.tagger.file_types.asf import AsfTagger, WmPicture
 
 from ..fixtures.create_library import create_library
 
@@ -100,6 +104,9 @@ class TestAsf:
             fields = dict(file.get_fields())
             assert BasicField.COMPILATION not in fields
             file.set_field(BasicField.COMPILATION, "1")  # normal enable
+        # MS-ASF defines WM/IsCompilation as a Boolean attribute, so a conformant bool must be written
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert isinstance(asf.tags["WM/IsCompilation"][0], ASFBoolAttribute)
         with TestAsf.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
             assert fields.get(BasicField.COMPILATION) == ("1",)
@@ -113,6 +120,33 @@ class TestAsf:
         with TestAsf.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
             assert fields.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
+
+    def test_read_asf_compilation_boolean(self, tmp_path):
+        # a WMA written by a conformant tool stores WM/IsCompilation as a Boolean attribute; it must be
+        # read back as the standard "1" value (not "True") so it is not "fixed" into a non-conformant string
+        wma = tmp_path / "1.wma"
+        shutil.copy(TestAsf.library / album.path / track.filename, wma)
+        asf = ASF(str(wma))
+        asf.tags["WM/IsCompilation"] = [True]
+        asf.save()
+
+        tagger_file = AsfTagger(wma, picture_scanner=PictureScanner(), padding=lambda info: 0)
+        try:
+            fields = dict(tagger_file.get_fields())
+            assert fields[BasicField.COMPILATION] == ("1",)
+        finally:
+            tagger_file.close()
+
+        asf = ASF(str(wma))
+        asf.tags["WM/IsCompilation"] = [False]
+        asf.save()
+
+        tagger_file = AsfTagger(wma, picture_scanner=PictureScanner(), padding=lambda info: 0)
+        try:
+            fields = dict(tagger_file.get_fields())
+            assert BasicField.COMPILATION not in fields  # false boolean = flag not set
+        finally:
+            tagger_file.close()
 
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:
