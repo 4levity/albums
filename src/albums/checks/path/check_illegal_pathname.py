@@ -31,12 +31,16 @@ class CheckIllegalPathname(Check):
             option_automatic_index = 0
             table = (
                 ["Filename", "New Filename"],
-                [[escape(track.filename), escape(self._sanitize(track.filename)) if self._check(track.filename) else ""] for track in album.tracks],
+                [[escape(filename), escape(self._sanitize(filename)) if self._check(filename) else ""] for filename in self._album_filenames(album)],
             )
             return CheckResult(
                 f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))}",
                 Fixer(lambda _: self._fix_sanitize_filenames(album), options, False, option_automatic_index, table),
             )
+
+    def _album_filenames(self, album: Album) -> list[str]:
+        """Filenames of all album files this check inspects and sanitizes: audio tracks and picture files."""
+        return [track.filename for track in album.tracks] + [picture_file.filename for picture_file in album.picture_files]
 
     def _check(self, filename: str) -> set[str]:
         try:
@@ -50,10 +54,10 @@ class CheckIllegalPathname(Check):
 
     def _fix_sanitize_filenames(self, album: Album):
         changed = False
-        for track in album.tracks:
-            new_filename = self._sanitize(track.filename)
-            if new_filename != track.filename:
-                self.ctx.console.print(f"Renaming {escape(track.filename)} to {escape(new_filename)}")
-                rename(self.ctx.config.library / album.path / track.filename, self.ctx.config.library / album.path / new_filename)
+        for filename in self._album_filenames(album):
+            new_filename = self._sanitize(filename)
+            if new_filename != filename:
+                self.ctx.console.print(f"Renaming {escape(filename)} to {escape(new_filename)}")
+                rename(self.ctx.config.library / album.path / filename, self.ctx.config.library / album.path / new_filename)
                 changed = True
         return FixResult.of(changed)

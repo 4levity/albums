@@ -49,6 +49,60 @@ class TestCheckIllegalPathname:
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert mock_rename.call_args_list == [call(Path(album.path) / "CON.flac", Path(album.path) / "CON_.flac")]
 
+    def test_pathname_picture_file_fix(self, mocker):
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[Track(filename="normal.flac")],
+            picture_files=[PictureFile(filename="CON.jpg", picture_info=PictureInfo("image/png", 1, 1, 24, 1, b""))],
+        )
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert "'CON' is a reserved name" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == [">> Sanitize all filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [call(Path(album.path) / "CON.jpg", Path(album.path) / "CON_.jpg")]
+
+    def test_pathname_fix_renames_tracks_and_picture_files(self, mocker):
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[Track(filename="a/b.flac"), Track(filename="normal.flac")],
+            picture_files=[PictureFile(filename="a:b.jpg", picture_info=PictureInfo("image/png", 1, 1, 24, 1, b""))],
+        )
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [
+            call(Path(album.path) / "a/b.flac", Path(album.path) / "ab.flac"),
+            call(Path(album.path) / "a:b.jpg", Path(album.path) / "ab.jpg"),
+        ]
+
+    def test_pathname_fix_table_includes_picture_files(self):
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[Track(filename="a/b.flac"), Track(filename="normal.flac")],
+            picture_files=[PictureFile(filename="a:b.jpg", picture_info=PictureInfo("image/png", 1, 1, 24, 1, b""))],
+        )
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert result.fixer is not None
+        table = result.fixer.get_table()
+        assert table is not None
+        (headers, rows) = table
+        assert headers == ["Filename", "New Filename"]
+        assert list(rows) == [
+            ["a/b.flac", "ab.flac"],
+            ["normal.flac", ""],
+            ["a:b.jpg", "ab.jpg"],
+        ]
+
     def test_pathname_reserved_character_Windows(self):
         result = CheckIllegalPathname(Context()).check(Album(path="Foo" + os.sep, tracks=[Track(filename="a:b.flac")]))
         assert result is not None
