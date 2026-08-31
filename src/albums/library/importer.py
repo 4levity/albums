@@ -56,7 +56,7 @@ class Importer:
             raise SystemExit(1)
         if albums_total > 1 and self._recursive:
             self.ctx.console.print(
-                f"THe [bold]--recursive[/bold] option cannot be used because there is more than one album at {escape(str(self.ctx.config.library))}"
+                f"The [bold]--recursive[/bold] option cannot be used because there is more than one album at {escape(str(self.ctx.config.library))}"
             )
             raise SystemExit(1)
         with self.ctx.console.status("Initializing duplicate album finder", spinner="bouncingBar"):

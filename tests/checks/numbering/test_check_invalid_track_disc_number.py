@@ -24,7 +24,7 @@ class TestCheckInvalidTrackOrDiscNumber:
     def test_duplicate_value(self, mocker):
         album = Album(
             path="",
-            tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["1", "1"]})],  #  1 will be preserved
+            tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["1", "1"]})],  # 1 will be preserved
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result

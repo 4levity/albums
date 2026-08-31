@@ -1,3 +1,5 @@
+"""Shared test helpers: a no-op mock tagger, CLI invocation, and a fake ffmpeg."""
+
 from pathlib import Path
 from typing import Generator, List, Sequence, Tuple
 

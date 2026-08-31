@@ -74,7 +74,8 @@ def _get_collection(ctx: Context, default: str = "") -> str:
     if match:
         option = match
         ctx.console.print("Using existing collection")
-    ctx.console.print(f"To use this destination, add some albums to this collection: {option}")
+    else:
+        ctx.console.print(f"To use this destination, add some albums to this collection: {option}")
     return option
 
 

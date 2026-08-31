@@ -25,6 +25,7 @@ class Policy(Enum):
 
     @classmethod
     def from_str(cls, selection: str):
+        """Case-insensitive parse of a policy name; raises ``ValueError`` for an unknown value so bad configuration fails loudly."""
         for policy in cls:
             if str.lower(policy.name) == str.lower(selection):
                 return policy

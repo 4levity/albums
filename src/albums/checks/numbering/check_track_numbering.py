@@ -149,7 +149,7 @@ class CheckTrackNumbering(Check):
 
             if expect_track_total == 0:
                 # we will expect tracks to be numbered from 1..track total
-                # if there is no track total, use 1..(# of tracks) or 1..(highest track number), whichever is more tracks
+                # if there is no track total, use 1..(# of tracks) or 1..(highest track number), whichever is larger
                 expect_track_total = max([len(tracks), *list(actual_track_numbers)])
 
             on_disc_message = f" on disc {disc_number}" if disc_number else ""
@@ -174,7 +174,7 @@ class CheckTrackNumbering(Check):
                     # then it looks like the album is incomplete.
                     return CheckResult(f"{pluralize('track', missing_track_numbers)} missing from album{on_disc_message} {missing_track_numbers}")
 
-                # TODO: we can probably offer this fixer in some other cases, also
+                # TODO: we can probably offer this fixer in some other cases as well
                 fixer = self._renumber_fixer(album, disc_number, tracks)
                 return CheckResult(f"missing track {pluralize('number', missing_track_numbers)}{on_disc_message} {missing_track_numbers}", fixer)
 

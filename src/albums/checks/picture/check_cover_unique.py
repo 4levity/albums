@@ -105,7 +105,7 @@ class CheckCoverUnique(Check):
                 )
             if cover_source_filename is not None and len(cover_image_files) > 1:
                 other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
-                option_automatic_index = 0  # YOLO
+                option_automatic_index = 0  # keep the cover source
 
                 return CheckResult(
                     "multiple front cover image files, and one of them is marked cover source (delete others)",

@@ -63,9 +63,9 @@ def run_scan(
     if full_scan:
         last_folders = session.execute(select(ScanHistoryEntity.folders_scanned).order_by(desc(ScanHistoryEntity.timestamp))).first()
         if last_folders:
-            # make scan faster while retaining progress bar by using last scan stats for approx folder count
+            # speed up scanning (progress bar included) by approximating the folder count from the last scan
             paths = glob.iglob("**/", root_dir=ctx.config.library, recursive=True)
-            # estimate more folders than last scan to maybe avoid progress bar hanging at 100% if albums were added
+            # over-estimate slightly so the progress bar doesn't stick at 100% if albums were added since
             expected_path_count = int(last_folders[0] * 1.01)
             logger.info(f"expect to scan about {expected_path_count} paths")
         else:
@@ -124,12 +124,12 @@ def scan_library(
         album_id,
         path,
     ) in session.execute(select(Album.album_id, Album.path)).tuples():
-        if album_id is not None:  # it's not
+        if album_id is not None:  # always non-NULL
             current_album_paths.add(path)
             unvisited_album_ids.add(album_id)
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for path in paths:
-        if path in current_album_paths:  # 99% chance
+        if path in current_album_paths:  # bloom filter: assume present unless it says otherwise
             album_match = session.execute(select(Album).where(Album.path == path)).tuples().one_or_none() or (None,)
         else:
             album_match = (None,)
