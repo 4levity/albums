@@ -45,15 +45,24 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
     return tracks_by_disc
 
 
+def _number_sort_key(value: str) -> Tuple[int, int, str]:
+    """Sort key for a track/disc number string: decimal values compare numerically (so 2 < 10), non-decimal values sort after all numbers, lexicographically among themselves."""
+    if value.isdecimal():
+        return (0, int(value), "")
+    return (1, 0, value)
+
+
 def ordered_tracks(album: Album):
-    """Return album tracks in playback order: by disc/track number fields when every track has a track number, falling back to filename sort otherwise."""
+    """Return album tracks in playback order: by disc/track number fields when every track has a track number, falling back to filename sort otherwise. Number fields compare numerically, so albums with ≥10 tracks or discs are ordered 1, 2, ..., 10, ... rather than lexicographically."""
     # sort by discnumber/tracknumber field if all tracks have one
     has_discnumber = all(len(track.get(BasicField.DISCNUMBER, default=[])) == 1 for track in album.tracks)
     if all(len(track.get(BasicField.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
         if has_discnumber:
-            return sorted(album.tracks, key=lambda t: (t.get(BasicField.DISCNUMBER)[0], t.get(BasicField.TRACKNUMBER)[0]))
+            return sorted(
+                album.tracks, key=lambda t: (_number_sort_key(t.get(BasicField.DISCNUMBER)[0]), _number_sort_key(t.get(BasicField.TRACKNUMBER)[0]))
+            )
         else:
-            return sorted(album.tracks, key=lambda t: t.get(BasicField.TRACKNUMBER)[0])
+            return sorted(album.tracks, key=lambda t: _number_sort_key(t.get(BasicField.TRACKNUMBER)[0]))
     else:  # default album sort is by filename
         return sorted(album.tracks)
 
