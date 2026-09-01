@@ -1,3 +1,4 @@
+# cspell:ignore Ünïcödé
 import os
 import shutil
 import struct
