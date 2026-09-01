@@ -1,10 +1,10 @@
 from typing import List, Tuple
 
-import rich_click as click
 from prompt_toolkit.shortcuts import checkboxlist_dialog
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.checks.helpers import album_display_name
 from albums.database import collections_by_name

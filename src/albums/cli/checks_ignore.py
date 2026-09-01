@@ -1,7 +1,7 @@
-import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from sqlalchemy.orm import Session
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.helpers import album_display_name

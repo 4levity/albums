@@ -1,5 +1,4 @@
-import rich_click as click
-
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.library import Importer, run_scan
 from albums.words import plural

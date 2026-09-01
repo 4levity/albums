@@ -3,9 +3,9 @@ import platform
 from pathlib import Path
 from typing import Final
 
-import rich_click as click
 from prompt_toolkit import choice
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.config import RescanOption, SyncDestination
 from albums.library import Synchronizer, run_scan

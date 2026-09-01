@@ -1,12 +1,12 @@
 from json import dumps
 
-import rich_click as click
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
+import albums.cli.click_rich as click
 from albums.app import Context
 
 from .cli_context import pass_context, require_real_context

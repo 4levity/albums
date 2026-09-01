@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import rich_click as click
+import click
 
 
 class InvisibleCountParam(click.ParamType[int]):

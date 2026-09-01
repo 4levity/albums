@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
 
-import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.config import PLATFORM_DIRS, config_load, config_save
 from albums.database import db_open

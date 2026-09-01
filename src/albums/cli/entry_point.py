@@ -1,9 +1,9 @@
 """CLI entry point: the root ``albums`` click group and its global options."""
 
 import rich.traceback
-import rich_click as click
 
 import albums
+import albums.cli.click_rich as click
 from albums import app
 from albums.database import Comparator
 from albums.library import run_scan
@@ -20,7 +20,6 @@ from .config import config
 from .import_command import import_command
 from .init import init
 from .list_albums import list_albums
-from .ordered_group import OrderedGroup
 from .scan import scan
 from .sql import sql
 from .sync import sync
@@ -28,7 +27,7 @@ from .sync import sync
 rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_length=10)
 
 
-@click.group(cls=OrderedGroup, epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
+@click.group(epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
 @click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m field:artist=Foo")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")  # pyright: ignore[reportUnknownMemberType]

@@ -1,9 +1,9 @@
 import logging
 from typing import Final
 
-import rich_click as click
 from sqlalchemy.orm import Session
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.library import run_scan
 

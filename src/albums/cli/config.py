@@ -5,11 +5,11 @@ from itertools import chain
 from pathlib import Path
 from typing import Final, Mapping
 
-import rich_click as click
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 from rich.table import Table
 
+import albums.cli.click_rich as click
 from albums.app import Context
 from albums.config import Configuration, SettingValueType, config_save
 from albums.interactive import interactive_config
