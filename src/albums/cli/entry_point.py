@@ -5,8 +5,8 @@ import rich.traceback
 import albums
 import albums.cli.click_rich as click
 from albums import app
-from albums.database import Comparator
 from albums.library import run_scan
+from albums.selector import Comparator
 
 from .check import check
 from .checks_ignore import checks_ignore

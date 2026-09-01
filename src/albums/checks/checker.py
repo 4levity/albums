@@ -8,10 +8,10 @@ from rich.markup import escape
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.database import Match, load_album_entities
 from albums.entities import Album
 from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
+from albums.selector import Match, load_album_entities
 from albums.tagger import AlbumTaggerProvider
 
 from .all import ALL_CHECKS

@@ -14,7 +14,8 @@ from rich.logging import RichHandler
 
 from albums.app import Context
 from albums.config import PLATFORM_DIRS, RescanOption, config_load
-from albums.database import MEMORY, Comparator, Match, db_open, load_album_entities
+from albums.database import MEMORY, db_open
+from albums.selector import Comparator, Match, load_album_entities
 
 logger: Final = logging.getLogger(__name__)
 

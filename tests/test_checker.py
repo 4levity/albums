@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.checker import Checker
-from albums.database import MEMORY, db_open, load_album_entities
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.library import run_scan
+from albums.selector import load_album_entities
 from albums.tagger import BasicField
 
 from .fixtures.create_library import create_library

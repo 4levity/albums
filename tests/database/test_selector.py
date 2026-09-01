@@ -4,9 +4,10 @@ import re
 import pytest
 from sqlalchemy.orm import Session
 
-from albums.database import MEMORY, Comparator, Match, db_open, load_album_entities
+from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
+from albums.selector import Comparator, Match, load_album_entities
 from albums.tagger import BasicField, PictureType, StreamInfo
 
 
