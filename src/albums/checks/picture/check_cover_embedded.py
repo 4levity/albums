@@ -220,6 +220,8 @@ class CheckCoverEmbedded(Check):
         source_image.load()  # fail here if not loadable
 
         suffix = mimetypes.guess_extension(cover.picture_info.mime_type)
+        if not suffix:
+            raise ValueError(f"couldn't extract image type {cover.picture_info.mime_type} - can't guess file extension")
         new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
         self.ctx.console.print(f"Extract to cover source: {escape(new_filename)}")
         path = self.ctx.config.library / album.path / new_filename

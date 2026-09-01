@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from unittest.mock import call, mock_open, patch
 
+import pytest
 from PIL import Image
 
 from albums.app import Context
@@ -71,6 +72,40 @@ class TestCheckCoverEmbedded:
         mock_handle = m_open.return_value
         image_data_written = mock_handle.write.call_args[0][0]
         assert image_data_written == image_data
+
+    def test_cover_embedded_some_unknown_extension(self, mocker):
+        # image/jpg is a common non-standard MIME type for which mimetypes.guess_extension returns None
+        album = Album(
+            path="",
+            tracks=[
+                Track(
+                    filename="1.flac",
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/jpg", 400, 400, 24, 0, b""), picture_type=PictureType.COVER_FRONT)],
+                ),
+                Track(filename="2.flac"),
+            ],
+        )
+        album.album_id = 1
+        ctx = Context()
+        ctx.db = True
+        result = CheckCoverEmbedded(ctx).check(album)
+        assert result is not None
+        assert "the cover can be extracted and marked as cover_source" in result.message
+        assert result.fixer
+        assert result.fixer.option_automatic_index == 0
+        tagger = MockTagger()
+        image_data = make_image_data(400, 400, "JPEG")
+        mock_read_image = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        m_open = mock_open()
+        with patch("builtins.open", m_open):
+            with pytest.raises(ValueError, match="can't guess file extension"):
+                result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+
+        assert mock_read_image.call_count == 1
+        assert len(album.picture_files) == 0
+        m_open.assert_not_called()
 
     def test_cover_embedded_some_with_source(self, mocker):
         album = Album(

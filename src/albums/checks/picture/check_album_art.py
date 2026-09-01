@@ -71,10 +71,16 @@ class CheckAlbumArt(Check):
 
     def _fix_extract(self, album: Album, embedded_to_extract: Mapping[Picture, list[str]]):
         tagger = self.tagger.get(album.path)
+        suffixes: dict[Picture, str] = {}
+        for pic in embedded_to_extract:
+            suffix = mimetypes.guess_extension(pic.picture_info.mime_type)
+            if not suffix:
+                raise ValueError(f"couldn't extract image type {pic.picture_info.mime_type} - can't guess file extension")
+            suffixes[pic] = suffix
         for pic, refs in embedded_to_extract.items():
             filename = refs[0]
             stem = FRONT_COVER_FILENAME if pic.type == PictureType.COVER_FRONT else str.lower(pic.type.name)
-            suffix = mimetypes.guess_extension(pic.picture_info.mime_type)
+            suffix = suffixes[pic]
             num = 0
             while (new_file := (self.ctx.config.library / album.path / f"{stem}{f'{num}' if num else ''}{suffix}")) and new_file.exists():
                 num += 1

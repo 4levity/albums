@@ -3,6 +3,8 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest.mock import call, mock_open, patch
 
+import pytest
+
 from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_available import CheckCoverAvailable
@@ -81,6 +83,37 @@ class TestCheckCoverAvailable:
                 call().__exit__(None, None, None),
             ],
         )
+
+    def test_album_pictures_but_no_front_cover_unknown_extension(self, mocker):
+        # image/jpg is a common non-standard MIME type for which mimetypes.guess_extension returns None
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(
+                    filename="1.flac",
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/jpg", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
+                ),
+            ],
+        )
+        result = CheckCoverAvailable(Context()).check(album)
+        assert result is not None
+        assert "album has pictures but none is COVER_FRONT picture" in result.message
+        assert result.fixer is not None
+        assert result.fixer.options == ["1.flac image/jpg COVER_BACK"]
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = MockTagger()
+        image_data = make_image_data()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_get_image_data = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
+
+        m_open = mock_open()
+        with patch("builtins.open", m_open):
+            with pytest.raises(ValueError, match="can't guess file extension"):
+                result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_get_image_data.call_count == 1
+        m_open.assert_not_called()
 
     def test_album_picture_files_no_front_cover(self, mocker):
         album = Album(

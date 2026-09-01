@@ -124,6 +124,8 @@ class CheckCoverAvailable(Check):
             with self.tagger.get(album.path).open(filename) as tags:
                 image_data = tags.get_image_data(pic)
             suffix = mimetypes.guess_extension(pic.picture_info.mime_type)
+            if not suffix:
+                raise ValueError(f"couldn't extract image type {pic.picture_info.mime_type} - can't guess file extension")
             new_filename = f"{FRONT_COVER_FILENAME}{suffix}"
             self.ctx.console.print(f"Creating {len(image_data)} byte {pic.picture_info.mime_type} file {escape(new_filename)}", highlight=False)
             new_path = self.ctx.config.library / album.path / new_filename
