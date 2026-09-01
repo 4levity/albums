@@ -47,6 +47,7 @@ class BasicField(StrEnum):
     ARTISTSORT = auto()
     BARCODE = auto()
     COMPILATION = auto()
+    DATE = auto()  # release date; ID3 TDRL, MP4 aard, ASF WM/Year
     DISCNUMBER = auto()
     DISCTOTAL = auto()
     GENRE = auto()

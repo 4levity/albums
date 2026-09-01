@@ -32,6 +32,7 @@ track = Track(
         BasicField.ORGANIZATION: "ABC",
         BasicField.BARCODE: "0123",
         BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.DATE: "2020",
     },
 )
 album = Album(path="baz" + os.sep, tracks=[track])
@@ -59,6 +60,7 @@ class TestAsf:
         assert fields[BasicField.ORGANIZATION] == tuple(track_fields[BasicField.ORGANIZATION])
         assert fields[BasicField.BARCODE] == tuple(track_fields[BasicField.BARCODE])
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        assert fields[BasicField.DATE] == tuple(track_fields[BasicField.DATE])
 
     def test_update_asf_tags(self):
         TestAsf.tagger.set_basic_fields(
@@ -74,6 +76,7 @@ class TestAsf:
                 (BasicField.ORGANIZATION, "Q"),
                 (BasicField.BARCODE, "0000"),
                 (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
+                (BasicField.DATE, "2021"),
             ],
         )
         with TestAsf.tagger.open(track.filename) as file:
@@ -88,6 +91,18 @@ class TestAsf:
         assert fields[BasicField.ORGANIZATION] == ("Q",)
         assert fields[BasicField.BARCODE] == ("0000",)
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+        assert fields[BasicField.DATE] == ("2021",)
+
+    def test_remove_asf_release_date(self):
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields
 
     def test_set_unsupported_asf_tags(self):
         with TestAsf.tagger.open(track.filename) as file:

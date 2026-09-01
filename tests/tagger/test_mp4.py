@@ -28,6 +28,7 @@ track1 = Track(
         BasicField.ORGANIZATION: "ABC",
         BasicField.BARCODE: "0123",
         BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.DATE: "2020",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b"1111"), picture_type=PictureType.COVER_FRONT),
@@ -53,6 +54,7 @@ track2 = Track(
         BasicField.ORGANIZATION: "ABC",
         BasicField.BARCODE: "0123",
         BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.DATE: "2020",
     },
 )
 video = OtherFile(filename="video.mp4")
@@ -89,6 +91,7 @@ class TestMp4:
         assert fields[BasicField.ORGANIZATION] == tuple(track_fields[BasicField.ORGANIZATION])
         assert fields[BasicField.BARCODE] == tuple(track_fields[BasicField.BARCODE])
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        assert fields[BasicField.DATE] == tuple(track_fields[BasicField.DATE])
 
     def test_mp4_audio(self):
         with TestMp4.tagger.open(track2.filename) as file:
@@ -128,6 +131,7 @@ class TestMp4:
                 (BasicField.ORGANIZATION, "Q"),
                 (BasicField.BARCODE, "0000"),
                 (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
+                (BasicField.DATE, "2021"),
             ],
         )
         with TestMp4.tagger.open(track1.filename) as file:
@@ -142,6 +146,18 @@ class TestMp4:
         assert fields[BasicField.ORGANIZATION] == ("Q",)
         assert fields[BasicField.BARCODE] == ("0000",)
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+        assert fields[BasicField.DATE] == ("2021",)
+
+    def test_remove_mp4_release_date(self):
+        with TestMp4.tagger.open(track1.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestMp4.tagger.open(track1.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields
 
     def test_update_mp4_compilation(self):
         with TestMp4.tagger.open(track1.filename) as file:

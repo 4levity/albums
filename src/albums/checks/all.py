@@ -15,6 +15,7 @@ from .fields.check_legacy_fields import CheckLegacyFields
 from .fields.check_musicbrainz_fields import CheckMusicBrainzFields
 from .fields.check_publisher import CheckPublisherField
 from .fields.check_releasecountry import CheckReleaseCountryField
+from .fields.check_releasedate import CheckReleaseDateField
 from .fields.check_releasetype import CheckReleaseTypeField
 from .fields.check_single_value_fields import CheckSingleValueFields
 from .fields.check_track_title import CheckTrackTitle
@@ -73,6 +74,7 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckCompilationField,
     CheckReleaseTypeField,
     CheckReleaseCountryField,
+    CheckReleaseDateField,
     # picture checks
     CheckInvalidImage,
     CheckDuplicateImage,

@@ -23,6 +23,9 @@ M4A_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.ALBUMARTISTSORT, "soaa"),
     (BasicField.ARTIST, "©ART"),
     (BasicField.ARTISTSORT, "soar"),
+    # aard is usually written by other tools as an integer atom (year only), which mutagen cannot parse;
+    # albums writes it as text and replaces such integer atoms when setting the field
+    (BasicField.DATE, "aard"),
     (BasicField.TITLE, "©nam"),
     (BasicField.GENRE, "©gen"),
     (BasicField.ORGANIZATION, "©pub"),

@@ -5,7 +5,7 @@ from typing import Callable, Final, Generator, List, Tuple, override
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSOA, TSOP, TXXX, UFID
+from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TDRL, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSOA, TSOP, TXXX, UFID
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
@@ -155,6 +155,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
                         frames["TCMP"] = TCMP(encoding=Encoding.UTF8, text=["1"])
                     elif "TCMP" in frames:
                         del frames["TCMP"]
+                case BasicField.DATE:
+                    frames["TDRL"] = TDRL(encoding=Encoding.UTF8, text=value_list)
                 case BasicField.DISCNUMBER:
                     _, disc_total = self._get_tpos()
                     self._set_tpos(value_list[0] if value_list[0] else None, disc_total)

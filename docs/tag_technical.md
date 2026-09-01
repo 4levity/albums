@@ -14,6 +14,10 @@ are referenced by the standard field names "artist" and "albumartist".
 In other words, if `albums` writes a new "album artist" to your MP3, behind
 the scenes it's actually writing to the TPE2 frame.
 
+The same applies to the release date field: `date` in Vorbis comments (FLAC,
+Ogg Vorbis), `TDRL` in ID3 tags (MP3, AIFF), `aard` in MP4 iTunes atoms (M4A)
+and `WM/Year` in ASF/WMA tags.
+
 ### Track total and disc total
 
 If track number and track total are combined in the tracknumber field (or ID3

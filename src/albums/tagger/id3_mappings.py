@@ -11,6 +11,7 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.ARTISTSORT, "TSOP"),
     (BasicField.BARCODE, "TXXX:BARCODE"),
     (BasicField.COMPILATION, "TCMP"),
+    (BasicField.DATE, "TDRL"),
     (BasicField.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
     (BasicField.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
     (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
@@ -47,7 +48,7 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
 # TODO also pull other common values, like
 # "composer": "tcom",
 # "encoder": "tenc",
-# "date": "tdrc",  # recordingdate?
+# "recording date": "tdrc"
 
 UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
 

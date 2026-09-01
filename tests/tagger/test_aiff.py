@@ -22,6 +22,7 @@ track = Track(
         BasicField.DISCTOTAL: "2",
         BasicField.GENRE: "Rock",
         BasicField.ORGANIZATION: "ABC",
+        BasicField.DATE: "2020",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
@@ -60,6 +61,7 @@ class TestAiff:
         assert fields[BasicField.TITLE] == tuple(track_fields[BasicField.TITLE])
         assert fields[BasicField.GENRE] == tuple(track_fields[BasicField.GENRE])
         assert fields[BasicField.ORGANIZATION] == tuple(track_fields[BasicField.ORGANIZATION])
+        assert fields[BasicField.DATE] == tuple(track_fields[BasicField.DATE])
 
     def test_update_aiff_tags(self):
         TestAiff.tagger.set_basic_fields(
@@ -71,6 +73,7 @@ class TestAiff:
                 (BasicField.TITLE, "t"),
                 (BasicField.GENRE, "Country"),
                 (BasicField.ORGANIZATION, "Q"),
+                (BasicField.DATE, "2021"),
             ],
         )
         with TestAiff.tagger.open(track.filename) as file:
@@ -81,6 +84,18 @@ class TestAiff:
         assert fields[BasicField.TITLE] == ("t",)
         assert fields[BasicField.GENRE] == ("Country",)
         assert fields[BasicField.ORGANIZATION] == ("Q",)
+        assert fields[BasicField.DATE] == ("2021",)
+
+    def test_remove_aiff_release_date(self):
+        with TestAiff.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        with TestAiff.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestAiff.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields
 
     def test_write_aiff_tracktotal(self):
         with TestAiff.tagger.open(track.filename) as file:

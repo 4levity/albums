@@ -30,6 +30,7 @@ track = Track(
         BasicField.ORGANIZATION: "ABC",
         BasicField.BARCODE: "0123",
         BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.DATE: "2020",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT, description=""),
@@ -72,6 +73,7 @@ class TestMp3:
         assert fields[BasicField.ORGANIZATION] == tuple(track_tags[BasicField.ORGANIZATION])
         assert fields[BasicField.BARCODE] == tuple(track_tags[BasicField.BARCODE])
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        assert fields[BasicField.DATE] == tuple(track_tags[BasicField.DATE])
 
     def test_update_id3_tags(self):
         TestMp3.tagger.set_basic_fields(
@@ -87,6 +89,7 @@ class TestMp3:
                 (BasicField.ORGANIZATION, "Q"),
                 (BasicField.BARCODE, "0000"),
                 (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
+                (BasicField.DATE, "2021-05"),
             ],
         )
         with TestMp3.tagger.open(track.filename) as file:
@@ -101,6 +104,18 @@ class TestMp3:
         assert fields[BasicField.ORGANIZATION] == ("Q",)
         assert fields[BasicField.BARCODE] == ("0000",)
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+        assert fields[BasicField.DATE] == ("2021-05",)
+
+    def test_remove_id3_release_date(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestMp3.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields
 
     def test_set_unsupported_id3_tags(self):
         with TestMp3.tagger.open(track.filename) as file:

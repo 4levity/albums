@@ -4,6 +4,7 @@
     "useGitignore": true,
     "version": "0.2",
     "words": [
+        "aard",
         "abatilo",
         "albumartist",
         "ALBUMARTISTID",
@@ -102,6 +103,7 @@
         "RECORDINGID",
         "RELEASEARTISTID",
         "RELEASECOUNTRY",
+        "releasedate",
         "RELEASEGROUPID",
         "RELEASETRACKID",
         "RELEASETYPE",
@@ -123,6 +125,7 @@
         "startfile",
         "TALB",
         "TCMP",
+        "TDRL",
         "tcom",
         "tdrc",
         "tenc",

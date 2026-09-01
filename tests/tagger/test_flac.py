@@ -26,7 +26,7 @@ track2 = Track(
 )
 track3 = Track(
     filename="3.flac",
-    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
+    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2", BasicField.DATE: "2020"},
     legacy_fields=["label", "album artist", "totaldiscs"],
 )
 
@@ -170,3 +170,18 @@ class TestFlac:
         assert fields[BasicField.ORGANIZATION] == ("ABC",)
         assert fields[BasicField.ALBUMARTIST] == ("foo artist",)
         assert fields[BasicField.DISCTOTAL] == ("2",)
+
+    def test_read_write_flac_date(self):
+        with TestFlac.tagger.open(track3.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        TestFlac.tagger.set_basic_fields(TestFlac.library / album.path / track3.filename, [(BasicField.DATE, "2021-05")])
+        with TestFlac.tagger.open(track3.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2021-05",)
+
+        TestFlac.tagger.set_basic_fields(TestFlac.library / album.path / track3.filename, [(BasicField.DATE, None)])
+        with TestFlac.tagger.open(track3.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields

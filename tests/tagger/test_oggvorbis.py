@@ -27,6 +27,7 @@ track = Track(
         BasicField.BARCODE: "0123",
         BasicField.MUSICBRAINZ_ALBUMID: UUID0,
         BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY: "US",
+        BasicField.DATE: "2020",
     },
     pictures=[
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
@@ -74,6 +75,7 @@ class TestOggVorbis:
         assert fields[BasicField.BARCODE] == tuple(track_fields[BasicField.BARCODE])
         assert fields[BasicField.MUSICBRAINZ_ALBUMID] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMID])
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == tuple(track_fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY])
+        assert fields[BasicField.DATE] == tuple(track_fields[BasicField.DATE])
 
     def test_update_ogg_vorbis_tags(self):
         TestOggVorbis.tagger.set_basic_fields(
@@ -92,6 +94,7 @@ class TestOggVorbis:
                 (BasicField.BARCODE, "0000"),
                 (BasicField.MUSICBRAINZ_ALBUMID, UUID1),
                 (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "UK"),
+                (BasicField.DATE, "2021"),
             ],
         )
         with TestOggVorbis.tagger.open(track.filename) as file:
@@ -109,6 +112,18 @@ class TestOggVorbis:
         assert fields[BasicField.BARCODE] == ("0000",)
         assert fields[BasicField.MUSICBRAINZ_ALBUMID] == (UUID1,)
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
+        assert fields[BasicField.DATE] == ("2021",)
+
+    def test_remove_ogg_vorbis_date(self):
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DATE] == ("2020",)
+
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DATE not in fields
 
     def test_update_ogg_vorbis_compilation(self):
         with TestOggVorbis.tagger.open(track.filename) as file:

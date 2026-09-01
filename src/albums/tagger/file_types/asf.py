@@ -26,6 +26,7 @@ BASIC_ASF_PROPERTIES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.ARTISTSORT, "WM/ArtistSortOrder"),
     (BasicField.BARCODE, "WM/Barcode"),
     (BasicField.COMPILATION, "WM/IsCompilation"),
+    (BasicField.DATE, "WM/Year"),
     (BasicField.GENRE, "WM/Genre"),
     (BasicField.MUSICBRAINZ_ALBUMARTISTID, "MusicBrainz/Album Artist Id"),
     (BasicField.MUSICBRAINZ_ALBUMID, "MusicBrainz/Album Id"),

@@ -56,3 +56,19 @@ See above for common behavior of this check.
     track types where some use Vorbis Comment and others don't, the `presence`
     setting will be ignored for that album and the field will be **removed** if
     present.
+
+## release-date
+
+See above for common behavior of this check.
+
+The release date field is mapped for every supported track type: Vorbis
+Comment `date` (FLAC, Ogg), ID3 `TDRL` (MP3, AIFF), MP4 `aard` (M4A) and ASF
+`WM/Year` (WMA). The value may be a year (e.g. `2020`) or a more specific
+date (e.g. `2020-06`).
+
+!!!warning
+
+    Some MP4 files created by other tools store the `aard` atom as an integer
+    (the year only), which `albums` cannot read. When `albums` sets the release
+    date on such a file, the existing integer atom is replaced by the text
+    value.
