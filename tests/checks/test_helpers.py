@@ -1,4 +1,4 @@
-from albums.checks.helpers import ordered_tracks
+from albums.checks.helpers import ordered_tracks, parse_filename
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
@@ -72,3 +72,44 @@ class TestOrderedTracks:
             ],
         )
         assert [track.filename for track in ordered_tracks(album)] == ["a.flac", "b.flac", "c.flac"]
+
+
+class TestParseFilename:
+    def test_track_title(self):
+        assert parse_filename("01 the title.flac") == (None, 1, "the title")
+
+    def test_track_dot_title(self):
+        assert parse_filename("01. the title.mp3") == (None, 1, "the title")
+
+    def test_track_dash_title(self):
+        assert parse_filename("01 - the title.mp3") == (None, 1, "the title")
+
+    def test_disc_track_title(self):
+        assert parse_filename("1-03 - the title.flac") == (1, 3, "the title")
+
+    def test_title_only(self):
+        assert parse_filename("the title.flac") == (None, None, "the title")
+
+    def test_track_number_only(self):
+        assert parse_filename("1.flac") == (None, 1, None)
+
+    def test_iso_date_prefix_is_not_a_number(self):
+        assert parse_filename("2024-01-05 Live show.mp3") == (None, None, "Live show")
+
+    def test_compact_date_prefix_is_not_a_number(self):
+        assert parse_filename("20240105 Live show.mp3") == (None, None, "Live show")
+
+    def test_year_and_month_prefixes_are_not_numbers(self):
+        assert parse_filename("2024-01 Live show.mp3") == (None, None, "Live show")
+        assert parse_filename("202401 Live show.mp3") == (None, None, "Live show")
+        assert parse_filename("2024 Live show.mp3") == (None, None, "Live show")
+
+    def test_date_prefix_with_track_number(self):
+        assert parse_filename("2024-01-05 01 Live show.mp3") == (None, 1, "Live show")
+
+    def test_invalid_date_is_not_stripped(self):
+        assert parse_filename("2024-13-40 Song.mp3") == (None, None, "2024-13-40 Song")
+        assert parse_filename("9999-12-31 Song.mp3") == (None, None, "9999-12-31 Song")
+
+    def test_long_number_is_not_a_track_number(self):
+        assert parse_filename("1234 Song.mp3") == (None, None, "1234 Song")

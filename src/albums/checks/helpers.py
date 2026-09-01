@@ -89,9 +89,31 @@ def format_field_values(values: Sequence[str] | None) -> str:
     return escape(str(values))
 
 
+# a date at the start of a filename: a 4-digit year with an optional month and day, separated by dash, underscore or
+# dot, or compact (e.g. 2024, 2024-01, 2024-01-05, 20240105)
+_LEADING_DATE_RE: Final = re.compile(r"^(\d{4})(?:[-_.]?(\d{1,2}))?(?:[-_.]?(\d{1,2}))?(?=[\s._-])")
+
+
+def _strip_leading_date(filename: str) -> str:
+    """Remove a leading date (year, optional month, optional day) so it is not mistaken for track or disc numbers; returns the rest of the filename, unchanged if there is no plausible date prefix."""
+    match = _LEADING_DATE_RE.match(filename)
+    if not match:
+        return filename
+    year, month, day = match.groups()
+    if not (1900 <= int(year) <= 2099 and (month is None or 1 <= int(month) <= 12) and (day is None or 1 <= int(day) <= 31)):
+        return filename
+    return filename[match.end() :].lstrip()
+
+
 def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
-    """Parse ``disc-track title`` or ``track title`` from a filename; returns (disc, track, title), with missing parts as ``None``."""
-    filename_parser = "(?P<track1>\\d+)?(?:-(?P<track2>\\d+)?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
+    """Parse ``disc-track title`` or ``track title`` from a filename; returns (disc, track, title), with missing parts as ``None``.
+
+    Only 1-3 digit numbers are treated as track/disc numbers, and a leading date (e.g. ``2024-01-05`` or
+    ``20240105``) is ignored rather than mistaken for numbers, so ``2024-01-05 Live show.mp3`` gives the
+    title "Live show".
+    """
+    filename = _strip_leading_date(filename)
+    filename_parser = "(?P<track1>\\d{1,3}(?!\\d))?(?:-(?P<track2>\\d{1,3}(?!\\d))?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
     match = re.fullmatch(filename_parser, filename)
     if not match:
         return (None, None, None)

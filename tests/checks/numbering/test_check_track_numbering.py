@@ -132,6 +132,18 @@ class TestCheckTrackNumbering:
             call(path / album.tracks[1].filename, [(BasicField.TRACKNUMBER, "2")]),
         ]
 
+    def test_check_track_number_missing_date_prefix_filenames(self):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="2024-01-05 one.flac"),
+                Track(filename="20240106 two.flac"),
+            ],
+        )
+        result = CheckTrackNumbering(Context()).check(album)
+        assert "missing track numbers {1, 2}" in result.message
+        assert result.fixer is None  # date prefixes are not track numbers
+
     def test_check_unexpected_track_number(self):
         album = Album(
             path="foo" + os.sep,

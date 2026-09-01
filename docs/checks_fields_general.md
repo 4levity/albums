@@ -138,14 +138,21 @@ automatic fix will remove them. And if `automatic_concatenate` is enabled
 
 Each track should have at least one title field. This check doesn't care if a
 track has more than one title. If the track doesn't have a title, it can be
-guessed from the filename, as long as the filename looks similar to one of these
-examples:
+guessed from the filename. A number at the start of the filename is assumed to
+be the track number (or a disc number and track number if there are two numbers
+separated by a dash), and the title is what follows it, as in these examples:
 
 - `01 the title.flac`
 - `01. the title.mp3`
 - `01 - the title.mp3`
 - `1-03 - the title.flac`
 - `the title.flac` _(if nothing else matches)_
+
+Only 1-3 digit numbers are treated as track or disc numbers, and a date at the
+start of the filename is ignored entirely. A date is a four-digit year, with an
+optional month and day, separated by dashes, dots or underscores (e.g.
+`2024-01-05`, `2024-01` or `20240105`), so for example
+`2024-01-05 Live show.mp3` gives the title `Live show`.
 
 If the filename looks like a track number only, no title guess will be made.
 However, if the filename doesn't match any recognized pattern, the guess will

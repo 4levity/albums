@@ -107,6 +107,13 @@ The rules are:
 from some tracks but all track numbers can be guessed from the filename,
 recreate track number fields from filenames.
 
+The guess is a 1-3 digit number at the start of the filename, optionally after
+a disc number and dash (e.g. `03` or `1-03`). Longer numbers are not track
+numbers, and a date at the start of the filename (e.g. `2024-01-05`) is not a
+number at all. The fix is not offered if any filename indicates a disc number
+different from the disc being fixed, or if a track has no track number and no
+number can be read from its filename.
+
 **Automatic fix** for track total policy: If the policy is "never", always
 remove the field. If the policy is "always", and a consistent total is set on
 some tracks, set the same total on the others.
