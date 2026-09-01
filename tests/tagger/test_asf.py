@@ -1,16 +1,17 @@
 import os
 import shutil
+import struct
 
 import pytest
 from mutagen.asf import ASF
-from mutagen.asf._attrs import ASFBoolAttribute
+from mutagen.asf._attrs import ASFBoolAttribute, ASFByteArrayAttribute
 
 from albums.entities import Album, Track
 from albums.picture import PictureScanner
 from albums.tagger import AlbumTagger, BasicField, PictureType
 from albums.tagger.file_types.asf import AsfTagger, WmPicture
 
-from ..fixtures.create_library import create_library
+from ..fixtures.create_library import create_library, make_image_data
 
 UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
@@ -216,8 +217,74 @@ class TestAsf:
         assert fields[BasicField.DISCNUMBER] == ("2",)
         assert BasicField.DISCTOTAL not in fields
 
+    @staticmethod
+    def wm_picture_blob(picture_type: int, mime_type: str, description: str, image_data: bytes) -> bytes:
+        # spec-compliant WM/Picture blob: type, image size, null-terminated UTF-16LE mime type and
+        # description, then image data
+        return (
+            struct.pack("<bi", picture_type, len(image_data))
+            + mime_type.encode("utf-16-le")
+            + b"\x00\x00"
+            + description.encode("utf-16-le")
+            + b"\x00\x00"
+            + image_data
+        )
+
     def test_wm_picture_serialize(self):
         original = WmPicture(PictureType.FISH, "image/png", "Description", b"-image data-")
         serialized = original.to_bytes()
         from_bytes = WmPicture.from_bytes(serialized)
         assert original == from_bytes
+
+    def test_wm_picture_serialize_edge_cases(self):
+        # empty strings and non-ASCII text
+        for original in (
+            WmPicture(PictureType.OTHER, "", "", b"xyz"),
+            WmPicture(PictureType.COVER_FRONT, "image/jpeg", "Ünïcödé 中文", b"img"),
+        ):
+            assert WmPicture.from_bytes(original.to_bytes()) == original
+
+    def test_wm_picture_from_bytes_malformed(self):
+        full = self.wm_picture_blob(3, "image/png", "desc", b"0123456789ABCDEF")
+        for raw in (
+            full[:12],  # MIME type without null terminator
+            full[:30],  # description without null terminator
+            full[:-13],  # image data shorter than declared size
+            b"\x03",  # shorter than the 5-byte header
+            b"",  # empty
+        ):
+            with pytest.raises(ValueError):
+                WmPicture.from_bytes(raw)
+
+    def test_wm_picture_from_bytes_trailing_data(self, mocker):
+        mock_logger = mocker.patch("albums.tagger.file_types.asf.logger")
+        raw = self.wm_picture_blob(3, "image/png", "desc", b"ABC") + b"TRAILING"
+        from_bytes = WmPicture.from_bytes(raw)
+        assert from_bytes.image_data == b"ABC"
+        assert mock_logger.warning.call_count == 1
+
+    def test_read_wm_picture_from_file(self, tmp_path):
+        # embed spec-compliant WM/Picture blobs in a real WMA file and read them back through the full
+        # read path (ASF container -> WmPicture -> picture scanner)
+        wma = tmp_path / "pic.wma"
+        shutil.copy(TestAsf.library / album.path / track.filename, wma)
+        asf = ASF(str(wma))
+        red = make_image_data(64, 64, "PNG", "red")
+        green = make_image_data(32, 48, "PNG", "green")
+        asf.tags["WM/Picture"] = [
+            ASFByteArrayAttribute(self.wm_picture_blob(PictureType.COVER_FRONT.value, "image/png", "front cover", red)),
+            ASFByteArrayAttribute(self.wm_picture_blob(PictureType.ILLUSTRATION.value, "image/png", "illustration", green)),
+        ]
+        asf.save()
+
+        tagger_file = AsfTagger(wma, picture_scanner=PictureScanner(), padding=lambda info: 0)
+        try:
+            pictures = list(tagger_file.get_pictures())
+        finally:
+            tagger_file.close()
+
+        assert [(pic.type, pic.description, pic.picture_info.mime_type, pic.picture_info.width, pic.picture_info.height) for pic, _ in pictures] == [
+            (PictureType.COVER_FRONT, "front cover", "image/png", 64, 64),
+            (PictureType.ILLUSTRATION, "illustration", "image/png", 32, 48),
+        ]
+        assert [data for _, data in pictures] == [red, green]

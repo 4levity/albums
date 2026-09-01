@@ -77,23 +77,34 @@ class WmPicture:
 
     @classmethod
     def from_bytes(cls, raw: bytes):
+        if len(raw) < 5:
+            raise ValueError("WM/Picture blob is too small")
         (picture_type, image_data_length) = struct.unpack_from("<bi", raw)
+
+        def find_terminator(start: int) -> int:
+            # the null terminator must align with a UTF-16 character boundary; a plain search could
+            # match the high byte of the last character together with the terminator
+            end = raw.find(b"\x00\x00", start)
+            while end != -1 and (end - start) % 2 != 0:
+                end = raw.find(b"\x00\x00", end + 1)
+            return end
+
         ix = 5
-        mime_type_b = b""
-        while raw[ix : ix + 2] != b"\x00\x00":
-            mime_type_b += raw[ix : ix + 2]
-            ix += 2
-        ix += 2
-        mime_type = mime_type_b.decode("utf-16-le")
-        description_b = b""
-        while raw[ix : ix + 2] != b"\x00\x00":
-            description_b += raw[ix : ix + 2]
-            ix += 2
-        ix += 2
-        description = description_b.decode("utf-16-le")
+        end = find_terminator(ix)
+        if end == -1:  # unterminated string: a loop scanning byte pairs would run past the end forever
+            raise ValueError("WM/Picture blob has unterminated MIME type")
+        mime_type = raw[ix:end].decode("utf-16-le")
+        ix = end + 2
+        end = find_terminator(ix)
+        if end == -1:
+            raise ValueError("WM/Picture blob has unterminated description")
+        description = raw[ix:end].decode("utf-16-le")
+        ix = end + 2
         image_data = raw[ix : ix + image_data_length]
-        if len(raw) != ix + len(image_data):
-            logger.warning("embedded image is smaller than raw data")  # if the raw data was too small, an exception was raised above
+        if len(image_data) != image_data_length:
+            raise ValueError("WM/Picture blob is truncated: image data is incomplete")
+        if len(raw) != ix + image_data_length:
+            logger.warning(f"WM/Picture blob has {len(raw) - ix - image_data_length} trailing bytes after image data")
         return WmPicture(PictureType(picture_type), mime_type, description, image_data)
 
 
@@ -117,7 +128,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                 logger.warning(f"unexpected WM/Picture property is not ASFByteArrayAttribute: {type(wm_picture_attr)}")  # pyright: ignore[reportUnknownArgumentType]
                 continue
 
-            try:  # TODO find a WMA file that has embedded art, test this out, and if it works, implement writing
+            try:  # TODO implement writing pictures - want good samples first
                 wm_picture = WmPicture.from_bytes(wm_picture_attr.value)  # pyright: ignore[reportArgumentType, reportUnknownMemberType]
                 picture_info = self._picture_scanner.scan(wm_picture.image_data, wm_picture.mime_type)
                 yield (Picture(picture_info, wm_picture.picture_type, wm_picture.description), wm_picture.image_data)
