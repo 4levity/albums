@@ -59,7 +59,7 @@ def create_track_file(path: Path, spec: Track):
 
 
 def create_picture_file(path: Path, width: int = 400, height: int = 400, color: str = "blue"):
-    image = Image.new("RGB", (width, height), color="blue")
+    image = Image.new("RGB", (width, height), color=color)
     image.save(path)
 
 
@@ -90,7 +90,7 @@ def create_library(library_name: str, albums: Collection[Album]):
 
 
 def make_image_data(width: int = 400, height: int = 400, format: str = "PNG", color: str = "blue") -> bytes:
-    image = Image.new("RGB", (width, height), color="blue")
+    image = Image.new("RGB", (width, height), color=color)
     buffer = io.BytesIO()
     image.save(buffer, format)
     return buffer.getvalue()
