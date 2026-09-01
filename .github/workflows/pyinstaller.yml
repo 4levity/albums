@@ -27,7 +27,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: albums-pyinstaller-linux
-          path: dist/pyinstaller/manylinux_2_39_x86_64/albums/
+          path: dist/pyinstaller/linux_x86_64/albums/
 
   build-win:
     runs-on: windows-latest
