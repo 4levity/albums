@@ -2,6 +2,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from albums.database import MEMORY, db_open, migrate
+from albums.database.migrations.migrate import _load_migrations
 
 from .sql_helpers import make_track_sql
 
@@ -146,5 +147,33 @@ class TestMigration17CheckRename:
                 # Check that old names don't exist anymore
                 assert "single-value-tags.enabled" not in setting_dict
                 assert "single-value-tags.tags" not in setting_dict
+        finally:
+            db.dispose()
+
+    def test_rerun_is_idempotent(self):
+        """Re-running migration 17 (e.g. after a crash before the version bump) must not double-rename or corrupt data."""
+        db = db_open(MEMORY, version=16)
+        try:
+            with db.begin() as conn:
+                conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})
+                conn.execute(text("INSERT INTO album_ignore_check (album_id, check_name) VALUES (1, 'album-tag');"))
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('album-tag.enabled', 'false');"))
+                conn.execute(text("INSERT INTO setting (name, value_json) VALUES ('single-value-tags.tags', '[\"a\"]');"))
+
+            migrate(db, quiet=True, target_version=17)
+
+            # Simulate the migration being re-run after a crash: version still 16, script applied again
+            with db.begin() as conn:
+                conn.connection.executescript(_load_migrations()[17])
+
+            with Session(db) as session:
+                ignore_rows = session.execute(text("SELECT check_name FROM album_ignore_check;")).fetchall()
+                assert [r.check_name for r in ignore_rows] == ["album"]
+
+                setting_rows = session.execute(text("SELECT name, value_json FROM setting ORDER BY name;")).fetchall()
+                assert [(r.name, r.value_json) for r in setting_rows] == [
+                    ("album.enabled", "false"),
+                    ("single-value-fields.fields", '["a"]'),
+                ]
         finally:
             db.dispose()

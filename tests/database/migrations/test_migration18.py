@@ -1,10 +1,14 @@
+import sqlite3
+from pathlib import Path
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from albums.database import MEMORY, db_open, migrate
+from albums.database.migrations.migrate import _load_migrations
 from albums.tagger import BasicField
 
-from .sql_helpers import make_track_sql
+from .sql_helpers import make_track_sql, split_sql_statements
 
 
 class TestMigration18TableNameRenamed:
@@ -95,6 +99,52 @@ class TestMigration18TableNameRenamed:
                 # New indexes should exist
                 assert "idx_track_field_track_id" in index_names
                 assert "idx_legacy_field_track_id" in index_names
+        finally:
+            db.dispose()
+
+    def test_crash_mid_migration_recovers(self, tmp_path: Path):
+        """A crash partway through migration 18 must not leave a schema that cannot be re-migrated.
+
+        executescript() does not run in the caller's transaction, so the migration wraps itself in
+        BEGIN/COMMIT; a crash mid-migration rolls back and the next startup re-runs it cleanly.
+        (This used to leave 'no such index: idx_track_tag_track_id' on next startup.)
+        """
+        db_file = tmp_path / "library.db"
+        db = db_open(db_file, version=17)
+        try:
+            with db.begin() as conn:
+                conn.execute(text("INSERT INTO album (path) VALUES ('test_album');"))
+                conn.execute(text(make_track_sql(1, "1.flac")))
+                conn.execute(text(f"INSERT INTO track_tag (track_id, name, value) VALUES (1, '{BasicField.ARTIST.value}', 'TestArtist');"))
+                conn.execute(text("INSERT INTO track_legacy_tag (track_id, tag_name) VALUES (1, 'old_field');"))
+        finally:
+            db.dispose()
+
+        # Simulate a crash partway through migration 18: apply statements up to and including
+        # 'DROP TABLE track_tag', then abandon the connection without committing (rolls back).
+        statements = split_sql_statements(_load_migrations()[18])
+        raw = sqlite3.connect(db_file)
+        try:
+            for statement in statements:
+                raw.execute(statement)
+                if statement.startswith("DROP TABLE track_tag"):
+                    break
+        finally:
+            raw.close()
+
+        # Next startup re-runs migration 18 from the rolled-back (pre-migration) state
+        db = db_open(db_file, version=18)
+        try:
+            with Session(db) as session:
+                rows = session.execute(text("SELECT track_id, name, value FROM track_field;")).fetchall()
+                assert len(rows) == 1
+                assert rows[0].track_id == 1
+                assert rows[0].name == BasicField.ARTIST.value
+                assert rows[0].value == "TestArtist"
+
+                legacy_rows = session.execute(text("SELECT track_id, field_name FROM track_legacy_field;")).fetchall()
+                assert len(legacy_rows) == 1
+                assert legacy_rows[0].field_name == "old_field"
         finally:
             db.dispose()
 

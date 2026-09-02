@@ -2,6 +2,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from albums.database import MEMORY, db_open, migrate
+from albums.database.migrations.migrate import _load_migrations
 from albums.tagger import BasicField
 
 from .sql_helpers import make_track_sql
@@ -154,5 +155,35 @@ class TestMigration16LegacyTags:
                 assert len(legacy_rows) == 2
                 assert legacy_rows[0].tag_name in ("label", "publisher")
                 assert legacy_rows[1].tag_name in ("label", "publisher")
+        finally:
+            db.dispose()
+
+    def test_rerun_is_idempotent(self):
+        """Re-running migration 16 (e.g. after a crash before the version bump) must not corrupt data."""
+        db = db_open(MEMORY, version=15)
+        try:
+            with db.begin() as conn:
+                conn.execute(text("INSERT INTO album (path) VALUES (:path);"), {"path": "foo/"})
+                conn.execute(text(make_track_sql(1, "1.flac")))
+                conn.execute(text("INSERT INTO track_tag (track_id, name, value) VALUES (1, 'album artist', 'LegacyArtist');"))
+                conn.execute(text("INSERT INTO track_tag (track_id, name, value) VALUES (1, 'label', 'LabelVal');"))
+                conn.execute(text("INSERT INTO track_tag (track_id, name, value) VALUES (1, 'totaldiscs', '2');"))
+
+            migrate(db, quiet=True, target_version=16)
+
+            # Simulate the migration being re-run after a crash: version still 15, script applied again
+            with db.begin() as conn:
+                conn.connection.executescript(_load_migrations()[16])
+
+            with Session(db) as session:
+                tag_rows = session.execute(text("SELECT name, value FROM track_tag WHERE track_id = 1 ORDER BY name, value;")).fetchall()
+                assert [(r.name, r.value) for r in tag_rows] == [
+                    (BasicField.ALBUMARTIST.value, "LegacyArtist"),
+                    (BasicField.DISCTOTAL.value, "2"),
+                    (BasicField.ORGANIZATION.value, "LabelVal"),
+                ]
+
+                legacy_rows = session.execute(text("SELECT tag_name FROM track_legacy_tag ORDER BY tag_name;")).fetchall()
+                assert [r.tag_name for r in legacy_rows] == ["album artist", "label", "totaldiscs"]
         finally:
             db.dispose()

@@ -1,6 +1,11 @@
 -- v18: Rename tables track_tag -> track_field and track_legacy_tag -> track_legacy_field
-
-PRAGMA foreign_keys = OFF;
+--
+-- Wrapped in an explicit transaction: executescript() does not run inside the caller's
+-- transaction (it commits it first), so without BEGIN/COMMIT each statement below would be
+-- auto-committed and a crash partway through would leave a schema that cannot be re-migrated.
+-- No PRAGMA foreign_keys toggle is needed: no other table has foreign keys to
+-- track_tag or track_legacy_tag, so dropping them cannot cascade.
+BEGIN;
 DROP INDEX idx_track_tag_track_id;
 CREATE TABLE track_field (
     track_field_id INTEGER PRIMARY KEY,
@@ -22,5 +27,4 @@ CREATE TABLE track_legacy_field (
 INSERT INTO track_legacy_field (track_id, field_name) SELECT track_id, tag_name FROM track_legacy_tag;
 DROP TABLE track_legacy_tag;
 CREATE INDEX idx_legacy_field_track_id ON track_legacy_field(track_id);
-
-PRAGMA foreign_keys = ON;
+COMMIT;

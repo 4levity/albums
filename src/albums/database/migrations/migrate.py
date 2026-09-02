@@ -37,6 +37,8 @@ def migrate(db: Engine, quiet: bool = False, target_version: int | None = None) 
     migrations = _load_migrations()
     current_schema_version = max(migrations.keys())
     effective_target = target_version if target_version is not None else current_schema_version
+    if effective_target > current_schema_version:
+        raise ValueError(f"target database version is newer than the latest available ({effective_target} > {current_schema_version})")
 
     with Session(db) as session:
         db_version = int(str(session.scalar(select(schema_table.c.version))))
@@ -51,12 +53,16 @@ def migrate(db: Engine, quiet: bool = False, target_version: int | None = None) 
     if not quiet:
         logger.debug("database schema version %d, migrations to perform: %s", db_version, list(range_to_run))
 
+    # Note: executescript() implicitly commits any pending transaction and its statements are
+    # auto-committed, so the db.begin() above does not make a migration atomic.  Migrations
+    # that are not re-runnable must therefore be written as idempotent SQL or wrapped in an
+    # explicit BEGIN/COMMIT (see 18.sql).
     for version in range_to_run:
         if not quiet:
             logger.info("migrating database: v%d", version)
         with db.begin() as conn:
             conn.connection.executescript(migrations[version])
-
-    with Session(db) as session:
-        session.execute(update(schema_table), {"version": effective_target})
-        session.commit()
+        # Record each completed migration immediately so a crash or failure partway through the
+        # sequence never re-runs migrations that have already been applied.
+        with db.begin() as conn:
+            conn.execute(update(schema_table), {"version": version})
