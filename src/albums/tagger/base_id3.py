@@ -5,13 +5,13 @@ from typing import Callable, Final, Generator, List, Tuple, override
 from mutagen._tags import PaddingInfo
 from mutagen.aiff import AIFF
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TDRL, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSOA, TSOP, TXXX, UFID
+from mutagen.id3._frames import APIC, TALB, TCMP, TCON, TDRC, TDRL, TIT2, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSOA, TSOP, TXXX, UFID
 from mutagen.id3._specs import Encoding
 from mutagen.mp3 import MP3
 
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
-from .id3_helpers import format_numbered_value, get_text, must_get_text, parse_numbered_value, set_numbered_frame
+from .id3_helpers import format_numbered_value, get_text, id3_legacy_fields, must_get_text, parse_numbered_value, set_numbered_frame
 from .id3_mappings import BASIC_ID3_TEXT_FRAMES, FIELD_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
 from .types import BasicField, ID3v1Policy, Picture, PictureType
 
@@ -80,11 +80,30 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
             self._add_picture(pic, data)
 
     @override
+    def get_legacy_fields(self):
+        if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
+            return id3_legacy_fields(self._ensure_id3())
+        return ()
+
+    @override
     def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
         basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
         if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
             frames = self._ensure_id3()
-            basic_fields.extend((tag, tuple(must_get_text(frames, frame))) for tag, frame in BASIC_ID3_TEXT_FRAMES if frame in frames)
+            field_values: dict[BasicField, list[str]] = {}
+            for tag, frame in BASIC_ID3_TEXT_FRAMES:
+                if frame in frames:
+                    field_values[tag] = list(must_get_text(frames, frame))
+            # merge non-duplicate values from deprecated frames (e.g. TDRL) into their canonical field
+            for legacy_frame, tag in id3_legacy_fields(frames):
+                legacy_values = must_get_text(frames, legacy_frame)
+                if tag in field_values:
+                    for value in legacy_values:
+                        if value not in field_values[tag]:
+                            field_values[tag].append(value)
+                else:
+                    field_values[tag] = list(legacy_values)
+            basic_fields.extend((tag, tuple(values)) for tag, values in field_values.items())
 
             if "TCON" in frames:
                 basic_fields.append((BasicField.GENRE, tuple(frames["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
@@ -110,13 +129,28 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
 
     @override
     def _set_field(self, field: BasicField | str, value: str | List[str] | None):
-        if not isinstance(field, BasicField):
-            raise ValueError("id3 tagger only uses BasicField")
         frames = self._ensure_id3()
+        if not isinstance(field, BasicField):
+            # deprecated frames may be set or removed by name, so the legacy-fields check can convert them
+            match field:
+                case "TDRL":
+                    if value is None:
+                        if "TDRL" in frames:
+                            del frames["TDRL"]
+                    else:
+                        value_list = value if isinstance(value, List) else [value]
+                        frames["TDRL"] = TDRL(encoding=Encoding.UTF8, text=value_list)
+                case _:
+                    raise ValueError(f"cannot set {field!r} in ID3 tag: use a BasicField or a deprecated ID3 frame name")
+            return
         if value is None:
             match field:
                 case BasicField.GENRE:
                     del frames["TCON"]
+                case BasicField.DATE:
+                    # only TDRC is removed here; a deprecated TDRL frame is left for the legacy-fields check to convert
+                    if "TDRC" in frames:
+                        del frames["TDRC"]
                 case BasicField.DISCNUMBER:
                     _, disc_total = self._get_tpos()
                     self._set_tpos(None, disc_total)
@@ -156,7 +190,7 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
                     elif "TCMP" in frames:
                         del frames["TCMP"]
                 case BasicField.DATE:
-                    frames["TDRL"] = TDRL(encoding=Encoding.UTF8, text=value_list)
+                    frames["TDRC"] = TDRC(encoding=Encoding.UTF8, text=value_list)
                 case BasicField.DISCNUMBER:
                     _, disc_total = self._get_tpos()
                     self._set_tpos(value_list[0] if value_list[0] else None, disc_total)

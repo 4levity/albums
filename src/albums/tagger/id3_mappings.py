@@ -11,7 +11,8 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
     (BasicField.ARTISTSORT, "TSOP"),
     (BasicField.BARCODE, "TXXX:BARCODE"),
     (BasicField.COMPILATION, "TCMP"),
-    (BasicField.DATE, "TDRL"),
+    # TDRC ("recording time") is used de facto as the release date, see LEGACY_ID3_FIELDS below
+    (BasicField.DATE, "TDRC"),
     (BasicField.MUSICBRAINZ_ALBUMARTISTID, "TXXX:MusicBrainz Album Artist Id"),
     (BasicField.MUSICBRAINZ_ALBUMID, "TXXX:MusicBrainz Album Id"),
     (BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY, "TXXX:MusicBrainz Album Release Country"),
@@ -47,8 +48,15 @@ BASIC_ID3_TEXT_FRAMES: Final[Tuple[Tuple[BasicField, str], ...]] = (
 
 # TODO also pull other common values, like
 # "composer": "tcom",
-# "encoder": "tenc",
-# "recording date": "tdrc"
+# "encoder": "tenc"
+
+# Mapping of deprecated ID3 frames to their canonical BasicField equivalents,
+# like LEGACY_VORBIS_FIELDS for Vorbis comments. Values from a deprecated frame are
+# merged into the canonical field when reading; the legacy-fields check converts them.
+# TDRL ("release time") was only added in ID3v2.4, where TDRC ("recording time") was
+# already used as the release date because ID3v2.3 had no dedicated release-date frame.
+# As a result, TDRC is the de facto release date frame and TDRL is largely ignored.
+LEGACY_ID3_FIELDS: Final[Tuple[Tuple[str, BasicField], ...]] = (("TDRL", BasicField.DATE),)
 
 UFID_MUSICBRAINZ_OWNER: Final = "http://musicbrainz.org"
 

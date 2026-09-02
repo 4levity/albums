@@ -1,6 +1,7 @@
 """Tagger package for reading and writing audio file metadata."""
 
 from .folder import AUDIO_FILE_SUFFIXES, AlbumTagger, Cap
+from .id3_mappings import LEGACY_ID3_FIELDS
 from .provider import AlbumTaggerProvider
 from .types import (
     BASIC_FIELDS,
@@ -21,6 +22,7 @@ __all__ = [
     "BasicField",
     "Cap",
     "ID3v1Policy",
+    "LEGACY_ID3_FIELDS",
     "LEGACY_VORBIS_FIELDS",
     "Picture",
     "PictureType",

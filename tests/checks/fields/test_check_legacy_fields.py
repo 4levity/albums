@@ -94,3 +94,29 @@ class TestCheckLegacyFields:
         set_field_calls = [c[0] for c in mock_set_field.call_args_list]
         assert (BasicField.DISCTOTAL, ["2"]) in set_field_calls
         assert ("totaldiscs", None) in set_field_calls
+
+    def test_legacy_id3_tdrl(self, mocker):
+        track1 = Track(
+            filename="1.mp3",
+            tag={BasicField.DATE: "2020"},
+            legacy_fields=["TDRL"],
+        )
+        album = Album(path="foo", tracks=[track1])
+        result = CheckLegacyFields(Context()).check(album)
+
+        assert result is not None
+        assert "TDRL" in result.message
+        assert result.fixer is not None
+
+        tagger = MockTagger()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+
+        # Verify that date (TDRC) was set and the deprecated TDRL frame removed
+        set_field_calls = [c[0] for c in mock_set_field.call_args_list]
+        assert (BasicField.DATE, ["2020"]) in set_field_calls
+        assert ("TDRL", None) in set_field_calls

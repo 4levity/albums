@@ -4,6 +4,16 @@ from mutagen.id3 import ID3
 from mutagen.id3._frames import TPOS, TRCK
 from mutagen.id3._specs import Encoding
 
+from .id3_mappings import LEGACY_ID3_FIELDS
+from .types import BasicField
+
+
+def id3_legacy_fields(frames: ID3 | None) -> Tuple[Tuple[str, BasicField], ...]:
+    """Return the deprecated ID3 frames present in the tags, mapped to their canonical BasicFields."""
+    if frames is None:
+        return ()
+    return tuple((frame_name, basic_field) for frame_name, basic_field in LEGACY_ID3_FIELDS if frame_name in frames)
+
 
 def get_text(id3: ID3 | None, frame_name: str) -> list[str] | None:
     """Return text values from an ID3 frame, or None if the frame is missing."""

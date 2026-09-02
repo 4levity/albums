@@ -37,7 +37,13 @@ track = Track(
         TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK, description=""),
     ],
 )
-album = Album(path="baz" + os.sep, tracks=[track])
+# release date stored only in the deprecated TDRL frame, as is common in the wild
+track_tdrl = Track(
+    filename="2.mp3",
+    tag={BasicField.DATE: "2019"},
+    legacy_fields=["TDRL"],
+)
+album = Album(path="baz" + os.sep, tracks=[track, track_tdrl])
 
 
 class TestMp3:
@@ -116,6 +122,58 @@ class TestMp3:
         with TestMp3.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
         assert BasicField.DATE not in fields
+
+    def test_write_id3_date_to_tdrc(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DATE, "2022")
+            id3 = file._ensure_id3()
+            # date frames store ID3TimeStamp objects, whose str() is the date text
+            assert [str(stamp) for stamp in id3["TDRC"].text] == ["2022"]
+            assert "TDRL" not in id3
+
+    def test_read_id3_date_from_tdrl(self):
+        with TestMp3.tagger.open(track_tdrl.filename) as file:
+            fields = dict(file.get_fields())
+            legacy = file.get_legacy_fields()
+        assert fields[BasicField.DATE] == ("2019",)
+        assert legacy == (("TDRL", BasicField.DATE),)
+
+    def test_read_id3_date_merges_tdrl(self):
+        with TestMp3.tagger.open(track_tdrl.filename) as file:
+            # setting the date writes TDRC and leaves the deprecated TDRL frame alone
+            file.set_field(BasicField.DATE, "2020")
+        with TestMp3.tagger.open(track_tdrl.filename) as file:
+            id3 = file._ensure_id3()
+            assert [str(stamp) for stamp in id3["TDRC"].text] == ["2020"]
+            assert [str(stamp) for stamp in id3["TDRL"].text] == ["2019"]
+            fields = dict(file.get_fields())
+        # non-duplicate values from TDRL are merged into the release date
+        assert fields[BasicField.DATE] == ("2020", "2019")
+
+    def test_get_id3_legacy_fields_absent(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            assert file.get_legacy_fields() == ()
+
+    def test_set_and_remove_id3_tdrl(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field("TDRL", "2018")
+            id3 = file._ensure_id3()
+            assert [str(stamp) for stamp in id3["TDRL"].text] == ["2018"]
+            file.set_field("TDRL", None)
+            assert "TDRL" not in id3
+            # other frame names cannot be set directly
+            with pytest.raises(ValueError):
+                file.set_field("TPE1", "x")
+
+    def test_remove_id3_date_keeps_tdrl(self):
+        # removing the release date only removes TDRC; the deprecated TDRL frame is
+        # left in place for the legacy-fields check to convert
+        with TestMp3.tagger.open(track_tdrl.filename) as file:
+            file.set_field(BasicField.DATE, None)
+        with TestMp3.tagger.open(track_tdrl.filename) as file:
+            fields = dict(file.get_fields())
+            assert fields[BasicField.DATE] == ("2019",)
+            assert file.get_legacy_fields() == (("TDRL", BasicField.DATE),)
 
     def test_set_unsupported_id3_tags(self):
         with TestMp3.tagger.open(track.filename) as file:

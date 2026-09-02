@@ -8,7 +8,7 @@ from PIL import Image
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import mime_type_to_format
-from albums.tagger import LEGACY_VORBIS_FIELDS, AlbumTagger, BasicField, Picture
+from albums.tagger import LEGACY_ID3_FIELDS, LEGACY_VORBIS_FIELDS, AlbumTagger, BasicField, Picture
 
 from .empty_files import (
     EMPTY_AIFF_FILE_BYTES,
@@ -20,7 +20,8 @@ from .empty_files import (
     EMPTY_WMA_FILE_BYTES,
 )
 
-LEGACY_TAG_MAP: Mapping[str, BasicField] = dict(LEGACY_VORBIS_FIELDS)
+# legacy field names (Vorbis comment names and deprecated ID3 frames) to their canonical BasicField
+LEGACY_TAG_MAP: Mapping[str, BasicField] = dict(LEGACY_VORBIS_FIELDS) | dict(LEGACY_ID3_FIELDS)
 
 test_data_path = Path(__file__).resolve().parent / "libraries"
 

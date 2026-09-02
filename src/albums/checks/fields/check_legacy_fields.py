@@ -5,9 +5,10 @@ from rich.markup import escape
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album
-from albums.tagger import LEGACY_VORBIS_FIELDS, BasicField
+from albums.tagger import LEGACY_ID3_FIELDS, LEGACY_VORBIS_FIELDS, BasicField
 
-LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_FIELDS)
+# legacy field names (Vorbis comment names and deprecated ID3 frames) to their canonical BasicField
+LEGACY_TO_BASIC: Final[dict[str, BasicField]] = dict(LEGACY_VORBIS_FIELDS) | dict(LEGACY_ID3_FIELDS)
 
 OPTION_CONVERT_LEGACY = ">> Convert legacy fields to standard fields"
 
