@@ -69,15 +69,37 @@ Rules:
 
 **Automatic fix** for disc total policy: If the policy is "never", always remove
 the field. If the policy is "always", and a consistent total is set on some
-tracks, set the same total on the others.
+tracks, set the same total on the others; if no track has disc total, a value
+can be entered instead.
+
+**Automatic fix** for missing disc numbers: When some tracks have disc number
+and some do not, a table lists each track's disc number and disc total, and
+options are offered to fill in the missing disc numbers. If a disc number can
+be read from each affected filename (e.g. `2-01`) and no filename disagrees
+with an existing disc number, the missing disc numbers can be set from the
+filenames; this is applied automatically when the result would be consistent
+(sequential discs from 1, not exceeding disc total). If the only disc number
+present is 1 (and disc total, if present, is 1), the missing disc numbers can
+be set to 1, or disc number 1 (and disc total 1) can be removed from all
+tracks; with `remove_redundant_discnumber` the removal is applied
+automatically, otherwise setting 1 is. If no option applies, a disc number can
+be entered to set on the affected tracks.
+
+**Automatic fix** for redundant disc number: When every track has disc number
+1 (and disc total 1, if present), the disc number (and disc total) fields are
+redundant. With `remove_redundant_discnumber` they are removed automatically.
+With `discs_in_separate_folders` disabled and
+`remove_redundant_discnumber` not set, the removal is offered but not applied
+automatically; with `discs_in_separate_folders` enabled, disc 1 might be part
+of a multi-disc set stored in another folder, so no issue is reported.
 
 <!-- pyml disable line-length -->
 
-| Option = default                          | Description                                                     |
-| ----------------------------------------- | --------------------------------------------------------------- |
+| Option = default                          | Description                                                    |
+| ----------------------------------------- | -------------------------------------------------------------- |
 | `discs_in_separate_folders` = **true**    | if true, discs from one album may be stored in separate folders |
-| `remove_redundant_discnumber` = **false** | if true, disc number field "1" can be removed if no other discs |
-| `disctotal_policy` = `"consistent"`       | Set the field presence policy for disc total                    |
+| `remove_redundant_discnumber` = **false** | if true, redundant disc number 1 (and disc total 1) is removed |
+| `disctotal_policy` = `"consistent"`       | Set the field presence policy for disc total                   |
 
 <!-- pyml enable line-length -->
 

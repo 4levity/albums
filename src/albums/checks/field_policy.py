@@ -68,17 +68,28 @@ def check_policy(
     if policy != Policy.ALWAYS:
         options.append(f"{OPTION_REMOVE_FIELD} {field}")
 
+    table = (
+        ["track", "filename", field.value],
+        [[describe_track_number(track), escape(track.filename), "/".join(track.get(field, [""]))] for track in ordered_tracks(album)],
+    )
     if options:
         option_automatic_index = 0 if (value_options_count == 1 or len(options) == 1) else None
-        table = (
-            ["track", "filename", field.value],
-            [[describe_track_number(track), escape(track.filename), "/".join(track.get(field, [""]))] for track in ordered_tracks(album)],
-        )
         fixer = Fixer(
             lambda option: _fix(ctx, tagger, album, field, option),
             options,
             single_value_for_album and can_set_field_on_all_tracks,
             option_automatic_index,
+            table,
+        )
+    elif policy == Policy.ALWAYS and can_set_field_on_all_tracks and single_value_for_album:
+        # we reach here only when options is empty; with policy ALWAYS the remove option is never
+        # added, and the values were collected (policy is not NEVER and can_set_field_on_all_tracks),
+        # so no track has the field; there is no value to copy, let the user enter one
+        fixer = Fixer(
+            lambda option: _fix(ctx, tagger, album, field, option),
+            [],
+            True,
+            None,
             table,
         )
     else:

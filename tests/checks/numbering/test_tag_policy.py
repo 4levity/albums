@@ -55,6 +55,31 @@ class TestFieldPolicy:
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert mock_set_basic_fields.call_args_list == [call(Path(album.tracks[0].filename), [(BasicField.TRACKTOTAL, "1")])]
 
+    def test_check_field_policy_always_no_values(self, mocker):
+        # policy always but no track has the field: no value to copy, so offer free text entry
+        album = Album(
+            path="",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2"}),
+            ],
+        )
+
+        result = self.check(album, Policy.ALWAYS)
+        assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
+        assert result.fixer
+        assert result.fixer.options == []
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_free_text
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+
+        assert result.fixer.fix("2")
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path("1.flac"), [(BasicField.TRACKTOTAL, "2")]),
+            call(Path("2.flac"), [(BasicField.TRACKTOTAL, "2")]),
+        ]
+
     def test_check_field_policy_always_unfixable(self, mocker):
         album = Album(
             path="",

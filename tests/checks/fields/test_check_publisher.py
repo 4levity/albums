@@ -36,7 +36,11 @@ class TestCheckPublisherField:
         ctx.config.checks[CheckPublisherField.name]["presence"] = "always"
         result = CheckPublisherField(ctx).check(album)
         assert result is not None
-        assert result.fixer is None
+        # no value to copy from any track, so offer free text entry rather than no fixer
+        assert result.fixer is not None
+        assert result.fixer.options == []
+        assert result.fixer.option_free_text
+        assert result.fixer.option_automatic_index is None
         assert "organization policy=ALWAYS but it is not on all tracks" in result.message
 
     def test_publisher_different_select(self, mocker):

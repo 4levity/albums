@@ -39,7 +39,11 @@ class TestCheckReleaseDateField:
         ctx.config.checks[CheckReleaseDateField.name]["presence"] = "always"
         result = CheckReleaseDateField(ctx).check(album)
         assert result is not None
-        assert result.fixer is None
+        # no value to copy from any track, so offer free text entry rather than no fixer
+        assert result.fixer is not None
+        assert result.fixer.options == []
+        assert result.fixer.option_free_text
+        assert result.fixer.option_automatic_index is None
         assert "date policy=ALWAYS but it is not on all tracks" in result.message
 
     def test_releasedate_policy_never(self):

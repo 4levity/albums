@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from unittest.mock import call
 
+import pytest
+
 from albums.app import Context
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.entities import Album, Track
@@ -103,7 +105,7 @@ class TestCheckDiscNumbering:
         assert result.fixer.options == [">> Set disc total = 2", ">> Set disc total = 3", ">> Remove disc total field"]
         assert result.fixer.option_automatic_index is None
 
-    def test_check_discnumber_inconsistent(self):
+    def test_check_discnumber_inconsistent_fix_from_filename(self, mocker):
         album = Album(
             path="foo" + os.sep,
             tracks=[
@@ -114,8 +116,184 @@ class TestCheckDiscNumbering:
             ],
         )
         result = CheckDiscNumbering(Context()).check(album)
-        assert "some tracks have disc number and some do not" in result.message
-        assert result.fixer is None
+        assert "some tracks have disc number and some do not (1 track without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number from filename on 1 track"]
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.option_free_text
+        table = result.fixer.get_table()
+        assert table is not None
+        (headers, rows) = table
+        assert headers == ["track", "filename", "discnumber", "disctotal"]
+        assert [list(row)[2] for row in rows] == ["1", "", "2", "2"]
+        assert [list(row)[3] for row in rows] == ["", "", "", ""]
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        # only the track without a disc number is fixed, from its filename
+        assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "1-2.flac", [(BasicField.DISCNUMBER, "1")])]
+
+    def test_check_discnumber_inconsistent_set_from_filename_multidisc(self, mocker):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "2"}),
+                Track(filename="1-02.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "2"}),
+                Track(filename="2-01.flac", tag={BasicField.DISCTOTAL: "2"}),
+                Track(filename="2-02.flac", tag={BasicField.DISCTOTAL: "2"}),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number from filename on 2 tracks"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path("foo") / "2-01.flac", [(BasicField.DISCNUMBER, "2")]),
+            call(Path("foo") / "2-02.flac", [(BasicField.DISCNUMBER, "2")]),
+        ]
+
+    def test_check_discnumber_inconsistent_filename_fix_not_beyond_total(self):
+        # filenames suggest a disc beyond the disc total: offer the filename fix but not automatic
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "2"}),
+                Track(filename="2-01.flac", tag={BasicField.DISCTOTAL: "2"}),
+                Track(filename="3-01.flac", tag={BasicField.DISCTOTAL: "2"}),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number from filename on 2 tracks"]
+        assert result.fixer.option_automatic_index is None
+
+    def test_check_discnumber_inconsistent_filename_conflict(self, mocker):
+        # the filename of a numbered track disagrees with its disc number, so filenames can't be trusted
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="2-01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="02.flac"),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (1 track without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number = 1 on 1 track", ">> Remove disc number 1 from all tracks"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "02.flac", [(BasicField.DISCNUMBER, "1")])]
+
+    def test_check_discnumber_inconsistent_fill_disc_1(self, mocker):
+        # only disc 1 is present, no disc numbers in filenames: fill in or remove, filling is automatic by default
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="02.flac"),
+                Track(filename="03.flac"),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number = 1 on 2 tracks", ">> Remove disc number 1 from all tracks"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path("foo") / "02.flac", [(BasicField.DISCNUMBER, "1")]),
+            call(Path("foo") / "03.flac", [(BasicField.DISCNUMBER, "1")]),
+        ]
+
+    def test_check_discnumber_inconsistent_remove_disc_1(self, mocker):
+        # only disc 1 is present and remove_redundant_discnumber: remove is offered first and automatic
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="01.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "1"}),
+                Track(filename="02.flac", tag={BasicField.DISCTOTAL: "1"}),
+                Track(filename="03.flac", tag={BasicField.DISCTOTAL: "1"}),
+            ],
+        )
+        ctx = Context()
+        ctx.config.checks[CheckDiscNumbering.name]["discs_in_separate_folders"] = False
+        ctx.config.checks[CheckDiscNumbering.name]["remove_redundant_discnumber"] = True
+        result = CheckDiscNumbering(ctx).check(album)
+        assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [
+            ">> Remove disc number 1 and disc total 1 from all tracks",
+            ">> Set disc number = 1 on 2 tracks",
+        ]
+        assert result.fixer.option_automatic_index == 0
+
+        tagger = MockTagger()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mock_set_field = mocker.patch.object(tagger, "set_field")
+
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_field.call_args_list == [
+            call(BasicField.DISCNUMBER, None),
+            call(BasicField.DISCTOTAL, None),
+            call(BasicField.DISCTOTAL, None),
+            call(BasicField.DISCTOTAL, None),
+        ]
+
+    def test_check_discnumber_inconsistent_fill_disc_1_from_filename(self, mocker):
+        # only disc 1 is present and the filenames of the unnumbered tracks confirm disc 1
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-02.flac"),
+                Track(filename="1-03.flac"),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Set disc number = 1 on 2 tracks", ">> Remove disc number 1 from all tracks"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path("foo") / "1-02.flac", [(BasicField.DISCNUMBER, "1")]),
+            call(Path("foo") / "1-03.flac", [(BasicField.DISCNUMBER, "1")]),
+        ]
+
+    def test_check_discnumber_inconsistent_free_text(self, mocker):
+        # no disc numbers can be guessed from filenames, but the user can enter one
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="02.flac", tag={BasicField.DISCNUMBER: "2"}),
+                Track(filename="03.flac"),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "some tracks have disc number and some do not (1 track without disc number)" in result.message
+        assert result.fixer
+        assert result.fixer.options == []
+        assert result.fixer.option_free_text
+        assert result.fixer.option_automatic_index is None
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        assert result.fixer.fix("2")
+        assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "03.flac", [(BasicField.DISCNUMBER, "2")])]
+        with pytest.raises(ValueError):
+            result.fixer.fix("banana")
 
     def test_check_discnumber_missing_disc(self):
         album = Album(
@@ -221,3 +399,33 @@ class TestCheckDiscNumbering:
             call(BasicField.DISCNUMBER, None),
             call(BasicField.DISCTOTAL, None),
         ]
+
+    def test_check_discnumbering_redundant_offer_not_automatic(self):
+        # discs in one folder and remove_redundant_discnumber is off: offer to remove redundant disc 1, but not automatic
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-02.flac", tag={BasicField.DISCNUMBER: "1"}),
+            ],
+        )
+        ctx = Context()
+        ctx.config.checks[CheckDiscNumbering.name]["discs_in_separate_folders"] = False
+        result = CheckDiscNumbering(ctx).check(album)
+        assert "redundant disc number" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Remove disc number 1 from all tracks"]
+        assert result.fixer.option_automatic_index is None
+        assert result.fixer.get_table() is not None
+
+    def test_check_discnumbering_redundant_separate_folders_ok(self):
+        # discs in separate folders: disc 1 might be part of a multi-disc set, so no issue
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-02.flac", tag={BasicField.DISCNUMBER: "1"}),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert result is None
