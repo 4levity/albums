@@ -27,13 +27,20 @@ resolved to a single valid number, they are not useful and should be removed.
 Rule: for each track, if present, track/disc number/total fields should each
 have a single value and that value should be a positive number (0 is not valid).
 
+The check message names the fields that have problems (e.g. "tracktotal
+(multiple values)") and the number of tracks affected. When run
+interactively, a table lists all tracks with their track number, track total,
+disc number and disc total values; values that the fix will change or remove
+are marked (e.g. "9, 09 -> 9" or "0 -> removed").
+
 !!!success "Dependency"
 
     Requires the `disc-in-track-number` check to pass first.
 
 **Automatic fix**: For each of the noted fields in each track, discard all
-values that are non-numeric or 0. If exactly one unique value remains, save it.
-Otherwise, delete the field.
+values that are non-numeric or 0. If exactly one unique number remains, save
+it without leading zeros (e.g. values "9" and "09" become "9"). Otherwise,
+delete the field.
 
 ## disc-numbering
 
