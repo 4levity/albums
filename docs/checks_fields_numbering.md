@@ -12,6 +12,10 @@ If the disc number and track number are combined in the track number field with
 a dash (e.g. track number="2-03") instead of being in separate fields, this is
 treated as an error. Subsequent checks require track numbers to be numeric.
 
+!!!success "Dependency"
+
+    Requires the `legacy-fields` check to pass first.
+
 **Automatic fix**: Split the values into track number and disc number fields.
 
 ## invalid-track-or-disc-number

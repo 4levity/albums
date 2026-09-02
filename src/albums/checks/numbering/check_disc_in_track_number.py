@@ -20,6 +20,7 @@ OPTION_USE_PROPOSED: Final = ">> Split track number into disc number and track n
 class CheckDiscInTrackNumber(Check):
     name = "disc-in-track-number"
     default_config = {"enabled": True}
+    must_pass_checks = {"legacy-fields"}
 
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.FORMATTED_TRACK_NUMBER) for track in album.tracks):

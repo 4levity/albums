@@ -137,6 +137,7 @@
         "totaltracks",
         "TPOS",
         "TPUB",
+        "trackc",
         "TRACKID",
         "tracknum",
         "tracknumber",

@@ -9,14 +9,22 @@ from .types import BasicField
 # Mapping of legacy Vorbis comment names to their canonical BasicField equivalents
 LEGACY_VORBIS_FIELDS: Final[Tuple[Tuple[str, BasicField], ...]] = (
     ("album artist", BasicField.ALBUMARTIST),
+    # DISCNUMBER
+    ("disc", BasicField.DISCNUMBER),
     ("disc number", BasicField.DISCNUMBER),
+    # DISCTOTAL
     ("totaldiscs", BasicField.DISCTOTAL),
+    # ORGANIZATION
     ("label", BasicField.ORGANIZATION),
     ("publisher", BasicField.ORGANIZATION),
+    # TRACKNUMBER
+    ("track", BasicField.TRACKNUMBER),
     ("track number", BasicField.TRACKNUMBER),
+    # TRACKTOTAL
     ("numtracks", BasicField.TRACKTOTAL),
     ("number_of_tracks", BasicField.TRACKTOTAL),
     ("totaltracks", BasicField.TRACKTOTAL),
+    ("trackc", BasicField.TRACKTOTAL),  # cspell: ignore trackc
 )
 
 

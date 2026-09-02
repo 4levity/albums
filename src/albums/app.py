@@ -19,7 +19,7 @@ from .entities import Album
 logger: Final = logging.getLogger(__name__)
 
 # Bumped whenever the database schema or scan logic changes incompatibly.
-SCANNER_VERSION: Final = 9
+SCANNER_VERSION: Final = 10
 
 
 class Context(dict[Any, Any]):

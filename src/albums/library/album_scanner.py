@@ -43,6 +43,8 @@ def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> Target
         return TargetRescan(file, fields=True, images=False, streams=False)  # v7 tags are suspect due to orm issues
     if scanner == 8:
         return TargetRescan(file, fields=False, images=False, streams=True)  # v8 could incorrectly treat video as track after rescan
+    if scanner == 9:
+        return TargetRescan(file, fields=True, images=False, streams=False)  # v10 reads several new fields
     return None
 
 
