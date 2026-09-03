@@ -66,6 +66,11 @@ class TrackTotalFixer(Fixer):
             new_tracktotal = len(self.tracks)
         elif option.startswith(OPTION_USE_MAX):
             new_tracktotal = self.max_tracktotal
+        elif option.isdecimal():  # free text, e.g. "12" from ">> Enter Text"
+            new_tracktotal = int(option)
+            if new_tracktotal < 1:
+                logger.error(f"invalid tracktotal for TrackTotalFixer: {option}")
+                return FixResult.NO_CHANGE
         else:
             logger.error(f"invalid option for TrackTotalFixer: {option}")
             return FixResult.NO_CHANGE

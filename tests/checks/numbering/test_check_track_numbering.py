@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
 from albums.entities import Album, FieldV, Track
 from albums.tagger import AlbumTagger, BasicField
@@ -93,6 +94,33 @@ class TestCheckTrackNumbering:
             call(path / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "3")]),
             call(path / album.tracks[1].filename, [(BasicField.TRACKTOTAL, "3")]),
         ]
+
+    def test_check_track_total_inconsistent_free_text(self, mocker):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
+            ],
+        )
+        result = CheckTrackNumbering(Context()).check(album)
+        assert result
+        fixer = result.fixer
+        assert fixer
+        assert fixer.option_free_text
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        # a decimal value entered via ">> Enter Text" is used as the new tracktotal
+        assert fixer.fix("4")
+        path = Path(album.path)
+        assert mock_set_basic_fields.call_args_list == [
+            call(path / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "4")]),
+            call(path / album.tracks[1].filename, [(BasicField.TRACKTOTAL, "4")]),
+            call(path / album.tracks[2].filename, [(BasicField.TRACKTOTAL, "4")]),
+        ]
+        # zero or non-numeric free text is rejected without changes
+        assert fixer.fix("0") == FixResult.NO_CHANGE
+        assert fixer.fix("abc") == FixResult.NO_CHANGE
 
     def test_check_track_number_missing(self, mocker):
         album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac"), Track(filename="2.flac"), Track(filename="3.flac")])
