@@ -222,8 +222,14 @@ class CheckDiscNumbering(Check):
             value = option.split(" = ")[1]
         elif option.startswith(OPTION_REMOVE_DISC_TOTAL):
             value = None
+        elif option.isdecimal():  # free text
+            if int(option) < 1:
+                logger.error(f"invalid disc total: {option}")
+                return FixResult.NO_CHANGE
+            value = option
         else:
-            raise ValueError(f"invalid option {option}")
+            logger.error(f"invalid option for disc total fix: {option}")
+            return FixResult.NO_CHANGE
 
         changed = False
         for track in sorted(album.tracks):
@@ -248,10 +254,12 @@ class CheckDiscNumbering(Check):
         elif option.isdecimal():  # free text
             value_str = option
         else:
-            raise ValueError(f"invalid option {option}")
+            logger.error(f"invalid option for disc number fix: {option}")
+            return FixResult.NO_CHANGE
         value = int(value_str)
         if value < 1:
-            raise ValueError(f"invalid disc number {value}")
+            logger.error(f"invalid disc number: {value}")
+            return FixResult.NO_CHANGE
         return self._fix_set_discnumber(album, value)
 
     def _fix_set_discnumber(self, album: Album, value: int) -> FixResult:

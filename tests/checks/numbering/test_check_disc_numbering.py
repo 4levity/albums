@@ -2,9 +2,8 @@ import os
 from pathlib import Path
 from unittest.mock import call
 
-import pytest
-
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
@@ -104,6 +103,35 @@ class TestCheckDiscNumbering:
         assert result.fixer
         assert result.fixer.options == [">> Set disc total = 2", ">> Set disc total = 3", ">> Remove disc total field"]
         assert result.fixer.option_automatic_index is None
+
+    def test_check_disctotal_inconsistent_free_text(self, mocker):
+        album = Album(
+            path="",
+            tracks=[
+                Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "2"}),
+                Track(filename="1-02.flac", tag={BasicField.DISCNUMBER: "1", BasicField.DISCTOTAL: "2"}),
+                Track(filename="2-01.flac", tag={BasicField.DISCNUMBER: "2", BasicField.DISCTOTAL: "3"}),
+                Track(filename="2-02.flac", tag={BasicField.DISCNUMBER: "2", BasicField.DISCTOTAL: "2"}),
+            ],
+        )
+        result = CheckDiscNumbering(Context()).check(album)
+        assert "inconsistent disc total" in result.message
+        assert result
+        fixer = result.fixer
+        assert fixer
+        assert fixer.option_free_text
+
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        # a decimal value entered via ">> Enter Text" is used as the new disc total
+        assert fixer.fix("3")
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicField.DISCTOTAL, "3")]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicField.DISCTOTAL, "3")]),
+            call(Path(album.path) / album.tracks[3].filename, [(BasicField.DISCTOTAL, "3")]),
+        ]
+        # invalid free text does not crash and leaves the album unchanged
+        assert fixer.fix("0") == FixResult.NO_CHANGE
+        assert fixer.fix("banana") == FixResult.NO_CHANGE
 
     def test_check_discnumber_inconsistent_fix_from_filename(self, mocker):
         album = Album(
@@ -292,8 +320,9 @@ class TestCheckDiscNumbering:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert result.fixer.fix("2")
         assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "03.flac", [(BasicField.DISCNUMBER, "2")])]
-        with pytest.raises(ValueError):
-            result.fixer.fix("banana")
+        # invalid free text does not crash and leaves the album unchanged
+        assert result.fixer.fix("0") == FixResult.NO_CHANGE
+        assert result.fixer.fix("banana") == FixResult.NO_CHANGE
 
     def test_check_discnumber_missing_disc(self):
         album = Album(
