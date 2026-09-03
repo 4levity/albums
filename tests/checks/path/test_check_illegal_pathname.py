@@ -49,6 +49,24 @@ class TestCheckIllegalPathname:
         assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
         assert mock_rename.call_args_list == [call(Path(album.path) / "CON.flac", Path(album.path) / "CON_.flac")]
 
+    def test_pathname_fix_collision(self):
+        # "a/b.flac" and "a?b.flac" both sanitize to "ab.flac", so no automatic fix is offered
+        album = Album(path="Foo" + os.sep, tracks=[Track(filename="a/b.flac"), Track(filename="a?b.flac")])
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert "invalid characters" in result.message
+        assert "automatic fix not possible due to filename conflict" in result.message
+        assert result.fixer is None
+
+    def test_pathname_fix_collision_with_existing_file(self):
+        # "a:b.flac" sanitizes to "ab.flac" which already exists, so no automatic fix is offered
+        album = Album(path="Foo" + os.sep, tracks=[Track(filename="a:b.flac"), Track(filename="ab.flac")])
+        result = CheckIllegalPathname(Context()).check(album)
+        assert result is not None
+        assert "invalid characters" in result.message
+        assert "automatic fix not possible due to filename conflict" in result.message
+        assert result.fixer is None
+
     def test_pathname_picture_file_fix(self, mocker):
         album = Album(
             path="Foo" + os.sep,

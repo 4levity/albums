@@ -27,11 +27,22 @@ class CheckIllegalPathname(Check):
         # TODO also check album.path
 
         if issues:
+            filenames = self._album_filenames(album)
+            final_names: list[str] = []
+            for filename in filenames:
+                new_filename = self._sanitize(filename)
+                final_names.append(new_filename if new_filename != filename else filename)
+            if len(final_names) != len(set(final_names)):
+                # two or more files would end up with the same name after sanitizing, so no automatic fix is possible
+                return CheckResult(
+                    f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))} (automatic fix not possible due to filename conflict)"
+                )
+
             options = [">> Sanitize all filenames"]
             option_automatic_index = 0
             table = (
                 ["Filename", "New Filename"],
-                [[escape(filename), escape(self._sanitize(filename)) if self._check(filename) else ""] for filename in self._album_filenames(album)],
+                [[escape(filename), escape(self._sanitize(filename)) if self._check(filename) else ""] for filename in filenames],
             )
             return CheckResult(
                 f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))}",
