@@ -183,6 +183,90 @@ class TestCheckTrackFilename:
             call(Path(album.path) / "9.m4a", Path(album.path) / "09 nine.m4a"),
         ]
 
+    def test_track_filename_pad_m4a_stored_config_enabled(self, mocker):
+        # replicates "albums check track-filename -f": the temporary runtime config disables
+        # zero-pad-numbers, but the persisted (stored) config still has it enabled. _pad must
+        # "fake it" and pad, as it would in a normal full check run.
+        ctx = Context()
+        ctx.config.checks["zero-pad-numbers"]["enabled"] = False  # temporary runtime override
+        # ctx.stored_checks["zero-pad-numbers"]["enabled"] is still True (set from defaults at Context creation)
+        assert ctx.stored_checks["zero-pad-numbers"]["enabled"]
+        tracks = [
+            Track(filename="1.m4a", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="10.m4a", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="2.m4a", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.m4a", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.m4a", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.m4a", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.m4a", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.m4a", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.m4a", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.m4a", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+        ]
+        album = Album(path="foo" + os.sep, tracks=tracks)
+        result = CheckTrackFilename(ctx).check(album)
+        assert result
+        assert "track filenames do not match configured pattern" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Use generated filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [
+            call(Path(album.path) / "1.m4a", Path(album.path) / "01 one.m4a"),
+            call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
+            call(Path(album.path) / "2.m4a", Path(album.path) / "02 two.m4a"),
+            call(Path(album.path) / "3.m4a", Path(album.path) / "03 three.m4a"),
+            call(Path(album.path) / "4.m4a", Path(album.path) / "04 four.m4a"),
+            call(Path(album.path) / "5.m4a", Path(album.path) / "05 five.m4a"),
+            call(Path(album.path) / "6.m4a", Path(album.path) / "06 six.m4a"),
+            call(Path(album.path) / "7.m4a", Path(album.path) / "07 seven.m4a"),
+            call(Path(album.path) / "8.m4a", Path(album.path) / "08 eight.m4a"),
+            call(Path(album.path) / "9.m4a", Path(album.path) / "09 nine.m4a"),
+        ]
+
+    def test_track_filename_pad_m4a_stored_config_disabled(self, mocker):
+        # the persisted (stored) config has zero-pad-numbers disabled, so _pad must not pad -
+        # even though the runtime config has it enabled (proving the stored config is authoritative)
+        ctx = Context()
+        ctx.stored_checks["zero-pad-numbers"]["enabled"] = False
+        ctx.config.checks["zero-pad-numbers"]["enabled"] = True
+        tracks = [
+            Track(filename="1.m4a", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="10.m4a", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="2.m4a", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.m4a", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.m4a", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.m4a", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.m4a", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.m4a", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.m4a", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.m4a", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+        ]
+        album = Album(path="foo" + os.sep, tracks=tracks)
+        result = CheckTrackFilename(ctx).check(album)
+        assert result
+        assert "track filenames do not match configured pattern" in result.message
+        assert result.fixer
+        assert result.fixer.options == [">> Use generated filenames"]
+        assert result.fixer.option_automatic_index == 0
+
+        mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
+        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert mock_rename.call_args_list == [
+            call(Path(album.path) / "1.m4a", Path(album.path) / "1 one.m4a"),
+            call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
+            call(Path(album.path) / "2.m4a", Path(album.path) / "2 two.m4a"),
+            call(Path(album.path) / "3.m4a", Path(album.path) / "3 three.m4a"),
+            call(Path(album.path) / "4.m4a", Path(album.path) / "4 four.m4a"),
+            call(Path(album.path) / "5.m4a", Path(album.path) / "5 five.m4a"),
+            call(Path(album.path) / "6.m4a", Path(album.path) / "6 six.m4a"),
+            call(Path(album.path) / "7.m4a", Path(album.path) / "7 seven.m4a"),
+            call(Path(album.path) / "8.m4a", Path(album.path) / "8 eight.m4a"),
+            call(Path(album.path) / "9.m4a", Path(album.path) / "9 nine.m4a"),
+        ]
+
     def test_track_filename_use_formatted_tag(self, mocker):
         # unlike above test, these track numbers will not get padding because ID3 track numbers are formatted strings
         tracks = [

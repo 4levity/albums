@@ -3,7 +3,7 @@
 import logging
 import os
 from collections import defaultdict
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from functools import reduce
 from pathlib import Path
@@ -93,6 +93,8 @@ def setup(
     app_context.db_path = _get_albums_db_path(db_file)
     if app_context.db_path.is_file():
         app_context.db = _open_db_and_set_context_config(ctx, app_context)
+        # snapshot the persisted check config before any per-invocation override (e.g. "albums check <name>")
+        app_context.stored_checks = deepcopy(app_context.config.checks)
         has_database = True
     else:
         has_database = False

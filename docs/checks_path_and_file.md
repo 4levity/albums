@@ -76,13 +76,13 @@ The filename format is a template string. The template substitutions are:
 
 <!-- pyml enable line-length -->
 
-The zero-padding on track number and disc number (if any) normally comes from
-formatting applied to the corresponding field. `albums` can format the fields
-with the `zero-pad-numbers` check/fix. But in some formats like **M4A**, the
-tracknumber and discnumber fields don't support formatting. For such formats, if
-the `zero-pad-numbers` check is enabled, the `tracknumber_pad` and
-`discnumber_pad` options from _that_ check will be used to generate possibly
-zero-padded `$tracknumber` and `$discnumber` substitutions in _this_ check.
+The zero-padding on track/disc numbers (if any) normally comes from formatting
+applied to the corresponding field. `albums` can format the fields with the
+`zero-pad-numbers` check/fix. But some tag types (like **M4A**) don't support
+track number formatting. When `track-filename` processes such files, it checks
+whether the `zero-pad-numbers` check is enabled in the stored configuration, and
+if so, borrows its `tracknumber_pad` and `discnumber_pad` options to make
+filenames consistent across file types.
 
 The default template `"$track_auto $title_auto"` generates filenames like this:
 
@@ -107,11 +107,10 @@ The default template `"$track_auto $title_auto"` generates filenames like this:
 
 ## cover-filename
 
-If the front cover image is in a file with a recognizable name, that file
-should have the standard name. For example, `albums` recognizes `.folder.png`
-and `AlbumArtSmall.jpg` and other variations as front cover images. This check
-flags if one of those files exists, but the "standard" cover image file does
-not.
+If the front cover image is in a file with a recognizable name, that file should
+have the standard name. For example, `albums` recognizes `.folder.png` and
+`AlbumArtSmall.jpg` and other variations as front cover images. This check flags
+if one of those files exists, but the "standard" cover image file does not.
 
 **Automatic fix**: If there is exactly one front cover file, rename or convert
 it according to the options.

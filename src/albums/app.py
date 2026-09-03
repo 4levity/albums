@@ -5,14 +5,16 @@ and console output between the various album-checking and management subcommands
 """
 
 import logging
+from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Final, Iterator, Self
+from typing import Any, Callable, Final, Iterator, Mapping, Self
 
 import click
 from rich.console import Console
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
+from .checks.check_types import CheckConfiguration
 from .config import Configuration
 from .entities import Album
 
@@ -38,6 +40,10 @@ class Context(dict[Any, Any]):
             the current command invocation, respecting any active collection or album filters.
         is_filtered: Whether a user-provided filter narrowed the selection.
         config: Loaded application configuration (defaults + CLI overrides).
+        stored_checks: Deep copy of the persisted check configuration (``config.checks``) taken
+            when the configuration is loaded. It represents the user's standing settings for a full
+            check run and, unlike :attr:`config`, is not altered by the temporary per-invocation
+            overrides that e.g. ``albums check <name>`` applies.
         verbose: Logging verbosity level (number of ``-v`` flags on the command line).
         is_persistent: Always ``True`` for this context class so Click keeps it alive between groups.
         prescanned: Whether a full-library scan has already been performed in this session.
@@ -52,6 +58,7 @@ class Context(dict[Any, Any]):
     select_album_entities: Callable[[Session], Iterator[Album]]
     is_filtered: bool
     config: Configuration
+    stored_checks: Mapping[str, CheckConfiguration]
     verbose: int = 0
     is_persistent = True  # required by Click to propagate context across group subcommands
     prescanned = False
@@ -64,3 +71,4 @@ class Context(dict[Any, Any]):
         """
         super(Context, self).__init__(*args, **kwargs)
         self.config = Configuration()
+        self.stored_checks = deepcopy(self.config.checks)

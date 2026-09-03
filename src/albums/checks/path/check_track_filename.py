@@ -133,7 +133,22 @@ class CheckTrackFilename(Check):
     def _pad(self, field_name: Literal["tracknumber", "tracktotal", "discnumber", "disctotal"], value: str, total: int) -> str:
         if not value or not int(value):
             return ""
-        if not self.ctx.config.checks[CheckZeroPadNumbers.name]["enabled"]:
+        # _pad is only reached for formats that cannot store zero padding in the track/disc number
+        # fields (e.g. M4A), so the generated filename must be padded here. We mirror the
+        # zero-pad-numbers check so these filenames stay consistent with the tags that check/fix
+        # would otherwise write for ID3/Vorbis files.
+        #
+        # Whether to pad at all is decided from the PERSISTED config (self.ctx.stored_checks), not the
+        # runtime config (self.ctx.config.checks). A single-check invocation such as
+        # "albums check track-filename -f" builds a temporary runtime config that disables every other
+        # check - including zero-pad-numbers - even when the user normally enables it. We don't want to
+        # force-enable zero-pad-numbers in that temporary config (the user may keep it disabled), but
+        # track-filename should still behave as it would in a normal full check run. So when
+        # zero-pad-numbers is enabled in the stored config we "fake it" and pad; when it is disabled
+        # there we leave the numbers unpadded.
+        if not self.ctx.stored_checks[CheckZeroPadNumbers.name]["enabled"]:
             return value
+        # The pad policy itself is read from the runtime config so explicit per-run options (e.g.
+        # --default, which replaces the check config with the defaults) are still honored.
         policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{field_name}_pad"]))
         return apply_pad_policy(value, policy, total)
