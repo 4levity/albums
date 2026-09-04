@@ -91,6 +91,7 @@ pymarkdownlnt = "^0.9.34"
 zensical = "^0.0.18"
 pyright = "^1.1.408"
 pyinstaller = "^6.19.0"
+ansi2image = "^0.1.6"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.3"

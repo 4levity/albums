@@ -46,10 +46,23 @@ docs/database_diagram.png: sample/albums.db
 	$(POETRY) run eralchemy -i sqlite:///sample/albums.db -o docs/database_diagram.png
 	@ls -l docs/database_diagram.png
 
-preview: docs/database_diagram.png ## Preview docs (does not automatically install)
+# Render the real `albums --help` output to an image (via ansi2image, bundled JetBrains Mono font).
+# FORCE_COLOR=1 forces ANSI color (output is piped, not a tty), COLUMNS=100 fixes rich's wrap width,
+# and XDG_CONFIG_HOME='~/.config' (Linux) keeps the epilog's default-db path machine independent.
+# sed 1d drops the blank line rich pads above the Usage line.
+docs/screenshot_help.png: $(wildcard src/albums/cli/*.py)
+	@rm -f $@ $@.tmp $@.txt
+	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(POETRY) run albums --help > $@.tmp
+	@sed 1d $@.tmp > $@.txt
+	@$(POETRY) run ansi2image $@.txt -o $@
+	@rm -f $@.tmp $@.txt
+	@test -s $@
+	@ls -l $@
+
+preview: docs/database_diagram.png docs/screenshot_help.png ## Preview docs (does not automatically install)
 	$(POETRY) run zensical serve
 
-docs: install lint-markdown docs/database_diagram.png ## Build docs
+docs: install lint-markdown docs/database_diagram.png docs/screenshot_help.png ## Build docs
 	$(POETRY) run zensical build --clean
 	@echo injecting version `poetry dynamic-versioning show`
 	@sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
@@ -61,7 +74,7 @@ clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf dist
 	rm -rf tests/fixtures/libraries
-	rm -rf docs/database_diagram.png
+	rm -rf docs/database_diagram.png docs/screenshot_help.png docs/screenshot_help.png.tmp docs/screenshot_help.png.txt
 	rm -rf site
 	rm -rf docs/.cache
 	rm -rf htmlcov
