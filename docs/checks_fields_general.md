@@ -5,7 +5,9 @@ icon: lucide/list-checks
 # Checks: General Fields
 
 Field checks not related to numbering, pictures or the per-album fields on
-the [Album Fields](./checks_fields_per_album.md) page.
+the [Album Fields](./checks_fields_per_album.md) page. Sort order field
+checks are documented on the [Sort Order
+Fields](./checks_sort_fields.md) page.
 
 ## extra-whitespace
 

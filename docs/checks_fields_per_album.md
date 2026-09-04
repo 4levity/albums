@@ -33,7 +33,12 @@ tracks.
 | ---------- | -------------- | ----------------------------- |
 | `presence` | `"consistent"` | Set the field presence policy |
 
-## album-sort, album-artist-sort, barcode, compilation
+## album-sort, album-artist-sort
+
+These are sort order fields; see [Sort Order Fields](./checks_sort_fields.md)
+for details.
+
+## barcode, compilation
 
 See above for details on these per-album field checks.
 

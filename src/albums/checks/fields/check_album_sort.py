@@ -1,10 +1,10 @@
-from albums.checks.base_check_field_per_album import BaseCheckFieldPerAlbum
+from albums.checks.base_check_sort import BaseCheckSortField
 from albums.tagger import BasicField
 
 
-class CheckAlbumSort(BaseCheckFieldPerAlbum):
+class CheckAlbumSort(BaseCheckSortField):
     name = "album-sort"
     field = BasicField.ALBUMSORT
+    source_field = BasicField.ALBUM
     field_description = "album sort order"
-
-    # TODO: check or generate sort order field
+    must_pass_checks = {"album"}

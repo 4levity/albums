@@ -25,6 +25,7 @@ nav = [
         "checks_fields_numbering.md",
         "checks_fields_general.md",
         "checks_fields_per_album.md",
+        "checks_sort_fields.md",
         "checks_pictures.md",
     ] },
     { "More Features" = [

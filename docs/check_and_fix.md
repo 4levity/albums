@@ -19,7 +19,8 @@ unintended results. If it goes very badly, simply restore your backup.
     individual check pages ([Path and File](./checks_path_and_file.md),
     [Numbering](./checks_fields_numbering.md),
     [General Fields](./checks_fields_general.md),
-    [Album Fields](./checks_fields_per_album.md) and
+    [Album Fields](./checks_fields_per_album.md),
+    [Sort Order Fields](./checks_sort_fields.md) and
     [Pictures](./checks_pictures.md)). To enable, disable or configure checks,
     run `albums config`.
 

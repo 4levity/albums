@@ -6,6 +6,7 @@ from .fields.check_album_artist import CheckAlbumArtist
 from .fields.check_album_artist_sort import CheckAlbumArtistSort
 from .fields.check_album_sort import CheckAlbumSort
 from .fields.check_artist import CheckArtistField
+from .fields.check_artist_sort import CheckArtistSort
 from .fields.check_barcode import CheckBarcodeField
 from .fields.check_compilation import CheckCompilationField
 from .fields.check_duplicate_album import CheckDuplicateAlbum
@@ -70,6 +71,7 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckPublisherField,
     CheckAlbumSort,
     CheckAlbumArtistSort,
+    CheckArtistSort,
     CheckBarcodeField,
     CheckCompilationField,
     CheckReleaseTypeField,
