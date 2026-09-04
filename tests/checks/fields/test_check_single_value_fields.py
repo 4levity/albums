@@ -1,9 +1,12 @@
 from pathlib import Path
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_single_value_fields import CheckSingleValueFields
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 def context(checks, db=None):
@@ -49,11 +52,9 @@ class TestCheckSingleValueFields:
             '>> Concatenate unique values into one with "/"',
             '>> Concatenate unique values into one with " - "',
         ]
-        assert result.fixer.option_automatic_index == 0
-
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
@@ -80,7 +81,7 @@ class TestCheckSingleValueFields:
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[1])
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,
@@ -97,12 +98,11 @@ class TestCheckSingleValueFields:
         assert result.fixer
         assert not result.fixer.option_free_text
         assert result.fixer.table
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.options[0] == ">> Remove duplicate values (preserve unique multiple values)"
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[0])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[0].filename,

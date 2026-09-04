@@ -2,6 +2,7 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.base_check_field_per_album import AlbumTagger
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_publisher import CheckPublisherField
 from albums.entities import Album, Track
 from albums.tagger import BasicField
@@ -58,7 +59,7 @@ class TestCheckPublisherField:
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[0])
+        assert result.fixer.fix(result.fixer.options[0]) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]
@@ -78,7 +79,7 @@ class TestCheckPublisherField:
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[0])
+        assert result.fixer.fix(result.fixer.options[0]) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(tracks[0].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.ORGANIZATION, "ABC")]

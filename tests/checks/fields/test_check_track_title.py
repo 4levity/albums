@@ -3,9 +3,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_track_title import CheckTrackTitle
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckTrackTitle:
@@ -35,11 +38,9 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "4 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 4
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
@@ -62,11 +63,9 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1  # track 3 could not be fixed
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])
 
@@ -79,10 +78,9 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "2 tracks missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
-        assert result.fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path(album.path) / album.tracks[0].filename, [(BasicField.TITLE, "Live show")]),
             call(Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "Other")]),
@@ -108,10 +106,8 @@ class TestCheckTrackTitle:
         assert result is not None
         assert "1 track missing title" in result.message
         assert result.fixer.options == [">> Use proposed track titles"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "bar")])

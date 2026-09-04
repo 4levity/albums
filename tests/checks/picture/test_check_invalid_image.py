@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_invalid_image import CheckInvalidImage
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
@@ -46,7 +47,7 @@ class TestCheckCheckInvalidImage:
         mock_tagger_open.return_value.__enter__.return_value = tagger
 
         fix_result = result.fixer.fix(result.fixer.options[0])
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_supports.call_count == 1
         assert mock_get_pictures.call_count == 1
         assert mock_remove_picture.call_count == 1
@@ -72,5 +73,5 @@ class TestCheckCheckInvalidImage:
 
         mock_unlink = mocker.patch("albums.checks.picture.check_invalid_image.unlink")
         fix_result = result.fixer.fix(result.fixer.options[0])
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_unlink.call_args_list == [call(Path(album.path) / "cover.jpg")]

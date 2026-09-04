@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_unreadable_track import CheckUnreadableTrack
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
@@ -33,7 +34,7 @@ class TestCheckUnreadable:
 
             mock_rename = mocker.patch("albums.checks.path.check_unreadable_track.rename")
             fix_result = result.fixer.fix(result.fixer.options[0])
-            assert fix_result
+            assert fix_result == FixResult.CHANGED_ALBUM
             assert mock_rename.call_args_list == [
                 call(ctx.config.library / album.path / "2.mp3", ctx.config.library / album.path / "2.mp3.unreadable")
             ]

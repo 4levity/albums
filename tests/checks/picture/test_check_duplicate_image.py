@@ -2,10 +2,13 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_duplicate_image import CheckDuplicateImage
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
 from albums.tagger import PictureType
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckDuplicateImage:
@@ -63,9 +66,8 @@ class TestCheckDuplicateImage:
         assert result.message == "same image data in multiple files: cover.png, folder.png"
         assert result.fixer
         assert result.fixer.options == ["cover.png", "folder.png"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_unlink = mocker.patch("albums.checks.helpers.unlink")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.png")]

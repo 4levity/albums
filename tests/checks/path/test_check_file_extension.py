@@ -3,9 +3,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_file_extension import CheckFileExtension
 from albums.entities import Album, OtherFile, PictureFile, Track
 from albums.picture import PictureInfo
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckFileExtension:
@@ -49,10 +52,9 @@ class TestCheckFileExtension:
         assert 'bad file extension, example "upper.MP3" should be "upper.mp3"' in result.message
         assert result.fixer is not None
         assert result.fixer.options == [">> Change file extensions"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_file_extension.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "upper.MP3", Path(album.path) / "upper.0"),
             call(Path(album.path) / "upper.0", Path(album.path) / "upper.mp3"),
@@ -73,10 +75,9 @@ class TestCheckFileExtension:
         assert 'bad file extensions, example "COVER.PNG" should be "COVER.png"' in result.message
         assert result.fixer is not None
         assert result.fixer.options == [">> Change file extensions"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_file_extension.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "COVER.PNG", Path(album.path) / "COVER.0"),
             call(Path(album.path) / "OVERSIZE.BMP", Path(album.path) / "OVERSIZE.0"),

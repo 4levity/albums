@@ -8,6 +8,8 @@ from albums.checks.numbering.check_track_numbering import CheckTrackNumbering
 from albums.entities import Album, FieldV, Track
 from albums.tagger import AlbumTagger, BasicField
 
+from ...helpers import apply_automatic_fix
+
 
 class TestCheckTrackNumbering:
     def test_check_track_numbering_ok(self):
@@ -86,9 +88,8 @@ class TestCheckTrackNumbering:
         fixer = result.fixer
         assert fixer
         assert fixer.options == [">> Set tracktotal to number of tracks: 3"]
-        assert fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert fixer.fix(fixer.options[fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "3")]),
@@ -111,7 +112,7 @@ class TestCheckTrackNumbering:
         assert fixer.option_free_text
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         # a decimal value entered via ">> Enter Text" is used as the new tracktotal
-        assert fixer.fix("4")
+        assert fixer.fix("4") == FixResult.CHANGED_ALBUM
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "4")]),
@@ -128,9 +129,8 @@ class TestCheckTrackNumbering:
         assert "missing track numbers {1, 2, 3}" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 3 tracks based on filenames"]
-        assert result.fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")]),
@@ -151,9 +151,8 @@ class TestCheckTrackNumbering:
         assert "missing track numbers on disc 1 {1, 2}" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Automatically renumber 2 tracks based on filenames"]
-        assert result.fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")]),

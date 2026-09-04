@@ -20,6 +20,8 @@ from albums.entities import Album, Track
 from albums.interactive.interact import interact
 from albums.tagger import AlbumTagger, BasicField
 
+from ...helpers import apply_automatic_fix
+
 NONE_CELL = "[bold italic]None[/bold italic]"
 TABLE_HEADERS = ["filename", "tracknumber", "tracktotal", "discnumber", "disctotal"]
 
@@ -28,14 +30,6 @@ def fixer_table(result: CheckResult) -> tuple[Iterable[str], Iterable[Iterable[R
     table = result.fixer.get_table()
     assert table is not None
     return table
-
-
-def apply_automatic_fix(result: CheckResult) -> FixResult:
-    fixer = result.fixer
-    assert fixer is not None
-    index = fixer.option_automatic_index
-    assert index is not None
-    return fixer.fix(fixer.options[index])
 
 
 class TestNumberFieldPlan:
@@ -89,7 +83,6 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result.message == "bad values in track/disc number fields: tracknumber (multiple values) on 1 track"
         assert result.fixer
         assert result.fixer.options == [">> Automatically remove zero, non-numeric and multiple values"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.prompt == "select option to fix 1 track"
         (headers, rows) = fixer_table(result)
         assert headers == TABLE_HEADERS
@@ -112,7 +105,6 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert result
         assert result.message == "bad values in track/disc number fields: tracktotal (multiple values) on 1 track"
         assert result.fixer
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.prompt == "select option to fix 1 track"
         (headers, rows) = fixer_table(result)
         assert headers == TABLE_HEADERS
@@ -268,7 +260,6 @@ class TestCheckInvalidTrackOrDiscNumber:
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.message == "bad values in track/disc number fields: tracknumber (multiple values) on 1 track"
-        assert result.fixer
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)

@@ -1,10 +1,11 @@
 from albums.app import Context
 from albums.checks.base_check_field_per_album import AlbumTagger
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_legacy_fields import OPTION_CONVERT_LEGACY, CheckLegacyFields
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckLegacyFields:
@@ -50,15 +51,13 @@ class TestCheckLegacyFields:
         result = CheckLegacyFields(Context()).check(album)
 
         assert result is not None
-        assert result.fixer is not None
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.option_automatic_index == 0
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         # Check that open was called for each track with legacy fields
         assert set(c[0][0] for c in mock_tagger_open.call_args_list) == {"1.flac", "2.flac"}
@@ -80,15 +79,13 @@ class TestCheckLegacyFields:
         result = CheckLegacyFields(Context()).check(album)
 
         assert result is not None
-        assert result.fixer is not None
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.option_automatic_index == 0
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         # Verify that disctotal was set and totaldiscs removed
         set_field_calls = [c[0] for c in mock_set_field.call_args_list]
@@ -106,15 +103,13 @@ class TestCheckLegacyFields:
 
         assert result is not None
         assert "TDRL" in result.message
-        assert result.fixer is not None
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.option_automatic_index == 0
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         # Verify that date (TDRC) was set and the deprecated TDRL frame removed
         set_field_calls = [c[0] for c in mock_set_field.call_args_list]

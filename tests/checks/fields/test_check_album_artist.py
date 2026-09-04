@@ -1,9 +1,12 @@
 from pathlib import Path
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_album_artist import CheckAlbumArtist
 from albums.entities import Album, FieldV, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckAlbumArtist:
@@ -70,7 +73,7 @@ class TestCheckAlbumArtist:
         # we select "B" and it is fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix("B")
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 3
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "B")])
 
@@ -118,13 +121,11 @@ class TestCheckAlbumArtist:
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist would be redundant, but it can be set to A" in result.message
-        assert result.fixer is not None
-        assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, "A")])
 
@@ -156,13 +157,11 @@ class TestCheckAlbumArtist:
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist would be redundant, but it can be set to Various Artists" in result.message
-        assert result.fixer is not None
-        assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (
             Path(album_auto.path) / album_auto.tracks[1].filename,
@@ -213,13 +212,11 @@ class TestCheckAlbumArtist:
 
         result = CheckAlbumArtist(ctx).check(album_auto)
         assert "album artist is not needed: A" in result.message
-        assert result.fixer is not None
-        assert result.fixer.option_automatic_index is not None
 
         # select automatic option and it is fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (Path(album_auto.path) / album_auto.tracks[1].filename, [(BasicField.ALBUMARTIST, None)])
 
@@ -260,7 +257,7 @@ class TestCheckAlbumArtist:
         # we select "copy album artist to artist" and it is fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = result.fixer.fix(result.fixer.options[4])
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 3
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ARTIST, "Bar")])
 

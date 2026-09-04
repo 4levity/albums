@@ -6,13 +6,14 @@ from unittest.mock import call, mock_open, patch
 from PIL import Image
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_dimensions import CheckCoverDimensions
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, PictureType
 
 from ...fixtures.create_library import make_image_data
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckCoverDimensions:
@@ -49,7 +50,6 @@ class TestCheckCoverDimensions:
         assert result.message == "COVER_FRONT is not square (800x1000)"
         assert result.fixer
         assert len(result.fixer.options) == 1
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
@@ -61,7 +61,7 @@ class TestCheckCoverDimensions:
         m_open = mock_open()
         with patch("builtins.open", m_open):
             assert result.fixer.get_table()
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_get_image_data.call_count == 1
         cover = album.picture_files[0]
@@ -85,7 +85,6 @@ class TestCheckCoverDimensions:
         assert result is not None
         assert result.message == "COVER_FRONT is not square (800x1000)"
         assert result.fixer
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         image_data = make_image_data(cover.picture_info.width, cover.picture_info.height, "JPEG")
@@ -97,7 +96,7 @@ class TestCheckCoverDimensions:
         m_open = mock_open()
         with patch("builtins.open", m_open):
             assert result.fixer.get_table()
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_get_image_data.call_count == 1
         cover = album.picture_files[0]
@@ -126,7 +125,6 @@ class TestCheckCoverDimensions:
         assert result.message == "COVER_FRONT is not square (1000x800)"
         assert result.fixer
         assert len(result.fixer.options) == 1
-        assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(picture_info.width, picture_info.height, "JPEG")
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
@@ -136,7 +134,7 @@ class TestCheckCoverDimensions:
         m_open = mock_open()
 
         with patch("builtins.open", m_open):
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_get_image_data.call_count == 1
         assert mock_unlink.call_args_list == [call(Path(album.path) / "folder.jpg")]
@@ -165,7 +163,6 @@ class TestCheckCoverDimensions:
         assert result.message == "COVER_FRONT is not square (1000x800)"
         assert result.fixer
         assert len(result.fixer.options) == 1
-        assert result.fixer.option_automatic_index == 0
         image_data = make_image_data(cover_info.width, cover_info.height, "PNG")
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
@@ -174,7 +171,7 @@ class TestCheckCoverDimensions:
         m_open = mock_open()
 
         with patch("builtins.open", m_open):
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_get_image_data.call_count == 1
         assert len(album.picture_files) == 1

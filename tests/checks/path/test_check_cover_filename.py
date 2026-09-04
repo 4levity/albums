@@ -5,11 +5,13 @@ from unittest.mock import call
 from PIL import Image
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_cover_filename import CheckCoverFilename
 from albums.entities import Album, PictureFile, Track
 from albums.picture import PictureInfo
 
 from ...fixtures.create_library import make_image_data
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckCoverFilename:
@@ -78,11 +80,10 @@ class TestCheckCoverFilename:
         assert result.message == "cover image has the wrong filename: folder.jpg"
         assert result.fixer
         assert result.fixer.options == [">> Rename folder.jpg to cover.jpg"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_cover_filename.rename")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path(album.path) / "folder.jpg", Path(album.path) / "cover.jpg")]
 
     def test_cover_filename_rename_cover_source(self, mocker):
@@ -98,12 +99,11 @@ class TestCheckCoverFilename:
         assert result.message == "cover image has the wrong filename: folder.jpg"
         assert result.fixer
         assert result.fixer.options == [">> Rename folder.jpg to cover.jpg"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_cover_filename.rename")
 
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path(album.path) / "folder.jpg", Path(album.path) / "cover.jpg")]
         assert album.picture_files[0].filename == "cover.jpg"
 
@@ -118,11 +118,10 @@ class TestCheckCoverFilename:
         assert result.message == "cover image has the wrong filename: Cover.JPG"
         assert result.fixer
         assert result.fixer.options == [">> Rename Cover.JPG to cover.JPG"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_cover_filename.rename")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "Cover.JPG", Path(album.path) / "Cover.0"),
             call(Path(album.path) / "Cover.0", Path(album.path) / "cover.JPG"),
@@ -141,16 +140,15 @@ class TestCheckCoverFilename:
         assert result.message == "cover image has the wrong filename and type (expected .jpg): cover.png"
         assert result.fixer
         assert result.fixer.options == [">> Convert cover.png to cover.jpg"]
-        assert result.fixer.option_automatic_index == 0
 
         image_data = make_image_data(400, 400, "PNG")
         mock_save = mocker.patch.object(Image.Image, "save")
         mock_read_binary_file = mocker.patch("albums.checks.path.check_cover_filename.read_binary_file", return_value=image_data)
         mock_unlink = mocker.patch("albums.checks.path.check_cover_filename.unlink")
 
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        fix_result = apply_automatic_fix(result)
 
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_read_binary_file.call_args_list == [call(Path(album.path) / "cover.png")]
         assert mock_unlink.call_args_list == [call(Path(album.path) / "cover.png")]
         assert mock_save.call_args_list == [call(Path(album.path) / "cover.jpg", quality=CheckCoverFilename.default_config["jpeg_quality"])]

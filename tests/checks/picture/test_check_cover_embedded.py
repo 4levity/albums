@@ -7,13 +7,14 @@ import pytest
 from PIL import Image
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_embedded import CheckCoverEmbedded
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, Picture, PictureType
 
 from ...fixtures.create_library import make_image_data
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckCoverEmbedded:
@@ -53,7 +54,6 @@ class TestCheckCoverEmbedded:
         assert "the cover can be extracted and marked as cover_source" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Extract embedded cover and mark as front cover source"]
-        assert result.fixer.option_automatic_index == 0
         tagger = MockTagger()
         image_data = make_image_data(400, 400, "PNG")
         mock_read_image = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
@@ -61,7 +61,7 @@ class TestCheckCoverEmbedded:
         mock_tagger_open.return_value.__enter__.return_value = tagger
         m_open = mock_open()
         with patch("builtins.open", m_open):
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_read_image.call_count == 1
         assert len(album.picture_files) == 1
@@ -91,8 +91,6 @@ class TestCheckCoverEmbedded:
         result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
         assert "the cover can be extracted and marked as cover_source" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
         tagger = MockTagger()
         image_data = make_image_data(400, 400, "JPEG")
         mock_read_image = mocker.patch.object(tagger, "get_image_data", return_value=image_data)
@@ -101,7 +99,7 @@ class TestCheckCoverEmbedded:
         m_open = mock_open()
         with patch("builtins.open", m_open):
             with pytest.raises(ValueError, match="can't guess file extension"):
-                result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                apply_automatic_fix(result)
 
         assert mock_read_image.call_count == 1
         assert len(album.picture_files) == 0
@@ -127,7 +125,6 @@ class TestCheckCoverEmbedded:
         assert "can re-embed from front cover source" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Embed new cover art in all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         image_data = make_image_data(400, 400, "PNG")
@@ -147,7 +144,7 @@ class TestCheckCoverEmbedded:
         assert mock_render_image_table.call_count == 1
         assert table == (["Front Cover Source cover.png", "Current Embedded Cover", "Preview New Embedded Cover"], [])
 
-        result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_read_binary_file.call_count == 2
         assert mock_get_pictures.call_count == 2

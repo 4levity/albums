@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context, Path
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_folder_name import CheckFolderName
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
@@ -12,6 +13,7 @@ from albums.library import run_scan
 from albums.tagger import BasicField
 
 from ...fixtures.create_library import create_library
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckFolderName:
@@ -52,10 +54,9 @@ class TestCheckFolderName:
         assert "folder name does not match pattern" in result.message
         assert result.fixer
         assert result.fixer.options == ['>> Rename folder to "Foo"']
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_folder_name.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path("Foo (2026)"), Path("Foo"))]
         assert album.path == "Foo" + os.sep
 
@@ -66,10 +67,9 @@ class TestCheckFolderName:
         assert "folder name does not match pattern" in result.message
         assert result.fixer
         assert result.fixer.options == ['>> Rename folder to "Foo"']
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_folder_name.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path("foo"), Path("foo.0")), call(Path("foo.0"), Path("Foo"))]
         assert album.path == "Foo" + os.sep
 
@@ -87,9 +87,7 @@ class TestCheckFolderName:
                 session.commit()
 
                 result = CheckFolderName(ctx).check(album)
-                assert result.fixer
-                assert result.fixer.option_automatic_index == 0
-                assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
                 session.flush()
 
                 (album,) = session.execute(select(Album)).tuples().one()

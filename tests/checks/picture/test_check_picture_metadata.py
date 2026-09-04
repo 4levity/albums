@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_picture_metadata import CheckPictureMetadata
 from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
@@ -14,6 +15,7 @@ from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, Picture, PictureType
 
 from ...fixtures.create_library import create_library, make_image_data
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckPictureMetadata:
@@ -64,9 +66,7 @@ class TestCheckPictureMetadata:
                 assert (
                     result.message == "embedded image metadata mismatch on 1 track, example image/png 400x400 but container says image/jpeg 399x399"
                 )
-                assert result.fixer
-                assert result.fixer.option_automatic_index is not None
-                assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
                 session.flush()
 
                 run_scan(ctx, session, reread=True)
@@ -104,9 +104,7 @@ class TestCheckPictureMetadata:
                 result = CheckPictureMetadata(ctx).check(result)
                 assert result is not None
                 assert result.message == "embedded image metadata mismatch on 1 track, example image/png 400x400 but container says image/jpeg"
-                assert result.fixer
-                assert result.fixer.option_automatic_index is not None
-                assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
                 run_scan(ctx, session, reread=True)
 
@@ -140,9 +138,7 @@ class TestCheckPictureMetadata:
                 result = CheckPictureMetadata(ctx).check(result)
                 assert result is not None
                 assert result.message == "image file with wrong extension, example cover.gif should be cover.png"
-                assert result.fixer
-                assert result.fixer.option_automatic_index is not None
-                assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
                 run_scan(ctx, session, reread=True)
 

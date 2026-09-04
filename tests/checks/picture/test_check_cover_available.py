@@ -13,7 +13,7 @@ from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, PictureType
 
 from ...fixtures.create_library import make_image_data
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckCoverAvailable:
@@ -62,7 +62,6 @@ class TestCheckCoverAvailable:
         assert "album has pictures but none is COVER_FRONT picture" in result.message
         assert result.fixer is not None
         assert result.fixer.options == ["1.flac (and 1 more) image/png COVER_BACK"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         image_data = make_image_data()
@@ -72,7 +71,7 @@ class TestCheckCoverAvailable:
 
         m_open = mock_open()
         with patch("builtins.open", m_open):
-            result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+            assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_get_image_data.call_count == 1
         m_open.assert_has_calls(
@@ -100,7 +99,6 @@ class TestCheckCoverAvailable:
         assert "album has pictures but none is COVER_FRONT picture" in result.message
         assert result.fixer is not None
         assert result.fixer.options == ["1.flac image/jpg COVER_BACK"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         image_data = make_image_data()
@@ -111,7 +109,7 @@ class TestCheckCoverAvailable:
         m_open = mock_open()
         with patch("builtins.open", m_open):
             with pytest.raises(ValueError, match="can't guess file extension"):
-                result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                apply_automatic_fix(result)
         assert mock_get_image_data.call_count == 1
         m_open.assert_not_called()
 
@@ -127,10 +125,9 @@ class TestCheckCoverAvailable:
 
         assert result.fixer is not None
         assert result.fixer.options == ["other.png image/png OTHER"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.picture.check_cover_available.rename")
-        result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_rename.call_args_list == [call(Path(".") / album.path / "other.png", Path(".") / album.path / "cover.png")]
 
@@ -155,11 +152,10 @@ class TestCheckCoverAvailable:
 
         assert result.fixer is not None
         assert result.fixer.options == ["1.flac (and 2 more) image/png OTHER"]
-        assert result.fixer.option_automatic_index == 0
 
         # same image was found embedded and in other.png - rename other.png instead of creating new cover.png
         mock_rename = mocker.patch("albums.checks.picture.check_cover_available.rename")
-        result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_rename.call_args_list == [call(Path(".") / album.path / "other.png", Path(".") / album.path / "cover.png")]
 
@@ -176,13 +172,12 @@ class TestCheckCoverAvailable:
         assert result.fixer is not None
         assert len(result.fixer.options) == 1
         assert ">> Try to retrieve cover image with: sacad" in result.fixer.options[0]
-        assert result.fixer.option_automatic_index == 0
 
         mock_iglob = mocker.patch("albums.checks.picture.check_cover_available.iglob")
         mock_iglob.side_effect = [(), ("cover.jpg",)]
         mock_run = mocker.patch("albums.checks.picture.check_cover_available.run", return_value=CompletedProcess([], 0))
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index]) == FixResult.CHANGED_ALBUM
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_iglob.call_count == 2
         expect_cmd = ["sacad", "--preserve-format", "--size-tolerance", "60", "Foo", "Bar", "1200", "cover.png"]
@@ -200,13 +195,12 @@ class TestCheckCoverAvailable:
         assert result.fixer is not None
         assert len(result.fixer.options) == 1
         assert ">> Try to retrieve cover image with: sacad" in result.fixer.options[0]
-        assert result.fixer.option_automatic_index == 0
 
         mock_iglob = mocker.patch("albums.checks.picture.check_cover_available.iglob")
         mock_iglob.side_effect = [(), ()]
         mock_run = mocker.patch("albums.checks.picture.check_cover_available.run", return_value=CompletedProcess([], 1))
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index]) == FixResult.NO_CHANGE
+        assert apply_automatic_fix(result) == FixResult.NO_CHANGE
 
         assert mock_iglob.call_count == 2
         expect_cmd = ["sacad", "--preserve-format", "--size-tolerance", "60", "Foo", "Bar", "1200", "cover.png"]

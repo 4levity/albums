@@ -3,9 +3,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_artist import CheckArtistField
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckArtistField:
@@ -27,11 +30,10 @@ class TestCheckArtistField:
         assert "2 tracks missing artist field" in result.message
         assert result.fixer
         assert result.fixer.options == ["Foo"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         path = Path(album.path)
         assert mock_set_basic_fields.call_args_list == [
             call(path / album.tracks[0].filename, [(BasicField.ARTIST, "Foo")]),

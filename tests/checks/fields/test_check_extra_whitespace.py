@@ -1,11 +1,12 @@
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_extra_whitespace import CheckExtraWhitespace
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
 
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckExtraWhitespace:
@@ -33,14 +34,13 @@ class TestCheckExtraWhitespace:
         assert "Extra whitespace present in 2 files in fields: artist, title" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Strip leading and trailing whitespace in fields: artist, title"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [
             call(BasicField.ARTIST, ["Alice"]),
             call(BasicField.ARTIST, ["Alice"]),

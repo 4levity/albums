@@ -1,15 +1,29 @@
-"""Shared test helpers: a no-op mock tagger, CLI invocation, and a fake ffmpeg."""
+"""Shared test helpers: applying automatic fixes, a no-op mock tagger, CLI invocation, and a fake ffmpeg."""
 
 from pathlib import Path
 from typing import Generator, List, Sequence, Tuple
 
 from click.testing import CliRunner
 
+from albums.checks.check_types import CheckResult, FixResult
 from albums.cli import entry_point
 from albums.entities import Track
 from albums.tagger import BasicField, Picture, StreamInfo, TaggerFile
 
 from .fixtures.create_library import create_track_file
+
+
+def apply_automatic_fix(result: CheckResult | None) -> FixResult:
+    """Assert that the check result offers an automatic fix option, apply that option, and return the fix result.
+
+    Callers should assert the specific ``FixResult`` value, since all ``FixResult`` values are truthy.
+    """
+    assert result is not None
+    fixer = result.fixer
+    assert fixer is not None
+    index = fixer.option_automatic_index
+    assert index is not None
+    return fixer.fix(fixer.options[index])
 
 
 class MockTagger(TaggerFile):

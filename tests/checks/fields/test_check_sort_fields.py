@@ -9,7 +9,7 @@ from albums.checks.fields.check_artist_sort import CheckArtistSort
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
 
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 def _album(*tags):
@@ -22,12 +22,13 @@ def _run(check_cls, album, presence="consistent"):
     return check_cls(ctx).check(album)
 
 
-def _fix(mocker, result, option):
+def _fix(mocker, result, option: str | None = None):
+    """Set up a mock tagger and apply a fix (the automatic option when option is None); return the fix result and the mock set_field."""
     tagger = MockTagger()
     mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
     mock_tagger_open.return_value.__enter__.return_value = tagger
     mock_set_field = mocker.patch.object(tagger, "set_field")
-    fix_result = result.fixer.fix(option)
+    fix_result = apply_automatic_fix(result) if option is None else result.fixer.fix(option)
     return fix_result, mock_set_field
 
 
@@ -66,11 +67,10 @@ class TestAlbumSort:
         assert "album sort order is not set but it should be" in result.message
         assert result.fixer
         assert result.fixer.options == [OPTION_GENERATED_VALUE, ">> Remove album sort order from all tracks"]
-        assert result.fixer.option_automatic_index == 0
         assert not result.fixer.option_free_text
         assert result.fixer.table
 
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The"), call(BasicField.ALBUMSORT, "Beatles, The")]
 
@@ -78,9 +78,7 @@ class TestAlbumSort:
         album = _album({BasicField.ALBUM: "The Beatles"}, {BasicField.ALBUM: "The Beatles"})
         result = _run(CheckAlbumSort, album, presence="always")
         assert "albumsort policy=ALWAYS but it is not set to the generated value on all tracks" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The"), call(BasicField.ALBUMSORT, "Beatles, The")]
 
@@ -92,9 +90,7 @@ class TestAlbumSort:
         )
         result = _run(CheckAlbumSort, album, presence="always")
         assert "albumsort policy=ALWAYS but it is not set to the generated value on all tracks" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The"), call(BasicField.ALBUMSORT, "Beatles, The")]
 
@@ -105,9 +101,7 @@ class TestAlbumSort:
         )
         result = _run(CheckAlbumSort, album)
         assert "incorrect album sort order on 2 tracks" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The"), call(BasicField.ALBUMSORT, "Beatles, The")]
 
@@ -115,9 +109,7 @@ class TestAlbumSort:
         album = _album({BasicField.ALBUM: "The Beatles", BasicField.ALBUMSORT: "Beatles, The"}, {BasicField.ALBUM: "The Beatles"})
         result = _run(CheckAlbumSort, album)
         assert "albumsort policy=CONSISTENT but it is on some tracks and not others" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         # only the track without the field is changed
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The")]
@@ -152,9 +144,7 @@ class TestAlbumSort:
         album = _album({BasicField.ALBUM: ["The Beatles", "Wings"]}, {BasicField.ALBUM: "Alice"})
         result = _run(CheckAlbumSort, album)
         assert "album sort order is not set but it should be" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMSORT, "Beatles, The / Wings"), call(BasicField.ALBUMSORT, "Alice")]
 
@@ -207,9 +197,7 @@ class TestAlbumArtistSort:
         album = _album({BasicField.ALBUMARTIST: "The Beatles"}, {BasicField.ALBUMARTIST: "The Beatles"})
         result = _run(CheckAlbumArtistSort, album)
         assert "album-artist sort order is not set but it should be" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ALBUMARTISTSORT, "Beatles, The"), call(BasicField.ALBUMARTISTSORT, "Beatles, The")]
 
@@ -240,9 +228,7 @@ class TestArtistSort:
         album = _album({BasicField.ARTIST: "The Beatles"}, {BasicField.ARTIST: "Alice"})
         result = _run(CheckArtistSort, album)
         assert "artist sort order is not set but it should be" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ARTISTSORT, "Beatles, The"), call(BasicField.ARTISTSORT, "Alice")]
 
@@ -250,9 +236,7 @@ class TestArtistSort:
         album = _album({BasicField.ARTIST: "The Beatles"}, {BasicField.ARTIST: "Alice"})
         result = _run(CheckArtistSort, album, presence="always")
         assert "artistsort policy=ALWAYS but it is not set to the generated value on all tracks" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ARTISTSORT, "Beatles, The"), call(BasicField.ARTISTSORT, "Alice")]
 
@@ -264,9 +248,7 @@ class TestArtistSort:
         )
         result = _run(CheckArtistSort, album)
         assert "incorrect artist sort order on 1 track" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         # only the wrong track is changed
         assert mock_set_field.call_args_list == [call(BasicField.ARTISTSORT, "Beatles, The")]
@@ -275,9 +257,7 @@ class TestArtistSort:
         album = _album({BasicField.ARTIST: "The Beatles", BasicField.ARTISTSORT: "Beatles, The"}, {BasicField.ARTIST: "Alice"})
         result = _run(CheckArtistSort, album)
         assert "artistsort policy=CONSISTENT but it is on some tracks and not others" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ARTISTSORT, "Alice")]
 
@@ -340,8 +320,6 @@ class TestArtistSort:
         album = _album({BasicField.ARTIST: ["The Beatles", "Wings"]}, {BasicField.ARTIST: "Alice"})
         result = _run(CheckArtistSort, album)
         assert "artist sort order is not set but it should be" in result.message
-        assert result.fixer
-        assert result.fixer.option_automatic_index == 0
-        fix_result, mock_set_field = _fix(mocker, result, result.fixer.options[result.fixer.option_automatic_index])
+        fix_result, mock_set_field = _fix(mocker, result)
         assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [call(BasicField.ARTISTSORT, "Beatles, The / Wings"), call(BasicField.ARTISTSORT, "Alice")]

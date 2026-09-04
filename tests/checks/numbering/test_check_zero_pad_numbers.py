@@ -1,9 +1,12 @@
 from pathlib import Path
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.entities import Album, FieldV, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestZeroPadNumbers:
@@ -34,13 +37,12 @@ class TestZeroPadNumbers:
         assert "incorrect zero padding for 9 track numbers" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Apply policy: tracknumber pad IF_NEEDED"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 9
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicField.TRACKNUMBER, "09")])
 
@@ -84,13 +86,12 @@ class TestZeroPadNumbers:
         assert result.fixer.options == [
             ">> Apply policy: discnumber pad IF_NEEDED and disctotal pad NEVER and tracknumber pad IF_NEEDED and tracktotal pad NEVER"
         ]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
@@ -123,13 +124,12 @@ class TestZeroPadNumbers:
         assert "incorrect zero padding for 90 disc numbers and 90 track numbers" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Apply policy: discnumber pad IF_NEEDED and tracknumber pad IF_NEEDED"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicField.TRACKNUMBER, "09")])
 
@@ -173,13 +173,12 @@ class TestZeroPadNumbers:
         assert result.fixer.options == [
             ">> Apply policy: discnumber pad TWO_DIGIT_MINIMUM and disctotal pad TWO_DIGIT_MINIMUM and tracknumber pad TWO_DIGIT_MINIMUM and tracktotal pad TWO_DIGIT_MINIMUM"
         ]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[1].filename,
@@ -202,11 +201,10 @@ class TestZeroPadNumbers:
         assert "incorrect zero padding for 1 track numbers" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Apply policy: tracknumber pad IF_NEEDED"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "1")])

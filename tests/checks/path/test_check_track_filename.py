@@ -3,9 +3,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_track_filename import CheckTrackFilename
 from albums.entities import Album, Track
 from albums.tagger import BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckTrackFilename:
@@ -137,10 +140,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.flac", Path(album.path) / "1 foo.flac"),
             call(Path(album.path) / "2.flac", Path(album.path) / "2 bar.flac"),
@@ -166,10 +167,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.m4a", Path(album.path) / "01 one.m4a"),
             call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
@@ -209,10 +208,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.m4a", Path(album.path) / "01 one.m4a"),
             call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
@@ -250,10 +247,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.m4a", Path(album.path) / "1 one.m4a"),
             call(Path(album.path) / "10.m4a", Path(album.path) / "10 ten.m4a"),
@@ -287,10 +282,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.mp3", Path(album.path) / "1 one.mp3"),
             call(Path(album.path) / "10.mp3", Path(album.path) / "10 ten.mp3"),
@@ -315,10 +308,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1 foo.flac", Path(album.path) / "1 foo.0"),
             call(Path(album.path) / "2 bar.flac", Path(album.path) / "2 bar.0"),
@@ -337,10 +328,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.flac", Path(album.path) / "1 foobar.flac"),
             call(Path(album.path) / "2.flac", Path(album.path) / "2 baz-baz.flac"),
@@ -360,10 +349,8 @@ class TestCheckTrackFilename:
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Use generated filenames"]
-        assert result.fixer.option_automatic_index == 0
-
         mock_rename = mocker.patch("albums.checks.path.check_track_filename.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "1.flac", Path(album.path) / "1 foo_bar.flac"),
             call(Path(album.path) / "2.flac", Path(album.path) / "2 baz, baz.flac"),

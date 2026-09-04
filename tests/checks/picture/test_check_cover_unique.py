@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.picture.check_cover_unique import CheckCoverUnique
 from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
@@ -15,6 +16,7 @@ from albums.picture import PictureInfo
 from albums.tagger import PictureType
 
 from ...fixtures.create_library import create_library
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckCoverUnique:
@@ -86,7 +88,6 @@ class TestCheckCoverUnique:
                 )
                 assert result.fixer
                 assert result.fixer.options == [">> Mark as front cover source: cover.png", ">> Delete all cover image files: cover.png"]
-                assert result.fixer.option_automatic_index == 0
                 table = result.fixer.get_table()
                 assert table
                 (h, r) = table
@@ -100,9 +101,9 @@ class TestCheckCoverUnique:
                 assert "1000 x 1000" in str(rows[1][0])
                 assert "400 x 400" in str(rows[1][1])
 
-                fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+                fix_result = apply_automatic_fix(result)
 
-                assert fix_result
+                assert fix_result == FixResult.CHANGED_ALBUM
                 assert album.picture_files[0].cover_source
 
         finally:
@@ -127,11 +128,10 @@ class TestCheckCoverUnique:
         )
         assert result.fixer
         assert result.fixer.options == [">> Mark as front cover source: cover_big.png", ">> Mark as front cover source: cover_small.png"]
-        assert result.fixer.option_automatic_index == 0
 
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        fix_result = apply_automatic_fix(result)
 
-        assert fix_result
+        assert fix_result == FixResult.CHANGED_ALBUM
         cover = next(file for file in album.picture_files if file.filename == "cover_big.png")
         assert cover.filename == "cover_big.png"
         assert cover.cover_source
@@ -152,9 +152,8 @@ class TestCheckCoverUnique:
         assert result.message == "multiple front cover image files, and one of them is marked cover source (delete others)"
         assert result.fixer
         assert result.fixer.options == ['>> Keep cover source image "cover_big.png" and delete other cover files: cover_small.png']
-        assert result.fixer.option_automatic_index == 0
 
         mock_unlink = mocker.patch("albums.checks.helpers.unlink")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_unlink.call_args_list == [call(Path(album.path) / "cover_small.png")]

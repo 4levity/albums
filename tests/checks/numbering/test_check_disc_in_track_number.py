@@ -2,9 +2,12 @@ import os
 from pathlib import Path
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.numbering.check_disc_in_track_number import CheckDiscInTrackNumber
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckDiscInTrackNumber:
@@ -46,9 +49,8 @@ class TestCheckDiscInTrackNumber:
         fixer = result.fixer
         assert fixer
         assert fixer.options == [">> Split track number into disc number and track number"]
-        assert fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert fixer.fix(fixer.options[fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 3
         assert mock_set_basic_fields.call_args.args == (
             Path(album.path) / album.tracks[2].filename,

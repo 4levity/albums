@@ -8,7 +8,7 @@ from albums.checks.numbering.check_disc_numbering import CheckDiscNumbering
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
 
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 
 class TestCheckDiscNumbering:
@@ -83,9 +83,8 @@ class TestCheckDiscNumbering:
         assert "inconsistent disc total" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc total = 2", ">> Remove disc total field"]
-        assert result.fixer.option_automatic_index == 0
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [call(Path(album.path) / album.tracks[2].filename, [(BasicField.DISCTOTAL, "2")])]
 
     def test_check_disctotal_inconsistent(self):
@@ -123,7 +122,7 @@ class TestCheckDiscNumbering:
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         # a decimal value entered via ">> Enter Text" is used as the new disc total
-        assert fixer.fix("3")
+        assert fixer.fix("3") == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path(album.path) / album.tracks[0].filename, [(BasicField.DISCTOTAL, "3")]),
             call(Path(album.path) / album.tracks[1].filename, [(BasicField.DISCTOTAL, "3")]),
@@ -147,7 +146,6 @@ class TestCheckDiscNumbering:
         assert "some tracks have disc number and some do not (1 track without disc number)" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc number from filename on 1 track"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.option_free_text
         table = result.fixer.get_table()
         assert table is not None
@@ -157,7 +155,7 @@ class TestCheckDiscNumbering:
         assert [list(row)[3] for row in rows] == ["", "", "", ""]
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         # only the track without a disc number is fixed, from its filename
         assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "1-2.flac", [(BasicField.DISCNUMBER, "1")])]
 
@@ -175,10 +173,9 @@ class TestCheckDiscNumbering:
         assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc number from filename on 2 tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path("foo") / "2-01.flac", [(BasicField.DISCNUMBER, "2")]),
             call(Path("foo") / "2-02.flac", [(BasicField.DISCNUMBER, "2")]),
@@ -213,10 +210,9 @@ class TestCheckDiscNumbering:
         assert "some tracks have disc number and some do not (1 track without disc number)" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc number = 1 on 1 track", ">> Remove disc number 1 from all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "02.flac", [(BasicField.DISCNUMBER, "1")])]
 
     def test_check_discnumber_inconsistent_fill_disc_1(self, mocker):
@@ -233,10 +229,9 @@ class TestCheckDiscNumbering:
         assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc number = 1 on 2 tracks", ">> Remove disc number 1 from all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path("foo") / "02.flac", [(BasicField.DISCNUMBER, "1")]),
             call(Path("foo") / "03.flac", [(BasicField.DISCNUMBER, "1")]),
@@ -262,14 +257,13 @@ class TestCheckDiscNumbering:
             ">> Remove disc number 1 and disc total 1 from all tracks",
             ">> Set disc number = 1 on 2 tracks",
         ]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_field.call_args_list == [
             call(BasicField.DISCNUMBER, None),
             call(BasicField.DISCTOTAL, None),
@@ -291,10 +285,9 @@ class TestCheckDiscNumbering:
         assert "some tracks have disc number and some do not (2 tracks without disc number)" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Set disc number = 1 on 2 tracks", ">> Remove disc number 1 from all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path("foo") / "1-02.flac", [(BasicField.DISCNUMBER, "1")]),
             call(Path("foo") / "1-03.flac", [(BasicField.DISCNUMBER, "1")]),
@@ -318,7 +311,7 @@ class TestCheckDiscNumbering:
         assert result.fixer.option_automatic_index is None
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        assert result.fixer.fix("2")
+        assert result.fixer.fix("2") == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [call(Path("foo") / "03.flac", [(BasicField.DISCNUMBER, "2")])]
         # invalid free text does not crash and leaves the album unchanged
         assert result.fixer.fix("0") == FixResult.NO_CHANGE
@@ -385,14 +378,13 @@ class TestCheckDiscNumbering:
         assert "redundant disc number" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove disc number 1 from all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_set_field.call_count == 2
         assert mock_set_field.call_args_list == [call(BasicField.DISCNUMBER, None), call(BasicField.DISCNUMBER, None)]
@@ -412,14 +404,13 @@ class TestCheckDiscNumbering:
         assert "redundant disc number 1 and disc total 1" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove disc number 1 and disc total 1 from all tracks"]
-        assert result.fixer.option_automatic_index == 0
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_set_field.call_count == 4
         assert mock_set_field.call_args_list == [

@@ -3,10 +3,13 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
 from albums.config import PathCompatibilityOption
 from albums.entities import Album, PictureFile, Track
 from albums.picture import PictureInfo
+
+from ...helpers import apply_automatic_fix
 
 
 class TestCheckIllegalPathname:
@@ -43,10 +46,9 @@ class TestCheckIllegalPathname:
         assert "'CON' is a reserved name" in result.message
         assert result.fixer is not None
         assert result.fixer.options == [">> Sanitize all filenames"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path(album.path) / "CON.flac", Path(album.path) / "CON_.flac")]
 
     def test_pathname_fix_collision(self):
@@ -78,10 +80,9 @@ class TestCheckIllegalPathname:
         assert "'CON' is a reserved name" in result.message
         assert result.fixer is not None
         assert result.fixer.options == [">> Sanitize all filenames"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [call(Path(album.path) / "CON.jpg", Path(album.path) / "CON_.jpg")]
 
     def test_pathname_fix_renames_tracks_and_picture_files(self, mocker):
@@ -92,11 +93,9 @@ class TestCheckIllegalPathname:
         )
         result = CheckIllegalPathname(Context()).check(album)
         assert result is not None
-        assert result.fixer is not None
-        assert result.fixer.option_automatic_index == 0
 
         mock_rename = mocker.patch("albums.checks.path.check_illegal_pathname.rename")
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_rename.call_args_list == [
             call(Path(album.path) / "a/b.flac", Path(album.path) / "ab.flac"),
             call(Path(album.path) / "a:b.jpg", Path(album.path) / "ab.jpg"),

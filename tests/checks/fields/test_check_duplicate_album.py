@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context, Session
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_duplicate_album import CheckDuplicateAlbum
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
@@ -52,7 +53,7 @@ class TestCheckDuplicateAlbum:
             mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
             fix_result = result.fixer.fix(result.fixer.options[0])
 
-            assert fix_result
+            assert fix_result == FixResult.CHANGED_OTHER
             assert mock_confirm.call_count == 1
             assert mock_rmtree.call_args_list == [call(Path(albums[1].path))]
 
@@ -83,7 +84,7 @@ class TestCheckDuplicateAlbum:
             mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
             fix_result = result.fixer.fix(result.fixer.options[1])
 
-            assert fix_result
+            assert fix_result == FixResult.DELETED_ALBUM
             assert mock_confirm.call_count == 1
             assert mock_rmtree.call_args_list == [call(Path(albums[0].path))]
 

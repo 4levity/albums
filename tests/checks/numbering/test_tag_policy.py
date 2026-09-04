@@ -2,9 +2,12 @@ from pathlib import Path
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.field_policy import Policy, check_policy
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
+
+from ...helpers import apply_automatic_fix
 
 
 class TestFieldPolicy:
@@ -47,12 +50,11 @@ class TestFieldPolicy:
         assert "tracktotal policy=ALWAYS but it is not on all tracks" in result.message
         assert result.fixer
         assert result.fixer.options == ["1"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.option_free_text
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [call(Path(album.tracks[0].filename), [(BasicField.TRACKTOTAL, "1")])]
 
     def test_check_field_policy_always_no_values(self, mocker):
@@ -74,7 +76,7 @@ class TestFieldPolicy:
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
 
-        assert result.fixer.fix("2")
+        assert result.fixer.fix("2") == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_args_list == [
             call(Path("1.flac"), [(BasicField.TRACKTOTAL, "2")]),
             call(Path("2.flac"), [(BasicField.TRACKTOTAL, "2")]),
@@ -106,13 +108,12 @@ class TestFieldPolicy:
         assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
         assert result.fixer
         assert result.fixer.options == ["1", ">> Remove field tracktotal"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "1")])
 
@@ -129,13 +130,12 @@ class TestFieldPolicy:
         assert "tracktotal policy=CONSISTENT but it is on some tracks and not others" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove field tracktotal"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
 
@@ -152,13 +152,12 @@ class TestFieldPolicy:
         assert "tracktotal policy=NEVER but it appears on tracks" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove field tracktotal"]
-        assert result.fixer.option_automatic_index == 0
         assert result.fixer.table
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 2
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
 
@@ -174,10 +173,9 @@ class TestFieldPolicy:
         assert "tracktotal appears on tracks without tracknumber" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Remove field tracktotal"]
-        assert result.fixer.option_automatic_index == 0
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
-        fix_result = result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
-        assert fix_result
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
         assert mock_set_basic_fields.call_count == 1
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])

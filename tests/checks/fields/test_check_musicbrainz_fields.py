@@ -1,11 +1,12 @@
 from unittest.mock import call
 
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_musicbrainz_fields import AlbumTagger, CheckMusicBrainzFields
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
-from ...helpers import MockTagger
+from ...helpers import MockTagger, apply_automatic_fix
 
 UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
@@ -46,14 +47,12 @@ class TestCheckMusicBrainzFields:
         assert result.message == "Deprecated MusicBrainz fields found and remove_deprecated is enabled"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove deprecated MusicBrainz fields"]
-        assert result.fixer.option_automatic_index == 0
-
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_TRMID, None)]
@@ -72,14 +71,12 @@ class TestCheckMusicBrainzFields:
         assert result.message == "MusicBrainz fields found and remove_all is enabled"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove all MusicBrainz fields"]
-        assert result.fixer.option_automatic_index == 0
-
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_TRACKID, None), call(BasicField.MUSICBRAINZ_TRMID, None)]
@@ -100,14 +97,12 @@ class TestCheckMusicBrainzFields:
         assert result.message == f"MUSICBRAINZ_ALBUMID is not the same on all tracks (values = {UUID1}, none)"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
-        assert result.fixer.option_automatic_index == 0
-
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[1].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMID, None)]
@@ -134,7 +129,7 @@ class TestCheckMusicBrainzFields:
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
         # removing all MB fields must remove the release type field too
-        assert result.fixer.fix(result.fixer.options[1])
+        assert result.fixer.fix(result.fixer.options[1]) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[1].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMRELEASETYPE, None)]
@@ -158,15 +153,12 @@ class TestCheckMusicBrainzFields:
         result = CheckMusicBrainzFields(ctx).check(album)
         assert result is not None
         assert result.message == "MusicBrainz fields found and remove_all is enabled"
-        assert result.fixer is not None
-        assert result.fixer.option_automatic_index == 0
-
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename)]
         assert mock_set_field.call_args_list == [
@@ -193,14 +185,12 @@ class TestCheckMusicBrainzFields:
         assert result.message == f"MUSICBRAINZ_ALBUMARTISTID is not the same on all tracks (values = {UUID0}, {UUID1})"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMARTISTID fields", ">> Remove all MusicBrainz fields"]
-        assert result.fixer.option_automatic_index == 0
-
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[result.fixer.option_automatic_index])
+        assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename), call(album.tracks[1].filename)]
         assert mock_set_field.call_args_list == [call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None), call(BasicField.MUSICBRAINZ_ALBUMARTISTID, None)]
@@ -227,7 +217,7 @@ class TestCheckMusicBrainzFields:
         mock_tagger_open.return_value.__enter__.return_value = tagger
         mock_set_field = mocker.patch.object(tagger, "set_field")
 
-        assert result.fixer.fix(result.fixer.options[1])
+        assert result.fixer.fix(result.fixer.options[1]) == FixResult.CHANGED_ALBUM
 
         assert mock_tagger_open.call_args_list == [call(album.tracks[0].filename), call(album.tracks[1].filename)]
         assert mock_set_field.call_args_list == [
