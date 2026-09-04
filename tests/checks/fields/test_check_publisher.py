@@ -1,11 +1,10 @@
 from unittest.mock import call
 
 from albums.app import Context
-from albums.checks.base_check_field_per_album import AlbumTagger
 from albums.checks.check_types import FixResult
 from albums.checks.fields.check_publisher import CheckPublisherField
 from albums.entities import Album, Track
-from albums.tagger import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 from ...helpers import MockTagger
 

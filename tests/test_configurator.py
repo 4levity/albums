@@ -1,7 +1,8 @@
 import os
 import platform
+from pathlib import Path
 
-from albums.app import Context, Path
+from albums.app import Context
 from albums.config import PathCompatibilityOption, RescanOption, config_load
 from albums.database import MEMORY, db_open
 from albums.interactive import interactive_config

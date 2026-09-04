@@ -2,9 +2,9 @@ from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.check_types import FixResult
-from albums.checks.fields.check_musicbrainz_fields import AlbumTagger, CheckMusicBrainzFields
+from albums.checks.fields.check_musicbrainz_fields import CheckMusicBrainzFields
 from albums.entities import Album, Track
-from albums.tagger import BasicField
+from albums.tagger import AlbumTagger, BasicField
 
 from ...helpers import MockTagger, apply_automatic_fix
 

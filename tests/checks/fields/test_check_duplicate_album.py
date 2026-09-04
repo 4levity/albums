@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 from unittest.mock import call
 
-from albums.app import Context, Session
+from sqlalchemy.orm import Session
+
+from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.fields.check_duplicate_album import CheckDuplicateAlbum
 from albums.database import MEMORY, db_open

@@ -7,10 +7,10 @@ from albums.database.orm import (
     Base,
     IntEnumAsInt,
     LoadIssuesAsJson,
-    LoadIssuesType,
     SafeStringEnum,
     SerializableValueAsJson,
 )
+from albums.picture import LoadIssuesType
 
 __all__ = [
     "Base",

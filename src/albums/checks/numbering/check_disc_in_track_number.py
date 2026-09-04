@@ -6,10 +6,9 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.helpers import describe_track_number, ordered_tracks
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField, Cap
-
-from .check_track_numbering import describe_track_number, ordered_tracks
 
 logger: Final = logging.getLogger(__name__)
 

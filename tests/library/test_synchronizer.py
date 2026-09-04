@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.config import ALL_ALBUMS, DEFAULT_FILE_CONVERT_PROFILE
+from albums.config import ALL_ALBUMS, DEFAULT_FILE_CONVERT_PROFILE, SyncDestination
 from albums.database import MEMORY, db_open
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, Track
-from albums.library.synchronizer import SyncDestination, Synchronizer
+from albums.library.synchronizer import Synchronizer
 from albums.tagger import AlbumTagger, BasicField, StreamInfo
 
 from ..fixtures.create_library import create_library, test_data_path

@@ -1,10 +1,11 @@
 import os
+from pathlib import Path
 from unittest.mock import call
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from albums.app import Context, Path
+from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.path.check_folder_name import CheckFolderName
 from albums.database import MEMORY, db_open
