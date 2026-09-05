@@ -24,17 +24,20 @@ class CheckUnreadableTrack(Check):
         if unreadable_count == 0:
             return None
         example_filename = next(track.filename for track in album.tracks if track.stream.error)
-        table = (
-            ["filename", "stream error", "proposed new filename"],
-            [
-                [
+        taken = self._existing_names(album)
+        rows: list[list[str]] = []
+        for track in sorted(album.tracks):
+            if track.stream.error:
+                new_filename = self._available_name(f"{track.filename}.unreadable", taken)
+                row = [
                     escape(track.filename),
-                    f"[red]{escape(track.stream.error)}[/red]" if track.stream.error else "[green]ok[/green]",
-                    f"[yellow]{escape(track.filename + '.unreadable')}[/yellow]" if track.stream.error else "[bold italic]no change[/bold italic]",
+                    f"[red]{escape(track.stream.error)}[/red]",
+                    f"[yellow]{escape(new_filename)}[/yellow]",
                 ]
-                for track in sorted(album.tracks)
-            ],
-        )
+            else:
+                row = [escape(track.filename), "[green]ok[/green]", "[bold italic]no change[/bold italic]"]
+            rows.append(row)
+        table = (["filename", "stream error", "proposed new filename"], rows)
         options = [OPTION_RENAME_UNREADABLE]
         option_automatic_index = None
         fixer = Fixer(lambda option: self._fix_rename_unreadable(album), options, False, option_automatic_index, table)
@@ -42,10 +45,35 @@ class CheckUnreadableTrack(Check):
 
     def _fix_rename_unreadable(self, album: Album):
         changed = False
+        album_path = self.ctx.config.library / album.path
+        # check for collisions again in case the album folder changed since the check ran
+        taken = self._existing_names(album)
         for track in sorted(album.tracks):
             if track.stream.error:
-                new_filename = f"{track.filename}.unreadable"
+                new_filename = self._available_name(f"{track.filename}.unreadable", taken)
+                taken.discard(str.lower(track.filename))
                 self.ctx.console.print(f"Renaming {escape(track.filename)} to {escape(new_filename)}", highlight=False)
-                rename(self.ctx.config.library / album.path / track.filename, self.ctx.config.library / album.path / new_filename)
+                rename(album_path / track.filename, album_path / new_filename)
                 changed = True
         return FixResult.of(changed)
+
+    def _existing_names(self, album: Album) -> set[str]:
+        """Lowercased names of all files and folders in the album folder, used to detect collisions with proposed filenames."""
+        album_path = self.ctx.config.library / album.path
+        if not album_path.is_dir():
+            return set()
+        return {str.lower(entry.name) for entry in album_path.iterdir()}
+
+    @staticmethod
+    def _available_name(filename: str, taken: set[str]) -> str:
+        """Return ``filename``, or ``filename.1``, ``filename.2`` etc. if it collides with a name in ``taken`` (case-insensitive).
+
+        The returned name is added to ``taken`` so subsequent proposals do not collide with it either.
+        """
+        candidate = filename
+        number = 0
+        while str.lower(candidate) in taken:
+            number += 1
+            candidate = f"{filename}.{number}"
+        taken.add(str.lower(candidate))
+        return candidate
