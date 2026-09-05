@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import format_field_values
+from albums.checks.helpers import COMPILATION_PARENT_FOLDERS, format_field_values
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural
@@ -19,7 +19,7 @@ class CheckArtistField(Check):
     name = "artist"
     default_config = {
         "enabled": True,
-        "ignore_parent_folders": ["compilation", "compilations", "soundtrack", "soundtracks", "various artists"],
+        "ignore_parent_folders": list(COMPILATION_PARENT_FOLDERS),
     }
     must_pass_checks = {"album-artist"}
 

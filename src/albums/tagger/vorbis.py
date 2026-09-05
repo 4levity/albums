@@ -4,6 +4,7 @@ from typing import Final, Tuple
 
 from mutagen._vorbis import VCommentDict
 
+from .helpers import CANONICAL_COMPILATION_VALUE, compilation_flag_is_set
 from .types import BasicField
 
 # Mapping of legacy Vorbis comment names to their canonical BasicField equivalents
@@ -45,7 +46,14 @@ def vorbis_comment_fields(file_tags: VCommentDict) -> Tuple[Tuple[BasicField, Tu
     # Process standard fields
     for field in BasicField:
         if field != BasicField.UNKNOWN and field.value in file_tags:
-            fields[field] = [str(value) for value in file_tags[field.value]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+            values = [str(value) for value in file_tags[field.value]]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+            if field == BasicField.COMPILATION:
+                # the canonical value is "1" when set and absent when not; normalize unusual truthy values
+                # (e.g. "true") to the canonical value and treat falsy values (e.g. "0") as not set
+                if any(compilation_flag_is_set(value) for value in values):
+                    fields[field] = [CANONICAL_COMPILATION_VALUE]
+            else:
+                fields[field] = values
 
     # Read values from legacy fields if present
     for legacy_name, basic_field in vorbis_comment_legacy_fields(file_tags):
@@ -76,8 +84,8 @@ def vorbis_comment_set_field(file_fields: VCommentDict, field: BasicField | str,
             case BasicField.UNKNOWN:
                 raise ValueError("cannot set field UNKNOWN")
             case BasicField.COMPILATION:
-                if value_list and value_list[0]:
-                    file_fields[field_name] = ["1"]
+                if value_list and compilation_flag_is_set(value_list[0]):
+                    file_fields[field_name] = [CANONICAL_COMPILATION_VALUE]
                 elif field_name in file_fields:
                     del file_fields[field_name]
             case _:

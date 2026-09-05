@@ -1,6 +1,7 @@
 """Tagger package for reading and writing audio file metadata."""
 
 from .folder import AUDIO_FILE_SUFFIXES, AlbumTagger, Cap
+from .helpers import CANONICAL_COMPILATION_VALUE
 from .id3_mappings import LEGACY_ID3_FIELDS
 from .provider import AlbumTaggerProvider
 from .types import (
@@ -20,6 +21,7 @@ __all__ = [
     "AUDIO_FILE_SUFFIXES",
     "BASIC_FIELDS",
     "BasicField",
+    "CANONICAL_COMPILATION_VALUE",
     "Cap",
     "ID3v1Policy",
     "LEGACY_ID3_FIELDS",

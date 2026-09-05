@@ -11,6 +11,7 @@ from mutagen.mp4 import MP4, AtomDataType, MP4Cover, MP4FreeForm, MP4Tags
 
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
+from ..helpers import CANONICAL_COMPILATION_VALUE, compilation_flag_is_set
 from ..types import BasicField, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
@@ -136,8 +137,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             tags = self._ensure_tagged_mp4()
             basic_fields.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
             basic_fields.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
-            if "cpil" in tags and tags["cpil"]:
-                basic_fields.append((BasicField.COMPILATION, ("1",)))
+            if "cpil" in tags and tags["cpil"]:  # mutagen parses cpil as a Python bool: True is "1", False means not set
+                basic_fields.append((BasicField.COMPILATION, (CANONICAL_COMPILATION_VALUE,)))
 
             (track_number, track_total) = self._get_trkn()
             if track_number:
@@ -185,8 +186,9 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             value_list = value if isinstance(value, List) else [value]
             match field:
                 case BasicField.COMPILATION:
-                    if value_list and value_list[0]:
-                        fields["cpil"] = ["1"]
+                    if value_list and compilation_flag_is_set(value_list[0]):
+                        # cpil is a one-byte boolean flag atom, stored as a Python bool as mutagen parses it
+                        fields["cpil"] = True
                     elif "cpil" in fields:
                         del fields["cpil"]
                 case BasicField.DISCNUMBER:

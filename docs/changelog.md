@@ -4,7 +4,7 @@ icon: lucide/scroll-text
 
 # Changelog
 
-v0.9.28 - RC0 release-date + sort-order checks, legacy-tags, fixes, reorg, docs
+v0.9.28 - release-date, sort-order, compilation checks, legacy-tags, fixes, docs
 
 v0.9.27 - bug fixes reading tags, setting modified_at date
 

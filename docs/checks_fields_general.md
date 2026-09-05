@@ -4,10 +4,9 @@ icon: lucide/list-checks
 
 # Checks: General Fields
 
-Field checks not related to numbering, pictures or the per-album fields on
-the [Album Fields](./checks_fields_per_album.md) page. Sort order field
-checks are documented on the [Sort Order
-Fields](./checks_sort_fields.md) page.
+Field checks not related to numbering, pictures or the per-album fields on the
+[Album Fields](./checks_fields_per_album.md) page. Sort order field checks are
+documented on the [Sort Order Fields](./checks_sort_fields.md) page.
 
 ## extra-whitespace
 
@@ -100,7 +99,7 @@ to all tracks that do not have an artist field.
 
 | Option = default                                                                                            |
 | ----------------------------------------------------------------------------------------------------------- |
-| `ignore_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various artists"]` |
+| `ignore_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists"]` |
 
 <!-- pyml enable line-length -->
 
@@ -157,8 +156,8 @@ optional month and day, separated by dashes, dots or underscores (e.g.
 `2024-01-05 Live show.mp3` gives the title `Live show`.
 
 If the filename looks like a track number only, no title guess will be made.
-However, if the filename doesn't match any recognized pattern, the guess will
-be the whole filename except for the extension.
+However, if the filename doesn't match any recognized pattern, the guess will be
+the whole filename except for the extension.
 
 **Automatic fix**: If every file that has a missing title also has a filename
 from which a title can be guessed, fill in all empty titles.
@@ -201,8 +200,8 @@ an album can cause problems for some players. When the `MusicBrainz Album Id` or
 `MusicBrainz Album Artist Id` or `MusicBrainz Album Release Country` is not the
 same on all tracks in an album (or not set on every track), some music players
 interpret this as two separate albums even if all the other (non-MusicBrainz)
-fields are the same.
-This check reports when those fields are not set consistently across the album.
+fields are the same. This check reports when those fields are not set
+consistently across the album.
 
 Other behaviors of this check are controlled by the options. If you don't use
 MusicBrainz, you might want to remove all MusicBrainz fields to avoid conflicts
@@ -224,5 +223,47 @@ MusicBrainz fields.
 | ------------------------------ | ----------------------------------------------------------------------- |
 | `remove_all` = **false**       | if enabled, remove all MusicBrainz fields                               |
 | `remove_deprecated` = **true** | if enabled, remove deprecated MusicBrainz fields (`MusicBrainz TRM Id`) |
+
+<!-- pyml enable line-length -->
+
+## compilation
+
+Whether an album is a compilation is determined from the album's location and
+artist values. An album is a compilation when any of the following is true:
+
+- the name of the parent folder containing the album folder matches one of the
+  `compilation_parent_folders` values (case-insensitive). The default list is the
+  same as the `ignore_parent_folders` option of the `artist` check, or
+- the album artist is "Various Artists", or
+- the album artist is not set, and the artist is "Various Artists" or two or
+  more distinct artists appear on the tracks, or
+- the album artist values are inconsistent across tracks.
+
+An album with one consistent album artist that is not "Various Artists" is
+**not** a compilation, even if some tracks have a different or additional
+artist, as in an artist album with a guest appearance. The album artist is
+what media players use to group the album, and the compilation flag only has a
+purpose when the album has no single artist of its own. An album whose album
+artist is not "Various Artists" can still be treated as a compilation by
+placing the album folder in a matching parent folder, or by setting its album
+artist to "Various Artists".
+
+The compilation flag must be set to the canonical "set" value (for that file
+type) on every track, or removed from every track. Any other state is flagged,
+e.g. flag present on some tracks, or having any other value like 0 or false.
+
+**Automatic fix**: Set the flag to the canonical "set" value on every track if
+the album is a compilation, otherwise remove it from every track.
+
+!!!success "Dependency"
+
+    Requires the `artist` check to pass first, so the distinct artists are
+    known.
+
+<!-- pyml disable line-length -->
+
+| Option = default                                                                                              | Description                                                                                          |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `compilation_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists"]` | List of parent folder names that always mean the album is a compilation |
 
 <!-- pyml enable line-length -->

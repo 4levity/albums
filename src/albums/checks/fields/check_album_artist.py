@@ -6,13 +6,12 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import format_field_values
+from albums.checks.helpers import VARIOUS_ARTISTS, format_field_values
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 
 logger: Final = logging.getLogger(__name__)
 
-VARIOUS_ARTISTS: Final = "Various Artists"
 OPTION_REMOVE_ALBUM_ARTIST: Final = ">> Remove album artist from all tracks"
 OPTION_COPY_ALBUM_ARTIST_TO_ARTIST: Final = ">> Copy album artist -> artist"
 

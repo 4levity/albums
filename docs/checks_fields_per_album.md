@@ -38,9 +38,9 @@ tracks.
 These are sort order fields; see [Sort Order Fields](./checks_sort_fields.md)
 for details.
 
-## barcode, compilation
+## barcode
 
-See above for details on these per-album field checks.
+See above for details on this per-album field check.
 
 ## publisher
 

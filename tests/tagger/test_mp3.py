@@ -1,13 +1,16 @@
 import os
+import shutil
 
 import pytest
 import xxhash
-from mutagen.id3._frames import TXXX
+from mutagen.id3._frames import TCMP, TXXX
 from mutagen.id3._specs import Encoding
+from mutagen.mp3 import MP3
 
 from albums.entities import Album, Track, TrackPicture
-from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
+from albums.picture import PictureInfo, PictureScanner
+from albums.tagger import AlbumTagger, BasicField, ID3v1Policy, Picture, PictureType
+from albums.tagger.file_types.mp3 import Mp3Tagger
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -216,6 +219,36 @@ class TestMp3:
         with TestMp3.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
             assert fields.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
+
+    def test_update_id3_compilation_falsy_values(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")
+            file.set_field(BasicField.COMPILATION, "0")  # falsy value = flag not set
+        with TestMp3.tagger.open(track.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "true")
+            file.set_field(BasicField.COMPILATION, "false")
+        with TestMp3.tagger.open(track.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+    def test_read_id3_compilation_unusual_values(self, tmp_path):
+        # TCMP is a boolean flag; the canonical value is "1" when set and absent when not, so
+        # unusual truthy values are normalized to "1" and falsy values are read as not set
+        mp3 = tmp_path / "1.mp3"
+        shutil.copy(TestMp3.library / album.path / track.filename, mp3)
+        for value, expected in (("0", None), ("false", None), ("1", ("1",)), ("true", ("1",)), ("anything", ("1",))):
+            f = MP3(str(mp3))
+            f.tags.add(TCMP(encoding=Encoding.UTF8, text=[value]))
+            f.save()
+
+            tagger_file = Mp3Tagger(mp3, picture_scanner=PictureScanner(), padding=lambda info: 0, id3v1=ID3v1Policy.REMOVE)
+            try:
+                fields = dict(tagger_file.get_fields())
+            finally:
+                tagger_file.close()
+            assert fields.get(BasicField.COMPILATION) == expected
 
     def test_write_id3_tracktotal(self):
         with TestMp3.tagger.open(track.filename) as file:

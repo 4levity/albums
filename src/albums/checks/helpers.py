@@ -14,6 +14,11 @@ from albums.tagger import BasicField
 from .check_types import FixResult
 
 FRONT_COVER_FILENAME: Final = "cover"
+# Artist/album artist value that always indicates a compilation album
+VARIOUS_ARTISTS: Final = "Various Artists"
+# Parent folder names that indicate an album with no single artist (a compilation album); shared default for the
+# artist check's `ignore_parent_folders` option and the compilation check's `compilation_parent_folders` option
+COMPILATION_PARENT_FOLDERS: Final = ("compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists")
 
 
 def album_display_name(ctx: Context, album: Album) -> str:

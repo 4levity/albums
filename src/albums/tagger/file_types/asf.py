@@ -12,6 +12,7 @@ from mutagen.asf._attrs import ASFByteArrayAttribute
 
 from ...picture.scan import PictureScanner
 from ..base_mutagen import AbstractMutagenTagger
+from ..helpers import CANONICAL_COMPILATION_VALUE, compilation_flag_is_set
 from ..types import BasicField, Picture, PictureType
 
 logger: Final = logging.getLogger(__name__)
@@ -159,10 +160,11 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
                     continue
                 if tag == BasicField.COMPILATION:
                     # WM/IsCompilation is defined as a Boolean attribute by MS-ASF, but the standard value in
-                    # albums is "1" when true and absent when false
+                    # albums is "1" when true and absent when false; non-conformant values (e.g. text "0")
+                    # are mapped by the same truthiness rules
                     comp_values = asf_fields[prop]  # pyright: ignore[reportUnknownVariableType]
-                    if comp_values and comp_values[0].value:  # pyright: ignore[reportUnknownMemberType]
-                        basic_fields.append((tag, ("1",)))
+                    if comp_values and compilation_flag_is_set(comp_values[0].value):  # pyright: ignore[reportUnknownMemberType]
+                        basic_fields.append((tag, (CANONICAL_COMPILATION_VALUE,)))
                 else:
                     basic_fields.append((tag, tuple(self._property_to_text(p) for p in asf_fields[prop])))  # pyright: ignore[reportUnknownVariableType]
 
@@ -209,7 +211,7 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
             value_list = value if isinstance(value, List) else [value]
             match field:
                 case BasicField.COMPILATION:
-                    if value_list and value_list[0]:
+                    if value_list and compilation_flag_is_set(value_list[0]):
                         # WM/IsCompilation is defined as a Boolean attribute by MS-ASF; a Python bool makes
                         # mutagen write an ASFBoolAttribute (a string would become a non-conformant ASFUnicodeAttribute)
                         fields[FIELD_TO_ASF_PROPERTY[field]] = [True]

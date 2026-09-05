@@ -165,6 +165,30 @@ class TestAsf:
         finally:
             tagger_file.close()
 
+        # non-conformant text values are mapped with the same truthiness rules
+        for text, expected in (("0", None), ("false", None), ("1", ("1",)), ("true", ("1",))):
+            asf = ASF(str(wma))
+            asf.tags["WM/IsCompilation"] = [text]
+            asf.save()
+
+            tagger_file = AsfTagger(wma, picture_scanner=PictureScanner(), padding=lambda info: 0)
+            try:
+                fields = dict(tagger_file.get_fields())
+            finally:
+                tagger_file.close()
+            assert fields.get(BasicField.COMPILATION) == expected
+
+    def test_update_asf_compilation_falsy_value(self):
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert asf.tags["WM/IsCompilation"][0].value is True
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "0")  # falsy value = flag not set
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert asf.tags is not None
+        assert "WM/IsCompilation" not in asf.tags
+
     def test_write_asf_tracktotal(self):
         with TestAsf.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())

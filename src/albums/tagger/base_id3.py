@@ -11,6 +11,7 @@ from mutagen.mp3 import MP3
 
 from ..picture.scan import PictureScanner
 from .base_mutagen import AbstractMutagenTagger
+from .helpers import CANONICAL_COMPILATION_VALUE, compilation_flag_is_set
 from .id3_helpers import format_numbered_value, get_text, id3_legacy_fields, must_get_text, parse_numbered_value, set_numbered_frame
 from .id3_mappings import BASIC_ID3_TEXT_FRAMES, FIELD_TO_ID3_TEXT_FRAME, UFID_MUSICBRAINZ_OWNER
 from .types import BasicField, ID3v1Policy, Picture, PictureType
@@ -94,6 +95,13 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
             for tag, frame in BASIC_ID3_TEXT_FRAMES:
                 if frame in frames:
                     field_values[tag] = list(must_get_text(frames, frame))
+            # TCMP is a boolean flag: the canonical value is "1" when set and absent when not, so normalize
+            # unusual truthy values (e.g. "true") to the canonical value and treat falsy values (e.g. "0") as not set
+            if BasicField.COMPILATION in field_values:
+                if any(compilation_flag_is_set(value) for value in field_values[BasicField.COMPILATION]):
+                    field_values[BasicField.COMPILATION] = [CANONICAL_COMPILATION_VALUE]
+                else:
+                    del field_values[BasicField.COMPILATION]
             # merge non-duplicate values from deprecated frames (e.g. TDRL) into their canonical field
             for legacy_frame, tag in id3_legacy_fields(frames):
                 legacy_values = must_get_text(frames, legacy_frame)
@@ -185,8 +193,8 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
                 case BasicField.ARTISTSORT:
                     frames["TSOP"] = TSOP(encoding=Encoding.UTF8, text=value_list)
                 case BasicField.COMPILATION:
-                    if value_list and value_list[0]:
-                        frames["TCMP"] = TCMP(encoding=Encoding.UTF8, text=["1"])
+                    if value_list and compilation_flag_is_set(value_list[0]):
+                        frames["TCMP"] = TCMP(encoding=Encoding.UTF8, text=[CANONICAL_COMPILATION_VALUE])
                     elif "TCMP" in frames:
                         del frames["TCMP"]
                 case BasicField.DATE:

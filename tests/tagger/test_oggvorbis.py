@@ -1,11 +1,14 @@
 import os
+import shutil
 
 import pytest
 import xxhash
+from mutagen.oggvorbis import OggVorbis
 
 from albums.entities import Album, Track, TrackPicture
-from albums.picture import PictureInfo
+from albums.picture import PictureInfo, PictureScanner
 from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
+from albums.tagger.file_types.oggvorbis import OggVorbisTagger
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -143,6 +146,36 @@ class TestOggVorbis:
         with TestOggVorbis.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
             assert fields.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
+
+    def test_update_ogg_vorbis_compilation_falsy_values(self):
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")
+            file.set_field(BasicField.COMPILATION, "0")  # falsy value = flag not set
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            file.set_field(BasicField.COMPILATION, "true")
+            file.set_field(BasicField.COMPILATION, "false")
+        with TestOggVorbis.tagger.open(track.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+    def test_read_ogg_vorbis_compilation_unusual_values(self, tmp_path):
+        # vorbis comments are text; the canonical value is "1" when set and absent when not, so
+        # unusual truthy values are normalized to "1" and falsy values are read as not set
+        ogg = tmp_path / "1.ogg"
+        shutil.copy(TestOggVorbis.library / album.path / track.filename, ogg)
+        for value, expected in (("0", None), ("false", None), ("1", ("1",)), ("true", ("1",)), ("anything", ("1",))):
+            f = OggVorbis(str(ogg))
+            f["compilation"] = value
+            f.save()
+
+            tagger_file = OggVorbisTagger(ogg, picture_scanner=PictureScanner(), padding=lambda info: 0)
+            try:
+                fields = dict(tagger_file.get_fields())
+            finally:
+                tagger_file.close()
+            assert fields.get(BasicField.COMPILATION) == expected
 
     def test_remove_one_ogg_vorbis_pic(self):
         with TestOggVorbis.tagger.open(track.filename) as file:

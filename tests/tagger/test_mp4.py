@@ -1,11 +1,14 @@
 import os
+import shutil
 
 import pytest
 import xxhash
+from mutagen.mp4 import MP4
 
 from albums.entities import Album, OtherFile, Track, TrackPicture
-from albums.picture import PictureInfo
+from albums.picture import PictureInfo, PictureScanner
 from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
+from albums.tagger.file_types.mp4 import Mp4Tagger
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -177,6 +180,47 @@ class TestMp4:
         with TestMp4.tagger.open(track1.filename) as file:
             fields = dict(file.get_fields())
             assert fields.get(BasicField.COMPILATION) == ("1",)  # set to anything = set to 1
+
+    def test_update_mp4_compilation_canonical_bool(self):
+        # cpil is a one-byte boolean flag atom, so a conformant bool (not a string) must be written
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")
+        m4a = MP4(str(TestMp4.library / album.path / track1.filename))
+        assert m4a.tags["cpil"] is True
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")  # idempotent
+        m4a = MP4(str(TestMp4.library / album.path / track1.filename))
+        assert m4a.tags["cpil"] is True
+
+    def test_update_mp4_compilation_falsy_values(self):
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.COMPILATION, "1")
+            file.set_field(BasicField.COMPILATION, "0")  # falsy value = flag not set
+        with TestMp4.tagger.open(track1.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.COMPILATION, "true")
+            file.set_field(BasicField.COMPILATION, "false")
+        with TestMp4.tagger.open(track1.filename) as file:
+            assert BasicField.COMPILATION not in dict(file.get_fields())
+
+    def test_read_mp4_compilation_bool(self, tmp_path):
+        # an m4a written by a conformant tool stores cpil as a boolean flag: true is read as the
+        # standard "1" value, and an explicit false is read as not set
+        m4a = tmp_path / "1.m4a"
+        shutil.copy(TestMp4.library / album.path / track1.filename, m4a)
+        for value, expected in ((False, None), (True, ("1",))):
+            f = MP4(str(m4a))
+            f.tags["cpil"] = value
+            f.save()
+
+            tagger_file = Mp4Tagger(m4a, picture_scanner=PictureScanner(), padding=lambda info: 0)
+            try:
+                fields = dict(tagger_file.get_fields())
+            finally:
+                tagger_file.close()
+            assert fields.get(BasicField.COMPILATION) == expected
 
     def test_write_mp4_tracktotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
