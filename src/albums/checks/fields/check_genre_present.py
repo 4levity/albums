@@ -53,9 +53,9 @@ class CheckGenrePresent(Check):
                         ["filename", "artist", "genre"],
                         [
                             [
-                                track.filename,
-                                "/".join(track.get(BasicField.ARTIST, [""])),
-                                "/".join(track.get(BasicField.GENRE, [""])),
+                                escape(track.filename),
+                                escape("/".join(track.get(BasicField.ARTIST, default=[]))) or "[italic]none[/italic]",
+                                escape("/".join(track.get(BasicField.GENRE, default=[]))) or "[italic]none[/italic]",
                             ]
                             for track in sorted(album.tracks)
                         ],

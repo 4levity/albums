@@ -34,6 +34,15 @@ class TestCheckExtraWhitespace:
         assert "Extra whitespace present in 2 files in fields: artist, title" in result.message
         assert result.fixer
         assert result.fixer.options == [">> Strip leading and trailing whitespace in fields: artist, title"]
+        # the table shows the current and proposed values in double quotes, so the offending
+        # leading/trailing whitespace is visible
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["filename", "field", "current value", "proposed value"]
+        assert [list(row) for row in rows] == [
+            ["1.flac", "artist", '"Alice "', '[yellow]"Alice"[/yellow]'],
+            ["2.flac", "artist", '"Alice "', '[yellow]"Alice"[/yellow]'],
+            ["2.flac", "title", '"red "', '[yellow]"red"[/yellow]'],
+        ]
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")

@@ -42,7 +42,13 @@ class CheckIllegalPathname(Check):
             option_automatic_index = 0
             table = (
                 ["Filename", "New Filename"],
-                [[escape(filename), escape(self._sanitize(filename)) if self._check(filename) else ""] for filename in filenames],
+                [
+                    [
+                        escape(filename),
+                        f"[yellow]{escape(self._sanitize(filename))}[/yellow]" if self._check(filename) else "[bold italic]no change[/bold italic]",
+                    ]
+                    for filename in filenames
+                ],
             )
             return CheckResult(
                 f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))}",

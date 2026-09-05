@@ -48,16 +48,16 @@ class CheckTrackFilename(Check):
             )
 
     def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
-        title_fields = ", ".join(track.get(BasicField.TITLE, default=["[bold italic]none[/bold italic]"]))
-        discnum = track.get(BasicField.DISCNUMBER, default=["[bold italic]none[/bold italic]"])[0]
-        tracknum = track.get(BasicField.TRACKNUMBER, default=["[bold italic]none[/bold italic]"])[0]
+        title_fields = ", ".join(track.get(BasicField.TITLE, default=[]))
+        discnum = track.get(BasicField.DISCNUMBER, default=[""])[0]
+        tracknum = track.get(BasicField.TRACKNUMBER, default=[""])[0]
         new_filename = self._generate_filename(album, track)
         return [
             escape(track.filename),
-            discnum,
-            tracknum,
-            title_fields,
-            new_filename if new_filename != track.filename else "[bold italic]no change[/bold italic]",
+            escape(discnum) or "[bold italic]none[/bold italic]",
+            escape(tracknum) or "[bold italic]none[/bold italic]",
+            escape(title_fields) or "[bold italic]none[/bold italic]",
+            f"[yellow]{escape(new_filename)}[/yellow]" if new_filename != track.filename else "[bold italic]no change[/bold italic]",
         ]
 
     def _generate_filename(self, album: Album, track: Track):

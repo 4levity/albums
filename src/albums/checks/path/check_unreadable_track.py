@@ -24,7 +24,17 @@ class CheckUnreadableTrack(Check):
         if unreadable_count == 0:
             return None
         example_filename = next(track.filename for track in album.tracks if track.stream.error)
-        table = (["filename", "stream error"], [[escape(track.filename), escape(track.stream.error)] for track in sorted(album.tracks)])
+        table = (
+            ["filename", "stream error", "proposed new filename"],
+            [
+                [
+                    escape(track.filename),
+                    f"[red]{escape(track.stream.error)}[/red]" if track.stream.error else "[green]ok[/green]",
+                    f"[yellow]{escape(track.filename + '.unreadable')}[/yellow]" if track.stream.error else "[bold italic]no change[/bold italic]",
+                ]
+                for track in sorted(album.tracks)
+            ],
+        )
         options = [OPTION_RENAME_UNREADABLE]
         option_automatic_index = None
         fixer = Fixer(lambda option: self._fix_rename_unreadable(album), options, False, option_automatic_index, table)

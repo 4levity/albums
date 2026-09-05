@@ -87,7 +87,7 @@ class CheckCoverEmbedded(Check):
                     )
 
                 track_cover = next(filter(None, track_covers), None)
-                headers = [f"Front Cover Source {cover_source.filename}"]
+                headers = [f"Front Cover Source {escape(cover_source.filename)}"]
                 cover_source_picture = Picture(cover_source.picture_info, PictureType.COVER_FRONT, "")
                 pictures = [cover_source_picture]
                 pic_sources: dict[Picture, list[str]] = {cover_source_picture: [cover_source.filename]}

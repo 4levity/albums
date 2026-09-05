@@ -96,6 +96,33 @@ class TestCheckTrackNumbering:
             call(path / album.tracks[1].filename, [(BasicField.TRACKTOTAL, "3")]),
         ]
 
+    def test_check_track_total_inconsistent_multidisc(self):
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="2-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
+            ],
+        )
+        result = CheckTrackNumbering(Context()).check(album)
+        assert "some tracks have different track total values on disc 1" in result.message
+        fixer = result.fixer
+        assert fixer
+        # the disc number notice is part of the option text (not a python set repr)
+        assert fixer.options == [">> Set tracktotal to number of tracks: 2 on disc 1", ">> Set tracktotal to maximum value seen: 3 on disc 1"]
+        assert "2 tracks on disc 1" in fixer.prompt
+        # the table lists all tracks (complete view), bolding the tracks on the affected disc that the fix will change
+        (headers, rows) = fixer.get_table() or ([], [])
+        assert list(headers) == ["track", "filename", "tracktotal"]
+        assert [list(row) for row in rows] == [
+            ["[bold](disc 1) 1/2[/bold]", "[bold]1-1.flac[/bold]", "[bold]2[/bold]"],
+            ["[bold](disc 1) 2/3[/bold]", "[bold]1-2.flac[/bold]", "[bold]3[/bold]"],
+            ["(disc 2) 1/1", "2-1.flac", "1"],
+            ["(disc 2) 2/1", "2-2.flac", "1"],
+        ]
+
     def test_check_track_total_inconsistent_free_text(self, mocker):
         album = Album(
             path="foo" + os.sep,

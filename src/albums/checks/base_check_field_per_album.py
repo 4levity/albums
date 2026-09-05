@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Final
+from typing import Any, Final, Sequence
 
 from rich.markup import escape
 
@@ -68,8 +68,8 @@ class BaseCheckFieldPerAlbum(Check):
                 ["filename", self.field_description],
                 [
                     [
-                        track.filename,
-                        ", ".join(track.get(self.field, [""])) or "[italic]none[/italic]",
+                        escape(track.filename),
+                        self._format_values(track.get(self.field, default=[])),
                     ]
                     for track in sorted(album.tracks)
                 ],
@@ -85,6 +85,10 @@ class BaseCheckFieldPerAlbum(Check):
                     f"Select {self.field_description} for all tracks",
                 ),
             )
+
+    @staticmethod
+    def _format_values(values: Sequence[str]) -> str:
+        return escape(", ".join(values)) if values else "[italic]none[/italic]"
 
     def _fix_set_field(self, album: Album, option: str | None):
         tagger = self.tagger.get(album.path)

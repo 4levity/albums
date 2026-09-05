@@ -92,7 +92,7 @@ class CheckCoverAvailable(Check):
                 album_name = get_album_name_from_tracks(album)
                 if self.get_cover_command and artist_name and album_name:
                     command_preview = self._preview_get_cover_command(album, artist_name, album_name)
-                    options = [f">> Try to retrieve cover image with: {command_preview}"]
+                    options = [f">> Try to retrieve cover image with: {escape(command_preview)}"]
                     option_automatic_index = 0
                     return CheckResult(
                         "album does not have any pictures to use as cover art, can try searching",

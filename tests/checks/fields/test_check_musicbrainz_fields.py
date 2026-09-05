@@ -47,6 +47,10 @@ class TestCheckMusicBrainzFields:
         assert result.message == "Deprecated MusicBrainz fields found and remove_deprecated is enabled"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove deprecated MusicBrainz fields"]
+        # the table counts files per MBID field (not a per-file list of MBIDs)
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["MusicBrainz field", "files"]
+        assert [list(row) for row in rows] == [["musicbrainz_trmid", "1"]]
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
         mock_tagger_open.return_value.__enter__.return_value = tagger
@@ -211,6 +215,13 @@ class TestCheckMusicBrainzFields:
         assert result.message == f"MUSICBRAINZ_ALBUMID is not the same on all tracks (values = {UUID1}, none)"
         assert result.fixer is not None
         assert result.fixer.options == [">> Remove MUSICBRAINZ_ALBUMID fields", ">> Remove all MusicBrainz fields"]
+        # the table counts files per MBID field, most common first
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["MusicBrainz field", "files"]
+        assert [list(row) for row in rows] == [
+            ["musicbrainz_albumartistid", "2"],
+            ["musicbrainz_albumid", "1"],
+        ]
 
         tagger = MockTagger()
         mock_tagger_open = mocker.patch.object(AlbumTagger, "open")

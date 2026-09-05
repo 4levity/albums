@@ -126,7 +126,7 @@ class CheckCoverDimensions(Check):
                     return new_cover[0]
 
                 table = (
-                    [f"Front cover {from_file}", "Preview"],
+                    [f"Front cover {escape(from_file)}", "Preview"],
                     lambda: self._render_table(album, cover, picture_source, make_new_cover),
                 )
                 return CheckResult(

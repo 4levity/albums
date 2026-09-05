@@ -62,7 +62,7 @@ class CheckCoverUnique(Check):
                 if any(str.lower(Path(filename).suffix) not in SUPPORTED_IMAGE_SUFFIXES for filename in picture_sources[pic])
             )
             cover_embedded_desc = [self._describe_album_art(pic, picture_sources) for pic in cover_embedded]
-            headers = cover_image_filenames + cover_embedded_desc
+            headers = [escape(filename) for filename in cover_image_filenames] + cover_embedded_desc
             preview_pictures = cover_image_files + cover_embedded
             if len(headers) > 6:
                 table = (
@@ -77,7 +77,7 @@ class CheckCoverUnique(Check):
             if cover_image_files and cover_source_filename is None:
                 # at this point every picture in cover_image_file should be associated with exactly one file
                 cover_source_candidate = self._source_image_file_candidate(cover_image_files, cover_embedded)
-                options = [f"{OPTION_SELECT_COVER_IMAGE}{filename}" for filename in cover_image_filenames]
+                options = [f"{OPTION_SELECT_COVER_IMAGE}{escape(filename)}" for filename in cover_image_filenames]
                 if cover_embedded:
                     options.append(f"{OPTION_DELETE_ALL_COVER_IMAGES}{', '.join(escape(filename) for filename in cover_image_filenames)}")
                 if cover_source_candidate:
@@ -104,14 +104,15 @@ class CheckCoverUnique(Check):
                     ),
                 )
             if cover_source_filename is not None and len(cover_image_files) > 1:
-                other_filenames = ", ".join(f for f in cover_image_filenames if f != cover_source_filename)
                 option_automatic_index = 0  # keep the cover source
 
                 return CheckResult(
                     "multiple front cover image files, and one of them is marked cover source (delete others)",
                     Fixer(
                         lambda _: delete_files_except(self.ctx, cover_source_filename, album, cover_image_filenames),
-                        [f'>> Keep cover source image "{cover_source_filename}" and delete other cover files: {other_filenames}'],
+                        [
+                            f'>> Keep cover source image "{escape(cover_source_filename)}" and delete other cover files: {", ".join(escape(f) for f in cover_image_filenames if f != cover_source_filename)}'
+                        ],
                         False,
                         option_automatic_index,
                         table,

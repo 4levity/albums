@@ -4,7 +4,7 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.entities import Album
+from albums.entities import Album, Track
 from albums.tagger import LEGACY_ID3_FIELDS, LEGACY_VORBIS_FIELDS, BasicField
 
 # legacy field names (Vorbis comment names and deprecated ID3 frames) to their canonical BasicField
@@ -27,10 +27,7 @@ class CheckLegacyFields(Check):
             all_legacy_names.update(track.legacy_fields)
 
         option_automatic_index = 0
-        table = (
-            ["filename", "convert fields"],
-            [[escape(track.filename), ", ".join(track.legacy_fields)] for track in sorted(album.tracks)],
-        )
+        table = (["filename", "legacy fields", "standard fields"], [self._table_row(track) for track in sorted(album.tracks) if track.legacy_fields])
 
         return CheckResult(
             f"Legacy fields {', '.join(sorted(all_legacy_names))} found",
@@ -42,6 +39,15 @@ class CheckLegacyFields(Check):
                 table,
             ),
         )
+
+    @staticmethod
+    def _table_row(track: Track) -> list[str]:
+        standard_fields = sorted({basic_field.value for basic_field in (LEGACY_TO_BASIC.get(name) for name in track.legacy_fields) if basic_field})
+        return [
+            escape(track.filename),
+            escape(", ".join(sorted(track.legacy_fields))),
+            escape(", ".join(standard_fields)) if standard_fields else "[italic]none[/italic]",
+        ]
 
     def _fix_legacy_fields(self, album: Album):
         changed = False

@@ -43,7 +43,7 @@ class TestCheckSingleValueFields:
             ],
         )
         result = CheckSingleValueFields(Context()).check(album)
-        assert "multiple values for single value fields" in result.message
+        assert "multiple values for single value fields on 1 track" in result.message
         assert result.fixer
         assert not result.fixer.option_free_text
         assert result.fixer.table
@@ -51,6 +51,13 @@ class TestCheckSingleValueFields:
             '>> Concatenate unique values into one with " / "',
             '>> Concatenate unique values into one with "/"',
             '>> Concatenate unique values into one with " - "',
+        ]
+        # the table lists the affected fields and their current (multiple) values, not a yaml dump
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["track", "filename", "field", "values"]
+        assert [list(row) for row in rows] == [
+            ["<no track>", "1.flac", "artist", "Alice, Bob"],
+            ["<no track>", "1.flac", "title", "blue, no, yellow"],
         ]
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)

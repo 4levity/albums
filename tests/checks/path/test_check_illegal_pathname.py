@@ -115,9 +115,9 @@ class TestCheckIllegalPathname:
         (headers, rows) = table
         assert headers == ["Filename", "New Filename"]
         assert list(rows) == [
-            ["a/b.flac", "ab.flac"],
-            ["normal.flac", ""],
-            ["a:b.jpg", "ab.jpg"],
+            ["a/b.flac", "[yellow]ab.flac[/yellow]"],
+            ["normal.flac", "[bold italic]no change[/bold italic]"],
+            ["a:b.jpg", "[yellow]ab.jpg[/yellow]"],
         ]
 
     def test_pathname_reserved_character_Windows(self):

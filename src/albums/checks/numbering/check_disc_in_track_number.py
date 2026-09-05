@@ -29,7 +29,12 @@ class CheckDiscInTrackNumber(Check):
             option_free_text = False
             option_automatic_index = 0
             tracks = [
-                [describe_track_number(track), escape(track.filename), *self._proposed_disc_and_tracknumber(track)] for track in ordered_tracks(album)
+                [
+                    describe_track_number(track),
+                    escape(track.filename),
+                    *[f"[yellow]{escape(value)}[/yellow]" for value in self._proposed_disc_and_tracknumber(track)],
+                ]
+                for track in ordered_tracks(album)
             ]
             table = (["track", "filename", "proposed disc#", "proposed track#"], tracks)
             return CheckResult(

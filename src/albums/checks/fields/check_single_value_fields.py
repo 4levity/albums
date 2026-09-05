@@ -1,14 +1,14 @@
 from collections import OrderedDict
 from typing import Any, Final, Sequence
 
-import yaml
 from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import describe_track_number, ordered_tracks
-from albums.entities import Album
+from albums.checks.helpers import describe_track_number
+from albums.entities import Album, Track
 from albums.tagger import BASIC_FIELDS, AlbumTagger, BasicField, Cap
+from albums.words import plural
 
 OPTION_CONCATENATE_WITH: Final = ">> Concatenate unique values into one with "
 OPTION_REMOVE_DUPLICATES_ONLY: Final = ">> Remove duplicate values (preserve unique multiple values)"
@@ -34,31 +34,39 @@ class CheckSingleValueFields(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None  # this check only makes sense for files with common fields
 
-        multiple_value_fields: list[dict[str, dict[str, Sequence[str]]]] = []
+        multiple_value_fields: list[tuple[Track, BasicField, Sequence[str]]] = []
         duplicates = False
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for field in self.single_value_fields:
                 # check for multiple values for field
                 fields = track.field_dict()
                 if field in fields and len(fields[field]) > 1:
-                    multiple_value_fields.append({track.filename: {field: fields[field]}})
+                    multiple_value_fields.append((track, field, fields[field]))
                     if len(set(fields[field])) < len(fields[field]):
                         duplicates = True
 
-        if len(multiple_value_fields) > 0:
+        if multiple_value_fields:
             option_free_text = False
             options = [OPTION_REMOVE_DUPLICATES_ONLY] if duplicates else []
             for concatenator in self.concatenators:
                 options.append(f'{OPTION_CONCATENATE_WITH}"{concatenator}"')
             option_automatic_index = 0 if duplicates or self.automatic_concatenate else None
+            affected_tracks = len({track.filename for track, _, _ in multiple_value_fields})
+            table = (
+                ["track", "filename", "field", "values"],
+                [
+                    [describe_track_number(track), escape(track.filename), field.value, escape(", ".join(values))]
+                    for track, field, values in multiple_value_fields
+                ],
+            )
             return CheckResult(
-                f"multiple values for single value fields\n{yaml.dump(multiple_value_fields)}",
+                f"multiple values for single value fields on {plural(affected_tracks, 'track')}",
                 Fixer(
                     lambda option: self._fix(album, option),
                     options,
                     option_free_text,
                     option_automatic_index,
-                    (["track", "filename"], [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]),
+                    table,
                 ),
             )
 

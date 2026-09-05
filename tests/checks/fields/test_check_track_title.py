@@ -86,6 +86,25 @@ class TestCheckTrackTitle:
             call(Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "Other")]),
         ]
 
+    def test_check_track_title_table(self):
+        album = Album(
+            path="Foobar" + os.sep,
+            tracks=[
+                Track(filename="1 foo [live].flac"),
+                Track(filename="2 bar.flac", tag={BasicField.TITLE: "bar"}),
+            ],
+        )
+        result = CheckTrackTitle(Context()).check(album)
+        assert result is not None
+        assert result.fixer is not None
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["filename", "title", "proposed new title"]
+        # rows distinguish tracks that will be changed from those that will not
+        assert [list(row) for row in rows] == [
+            ["1 foo \\[live].flac", "[bold italic]None[/bold italic]", "[yellow]foo \\[live][/yellow]"],
+            ["2 bar.flac", "bar", "[bold italic]no change[/bold italic]"],
+        ]
+
     def test_check_track_title_no_guess(self, mocker):
         album = Album(path="Foobar" + os.sep, tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
         result = CheckTrackTitle(Context()).check(album)

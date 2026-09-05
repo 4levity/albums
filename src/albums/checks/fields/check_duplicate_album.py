@@ -66,7 +66,7 @@ class CheckDuplicateAlbum(Check):
                 [self._filename(this_more, ix), self._desc(this_more, ix), self._filename(other_more, ix), self._desc(other_more, ix)]
                 for ix in range(0, max(len(this_more), len(other_more)))
             )
-        table = ([f'This album: "{escape(album.path)}"', "files", f'Other album: "{other.path}"', "files"], rows)
+        table = ([f'This album: "{escape(album.path)}"', "files", f'Other album: "{escape(other.path)}"', "files"], rows)
         options: list[str] = [f"{OPTION_DELETE_OTHER}{other.path}", f"{OPTION_KEEP_OTHER}{other.path}"]
         option_automatic_index = None
         return CheckResult(

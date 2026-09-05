@@ -87,6 +87,27 @@ class TestZeroPadNumbers:
             ">> Apply policy: discnumber pad IF_NEEDED and disctotal pad NEVER and tracknumber pad IF_NEEDED and tracktotal pad NEVER"
         ]
         assert result.fixer.table
+        # the table shows current values and highlights (yellow) the values that will change
+        (headers, rows) = result.fixer.get_table() or ([], [])
+        assert list(headers) == ["track", "filename", "tracknumber", "tracktotal", "discnumber", "disctotal"]
+        assert [list(row) for row in rows] == [
+            [
+                "(disc 01/01) 01/02",
+                "1.flac",
+                "[yellow]01 -> 1[/yellow]",
+                "[yellow]02 -> 2[/yellow]",
+                "[yellow]01 -> 1[/yellow]",
+                "[yellow]01 -> 1[/yellow]",
+            ],
+            [
+                "(disc 01/01) 02/02",
+                "2.flac",
+                "[yellow]02 -> 2[/yellow]",
+                "[yellow]02 -> 2[/yellow]",
+                "[yellow]01 -> 1[/yellow]",
+                "[yellow]01 -> 1[/yellow]",
+            ],
+        ]
 
         # automatically fixed
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")

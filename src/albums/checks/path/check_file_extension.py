@@ -44,8 +44,11 @@ class CheckFileExtension(Check):
             return CheckResult(message + " (automatic fix not possible due to filename conflict)")
 
         table = (
-            ["filename", "proposed new extension"],
-            [[escape(filename), suffix.lower() if suffix.lower() != suffix else ""] for filename, suffix in files],
+            ["filename", "proposed new filename"],
+            [
+                [escape(filename), f"[yellow]{escape(new_filename)}[/yellow]" if new_filename != filename else "[bold italic]no change[/bold italic]"]
+                for filename, new_filename in files
+            ],
         )
         options = [">> Change file extensions"]
         option_automatic_index = 0

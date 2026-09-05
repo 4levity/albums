@@ -19,14 +19,30 @@ class CheckExtraWhitespace(Check):
         fields: set[BasicField] = set()
         filenames: set[str] = set()
         example: str | None = None
-        for field, values, filename in [(k, v, track.filename) for track in sorted(album.tracks) for k, v in track.field_dict().items()]:
-            if bad_value := next((value for value in values if value.strip() != value), None):
-                example = f'{field.value}="{bad_value}"'
-                fields.add(field)
-                filenames.add(filename)
+        changed_values: list[tuple[str, BasicField, list[str], list[str]]] = []
+        for track in sorted(album.tracks):
+            for field, values in track.field_dict().items():
+                if any(value.strip() != value for value in values):
+                    if bad_value := next((value for value in values if value.strip() != value), None):
+                        example = f'{field.value}="{bad_value}"'
+                    fields.add(field)
+                    filenames.add(track.filename)
+                    changed_values.append((track.filename, field, list(values), [value.strip() for value in values]))
         if fields:
             options = [f">> Strip leading and trailing whitespace in fields: {', '.join(sorted(fields))}"]
             option_automatic_index = 0
+
+            # put values in double quotes so the offending leading/trailing whitespace is visible
+            def quoted(values: list[str]) -> str:
+                return ", ".join(f'"{escape(value)}"' for value in values)
+
+            table = (
+                ["filename", "field", "current value", "proposed value"],
+                [
+                    [escape(filename), field.value, quoted(values), f"[yellow]{quoted(stripped)}[/yellow]"]
+                    for filename, field, values, stripped in changed_values
+                ],
+            )
             return CheckResult(
                 f"Extra whitespace present in {plural(filenames, 'file')} in fields: {', '.join(sorted(fields))} - example {example}",
                 Fixer(
@@ -34,6 +50,7 @@ class CheckExtraWhitespace(Check):
                     options,
                     False,
                     option_automatic_index,
+                    table,
                 ),
             )
 

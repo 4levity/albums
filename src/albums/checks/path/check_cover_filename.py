@@ -38,7 +38,7 @@ class CheckCoverFilename(Check):
             new_filename = f"{self.stem}{self.suffix if self.suffix else path.suffix}"
             if self.suffix and str.lower(self.suffix) != str.lower(path.suffix):
                 # file has to be converted
-                options = [f">> Convert {cover_files[0]} to {new_filename}"]
+                options = [f">> Convert {escape(cover_files[0])} to {escape(new_filename)}"]
                 option_automatic_index = 0
                 return CheckResult(
                     f"cover image has the wrong filename and type (expected {self.suffix}): {cover_files[0]}",
@@ -51,7 +51,7 @@ class CheckCoverFilename(Check):
                 )
 
             # else just rename, no conversion
-            options = [f">> Rename {cover_files[0]} to {new_filename}"]
+            options = [f">> Rename {escape(cover_files[0])} to {escape(new_filename)}"]
             option_automatic_index = 0
             return CheckResult(
                 f"cover image has the wrong filename: {cover_files[0]}",

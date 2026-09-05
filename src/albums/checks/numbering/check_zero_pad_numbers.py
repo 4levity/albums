@@ -89,31 +89,31 @@ class CheckZeroPadNumbers(Check):
         fix_disctotals = 0
         for tracks in tracks_by_disc.values():
             for track in tracks:
-                table_rows.append([describe_track_number(track), escape(track.filename)])
-                if (
-                    track.has(BasicField.TRACKNUMBER)
-                    and apply_pad_policy(track.get(BasicField.TRACKNUMBER)[0], self.tracknumber_pad, len(tracks))
-                    != track.get(BasicField.TRACKNUMBER)[0]
+                row: list[RenderableType] = [describe_track_number(track), escape(track.filename)]
+                for field, policy, count in (
+                    (BasicField.TRACKNUMBER, self.tracknumber_pad, len(tracks)),
+                    (BasicField.TRACKTOTAL, self.tracktotal_pad, len(tracks)),
+                    (BasicField.DISCNUMBER, self.discnumber_pad, total_discs),
+                    (BasicField.DISCTOTAL, self.disctotal_pad, total_discs),
                 ):
-                    fix_tracknumbers += 1
-
-                if (
-                    track.has(BasicField.TRACKTOTAL)
-                    and apply_pad_policy(track.get(BasicField.TRACKTOTAL)[0], self.tracktotal_pad, len(tracks)) != track.get(BasicField.TRACKTOTAL)[0]
-                ):
-                    fix_tracktotals += 1
-
-                if (
-                    track.has(BasicField.DISCNUMBER)
-                    and apply_pad_policy(track.get(BasicField.DISCNUMBER)[0], self.discnumber_pad, total_discs) != track.get(BasicField.DISCNUMBER)[0]
-                ):
-                    fix_discnumbers += 1
-
-                if (
-                    track.has(BasicField.DISCTOTAL)
-                    and apply_pad_policy(track.get(BasicField.DISCTOTAL)[0], self.disctotal_pad, total_discs) != track.get(BasicField.DISCTOTAL)[0]
-                ):
-                    fix_disctotals += 1
+                    values = track.get(field, default=[])
+                    if not values:
+                        row.append("[italic]none[/italic]")
+                        continue
+                    new_value = apply_pad_policy(values[0], policy, count)
+                    if new_value != values[0]:
+                        row.append(f"[yellow]{escape(values[0])} -> {escape(new_value)}[/yellow]")
+                        if field is BasicField.TRACKNUMBER:
+                            fix_tracknumbers += 1
+                        elif field is BasicField.TRACKTOTAL:
+                            fix_tracktotals += 1
+                        elif field is BasicField.DISCNUMBER:
+                            fix_discnumbers += 1
+                        else:
+                            fix_disctotals += 1
+                    else:
+                        row.append(escape(values[0]))
+                table_rows.append(row)
 
         problems: list[str] = []
         policies: list[str] = []
@@ -139,7 +139,7 @@ class CheckZeroPadNumbers(Check):
                     [f"{OPTION_APPLY_POLICY}: {' and '.join(policies)}"],
                     option_free_text,
                     option_automatic_index,
-                    (["track", "filename"], table_rows),
+                    (["track", "filename", "tracknumber", "tracktotal", "discnumber", "disctotal"], table_rows),
                 ),
             )
 

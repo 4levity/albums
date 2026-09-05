@@ -64,14 +64,26 @@ class CheckMusicBrainzFields(Check):
             option_automatic_index = 0
             return CheckResult(
                 "MusicBrainz fields found and remove_all is enabled",
-                Fixer(lambda _: self._remove_fields(album, ALL_MBID_FIELDS), options, False, option_automatic_index),
+                Fixer(
+                    lambda _: self._remove_fields(album, ALL_MBID_FIELDS),
+                    options,
+                    False,
+                    option_automatic_index,
+                    self._make_table(album, ALL_MBID_FIELDS),
+                ),
             )
         elif self.remove_deprecated and any(any(track.has(mbid) for mbid in DEPRECATED_MBID_FIELDS) for track in album.tracks):
             options = [">> Remove deprecated MusicBrainz fields"]
             option_automatic_index = 0
             return CheckResult(
                 "Deprecated MusicBrainz fields found and remove_deprecated is enabled",
-                Fixer(lambda _: self._remove_fields(album, DEPRECATED_MBID_FIELDS), options, False, option_automatic_index),
+                Fixer(
+                    lambda _: self._remove_fields(album, DEPRECATED_MBID_FIELDS),
+                    options,
+                    False,
+                    option_automatic_index,
+                    self._make_table(album, DEPRECATED_MBID_FIELDS),
+                ),
             )
 
         return (
@@ -88,8 +100,28 @@ class CheckMusicBrainzFields(Check):
             option_automatic_index = 0  # automatic/default: only remove the conflicting MBID
             return CheckResult(
                 f"{check_field.name} is not the same on all tracks (values = {', '.join(sorted(values))})",
-                Fixer(lambda option: self._remove_fields(album, ALL_MBID_FIELDS, option, check_field), options, False, option_automatic_index),
+                Fixer(
+                    lambda option: self._remove_fields(album, ALL_MBID_FIELDS, option, check_field),
+                    options,
+                    False,
+                    option_automatic_index,
+                    self._make_table(album, ALL_MBID_FIELDS),
+                ),
             )
+
+    @staticmethod
+    def _make_table(album: Album, fields: Collection[BasicField]):
+        # a per-file table can get very messy (every file may have many MBIDs), so instead show how
+        # many files have each MBID field
+        counts: dict[str, int] = {}
+        for track in album.tracks:
+            for field in fields:
+                if track.has(field):
+                    counts[field.value] = counts.get(field.value, 0) + 1
+        return (
+            ["MusicBrainz field", "files"],
+            [[escape(name), str(count)] for name, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))],
+        )
 
     def _remove_fields(
         self, album: Album, default_remove_fields: Collection[BasicField], option: str = "", option_match_field: BasicField | None = None

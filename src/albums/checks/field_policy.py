@@ -68,10 +68,17 @@ def check_policy(
     if policy != Policy.ALWAYS:
         options.append(f"{OPTION_REMOVE_FIELD} {field}")
 
-    table = (
-        ["track", "filename", field.value],
-        [[describe_track_number(track), escape(track.filename), "/".join(track.get(field, [""]))] for track in ordered_tracks(album)],
-    )
+    table_rows: list[list[str]] = []
+    for track in ordered_tracks(album):
+        values = track.get(field, default=[])
+        table_rows.append(
+            [
+                describe_track_number(track),
+                escape(track.filename),
+                escape("/".join(values)) if values else "[italic]none[/italic]",
+            ]
+        )
+    table = (["track", "filename", field.value], table_rows)
     if options:
         option_automatic_index = 0 if (value_options_count == 1 or len(options) == 1) else None
         fixer = Fixer(

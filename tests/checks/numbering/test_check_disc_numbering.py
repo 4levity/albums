@@ -151,8 +151,8 @@ class TestCheckDiscNumbering:
         assert table is not None
         (headers, rows) = table
         assert headers == ["track", "filename", "discnumber", "disctotal"]
-        assert [list(row)[2] for row in rows] == ["1", "", "2", "2"]
-        assert [list(row)[3] for row in rows] == ["", "", "", ""]
+        assert [list(row)[2] for row in rows] == ["1", "[italic]none[/italic]", "2", "2"]
+        assert [list(row)[3] for row in rows] == ["[italic]none[/italic]"] * 4
 
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         assert apply_automatic_fix(result) == FixResult.CHANGED_ALBUM

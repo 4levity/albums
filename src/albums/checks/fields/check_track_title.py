@@ -34,7 +34,13 @@ class CheckTrackTitle(Check):
                         [
                             escape(track.filename),
                             format_field_values(track.get(BasicField.TITLE, default=None)),
-                            escape(str(proposed_titles[ix])) if proposed_titles[ix] else "[bold italic]None[/bold italic]",
+                            (
+                                "[bold italic]no change[/bold italic]"
+                                if track.get(BasicField.TITLE, default="")
+                                else f"[yellow]{escape(str(proposed_titles[ix]))}[/yellow]"
+                                if proposed_titles[ix]
+                                else "[bold italic]none[/bold italic]"
+                            ),
                         ]
                         for (ix, track) in enumerate(sorted(album.tracks))
                     ],

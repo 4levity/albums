@@ -3,6 +3,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Final
 
+from rich.markup import escape
+
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer
 from albums.checks.helpers import delete_files_except
@@ -53,7 +55,10 @@ class CheckDuplicateImage(Check):
         for pic in cover_image_file:
             filenames = sorted(filename for filename in picture_sources[pic] if str.lower(Path(filename).suffix) in SUPPORTED_IMAGE_SUFFIXES)
             if len(filenames) > 1:
-                table = (filenames, lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic] * len(filenames), picture_sources))
+                table = (
+                    [escape(filename) for filename in filenames],
+                    lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic] * len(filenames), picture_sources),
+                )
                 option_automatic_index = filenames.index(min(filenames, key=lambda s: len(s)))  # pick shortest filename
                 return CheckResult(
                     f"same image data in multiple files: {', '.join(filenames)}",

@@ -213,8 +213,8 @@ class CheckDiscNumbering(Check):
         return [
             describe_track_number(track),
             escape(track.filename),
-            track.get(BasicField.DISCNUMBER, default=[""])[0],
-            track.get(BasicField.DISCTOTAL, default=[""])[0],
+            escape(track.get(BasicField.DISCNUMBER, default=[""])[0]) or "[italic]none[/italic]",
+            escape(track.get(BasicField.DISCTOTAL, default=[""])[0]) or "[italic]none[/italic]",
         ]
 
     def _fix_disc_total(self, album: Album, option: str):

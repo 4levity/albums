@@ -9,7 +9,7 @@ from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.field_policy import Policy, check_policy
-from albums.checks.helpers import describe_track_number, get_tracks_by_disc, ordered_tracks, parse_filename
+from albums.checks.helpers import describe_track_number, format_field_values, get_tracks_by_disc, ordered_tracks, parse_filename
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural, pluralize
@@ -38,7 +38,7 @@ class TrackTotalFixer(Fixer):
             ),
             default=None,
         )
-        discnumber_notice = {f" on disc {discnumber}"} if discnumber is not None else ""
+        discnumber_notice = f" on disc {discnumber}" if discnumber is not None else ""
         options = [f"{OPTION_USE_TRACK_COUNT}: {len(self.tracks)}{discnumber_notice}"]
         option_automatic_index = None
         if self.max_tracktotal and len(self.tracks) != self.max_tracktotal:
@@ -46,9 +46,20 @@ class TrackTotalFixer(Fixer):
         elif not self.max_tracktotal or len(self.tracks) == self.max_tracktotal:
             option_automatic_index = 0
 
-        tracks = [[describe_track_number(track), escape(track.filename)] for track in ordered_tracks(album)]
-        table = (["track", "filename"], tracks)
-        # TODO highlight tracks we are fixing e.g. only disc 1 or disc 2
+        # list all tracks so the user has a complete view of the track totals, and bold the tracks the fix will change
+        # (e.g. only the affected disc)
+        affected = {track.filename for track in self.tracks}
+        tracks: list[list[str]] = []
+        for track in ordered_tracks(album):
+            row = [
+                describe_track_number(track),
+                escape(track.filename),
+                format_field_values(track.get(BasicField.TRACKTOTAL, default=None)),
+            ]
+            if track.filename in affected:
+                row = [f"[bold]{cell}[/bold]" for cell in row]
+            tracks.append(row)
+        table = (["track", "filename", "tracktotal"], tracks)
 
         super(TrackTotalFixer, self).__init__(
             lambda option: self._fix(ctx, tagger, album, option),
@@ -204,7 +215,16 @@ class CheckTrackNumbering(Check):
 
         table = (
             ["track", "filename", "proposed new track #"],
-            [[describe_track_number(track), escape(track.filename), new_tracknumbers.get(track.filename, "")] for track in ordered_tracks(album)],
+            [
+                [
+                    describe_track_number(track),
+                    escape(track.filename),
+                    f"[yellow]{escape(new_tracknumbers[track.filename])}[/yellow]"
+                    if track.filename in new_tracknumbers
+                    else "[bold italic]no change[/bold italic]",
+                ]
+                for track in ordered_tracks(album)
+            ],
         )
 
         return Fixer(lambda _: self._renumber(album, new_tracknumbers), options, False, option_automatic_index, table)
