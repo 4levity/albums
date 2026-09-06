@@ -67,15 +67,22 @@ class CheckAlbumArtist(Check):
                 f"multiple album artist values ({nonblank_albumartists[:2]} ...)",
                 self._make_fixer(album, options, show_free_text_option=True),
             )
-        if len(albumartists.keys()) == 2:  # some set, some blank
+        if len(albumartists.keys()) == 2:  # some set, some blank, so exactly one non-blank value
             if redundant:
                 return CheckResult(
                     f"album artist is set inconsistently and probably not needed ({nonblank_albumartists[:2]} ...)",
                     self._make_fixer(album, candidates_various + remove, show_free_text_option=True),
                 )
+            # exactly one non-blank album artist value, so setting it on all tracks is the obvious fix
+            value = nonblank_albumartists[0]
             return CheckResult(
                 f"album artist is set on some tracks but not all ({nonblank_albumartists[:2]} ...)",
-                self._make_fixer(album, candidates_various, show_free_text_option=True),
+                self._make_fixer(
+                    album,
+                    [value, VARIOUS_ARTISTS] + [c for c in candidates if c not in (value, VARIOUS_ARTISTS)],
+                    show_free_text_option=True,
+                    option_automatic_index=0,
+                ),
             )
         elif redundant and self.remove_redundant and len(nonblank_albumartists) == 1 and list(artists.keys())[0] == nonblank_albumartists[0]:
             return CheckResult(
@@ -89,9 +96,10 @@ class CheckAlbumArtist(Check):
                 self._make_fixer(album, [artist] + remove, show_free_text_option=False, option_automatic_index=0),
             )
         elif len(artists) > 1 and (sum(albumartists.values()) - albumartists.get("", 0)) != len(album.tracks):
+            # multiple artists with no album artist: "Various Artists" is the standard answer
             return CheckResult(
                 f"multiple artists but no album artist ({list(artists.keys())[:2]} ...)",
-                self._make_fixer(album, candidates_various, show_free_text_option=True),
+                self._make_fixer(album, [VARIOUS_ARTISTS] + candidates, show_free_text_option=True, option_automatic_index=0),
             )
 
     def _make_fixer(self, album: Album, options: list[str], show_free_text_option: bool, option_automatic_index: int | None = None):
@@ -132,7 +140,7 @@ class CheckAlbumArtist(Check):
                     albumartist = track.get(BasicField.ALBUMARTIST)[0]
                     self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ARTIST, albumartist)])
                     changed = True
-            elif track.get(BasicField.ALBUMARTIST, default=[]) != [album_artist_value]:
+            elif track.get(BasicField.ALBUMARTIST, default=[]) != (album_artist_value,):
                 self.ctx.console.print(f"setting albumartist on {escape(track.filename)}", highlight=False)
                 self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUMARTIST, album_artist_value)])
                 changed = True

@@ -21,6 +21,9 @@ class TestCheckAlbumArtist:
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert "multiple artists but no album artist (['A', 'B'] ...)" in result.message
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.options == ["Various Artists", "B", "A"]
 
     def test_check_missing_artist(self):
         # missing artist does not count as multiple artists, this passes
@@ -35,10 +38,10 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(Context()).check(album)
         assert result is None
 
-    def test_check_needs_albumartist__one(self):
+    def test_check_needs_albumartist__one(self, mocker):
         # some tracks with albumartist
         album = Album(
-            path="",
+            path="album/",
             tracks=[
                 Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "Foo"}),
                 Track(filename="2.flac", tag={BasicField.ARTIST: "B", BasicField.ALBUMARTIST: "Foo"}),
@@ -47,6 +50,16 @@ class TestCheckAlbumArtist:
         )
         result = CheckAlbumArtist(Context()).check(album)
         assert result.message == "album artist is set on some tracks but not all (['Foo'] ...)"
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.options == ["Foo", "Various Artists", "B", "A"]
+
+        # the automatic fix sets the existing value on all tracks
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
+        assert mock_set_basic_fields.call_count == 1
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "Foo")])
 
     def test_check_needs_albumartist__fix(self, mocker):
         album = Album(
@@ -61,7 +74,8 @@ class TestCheckAlbumArtist:
         assert "multiple artists but no album artist" in result.message
         assert result.fixer is not None
         assert result.fixer.option_free_text
-        assert result.fixer.options == ["B", "A", "Various Artists"]
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.options == ["Various Artists", "B", "A"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
         (hh, rr) = result.fixer.get_table() or ([], [])
@@ -77,6 +91,28 @@ class TestCheckAlbumArtist:
         assert mock_set_basic_fields.call_count == 3
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "B")])
 
+    def test_check_needs_albumartist__fix_automatic(self, mocker):
+        album = Album(
+            path="album/",
+            tracks=[
+                Track(filename="1.flac", tag={BasicField.ARTIST: "A"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "B"}),
+                Track(filename="3.flac", tag={BasicField.ARTIST: "B"}),
+            ],
+        )
+        result = CheckAlbumArtist(Context()).check(album)
+        assert "multiple artists but no album artist" in result.message
+        assert result.fixer is not None
+        assert result.fixer.option_automatic_index == 0
+        assert result.fixer.options == ["Various Artists", "B", "A"]
+
+        # the automatic fix sets "Various Artists" on all tracks
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
+        assert mock_set_basic_fields.call_count == 3
+        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUMARTIST, "Various Artists")])
+
     def test_check_albumartist_require(self, mocker):
         album_complies = Album(
             path="c/",
@@ -85,7 +121,7 @@ class TestCheckAlbumArtist:
                 Track(filename="2.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
             ],
         )
-        album_no_auto = Album(
+        album_various = Album(
             path="b/",
             tracks=[
                 Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
@@ -106,12 +142,12 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
-        result = CheckAlbumArtist(ctx).check(album_no_auto)
+        result = CheckAlbumArtist(ctx).check(album_various)
         assert "multiple artists but no album artist" in result.message
         assert result.fixer is not None
-        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_automatic_index == 0
         assert result.fixer.option_free_text
-        assert result.fixer.options == ["A", "B", "Various Artists"]
+        assert result.fixer.options == ["Various Artists", "A", "B"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
         (hh, rr) = result.fixer.get_table() or ([], [])
@@ -176,7 +212,7 @@ class TestCheckAlbumArtist:
                 Track(filename="2.mp3", tag={BasicField.ARTIST: "A", BasicField.ALBUMARTIST: "A"}),
             ],
         )
-        album_no_auto = Album(
+        album_various = Album(
             path="b/",
             tracks=[
                 Track(filename="1.mp3", tag={BasicField.ARTIST: "A"}),
@@ -197,12 +233,12 @@ class TestCheckAlbumArtist:
         result = CheckAlbumArtist(ctx).check(album_complies)
         assert result is None
 
-        result = CheckAlbumArtist(ctx).check(album_no_auto)
+        result = CheckAlbumArtist(ctx).check(album_various)
         assert "multiple artists but no album artist" in result.message
         assert result.fixer is not None
-        assert result.fixer.option_automatic_index is None
+        assert result.fixer.option_automatic_index == 0
         assert result.fixer.option_free_text
-        assert result.fixer.options == ["A", "B", "Various Artists"]
+        assert result.fixer.options == ["Various Artists", "A", "B"]
         assert "album artist to use" in result.fixer.prompt
         assert result.fixer.table
         (hh, rr) = result.fixer.get_table() or ([], [])

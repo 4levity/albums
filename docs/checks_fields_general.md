@@ -66,8 +66,10 @@ It can also apply a policy from options below.
 
     Requires the `legacy-fields` check to pass first.
 
-**Automatic fix**: If the album artist is or would be redundant, and one of the
-optional policies below is enabled, apply the policy.
+**Automatic fix**: If there is exactly one non-blank album artist value, set it
+on all tracks. If there are multiple artists but no album artist, use "Various
+Artists". If the album artist is or would be redundant, and one of the optional
+policies below is enabled, apply the policy.
 
 <!-- pyml disable line-length -->
 
