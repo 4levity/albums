@@ -171,6 +171,17 @@ class TestCheckCompilationField:
         assert result is not None
         assert "single artist: Bob" in result.message
 
+    def test_artist_unicode_casefold_single(self):
+        # "ß" and "ss" are case variants of the same letter, so these are one artist, not a compilation
+        album = _album(
+            [
+                Track(filename="1.flac", tag={BasicField.ARTIST: "Straße"}),
+                Track(filename="2.flac", tag={BasicField.ARTIST: "STRASSE"}),
+            ]
+        )
+        # not Various Artists, no albumartist set, not in compilation folder - but still not flagged because STRASSE is the same as Straße
+        assert _check(album) is None
+
     def test_album_artist_consistent_not_compilation(self):
         # a single consistent, non-Various-Artists album artist wins over diverse track artists
         # (e.g. an artist album with a guest appearance)
@@ -292,6 +303,13 @@ class TestCheckCompilationField:
         assert result is not None
         assert "parent folder Compilations" in result.message
 
+    def test_parent_folder_unicode_casefold(self):
+        # "ß" and "ss" are case variants of the same letter
+        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="Straße/Foo")
+        result = _check(album, compilation_parent_folders=["STRASSE"])
+        assert result is not None
+        assert "parent folder Straße" in result.message
+
     def test_parent_folder_overrides_artist_values(self):
         # tags alone say this is a normal single-artist album, but the parent folder wins
         album = _album(
@@ -348,6 +366,12 @@ class TestCheckCompilationField:
         result = _check(album, compilation_parent_folders=["mixes"])
         assert result is not None
         assert "parent folder mixes" in result.message
+
+        # configured values match case-insensitively
+        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="MIXES/Foo")
+        result = _check(album, compilation_parent_folders=["mixes"])
+        assert result is not None
+        assert "parent folder MIXES" in result.message
 
         # "compilations" is no longer a compilation parent folder with this configuration
         album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="compilations/Foo")

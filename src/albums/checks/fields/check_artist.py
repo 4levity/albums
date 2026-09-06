@@ -30,7 +30,7 @@ class CheckArtistField(Check):
         ):
             logger.warning(f'artist.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
             ignore_parent_folders = []
-        self.ignore_parent_folders = set(str(folder) for folder in ignore_parent_folders)
+        self.ignore_parent_folders = set(str(folder).casefold() for folder in ignore_parent_folders)
 
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
@@ -50,12 +50,12 @@ class CheckArtistField(Check):
             return None
 
         parent_folder_str = Path(album.path).parent.name
-        if parent_folder_str and str.lower(parent_folder_str) not in self.ignore_parent_folders:
+        if parent_folder_str and parent_folder_str.casefold() not in self.ignore_parent_folders:
             artist_values[parent_folder_str] = artist_values.get(parent_folder_str, []) + [parent_folder_str]
 
         artist_list = list(artist_values.keys())
         candidates = sorted(
-            filter(lambda v: v and not str.lower(v).startswith("various"), artist_list), key=lambda a: len(artist_values[a]), reverse=True
+            filter(lambda v: v and not v.casefold().startswith("various"), artist_list), key=lambda a: len(artist_values[a]), reverse=True
         )[:6]
         table = (
             ["filename", "album artist", "artist", "proposed artist"],

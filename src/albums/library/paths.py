@@ -83,7 +83,10 @@ def make_template_paths(ctx: Context, album: Album, t_artist: Template, t_variou
             album_v = "Unknown Album"
             logger.warning(f"generating library path: no album field, using {album_v}")
 
-    a1_v = str.lower(safe_path_element(artist_v[4] if artist_v.lower().startswith("the ") and len(artist_v) > 4 else artist_v[0]))
+    first_char = artist_v[4] if artist_v.casefold().startswith("the ") and len(artist_v) > 4 else artist_v[0]
+    a1_v = safe_path_element(first_char).casefold()
+    if len(a1_v) > 1:  # casefold can expand a single character (e.g. "ß" -> "ss"), keep a one-character initial
+        a1_v = a1_v[0]
     if a1_v.isnumeric():
         a1_v = "#"
 

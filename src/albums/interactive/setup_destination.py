@@ -70,7 +70,7 @@ def _get_collection(ctx: Context, default: str = "") -> str:
         return option
     while not (option := prompt("Collection name: ")):
         pass
-    match = next((name for name in collection_names if name.lower() == option.lower()), None)
+    match = next((name for name in collection_names if name.casefold() == option.casefold()), None)
     if match:
         option = match
         ctx.console.print("Using existing collection")

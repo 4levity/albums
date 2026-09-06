@@ -59,7 +59,7 @@ class CheckCompilationField(Check):
         ):
             logger.warning(f'compilation.compilation_parent_folders must be a list of folders, ignoring value "{compilation_parent_folders}"')
             compilation_parent_folders = []
-        self.compilation_parent_folders = set(str.lower(folder) for folder in compilation_parent_folders)
+        self.compilation_parent_folders = set(str(folder).casefold() for folder in compilation_parent_folders)
 
     @override
     def check(self, album: Album) -> CheckResult | None:
@@ -67,7 +67,7 @@ class CheckCompilationField(Check):
             return None  # this check only makes sense for files with common fields
 
         parent_folder = Path(album.path).parent.name
-        if parent_folder and str.lower(parent_folder) in self.compilation_parent_folders:
+        if parent_folder and parent_folder.casefold() in self.compilation_parent_folders:
             set_flag, reason = True, f"parent folder {parent_folder}"
         else:
             set_flag, reason = self._is_compilation(album)
@@ -118,20 +118,20 @@ class CheckCompilationField(Check):
                 for value in track.get(field, default=[]):
                     name = str.strip(value)
                     if name:
-                        values.setdefault(str.lower(name), name)
+                        values.setdefault(name.casefold(), name)
 
         if len(album_artists) > 1:
             return True, "inconsistent album artist"
         if len(album_artists) == 1:
             album_artist = next(iter(album_artists.values()))
-            if album_artist.lower() == VARIOUS_ARTISTS.lower():
+            if album_artist.casefold() == VARIOUS_ARTISTS.casefold():
                 return True, f"album artist {VARIOUS_ARTISTS}"
             return False, f"album artist {album_artist}"
         if len(artists) > 1:
             return True, f"{len(artists)} distinct artists"
         if len(artists) == 1:
             artist = next(iter(artists.values()))
-            if artist.lower() == VARIOUS_ARTISTS.lower():
+            if artist.casefold() == VARIOUS_ARTISTS.casefold():
                 return True, f"artist {VARIOUS_ARTISTS}"
             return False, f"single artist: {artist}"
         return False, "no artists"

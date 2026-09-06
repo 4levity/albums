@@ -55,3 +55,18 @@ class TestCheckArtistField:
         assert result.fixer
         assert result.fixer.options == ["Baz", "Foo"]
         assert result.fixer.option_automatic_index is None
+
+    def test_ignore_parent_folders_case_insensitive(self):
+        # configured ignore_parent_folders values match case-insensitively, so a mixed-case value
+        # keeps the parent folder out of the proposed artist values
+        ctx = Context()
+        ctx.config.checks = {CheckArtistField.name: {"enabled": True, "ignore_parent_folders": ["Compilations"]}}
+        album = Album(
+            path=f"compilations{os.sep}Foo{os.sep}",
+            tracks=[Track(filename="1.flac"), Track(filename="2.flac")],
+        )
+        result = CheckArtistField(ctx).check(album)
+        assert result
+        assert "2 tracks missing artist field" in result.message
+        assert result.fixer
+        assert result.fixer.options == []

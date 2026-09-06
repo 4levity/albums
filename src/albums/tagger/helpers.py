@@ -13,7 +13,7 @@ CANONICAL_COMPILATION_VALUE: Final = "1"
 def compilation_flag_is_set(value: Any) -> bool:
     """Return True when a boolean compilation flag value means "is a compilation": bools and ints by truthiness, text values unless blank, "0", or "false" (case-insensitive)."""
     if isinstance(value, str):
-        return str.strip(value).lower() not in ("", "0", "false")
+        return str.strip(value).casefold() not in ("", "0", "false")
     return bool(value)
 
 
