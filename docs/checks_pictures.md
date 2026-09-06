@@ -45,8 +45,12 @@ duplicate image data is not useful. Rules:
 
     Requires the `invalid-image` check to pass first.
 
-**Automatic fix**: If several image files (not embedded) contain the exact same
-image contents, keep the one with the shortest filename and delete the rest.
+**Automatic fix**: If the same image is embedded more than once in a single
+track, remove the duplicate embedded images (keep the first). This is lossless
+because the image data is identical. (WMA/ASF embedded images are read-only, so
+duplicates there are reported but not removed.) If several image files (not
+embedded) contain the exact same image contents, keep the one with the shortest
+filename and delete the rest.
 
 <!-- pyml disable line-length -->
 
