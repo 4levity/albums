@@ -115,10 +115,11 @@ def parse_filename(filename: str) -> Tuple[int | None, int | None, str | None]:
 
     Only 1-3 digit numbers are treated as track/disc numbers, and a leading date (e.g. ``2024-01-05`` or
     ``20240105``) is ignored rather than mistaken for numbers, so ``2024-01-05 Live show.mp3`` gives the
-    title "Live show".
+    title "Live show". The number(s) can be separated from the title by spaces, dashes or underscores
+    (or any combination), as in ``01 - the title.mp3``, ``01-the title.mp3`` and ``01_the_title.mp3``.
     """
     filename = _strip_leading_date(filename)
-    filename_parser = "(?P<track1>\\d{1,3}(?!\\d))?(?:-(?P<track2>\\d{1,3}(?!\\d))?)?(?:[\\s\\-]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
+    filename_parser = "(?P<track1>\\d{1,3}(?!\\d))?(?:-(?P<track2>\\d{1,3}(?!\\d))?)?(?:[\\s\\-_]+|\\.\\s+)?(?P<title>.*)(?:\\s+)?\\.\\w+"
     match = re.fullmatch(filename_parser, filename)
     if not match:
         return (None, None, None)

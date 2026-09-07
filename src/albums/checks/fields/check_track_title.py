@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Final
 
 from rich.markup import escape
@@ -13,6 +14,11 @@ from albums.words import plural
 logger: Final = logging.getLogger(__name__)
 
 OPTION_USE_PROPOSED: Final = ">> Use proposed track titles"
+
+# an underscore between two letters in a filename is assumed to be a space that was converted when a title
+# was turned into a filename (e.g. "Song_Title" -> "Song Title"); underscores next to digits or other
+# characters are kept as-is
+_UNDERSCORE_AS_SPACE_RE: Final = re.compile(r"(?<=[^\W\d_])_(?=[^\W\d_])")
 
 
 class CheckTrackTitle(Check):
@@ -60,7 +66,8 @@ class CheckTrackTitle(Check):
             return None
 
         (_, _, title) = parse_filename(track.filename)
-        # TODO: if it looks like spaces were converted to underscores, consider trying to recover
+        if title:
+            title = _UNDERSCORE_AS_SPACE_RE.sub(" ", title)
         return title
 
     def _fix(self, album: Album):

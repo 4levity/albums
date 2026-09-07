@@ -148,6 +148,8 @@ separated by a dash), and the title is what follows it, as in these examples:
 - `01 the title.flac`
 - `01. the title.mp3`
 - `01 - the title.mp3`
+- `01-the title.mp3`
+- `01_the_title.mp3`
 - `1-03 - the title.flac`
 - `the title.flac` _(if nothing else matches)_
 
@@ -156,6 +158,12 @@ start of the filename is ignored entirely. A date is a four-digit year, with an
 optional month and day, separated by dashes, dots or underscores (e.g.
 `2024-01-05`, `2024-01` or `20240105`), so for example
 `2024-01-05 Live show.mp3` gives the title `Live show`.
+
+An underscore between two letters is assumed to be a space that was converted
+when a title was turned into a filename, so the title proposed for
+`01_Song_Title.mp3` is `Song Title` (an underscore after the track number is
+also a separator). Underscores next to other characters, such as digits, are
+kept.
 
 If the filename looks like a track number only, no title guess will be made.
 However, if the filename doesn't match any recognized pattern, the guess will be

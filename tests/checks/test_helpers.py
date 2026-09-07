@@ -87,6 +87,16 @@ class TestParseFilename:
     def test_disc_track_title(self):
         assert parse_filename("1-03 - the title.flac") == (1, 3, "the title")
 
+    def test_underscore_separates_track_number_and_title(self):
+        assert parse_filename("01_Song_Title.flac") == (None, 1, "Song_Title")
+
+    def test_dash_separates_track_number_and_title(self):
+        assert parse_filename("01-Song_Title.mp3") == (None, 1, "Song_Title")
+        assert parse_filename("01-Song.mp3") == (None, 1, "Song")
+
+    def test_disc_track_underscore_separator(self):
+        assert parse_filename("1-03_Song_Title.flac") == (1, 3, "Song_Title")
+
     def test_title_only(self):
         assert parse_filename("the title.flac") == (None, None, "the title")
 

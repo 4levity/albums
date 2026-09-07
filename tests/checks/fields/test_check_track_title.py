@@ -86,6 +86,37 @@ class TestCheckTrackTitle:
             call(Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "Other")]),
         ]
 
+    def test_check_track_title_underscores(self, mocker):
+        album = Album(
+            path="Foobar" + os.sep,
+            tracks=[
+                Track(filename="1 Song_Title.flac"),
+                Track(filename="2 Foo_Bar_Baz.flac"),
+                Track(filename="3 digit_1.flac"),
+                Track(filename="4 1_digit.flac"),
+                Track(filename="5 a__b.flac"),
+                Track(filename="6_Song_Title.flac"),
+                Track(filename="7-Song_Title.flac"),
+            ],
+        )
+        result = CheckTrackTitle(Context()).check(album)
+        assert result is not None
+        assert "7 tracks missing title" in result.message
+        mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
+        # an underscore or dash after the track number is a separator, and letter-surrounded underscores
+        # become spaces; underscores next to digits or other underscores are kept
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicField.TITLE, "Song Title")]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicField.TITLE, "Foo Bar Baz")]),
+            call(Path(album.path) / album.tracks[2].filename, [(BasicField.TITLE, "digit_1")]),
+            call(Path(album.path) / album.tracks[3].filename, [(BasicField.TITLE, "1_digit")]),
+            call(Path(album.path) / album.tracks[4].filename, [(BasicField.TITLE, "a__b")]),
+            call(Path(album.path) / album.tracks[5].filename, [(BasicField.TITLE, "Song Title")]),
+            call(Path(album.path) / album.tracks[6].filename, [(BasicField.TITLE, "Song Title")]),
+        ]
+
     def test_check_track_title_table(self):
         album = Album(
             path="Foobar" + os.sep,
@@ -116,9 +147,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tag={BasicField.TITLE: "foo"}),
-                Track(filename="2 bar.flac"),
-                Track(filename="3 baz.flac", tag={BasicField.TITLE: "baz"}),
+                Track(filename="2-1 foo.flac", tag={BasicField.TITLE: "foo"}),
+                Track(filename="2-2 bar.flac"),
+                Track(filename="2-3 baz.flac", tag={BasicField.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
