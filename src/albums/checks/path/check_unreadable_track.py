@@ -24,6 +24,16 @@ class CheckUnreadableTrack(Check):
         if unreadable_count == 0:
             return None
         example_filename = next(track.filename for track in album.tracks if track.stream.error)
+        # the proposed filenames depend on the album folder contents on disk, so generating the
+        # table rows is deferred until the table is displayed, keeping check() fast and database-only
+        table = (["filename", "stream error", "proposed new filename"], lambda: self._table_rows(album))
+        options = [OPTION_RENAME_UNREADABLE]
+        option_automatic_index = None
+        fixer = Fixer(lambda option: self._fix_rename_unreadable(album), options, False, option_automatic_index, table)
+        return CheckResult(f"{plural(unreadable_count, 'unreadable track')}, example {example_filename}", fixer)
+
+    def _table_rows(self, album: Album) -> list[list[str]]:
+        """Table rows for the check result, proposing non-colliding filenames for unreadable tracks; reads the album folder to detect name collisions."""
         taken = self._existing_names(album)
         rows: list[list[str]] = []
         for track in sorted(album.tracks):
@@ -37,11 +47,7 @@ class CheckUnreadableTrack(Check):
             else:
                 row = [escape(track.filename), "[green]ok[/green]", "[bold italic]no change[/bold italic]"]
             rows.append(row)
-        table = (["filename", "stream error", "proposed new filename"], rows)
-        options = [OPTION_RENAME_UNREADABLE]
-        option_automatic_index = None
-        fixer = Fixer(lambda option: self._fix_rename_unreadable(album), options, False, option_automatic_index, table)
-        return CheckResult(f"{plural(unreadable_count, 'unreadable track')}, example {example_filename}", fixer)
+        return rows
 
     def _fix_rename_unreadable(self, album: Album):
         changed = False

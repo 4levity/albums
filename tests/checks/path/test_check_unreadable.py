@@ -45,6 +45,25 @@ class TestCheckUnreadable:
                 call(ctx.config.library / album.path / "2.mp3", ctx.config.library / album.path / "2.mp3.unreadable")
             ]
 
+    def test_check_unreadable_track_check_does_not_read_disk(self, mocker):
+        album = Album(path="foo", tracks=[Track(filename="1.mp3")])
+        ctx = Context()
+        ctx.config.library = create_library("unreadable_track", [album])
+        with open(ctx.config.library / album.path / "2.mp3", "wb") as f:
+            f.write(b"not a valid mp3")
+        ctx.db = db_open(MEMORY)
+        with Session(ctx.db) as session:
+            run_scan(ctx, session)
+            [(album,)] = session.execute(select(Album)).tuples()
+            mock_existing_names = mocker.patch.object(CheckUnreadableTrack, "_existing_names", return_value=set())
+            result = CheckUnreadableTrack(ctx).check(album)
+            assert result is not None
+            assert result.fixer is not None
+            # check() must be database-only: the album folder is read only when the table is displayed
+            mock_existing_names.assert_not_called()
+            table_rows(result.fixer)
+            mock_existing_names.assert_called_once()
+
     def test_check_unreadable_track_collision(self, mocker):
         album = Album(path="foo", tracks=[Track(filename="1.mp3")])
         ctx = Context()

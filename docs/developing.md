@@ -90,6 +90,37 @@ The `check()` method gets an ORM `Album` with loaded tracks. Check and fix via
 `self.session`, `self.tagger`, and `self.ctx`. Return `None` if passed, or a
 `CheckResult` with a message and optional `Fixer`.
 
+#### Check guidelines: fast and stateless
+
+Two rules keep checks repeatable and fast (a million checks should run in a
+few seconds):
+
+1. **`check()` should rely on data in the database.** It should not read tags
+   from files, or perform file system or network operations, or anything
+   "slow". Tag data (fields, pictures, stream info) is loaded during the scan
+   and available on the ORM entities, and additional queries via
+   `self.session` are fine. Any exception must be defensible and commented,
+   e.g. `folder-name` does a single `exists()` stat - and only for an album
+   that has already failed the check - because a rename collision depends on
+   disk state that is not in the database.
+2. **Checks should be stateless, holding only configuration.** Instance
+   attributes should be set in `init()` from the check configuration (or be
+   the injected `ctx`/`tagger`/`session`), and `check()` must not set any
+   state on the Check object. The one exception is `duplicate-album`, which
+   holds an in-memory index of the library built in `__init__` to compare
+   albums across the whole library; see its docstring for the justification.
+
+Related guidance:
+
+- Slow work belongs in the **fix phase**: the fixer's `fix(option)` callback
+  may read/write files, rename, or download (e.g. `cover-available` runs an
+  external download command).
+- Table row data for interactive display can be **deferred** by passing a row
+  factory callable instead of rows (`Fixer.get_table()` resolves it only when
+  the table is actually displayed). This keeps slow work such as image
+  decoding (picture checks) or reading the album folder for proposed
+  filenames (`unreadable-track`) out of `check()`.
+
 #### Fixers
 
 The `Fixer` object returned in a `CheckResult` has a list of option strings, and
@@ -105,8 +136,8 @@ fast if that is slow.
 
 Tips:
 
-- The `check()` method should avoid slow operations and checks should ideally
-  operate only on data loaded during the scan.
+- The `check()` method should avoid slow operations - see the check guidelines
+  above.
 - If returning one result is limiting, maybe the check should be two checks.
 - Consider checking for "pass" conditions first in some cases.
 

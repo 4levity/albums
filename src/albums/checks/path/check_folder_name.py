@@ -52,6 +52,13 @@ class CheckFolderName(Check):
         if Path(album.path).name == correct_name:
             return None
 
+        # deliberate exception to the "check() should rely only on database data" guideline (see
+        # docs/developing.md): every other check in this method is database/in-memory and has
+        # already been tried, so by the time we get here the check is failing anyway (the folder
+        # name does not match the pattern) and the only remaining question is whether the rename
+        # is possible, which depends on disk state (the target folder may exist without being an
+        # album in the database); a single cheap exists() stat, used only for an already-failing
+        # check, is justified
         new_path = (self.ctx.config.library / album.path).parent / correct_name
         if new_path.exists():
             return CheckResult(f"folder name does not match pattern, but new path already exists: {Path(album.path).parent / correct_name}")

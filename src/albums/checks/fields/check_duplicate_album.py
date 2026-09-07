@@ -20,6 +20,24 @@ OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): 
 
 
 class CheckDuplicateAlbum(Check):
+    """Check for albums that duplicate other albums in the library (same artist and album name).
+
+    This check deliberately breaks the fast, stateless check guidelines (see docs/developing.md)
+    because there is no other practical way to find duplicates: it must compare each album
+    against every other album in the library, not just the album passed to ``check()``.
+
+    - it holds non-configuration state: the DuplicateFinder's index of all library albums by
+      (artist, album name), in ``self._duplicates``;
+    - it builds that index in ``__init__`` by scanning the whole library, which takes several
+      seconds on a large library. It is done once per check run rather than per album (the
+      index is roughly 6x faster than querying the database for each album), and the check
+      announces the delay so it can be disabled to skip it.
+
+    The state is defensive only: ``check()`` does not mutate it. It merely looks the album up in
+    the in-memory index and queries the database for the duplicate albums to display. The index
+    is only mutated, via ``remove()``, when a duplicate is actually deleted in the fix phase.
+    """
+
     name = "duplicate-album"
     default_config = {"enabled": True}
     must_pass_checks = {"album", "artist"}
