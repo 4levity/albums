@@ -78,6 +78,9 @@ class CheckDuplicateImage(Check):
         def image_file_sources(pic: Picture) -> list[str]:
             return sorted(filename for filename in picture_sources[pic] if str.lower(Path(filename).suffix) in SUPPORTED_IMAGE_SUFFIXES)
 
+        # the cover_source mark only survives a rescan by filename, so keep the marked file when choosing which duplicate to delete
+        cover_source_filename = next((file.filename for file in album.picture_files if file.cover_source), None)
+
         for pic_type in picture_types:
             for pic in sorted((c for c in pictures_by_type.get(pic_type, set()) if image_file_sources(c)), key=lambda c: image_file_sources(c)[0]):
                 filenames = image_file_sources(pic)
@@ -86,7 +89,10 @@ class CheckDuplicateImage(Check):
                         [escape(filename) for filename in filenames],
                         lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic] * len(filenames), picture_sources),
                     )
-                    option_automatic_index = filenames.index(min(filenames, key=lambda s: len(s)))  # pick shortest filename
+                    if cover_source_filename in filenames:  # prefer the cover source file, otherwise pick the shortest filename
+                        option_automatic_index = filenames.index(cover_source_filename)
+                    else:
+                        option_automatic_index = filenames.index(min(filenames, key=lambda s: len(s)))
                     return CheckResult(
                         f"same image data in multiple files: {', '.join(filenames)}",
                         Fixer(

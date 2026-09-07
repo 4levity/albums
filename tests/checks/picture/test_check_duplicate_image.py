@@ -194,6 +194,28 @@ class TestCheckDuplicateImage:
         check.cover_only = True
         assert check.check(album) is None
 
+    def test_cover_source_file_kept_in_duplicate_files(self, mocker):
+        pic_info = PictureInfo("image/png", 400, 400, 24, 1, b"")
+        album = Album(
+            path="",
+            picture_files=[
+                PictureFile(filename="short.png", picture_info=pic_info, cover_source=False),
+                PictureFile(filename="a-much-longer-marked-name.png", picture_info=pic_info, cover_source=True),
+            ],
+        )
+        result = CheckDuplicateImage(Context()).check(album)
+        assert result is not None
+        assert result.message == "same image data in multiple files: a-much-longer-marked-name.png, short.png"
+        assert result.fixer
+        assert result.fixer.options == ["a-much-longer-marked-name.png", "short.png"]
+        # the marked cover source file is kept even though it is not the shortest filename
+        assert result.fixer.option_automatic_index == 0
+
+        mock_unlink = mocker.patch("albums.checks.helpers.unlink")
+        fix_result = apply_automatic_fix(result)
+        assert fix_result == FixResult.CHANGED_ALBUM
+        assert mock_unlink.call_args_list == [call(Path(album.path) / "short.png")]
+
     def test_front_cover_preferred_over_other_types(self, mocker):
         front_info = PictureInfo("image/png", 400, 400, 24, 1, b"front")
         other_info = PictureInfo("image/png", 400, 400, 24, 1, b"other")
