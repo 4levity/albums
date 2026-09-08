@@ -93,7 +93,6 @@ class TestCheckCoverFilename:
             picture_files=[PictureFile(filename="folder.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b""))],
         )
         ctx = Context()
-        ctx.db = True
         result = CheckCoverFilename(ctx).check(album)
         assert result
         assert result.message == "cover image has the wrong filename: folder.jpg"

@@ -48,7 +48,6 @@ class TestCheckCoverEmbedded:
         )
         album.album_id = 1
         ctx = Context()
-        ctx.db = True
         result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
         assert "the cover can be extracted and marked as cover_source" in result.message
@@ -87,7 +86,6 @@ class TestCheckCoverEmbedded:
         )
         album.album_id = 1
         ctx = Context()
-        ctx.db = True
         result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
         assert "the cover can be extracted and marked as cover_source" in result.message
@@ -119,7 +117,6 @@ class TestCheckCoverEmbedded:
         )
         album.album_id = 1
         ctx = Context()
-        ctx.db = True
         result = CheckCoverEmbedded(ctx).check(album)
         assert result is not None
         assert "can re-embed from front cover source" in result.message

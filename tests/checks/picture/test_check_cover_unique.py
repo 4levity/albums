@@ -119,7 +119,6 @@ class TestCheckCoverUnique:
             ],
         )
         ctx = Context()
-        ctx.db = True
         result = CheckCoverUnique(ctx).check(album)
         assert result is not None
         assert (
@@ -146,7 +145,6 @@ class TestCheckCoverUnique:
             ],
         )
         ctx = Context()
-        ctx.db = True
         result = CheckCoverUnique(ctx).check(album)
         assert result is not None
         assert result.message == "multiple front cover image files, and one of them is marked cover source (delete others)"

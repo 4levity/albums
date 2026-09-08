@@ -44,7 +44,6 @@ class TestCheckCoverDimensions:
         cover = TrackPicture(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
         album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", pictures=[cover])])
         ctx = Context()
-        ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT is not square (800x1000)"
@@ -79,7 +78,6 @@ class TestCheckCoverDimensions:
         cover = TrackPicture(picture_info=PictureInfo("image/jpeg", 800, 1000, 24, 1, b""), picture_type=PictureType.COVER_FRONT)
         album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", pictures=[cover])])
         ctx = Context()
-        ctx.db = True
         ctx.config.checks[CheckCoverDimensions.name]["create_mime_type"] = ""
         result = CheckCoverDimensions(ctx).check(album)
         assert result is not None
@@ -119,7 +117,6 @@ class TestCheckCoverDimensions:
             picture_files=[PictureFile(filename="folder.jpg", picture_info=picture_info, cover_source=True)],
         )
         ctx = Context()
-        ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT is not square (1000x800)"
@@ -157,7 +154,6 @@ class TestCheckCoverDimensions:
             picture_files=[PictureFile(filename="folder.png", picture_info=cover_info, cover_source=True)],
         )
         ctx = Context()
-        ctx.db = True
         result = CheckCoverDimensions(ctx).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT is not square (1000x800)"
