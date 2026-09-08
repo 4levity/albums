@@ -1,7 +1,7 @@
 POETRY := poetry
 DOCKER := docker
 
-.PHONY: build install lint lint-markdown spelling fix test coverage preview docs package clean
+.PHONY: build install lint lint-markdown spelling fix test preview docs package clean
 
 build: install lint test
 	@echo "build complete"
@@ -26,14 +26,8 @@ fix: install ## Automatically fix lint/format
 	$(POETRY) run ruff format
 	$(POETRY) run ruff check . --fix
 
-test: install ## Run all tests without coverage, fail on any warnings
-	$(POETRY) run pytest -v --max-warnings=0
-
-coverage: install ## Run all tests with coverage
-	# The coverage tracer changes GC timing, surfacing ResourceWarnings for unclosed
-	# sqlite connections that never appear in a regular run. Ignorable here: the
-	# `test` target already fails on any warning. (Other warning classes stay visible.)
-	$(POETRY) run pytest "-W ignore::ResourceWarning" --cov=src/albums --cov-report=html
+test: install ## Run all tests with coverage, fail on any warnings
+	$(POETRY) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
 # regenerate sample db if schema or schema-creation code changed

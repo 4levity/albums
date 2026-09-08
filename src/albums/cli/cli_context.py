@@ -114,8 +114,11 @@ def setup(
     elif not has_database:
         # it's simpler to always give app_context a database than to allow it to be Engine | None
         app_context.is_persistent = False
-        app_context.db = db_open(MEMORY, echo=False)
-        ctx.call_on_close(lambda: app_context.db.dispose())
+        mem_db = db_open(MEMORY, echo=False)
+        app_context.db = mem_db
+        # bind dispose to this engine object: commands (e.g. `init`) may reassign app_context.db,
+        # and a late-bound `app_context.db.dispose` would then dispose the new engine and leak this one
+        ctx.call_on_close(mem_db.dispose)
     return bool(dir) or app_context.config.rescan == RescanOption.ALWAYS
 
 
@@ -136,9 +139,11 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
         raise SystemExit(1)
     logger.info(f"using in-memory context, library is {folder}")
 
-    ctx.db = db_open(MEMORY, echo=ctx.verbose > 1)
+    folder_db = db_open(MEMORY, echo=ctx.verbose > 1)
+    ctx.db = folder_db
     if ctx.click_ctx:
-        ctx.click_ctx.call_on_close(lambda: ctx.db.dispose())
+        # bind dispose to this engine object, same reason as in setup()
+        ctx.click_ctx.call_on_close(folder_db.dispose)
     ctx.is_filtered = False
     ctx.is_persistent = False
     return parent
