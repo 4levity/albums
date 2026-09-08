@@ -11,7 +11,7 @@ install: ## Install project dependencies
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
-	$(POETRY) run pymarkdown --strict-config scan '**/*.md'
+	$(POETRY) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
 lint: lint-markdown ## Lint and static analysis
 	$(POETRY) run ruff check .
