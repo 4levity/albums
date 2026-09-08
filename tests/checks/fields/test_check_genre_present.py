@@ -29,7 +29,7 @@ class TestCheckGenrePresent:
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is not None
-        assert "genre per_track is false, but tracks have different genres, example Country and Rock" in result.message
+        assert "tracks have inconsistent genres (per_track=False), e.g. Country and Rock" in result.message
 
     def test_genre_none_policy_always(self):
         tracks = [Track(filename="1.flac"), Track(filename="2.flac")]

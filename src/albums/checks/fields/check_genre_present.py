@@ -62,7 +62,7 @@ class CheckGenrePresent(Check):
                     )
                     example = f"{'none' if genre is None else '/'.join(genre)} and {'none' if match_genre is None else '/'.join(match_genre)}"
                     return CheckResult(
-                        f"genre per_track is false, but tracks have different genres, example {example}",
+                        f"tracks have inconsistent genres (per_track=False), e.g. {example}",
                         Fixer(
                             lambda option: self._fix_set_genre(album, option),
                             options,
