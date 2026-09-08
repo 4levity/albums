@@ -83,7 +83,8 @@ def create_album_in_library(library_path: Path, album: Album):
 
 def create_library(library_name: str, albums: Collection[Album]):
     library_path = test_data_path / library_name
-    shutil.rmtree(library_path, ignore_errors=True)
+    if library_path.exists():
+        shutil.rmtree(library_path)
     os.makedirs(library_path)
     for album in albums:
         create_album_in_library(library_path, album)
