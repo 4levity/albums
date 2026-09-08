@@ -66,5 +66,8 @@ Installation via pipx requires Python 3.12+ and should work on almost any 64-bit
 x86 or ARM system with Linux, macOS or Windows.
 
 Binary releases for 64-bit Linux or Windows do not have any Python requirement.
+The Linux binary requires glibc 2.38, meaning recent distributions such as
+Ubuntu 24, Debian 13 (Trixie), Fedora 39 and Arch Linux. (Use the regular
+package to install on older distributions.)
 
 `albums` is primarily tested on Linux and Windows.

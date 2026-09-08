@@ -55,6 +55,9 @@ Installation via pipx requires Python 3.12+ and should work on almost any 64-bit
 x86 or ARM system with Linux, macOS or Windows.
 
 Binary releases for 64-bit Linux or Windows do not have any Python requirement.
+The Linux binary requires glibc 2.38, meaning recent distributions such as
+Ubuntu 24, Debian 13 (Trixie), Fedora 39 and Arch Linux. (Use the regular
+package to install on older distributions.)
 
 `albums` is primarily tested on Linux and Windows.
 
@@ -70,7 +73,7 @@ By using this software, you voluntarily assume the risk that it might:
   computer via hypothetical vulnerabilities in libraries or your OS.
 - corrupt files while changing tags due to hypothetical Mutagen bugs.
 - make incomplete copies of albums if there are bugs in the sync code.
-- delete entire directory trees if you use the `sync` command incorrectly —
-  with `--delete` and confirmation, or with `--force`.
+- delete entire directory trees if you use the `sync` command incorrectly — with
+  `--delete` and confirmation, or with `--force`.
     - Even if you set the correct `sync` location, the `--delete` option could
       delete files from your digital audio player that you wanted to keep.
