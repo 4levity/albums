@@ -6,19 +6,22 @@ icon: lucide/computer
 
 ## Prerequisites
 
-- Python 3.12+ available (install with uv or pyenv etc.)
-- [poetry](https://python-poetry.org/)
+- [uv](https://docs.astral.sh/uv/) (manages the Python installation and project dependencies)
 - `make`
 
 ## Overview
 
-Run `make` to install dependencies + lint + test. The first run requires Python
-3.12+.
+Run `make` to install dependencies + lint + test. If no suitable Python (3.12+)
+is installed, uv will download and use one automatically.
+
+The dependency lockfile (`uv.lock`) is committed, and `make install` fails if it
+is out of date with `pyproject.toml`. After changing dependencies, run
+`uv lock` (or `uv add`/`uv remove`) and commit the updated lockfile.
 
 ### Run
 
-Run the app with `poetry run albums [...]`. The first time you do, you may run
-`poetry run albums --db-file albums.db init` in the project directory, which
+Run the app with `uv run albums [...]`. The first time you do, you may run
+`uv run albums --db-file albums.db init` in the project directory, which
 will create a "local" `albums.db` there for a test environment (separate from
 the db used by a regular installation of `albums`).
 
@@ -29,12 +32,32 @@ the db used by a regular installation of `albums`).
 | `.github/workflows` | Github workflows (build/publish/docs)                |
 | `docs/`             | This documentation                                   |
 | `src/albums/`       | Python application (structure below)                 |
+| `scripts/`          | Development scripts (e.g. `version.py`)              |
 | `tests/`            | Tests!                                               |
 | `Makefile`          | The Makefile                                         |
 | `pyproject.toml`    | Project definition, tool configuration, dependencies |
 | `zensical.toml`     | Configuration for this documentation                 |
 
 (not all files/folders included)
+
+### Versioning and Packaging
+
+The package version is derived from git tags at build/install time, using
+[hatch-vcs](https://hatch.pypa.io/latest/plugins/builder/hatch-vcs/) (a wrapper
+around [setuptools-scm](https://setuptools-scm.readthedocs.io/)). A commit that
+is tagged `vX.Y.Z` builds as `X.Y.Z`, and any later commit builds as
+`X.Y.Z.postN+<commit>` (plus a date suffix if the working tree is dirty), so
+every commit has a distinct version.
+
+During install or build, the computed version is written to
+`src/albums/_version.py` (gitignored), which the app reads for
+`albums --version`. `scripts/version.py` prints the same version for the
+current checkout, and `write` writes the `_version.py` file:
+
+- `make package` builds the sdist and wheel in `dist/` (used to publish to PyPI)
+- `make pyinstaller` writes the version, then builds a standalone executable in
+  `dist/pyinstaller/<platform>/albums/` with [PyInstaller](https://pyinstaller.org/)
+- `make docs` injects the version into the built docs site
 
 ### Python Project Structure
 
@@ -170,7 +193,7 @@ class TestMyCheck:
 ```
 
 Library fixture data is in `tests/fixtures/libraries/`. Run `make test` for full
-suite, or `poetry run pytest tests/path/to/test.py -v` for targeted runs.
+suite, or `uv run pytest tests/path/to/test.py -v` for targeted runs.
 
 ### Music File Tag Support
 
@@ -224,9 +247,10 @@ commit body should be omitted for small changes.
 No warnings, only pass/fail. Some lint/format problems can be automatically
 fixed with `make fix`.
 
-- lint/format with [ruff](https://docs.astral.sh/ruff/) (static format same as
-  [Black](https://black.readthedocs.io/en/stable/)) - all defaults except 150
-  character line limit
+- lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
+  [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes
+  error rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on
+  Python files only (markdown is linted with pymarkdown)
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
@@ -257,7 +281,7 @@ make docs/database_diagram.png
 
 This generates the sample database, then renders it with
 [eralchemy](https://eralchemy.com/), which invokes the Graphviz `dot`
-executable. So in addition to the poetry dependencies, the [GraphViz]
+executable. So in addition to the project dependencies, the [GraphViz]
 (https://graphviz.org/) binaries must be installed (e.g.
 `sudo apt install graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
 

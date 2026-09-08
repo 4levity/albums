@@ -57,7 +57,7 @@ class Transcoder:
         self._descriptor = profile
         self._ffmpeg_options = parts[:-1]
         self._tagger = AlbumTaggerProvider(ctx.config.library, id3v1=ctx.config.id3v1)
-        self._this_cache = self.ctx.config.transcoder_cache / xxhash.xxh3_64_hexdigest(self._descriptor)
+        self._this_cache = self.ctx.config.transcoder_cache / xxhash.xxh3_64_hexdigest(self._descriptor.encode("utf-8"))
 
     def in_cache(self, album: Album, track: Track) -> Path | None:
         """Return the cached transcoded path for a track if it exists, else ``None``."""

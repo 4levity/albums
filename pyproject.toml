@@ -16,6 +16,23 @@ license-files = ["COPYING"]
 readme = "README.md"
 keywords = ["flac", "mp3", "id3", "vorbis", "tags", "music", "library"]
 dynamic = ["version"]
+dependencies = [
+    "humanize >= 4.15.0",
+    "click >= 8.3.1",
+    "platformdirs >= 4.5.1",
+    "mutagen >= 1.47.0",
+    "rich >= 14.2.0",
+    "pyyaml >= 6.0.3",
+    "pillow >= 12.2.0",
+    "xxhash >= 3.6.0",
+    "rich-pixels >= 3.0.1",
+    "scikit-image >= 0.26.0",
+    "pathvalidate >= 3.3.1",
+    "prompt-toolkit >= 3.0.52",
+    "sqlalchemy >= 2.0.48",
+    "rbloom >= 1.5.4",
+    "av >= 17.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/4levity/albums"
@@ -27,72 +44,54 @@ Changelog = "https://4levity.github.io/albums/changelog/"
 [project.scripts]
 albums = "albums.cli.entry_point:albums_group"
 
-[build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+[dependency-groups]
+dev = [
+    "ruff >= 0.14.10",
+    "eralchemy[graphviz] >= 1.6.0",
+    "pytest-cov >= 7.0.0",
+    "pymarkdownlnt >= 0.9.34",
+    "zensical >= 0.0.18",
+    "pyright >= 1.1.408",
+    "pyinstaller >= 6.19.0",
+    "ansi2image >= 0.1.6",
+    "setuptools-scm >= 8.0",
+]
+test = [
+    "pytest >= 9.0.3",
+    "pytest-mock >= 3.15.1",
+]
 
-[tool.black]
-line-length = 150
+[tool.uv]
+# plain `uv sync` installs all dependency groups (dev + test)
+default-groups = ["dev", "test"]
+
+[build-system]
+requires = ["hatchling >= 1.26", "hatch-vcs >= 0.4"]
+build-backend = "hatchling.build"
+
+# Version is derived from git tags at build/install time (post-release style:
+# commits after tag X.Y.Z build as X.Y.Z.postN+<commit>, tags build as X.Y.Z).
+[tool.hatch.version]
+source = "vcs"
+raw-options = { version_scheme = "post-release", fallback_version = "0.0.0" }
+
+# The computed version is written to the package so `albums --version` and
+# pyinstaller builds report it. Generated file is gitignored and cleaned.
+[tool.hatch.build.hooks.vcs]
+version-file = "src/albums/_version.py"
 
 [tool.ruff]
 line-length = 150
-exclude = ["typings"]
-lint.extend-select = ["I"]
+# ruff handles Python only here; markdown/toml formatting is done with prettier
+extend-exclude = ["typings", "src/albums/_version.py", "**/*.md", "pyproject.toml"]
+# pin the rule set (pycodestyle/pyflakes errors + isort) so ruff default
+# rule changes do not alter the project's lint behavior
+lint.select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.pyright]
 ignore = ["tests", "**/typings"]
-exclude = [".venv", "**/.*", "**/__*", "**/typings", "**/node_modules", "**/__pycache__"]
+exclude = [".venv", "**/.*", "**/__*", "**/typings", "**/node_modules", "**/__pycache__", "src/albums/_version.py"]
 typeCheckingMode = "strict"
 stubPath = "typings"
 pythonPlatform = "Linux"
 pythonVersion = "3.12"
-
-[tool.poetry]
-version = "0.0.0"
-
-[tool.poetry.requires-plugins]
-poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
-poetry-pyinstaller-plugin = { version = ">=2.0.0,<3.0.0", extras = ["plugin"] }
-
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-style = "semver"
-
-[tool.poetry-dynamic-versioning.substitution]
-files = ["src/albums/__init__.py"] 
-
-[tool.poetry-pyinstaller-plugin.targets]
-albums = "src/albums/__main__.py"
-
-[tool.poetry.dependencies]
-python = "^3.12, <3.15"
-humanize = "^4.15.0"
-click = "^8.3.1"
-platformdirs = "^4.5.1"
-mutagen = "^1.47.0"
-rich = "^14.2.0"
-pyyaml = "^6.0.3"
-pillow = "^12.2.0"
-xxhash = "^3.6.0"
-rich-pixels = "^3.0.1"
-scikit-image = "^0.26.0"
-pathvalidate = "^3.3.1"
-prompt-toolkit = "^3.0.52"
-sqlalchemy = "^2.0.48"
-rbloom = "^1.5.4"
-av = "^17.0.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.14.10"
-eralchemy = {extras = ["graphviz"], version = "^1.6.0"}
-pytest-cov = "^7.0.0"
-pymarkdownlnt = "^0.9.34"
-zensical = "^0.0.18"
-pyright = "^1.1.408"
-pyinstaller = "^6.19.0"
-ansi2image = "^0.1.6"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^9.0.3"
-pytest-mock = "^3.15.1"

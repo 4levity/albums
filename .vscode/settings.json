@@ -6,6 +6,6 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "makefile.configureOnOpen": false,
-    "python-envs.defaultEnvManager": "ms-python.python:poetry",
-    "python-envs.defaultPackageManager": "ms-python.python:poetry"
+    "python-envs.defaultEnvManager": "ms-python.python:uv",
+    "python-envs.defaultPackageManager": "ms-python.python:uv"
 }

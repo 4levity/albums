@@ -4,10 +4,10 @@ __pycache__/
 .ruff_cache/
 .cache/
 *.log
-uv.lock
 .venv/
 .coverage
 /dist
+/src/albums/_version.py
 /tests/fixtures/libraries/
 /htmlcov
 /site

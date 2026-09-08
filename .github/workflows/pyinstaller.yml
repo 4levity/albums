@@ -12,17 +12,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v10
         with:
-          python-version: 3.12
-      - uses: abatilo/actions-poetry@v4
-        with:
-          poetry-version: 2.3.2
-          poetry-plugins: poetry-dynamic-versioning poetry-pyinstaller-plugin
+          python-version: "3.12"
       - name: Install dependencies
         run: make install
       - name: Build executable
-        run: poetry dynamic-versioning && make package && ls -l dist && ls -l dist/pyinstaller
+        run: make pyinstaller && ls -l dist && ls -l dist/pyinstaller
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
         with:
@@ -35,18 +31,22 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v10
         with:
-          python-version: 3.12
-      - uses: abatilo/actions-poetry@v4
-        with:
-          poetry-version: 2.3.2
-          poetry-plugins: poetry-dynamic-versioning poetry-pyinstaller-plugin
+          python-version: "3.12"
+      # the windows runner image has no make, so run the make pyinstaller steps directly
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked
         shell: bash
       - name: Build executable
-        run: poetry -v build
+        run: |
+          uv run python scripts/version.py write
+          platform=$(uv run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))")
+          uv run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
+            --collect-data albums \
+            --workpath build/$platform --distpath dist/pyinstaller/$platform \
+            --specpath build/$platform/.specs --contents-directory _albums_internal
+          ls -l dist/pyinstaller/$platform/albums
         shell: bash
       - name: Upload pyinstaller artifact
         uses: actions/upload-artifact@v7
