@@ -9,13 +9,6 @@ from albums.tagger import AlbumTagger, BasicField
 from ...helpers import apply_automatic_fix
 
 
-def context(checks, db=None):
-    ctx = Context()
-    ctx.db = db
-    ctx.config.checks = checks
-    return ctx
-
-
 class TestCheckSingleValueFields:
     def test_single_value_fields_ok(self):
         album = Album(
