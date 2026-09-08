@@ -205,3 +205,30 @@ class TestCheckCoverAvailable:
         assert mock_iglob.call_count == 2
         expect_cmd = ["sacad", "--preserve-format", "--size-tolerance", "60", "Foo", "Bar", "1200", "cover.png"]
         assert mock_run.call_args_list == [call(expect_cmd, cwd=Path(album.path))]
+
+    def test_fix_set_cover_raises_runtime_error_when_target_exists(self, mocker):
+        """Verify that _fix_set_cover raises RuntimeError when target file already exists, instead of SystemExit."""
+        album = Album(
+            path="foo" + os.sep,
+            tracks=[
+                Track(
+                    filename="1.flac",
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_BACK)],
+                ),
+            ],
+        )
+        result = CheckCoverAvailable(Context()).check(album)
+        assert result is not None
+        assert result.fixer is not None
+
+        tagger = MockTagger()
+        image_data = make_image_data()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mocker.patch.object(tagger, "get_image_data", return_value=image_data)
+
+        # Mock Path.exists() to return True (target file already exists)
+        mocker.patch("pathlib.Path.exists", return_value=True)
+
+        with pytest.raises(RuntimeError, match="target file already exists"):
+            apply_automatic_fix(result)

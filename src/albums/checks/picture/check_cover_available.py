@@ -130,8 +130,7 @@ class CheckCoverAvailable(Check):
             self.ctx.console.print(f"Creating {len(image_data)} byte {pic.picture_info.mime_type} file {escape(new_filename)}", highlight=False)
             new_path = self.ctx.config.library / album.path / new_filename
             if new_path.exists():
-                self.ctx.console.print(f"Error: the file {escape(str(new_path))} already exists (scan again)")
-                raise SystemExit(1)
+                raise RuntimeError(f"target file already exists: {new_path}")
             with open(new_path, "wb") as f:
                 f.write(image_data)
 
