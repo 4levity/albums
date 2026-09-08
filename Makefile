@@ -1,33 +1,34 @@
-POETRY := poetry
+UV := uv
 DOCKER := docker
 
-.PHONY: build install lint lint-markdown spelling fix test preview docs package clean
+.PHONY: build install lint lint-markdown spelling fix test preview docs package pyinstaller clean
 
 build: install lint test
 	@echo "build complete"
 
+# --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
 install: ## Install project dependencies
-	$(POETRY) install
+	$(UV) sync --locked
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
-	$(POETRY) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
+	$(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
 lint: lint-markdown ## Lint and static analysis
-	$(POETRY) run ruff check .
-	$(POETRY) run ruff format . --check
-	$(POETRY) run pyright
-	$(POETRY) run pyright -p tests
+	$(UV) run ruff check .
+	$(UV) run ruff format . --check
+	$(UV) run pyright
+	$(UV) run pyright -p tests
 
 spelling: ## Run spell check
 	$(DOCKER) run -i -v .:/workdir ghcr.io/streetsidesoftware/cspell:latest lint --gitignore * .github
 
 fix: install ## Automatically fix lint/format
-	$(POETRY) run ruff format
-	$(POETRY) run ruff check . --fix
+	$(UV) run ruff format
+	$(UV) run ruff check . --fix
 
 test: install ## Run all tests with coverage, fail on any warnings
-	$(POETRY) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
+	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
 # regenerate sample db if schema or schema-creation code changed
@@ -39,10 +40,10 @@ SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \
 sample/albums.db: $(SCHEMA_FILES)
 	@rm -rf sample/albums.db
 	@mkdir -p sample
-	$(POETRY) run python src/albums/database/connection.py sample/albums.db
+	$(UV) run python src/albums/database/connection.py sample/albums.db
 
 docs/database_diagram.png: sample/albums.db
-	$(POETRY) run eralchemy -i sqlite:///sample/albums.db -o docs/database_diagram.png
+	$(UV) run eralchemy -i sqlite:///sample/albums.db -o docs/database_diagram.png
 	@ls -l docs/database_diagram.png
 
 # Render the real `albums --help` output to an image (via ansi2image, bundled JetBrains Mono font).
@@ -50,30 +51,46 @@ docs/database_diagram.png: sample/albums.db
 # and XDG_CONFIG_HOME='~/.config' (Linux) keeps the epilog's default-db path machine independent.
 docs/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 	@rm -f $@ $@.tmp $@.txt
-	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(POETRY) run albums --help > $@.tmp
+	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(UV) run albums --help > $@.tmp
 	@sed 1d $@.tmp > $@.txt
-	@$(POETRY) run ansi2image $@.txt -o $@
+	@$(UV) run ansi2image $@.txt -o $@
 	@rm -f $@.tmp $@.txt
 	@test -s $@
 	@ls -l $@
 
-preview: docs/database_diagram.png docs/screenshot_help.png ## Preview docs (does not automatically install)
-	$(POETRY) run zensical serve
+# Build a standalone executable for this platform in dist/pyinstaller/<platform>/albums/.
+# The version is written to src/albums/_version.py first so the executable
+# reports the git-derived version (see scripts/version.py). --collect-data bundles
+# the package's non-Python files (the database migration SQL). Note: on Windows
+# runners, run these same commands directly (no make available).
+pyinstaller: install ## Build standalone pyinstaller executable for this platform
+	$(UV) run python scripts/version.py write
+	platform=$$($(UV) run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))") && \
+	$(UV) run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
+	--collect-data albums \
+	--workpath build/$$platform --distpath dist/pyinstaller/$$platform \
+	--specpath build/$$platform/.specs --contents-directory _albums_internal && \
+	ls -l dist/pyinstaller/$$platform/albums
+
+package: ## Create sdist and wheel in dist/
+	$(UV) build
 
 docs: install lint-markdown docs/database_diagram.png docs/screenshot_help.png ## Build docs
-	$(POETRY) run zensical build --clean
+	$(UV) run zensical build --clean
 	# portable version of sed -i (GNU-only): write to tmp file and move into place
-	@version=$$($(POETRY) dynamic-versioning show) && \
+	@version=$$($(UV) run python scripts/version.py) && \
 	echo "injecting version $$version" && \
 	sed "s/%%version_placeholder%%/$$version/g" site/index.html > site/index.html.tmp && \
 	mv site/index.html.tmp site/index.html
 
-package: ## Create distribution
-	$(POETRY) build
+preview: docs/database_diagram.png docs/screenshot_help.png ## Preview docs (does not automatically install)
+	$(UV) run zensical serve
 
 clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf dist
+	rm -rf build
+	rm -rf src/albums/_version.py
 	rm -rf tests/fixtures/libraries
 	rm -rf docs/database_diagram.png docs/screenshot_help.png docs/screenshot_help.png.tmp docs/screenshot_help.png.txt
 	rm -rf site

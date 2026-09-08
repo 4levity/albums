@@ -1,6 +1,9 @@
+import re
+
 import albums
 
 
 class TestApp:
     def test_app_version(self):
-        assert albums.__version__ == "0.0.0"  # poetry-dynamic-versioning does not substitute version during `poetry run pytest ...`
+        # version is derived from git tags at install/build time (see scripts/version.py)
+        assert re.fullmatch(r"\d+\.\d+\.\d+(?:[.+a-z0-9]+)?", albums.__version__)
