@@ -4,7 +4,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
 from albums.checks.helpers import album_display_name
 from albums.entities import Album
-from albums.words import a_plural, is_plural
+from albums.words import a_plural, count_phrase
 
 
 class CheckAlbumUnderAlbum(Check):
@@ -22,5 +22,5 @@ class CheckAlbumUnderAlbum(Check):
 
         if matches > 0:
             return CheckResult(
-                f"there {is_plural(matches, 'album')} in {a_plural(matches, 'directory')} under album {album_display_name(self.ctx, album)}"
+                f"there {count_phrase(matches, 'album')} in {a_plural(matches, 'directory')} under album {album_display_name(self.ctx, album)}"
             )

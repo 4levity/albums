@@ -8,7 +8,7 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
 from albums.entities import Album
 from albums.tagger import Picture, PictureType
-from albums.words import is_plural
+from albums.words import count_phrase
 
 
 class CheckConflictingEmbedded(Check):
@@ -28,5 +28,5 @@ class CheckConflictingEmbedded(Check):
             )
             if conflict_type:
                 # TODO preview and remove or change type of conflicting images
-                message = f"there {is_plural(pics_by_type[conflict_type], 'different image')} for {conflict_type.name} in {escape(track.filename)}"
+                message = f"there {count_phrase(pics_by_type[conflict_type], 'different image')} for {conflict_type.name} in {escape(track.filename)}"
                 return CheckResult(message)

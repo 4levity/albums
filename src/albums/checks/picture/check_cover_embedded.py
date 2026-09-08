@@ -15,7 +15,7 @@ from albums.interactive import render_image_table
 from albums.picture import PictureInfo, mime_type_to_format
 from albums.tagger import Cap, Picture, PictureType
 from albums.utility import read_binary_file
-from albums.words import is_plural, plural, pluralize
+from albums.words import count_phrase, plural, pluralize
 
 logger: Final = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ class CheckCoverEmbedded(Check):
             unique_covers = unique_track_covers.union(Picture(file.picture_info, PictureType.COVER_FRONT, "") for file in cover_files)
             if len(unique_covers) > 1:
                 return CheckResult(
-                    f"{problem_summary}, but there {is_plural(unique_covers, 'unique front cover')} and no cover_source (enable cover-unique for fixes)",
+                    f"{problem_summary}, but there {count_phrase(unique_covers, 'unique front cover')} and no cover_source (enable cover-unique for fixes)",
                 )
             if len(unique_covers) == 1:
                 # there is one unique cover. if we just mark it as cover_source, embedded images can be automatically fixed on recheck

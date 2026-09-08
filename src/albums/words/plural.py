@@ -55,14 +55,14 @@ def plural(items: int | Sized, single_thing: str) -> str:
     return f"{count} {pluralize(single_thing, items)}"
 
 
-def is_plural(items: int | Sized, single_thing: str) -> str:
+def count_phrase(items: int | Sized, single_thing: str) -> str:
     """Given a count or Sized object and a singular noun, return a phrase
     of the form "is 1 apple" with the correct grammatical number.
 
     Examples:
-        >>> is_plural(1, "cat")
+        >>> count_phrase(1, "cat")
         "is 1 cat"
-        >>> is_plural(2, "cat")
+        >>> count_phrase(2, "cat")
         "are 2 cats"
 
     Args:
