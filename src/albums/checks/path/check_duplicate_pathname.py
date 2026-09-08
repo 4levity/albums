@@ -27,4 +27,4 @@ class CheckDuplicatePathname(Check):
 
         if issues:
             # TODO fix by automatically renaming affected files
-            return CheckResult(f"duplicate filenames: {', '.join(list(issues))}")
+            return CheckResult(f"duplicate filenames: {', '.join(sorted(issues))}")

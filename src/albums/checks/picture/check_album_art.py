@@ -59,7 +59,7 @@ class CheckAlbumArt(Check):
                 lambda: render_image_table(self.ctx, self.tagger.get(album.path), [pic for pic, _ in extract], picture_sources),
             )
             return CheckResult(
-                ", ".join(list(issues)),
+                ", ".join(issues),
                 Fixer(
                     lambda _: self._fix_extract(album, picture_sources),
                     options,

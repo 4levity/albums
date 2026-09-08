@@ -143,7 +143,7 @@ class CheckCoverDimensions(Check):
                 issues.add(message)
 
         if issues:
-            return CheckResult(", ".join(list(issues)))
+            return CheckResult(", ".join(sorted(issues)))
 
     def _fix_save_new_cover(self, album: Album, source_filename: str | None, get_image_data: Callable[[], Tuple[Picture, Image.Image, bytes]]):
         (picture, _, image_data) = get_image_data()

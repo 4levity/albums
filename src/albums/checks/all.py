@@ -94,4 +94,4 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     CheckAlbumUnderAlbum,
 )
 
-ALL_CHECK_NAMES: Final = frozenset({check.name for check in ALL_CHECKS})
+ALL_CHECK_NAMES: Final = frozenset(check.name for check in ALL_CHECKS)

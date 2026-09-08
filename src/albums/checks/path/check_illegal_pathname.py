@@ -35,7 +35,7 @@ class CheckIllegalPathname(Check):
             if len(final_names) != len(set(final_names)):
                 # two or more files would end up with the same name after sanitizing, so no automatic fix is possible
                 return CheckResult(
-                    f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))} (automatic fix not possible due to filename conflict)"
+                    f"illegal {pluralize('filename', issues)}: {', '.join(sorted(issues))} (automatic fix not possible due to filename conflict)"
                 )
 
             options = [">> Sanitize all filenames"]
@@ -51,7 +51,7 @@ class CheckIllegalPathname(Check):
                 ],
             )
             return CheckResult(
-                f"illegal {pluralize('filename', issues)}: {', '.join(list(issues))}",
+                f"illegal {pluralize('filename', issues)}: {', '.join(sorted(issues))}",
                 Fixer(lambda _: self._fix_sanitize_filenames(album), options, False, option_automatic_index, table),
             )
 
