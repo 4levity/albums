@@ -223,3 +223,23 @@ class TestCheckCoverDimensions:
         result = CheckCoverDimensions(Context()).check(album)
         assert result is not None
         assert result.message == "COVER_FRONT image is too large (9001x9001)"
+
+    def test_squarify_square_image(self, mocker):
+        """Squarify on a square image should be a no-op (not raise)."""
+        from albums.tagger.types import Picture
+
+        pic_info = PictureInfo("image/png", 100, 100, 24, 1, b"")
+        ctx = Context()
+        check = CheckCoverDimensions(ctx)
+        image_data = make_image_data(100, 100, "PNG")
+        tagger = MockTagger()
+        mock_tagger_open = mocker.patch.object(AlbumTagger, "open")
+        mock_tagger_open.return_value.__enter__.return_value = tagger
+        mocker.patch.object(tagger, "get_image_data", return_value=image_data)
+
+        pic = Picture(pic_info, PictureType.COVER_FRONT, "")
+        result = check._squarify(pic, "foo", "folder.png")
+        image, data, mime = result
+        assert image.width == 100
+        assert image.height == 100
+        assert mime == "image/png"

@@ -208,14 +208,9 @@ class CheckCoverDimensions(Check):
         image = Image.open(io.BytesIO(image_data))
         if image.mode not in {"RGB", "L"}:
             image = image.convert("RGB")
-        if image.width < image.height:
-            target_width = image.width
-            target_height = image.width
-        elif image.width > image.height:
-            target_width = image.height
-            target_height = image.height
-        else:
-            raise ValueError("image was already square")
+        # the common case is width != height (see _can_squarify); a square image
+        # simply results in a zero reduction below, which is a valid (no-op) crop
+        target_width = target_height = min(image.width, image.height)
 
         if self.create_mime_type == "" and image.format:
             mime_type = format_to_mime_type(image.format)
