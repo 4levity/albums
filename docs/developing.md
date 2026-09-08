@@ -12,8 +12,8 @@ icon: lucide/computer
 
 ## Overview
 
-Run `make` to install dependencies + lint + test. The first run requires
-Python 3.12+.
+Run `make` to install dependencies + lint + test. The first run requires Python
+3.12+.
 
 ### Run
 
@@ -92,34 +92,34 @@ The `check()` method gets an ORM `Album` with loaded tracks. Check and fix via
 
 #### Check guidelines: fast and stateless
 
-Two rules keep checks repeatable and fast (a million checks should run in a
-few seconds):
+Two rules keep checks repeatable and fast (a million checks should run in a few
+seconds):
 
 1. **`check()` should rely on data in the database.** It should not read tags
-   from files, or perform file system or network operations, or anything
-   "slow". Tag data (fields, pictures, stream info) is loaded during the scan
-   and available on the ORM entities, and additional queries via
-   `self.session` are fine. Any exception must be defensible and commented,
-   e.g. `folder-name` does a single `exists()` stat - and only for an album
-   that has already failed the check - because a rename collision depends on
-   disk state that is not in the database.
+   from files, or perform file system or network operations, or anything "slow".
+   Tag data (fields, pictures, stream info) is loaded during the scan and
+   available on the ORM entities, and additional queries via `self.session` are
+   fine. Any exception must be defensible and commented, e.g. `folder-name` does
+   a single `exists()` stat - and only for an album that has already failed the
+   check - because a rename collision depends on disk state that is not in the
+   database.
 2. **Checks should be stateless, holding only configuration.** Instance
-   attributes should be set in `init()` from the check configuration (or be
-   the injected `ctx`/`tagger`/`session`), and `check()` must not set any
-   state on the Check object. The one exception is `duplicate-album`, which
-   holds an in-memory index of the library built in `__init__` to compare
-   albums across the whole library; see its docstring for the justification.
+   attributes should be set in `init()` from the check configuration (or be the
+   injected `ctx`/`tagger`/`session`), and `check()` must not set any state on
+   the Check object. The one exception is `duplicate-album`, which holds an
+   in-memory index of the library built in `__init__` to compare albums across
+   the whole library; see its docstring for the justification.
 
 Related guidance:
 
-- Slow work belongs in the **fix phase**: the fixer's `fix(option)` callback
-  may read/write files, rename, or download (e.g. `cover-available` runs an
-  external download command).
+- Slow work belongs in the **fix phase**: the fixer's `fix(option)` callback may
+  read/write files, rename, or download (e.g. `cover-available` runs an external
+  download command).
 - Table row data for interactive display can be **deferred** by passing a row
   factory callable instead of rows (`Fixer.get_table()` resolves it only when
-  the table is actually displayed). This keeps slow work such as image
-  decoding (picture checks) or reading the album folder for proposed
-  filenames (`unreadable-track`) out of `check()`.
+  the table is actually displayed). This keeps slow work such as image decoding
+  (picture checks) or reading the album folder for proposed filenames
+  (`unreadable-track`) out of `check()`.
 
 #### Fixers
 
@@ -199,6 +199,24 @@ files with basic fields must read/write each one. Add a tag field by:
    [`tagger/file_types/`](src/albums/tagger/file_types/)
 5. Add a test case in the appropriate `tests/checks/fields/` test file
 
+## Commit style
+
+This project uses
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). These
+format types are recommended:
+
+- `build` : Changes to the build process or tools and libraries
+- `deps` : Changes to upstream dependencies only
+- `docs` : Documentation-only changes
+- `feat` : A new feature
+- `fix` : A bug fix
+- `refactor` : A code change that neither fixes a bug nor adds a feature
+- `style` : Changes that do not affect the meaning of the code
+- `test` : Adding tests or correcting existing tests
+
+The subject line of the commit message should be 50 characters maximum. The
+commit body should be omitted for small changes.
+
 ## Tips
 
 ### Lint, format and static analysis
@@ -240,8 +258,8 @@ make docs/database_diagram.png
 This generates the sample database, then renders it with
 [eralchemy](https://eralchemy.com/), which invokes the Graphviz `dot`
 executable. So in addition to the poetry dependencies, the [GraphViz]
-(https://graphviz.org/) binaries must be installed (e.g. `sudo apt install
-graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
+(https://graphviz.org/) binaries must be installed (e.g.
+`sudo apt install graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
 
 ![albums database schema diagram](./database_diagram.png)
 
