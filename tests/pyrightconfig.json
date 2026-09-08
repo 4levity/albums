@@ -6,5 +6,5 @@
   "reportAttributeAccessIssue": false,
   "reportOptionalMemberAccess": false,
   "reportOptionalSubscript": false,
-  "reportPrivateImportUsage": false,
+  "reportPrivateImportUsage": false
 }

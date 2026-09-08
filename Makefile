@@ -1,7 +1,7 @@
 POETRY := poetry
 DOCKER := docker
 
-.PHONY: build install lint lint-markdown spelling fix test integration-test preview docs package clean
+.PHONY: build install lint lint-markdown spelling fix test coverage preview docs package clean
 
 build: install lint test
 	@echo "build complete"
@@ -9,8 +9,9 @@ build: install lint test
 install: ## Install project dependencies
 	$(POETRY) install
 
+# glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
-	$(POETRY) run pymarkdown --strict-config scan *.md **/*.md
+	$(POETRY) run pymarkdown --strict-config scan '**/*.md'
 
 lint: lint-markdown ## Lint and static analysis
 	$(POETRY) run ruff check .
@@ -19,23 +20,27 @@ lint: lint-markdown ## Lint and static analysis
 	$(POETRY) run pyright -p tests
 
 spelling: ## Run spell check
-	$(DOCKER) run -it -v .:/workdir ghcr.io/streetsidesoftware/cspell:latest lint --gitignore * .github
+	$(DOCKER) run -i -v .:/workdir ghcr.io/streetsidesoftware/cspell:latest lint --gitignore * .github
 
 fix: install ## Automatically fix lint/format
 	$(POETRY) run ruff format
 	$(POETRY) run ruff check . --fix
 
-test-no-warnings: install ## Run all tests without coverage, fail on any warnings
+test: install ## Run all tests without coverage, fail on any warnings
 	$(POETRY) run pytest -v --max-warnings=0
 
-test: test-no-warnings install ## Run all tests with coverage (depends on test-no-warnings)
-	# Running tests twice: once without coverage to catch new warnings,
-	# and once with coverage for coverage reports (warnings ignored during coverage run)
-	$(POETRY) run pytest --cov=src/albums --cov-report=html
+coverage: install ## Run all tests with coverage
+	# The coverage tracer changes GC timing, surfacing ResourceWarnings for unclosed
+	# sqlite connections that never appear in a regular run. Ignorable here: the
+	# `test` target already fails on any warning. (Other warning classes stay visible.)
+	$(POETRY) run pytest "-W ignore::ResourceWarning" --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 
-# regenerate sample db if schema changed
-SCHEMA_FILES := $(wildcard src/albums/database/migrations/*)
+# regenerate sample db if schema or schema-creation code changed
+SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \
+	src/albums/database/migrations/migrate.py \
+	src/albums/database/migrations/__init__.py \
+	src/albums/database/connection.py
 
 sample/albums.db: $(SCHEMA_FILES)
 	@rm -rf sample/albums.db
@@ -49,7 +54,6 @@ docs/database_diagram.png: sample/albums.db
 # Render the real `albums --help` output to an image (via ansi2image, bundled JetBrains Mono font).
 # FORCE_COLOR=1 forces ANSI color (output is piped, not a tty), COLUMNS=100 fixes rich's wrap width,
 # and XDG_CONFIG_HOME='~/.config' (Linux) keeps the epilog's default-db path machine independent.
-# sed 1d drops the blank line rich pads above the Usage line.
 docs/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 	@rm -f $@ $@.tmp $@.txt
 	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(POETRY) run albums --help > $@.tmp
@@ -64,8 +68,11 @@ preview: docs/database_diagram.png docs/screenshot_help.png ## Preview docs (doe
 
 docs: install lint-markdown docs/database_diagram.png docs/screenshot_help.png ## Build docs
 	$(POETRY) run zensical build --clean
-	@echo injecting version `poetry dynamic-versioning show`
-	@sed -i s/%%version_placeholder%%/`poetry dynamic-versioning show`/g site/index.html
+	# portable version of sed -i (GNU-only): write to tmp file and move into place
+	@version=$$($(POETRY) dynamic-versioning show) && \
+	echo "injecting version $$version" && \
+	sed "s/%%version_placeholder%%/$$version/g" site/index.html > site/index.html.tmp && \
+	mv site/index.html.tmp site/index.html
 
 package: ## Create distribution
 	$(POETRY) build

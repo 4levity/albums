@@ -237,6 +237,12 @@ Database migrations are SQL files in
 make docs/database_diagram.png
 ```
 
+This generates the sample database, then renders it with
+[eralchemy](https://eralchemy.com/), which invokes the Graphviz `dot`
+executable. So in addition to the poetry dependencies, the [GraphViz]
+(https://graphviz.org/) binaries must be installed (e.g. `sudo apt install
+graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
+
 ![albums database schema diagram](./database_diagram.png)
 
 ### Querying the Database
@@ -246,4 +252,6 @@ inspect library data.
 
 ### Previewing Docs
 
-`make preview` requires [GraphViz](https://graphviz.org/).
+`make preview` builds the documentation assets first (including the database
+diagram, which requires Graphviz - see [Database Schema](#database-schema)
+above) and then serves the site with zensical.
