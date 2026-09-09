@@ -1,0 +1,13 @@
+{
+  "name": "albums",
+  "description": "Static-check tools for the albums project (cspell, prettier, pyright) - see Makefile",
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "devDependencies": {
+    "cspell": "10.3.0",
+    "prettier": "3.9.6",
+    "pyright": "1.1.411"
+  }
+}

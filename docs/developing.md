@@ -8,8 +8,7 @@ icon: lucide/computer
 
 - [uv](https://docs.astral.sh/uv/) (manages the Python installation and project
   dependencies)
-- [Node.js](https://nodejs.org/) 22.18+ (needed for cspell, prettier and
-  pyright in `make static` / `make fix`)
+- [Node.js](https://nodejs.org/) 22.18+ (lint tools: cspell, prettier, pyright)
 - `make`
 
 ## Overview
@@ -22,6 +21,11 @@ The dependency lockfile (`uv.lock`) is committed, and `make install` fails if it
 is out of date with `pyproject.toml`. After changing dependencies, run `uv lock`
 (or `uv add`/`uv remove`) and commit the updated lockfile.
 
+The static-check tools (cspell, prettier, pyright) are Node.js packages defined
+in `package.json` with versions pinned in `package-lock.json`. `make install-js`
+installs them into `node_modules/`; `make static` and `make fix` run it
+automatically, and it fails if the lockfile is out of date with `package.json`.
+
 ### Run
 
 Run the app with `uv run albums [...]`. The first time you do, you may run
@@ -31,16 +35,17 @@ used by a regular installation of `albums`).
 
 ### Project Files and Folders
 
-| Path                | Description                                          |
-| ------------------- | ---------------------------------------------------- |
-| `.github/workflows` | Github workflows (build/publish/docs)                |
-| `docs/`             | This documentation                                   |
-| `src/albums/`       | Python application (structure below)                 |
-| `scripts/`          | Development scripts (e.g. `version.py`)              |
-| `tests/`            | Tests!                                               |
-| `Makefile`          | The Makefile                                         |
-| `pyproject.toml`    | Project definition, tool configuration, dependencies |
-| `zensical.toml`     | Configuration for this documentation                 |
+| Path                | Description                                            |
+| ------------------- | ------------------------------------------------------ |
+| `.github/workflows` | Github workflows (build/publish/docs)                  |
+| `docs/`             | This documentation                                     |
+| `src/albums/`       | Python application (structure below)                   |
+| `scripts/`          | Development scripts (e.g. `version.py`)                |
+| `tests/`            | Tests!                                                 |
+| `Makefile`          | The Makefile                                           |
+| `package.json`      | Node.js static-check tools (cspell, prettier, pyright) |
+| `pyproject.toml`    | Project definition, tool configuration, dependencies   |
+| `zensical.toml`     | Configuration for this documentation                   |
 
 (not all files/folders included)
 
@@ -260,22 +265,19 @@ with `make fix`.
   rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
   files only (markdown is linted with pymarkdown)
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
-  strict mode for main project, looser rules for tests. Like cSpell, it is run
-  via [npx](https://www.npmjs.com/package/npx) (fetched on first use, cached
-  locally) with the version pinned in the `Makefile`
+  strict mode for main project, looser rules for tests. Like cSpell and
+  Prettier, it is a Node.js package installed by `make install-js` (versions
+  pinned in `package.json` / `package-lock.json`) and run via
+  [npx](https://www.npmjs.com/package/npx) from `node_modules/`
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
 - markdown reflow with [Prettier](https://prettier.io/) - wraps prose at 80
-  columns, run by `make fix` (same `.prettierrc` config as the IDE)
+  columns, run by `make fix` (uses `.prettierrc` config)
 
 ### Spell check
 
 Builds require [cSpell](https://cspell.org/) spell check to pass.
-`make spelling` runs cSpell via [npx](https://www.npmjs.com/package/npx) - it is
-fetched on first use and cached locally, so no Node project files are needed in
-the repo. The cSpell version is pinned in the `Makefile`, CI runs the same
-target as part of `make static`, and the cSpell IDE extension reads the same
-`cspell.json`, so local, CI and IDE checks all behave identically. Add valid
-words and relevant technical terms to `cspell.json`.
+`make spelling` runs cSpell via [npx](https://www.npmjs.com/package/npx). Add
+valid words and relevant technical terms to `cspell.json`.
 
 ### IDE
 

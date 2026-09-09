@@ -1,15 +1,12 @@
 UV := uv
-# cSpell, Prettier and Pyright are installed on demand by npx (cached in
-# ~/.npm, no npm project files needed). Pinned here so all developers and CI
-# use the same version - update with `npm view cspell version` /
-# `npm view prettier version` / `npm view pyright version` (requires Node.js
-# 22.18+). Pyright runs via `uv run` so VIRTUAL_ENV points at the project
-# virtualenv, which pyright needs to resolve the project's packages.
-CSPELL := npx --yes cspell@10.3.0
-PRETTIER := npx --yes prettier@3.9.6
-PYRIGHT := $(UV) run npx --yes pyright@1.1.411
+# cSpell, Prettier and Pyright are lint-only Node.js tools, defined in
+# package.json and installed by `make install-js` (requires Node.js 22.18+).
+CSPELL := npx --no-install cspell
+PRETTIER := npx --no-install prettier
+# pyright runs via `uv run` for correct project environment
+PYRIGHT := $(UV) run npx --no-install pyright
 
-.PHONY: build install static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
+.PHONY: build install install-js static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
 build: install static test
 	@echo "build complete"
@@ -18,8 +15,12 @@ build: install static test
 install: ## Install project dependencies
 	$(UV) sync --locked
 
-# Umbrella for all static checks (no code execution) - the gate for builds, CI
-# and the commit hook. Subtargets run in order, cheapest first.
+install-js: node_modules ## Install static-check Node.js dependencies
+
+node_modules: package.json package-lock.json
+	npm ci
+
+# cheapest first:
 static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
 
 lint: ## Lint and format-check Python (ruff)
@@ -30,14 +31,14 @@ lint: ## Lint and format-check Python (ruff)
 lint-markdown: ## Lint markdown
 	$(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
-spelling: ## Run spell check
+spelling: install-js ## Run spell check
 	$(CSPELL) lint --gitignore * .github
 
-typecheck: ## Type check (pyright: strict for src, looser for tests)
+typecheck: install-js ## Type check (pyright: strict for src, looser for tests)
 	$(PYRIGHT)
 	$(PYRIGHT) -p tests
 
-fix: install ## Automatically fix lint/format
+fix: install install-js ## Automatically fix lint/format
 	$(UV) run ruff format
 	$(UV) run ruff check . --fix
 	# reflow markdown with the same config the IDE uses (.prettierrc)
