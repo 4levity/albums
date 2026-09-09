@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.12"
       - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.12"
       # the windows runner image has no make, so run the make pyinstaller steps directly
