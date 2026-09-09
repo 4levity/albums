@@ -14,18 +14,15 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.14"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
       - name: Install dependencies
         run: make install
       - name: Lint/analyze source
         run: make lint
       - name: Spell check
-        uses: streetsidesoftware/cspell-action@v8
-        with:
-          files: |
-            *
-            **/*
-            .github
-          incremental_files_only: false
+        run: make spelling
       - name: Run tests
         env:
           TERM: "dumb"

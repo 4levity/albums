@@ -1,9 +1,12 @@
 UV := uv
-DOCKER := docker
+# cSpell is installed on demand by npx (cached in ~/.npm, no npm project files
+# needed). Pinned here so all developers and CI use the same version - update
+# with `npm view cspell version` (requires Node.js 22.18+).
+CSPELL := npx --yes cspell@10.3.0
 
 .PHONY: build install lint lint-markdown spelling fix test preview docs package pyinstaller clean
 
-build: install lint test
+build: install lint spelling test
 	@echo "build complete"
 
 # --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
@@ -20,8 +23,9 @@ lint: lint-markdown ## Lint and static analysis
 	$(UV) run pyright
 	$(UV) run pyright -p tests
 
-spelling: ## Run spell check
-	$(DOCKER) run -i -v .:/workdir ghcr.io/streetsidesoftware/cspell:latest lint --gitignore * .github
+spelling: ## Run spell check (requires Node.js, see docs/developing.md)
+	@command -v npx >/dev/null 2>&1 || { echo "spelling requires Node.js (https://nodejs.org) - install it and re-run" >&2; exit 1; }
+	$(CSPELL) lint --gitignore * .github
 
 fix: install ## Automatically fix lint/format
 	$(UV) run ruff format

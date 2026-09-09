@@ -7,6 +7,7 @@ icon: lucide/computer
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (manages the Python installation and project dependencies)
+- [Node.js](https://nodejs.org/) 22.18+ (only needed for the `spelling` target)
 - `make`
 
 ## Overview
@@ -257,9 +258,13 @@ fixed with `make fix`.
 
 ### Spell check
 
-CI builds require [cSpell](https://cspell.org/) spell check to pass. The
-`make spelling` target is separate from `lint` because it requires Docker to be
-installed. Add valid words and relevant technical terms to `cspell.json`.
+Builds require [cSpell](https://cspell.org/) spell check to pass. `make
+spelling` runs cSpell via [npx](https://www.npmjs.com/package/npx) - it is
+fetched on first use and cached locally, so no Node project files are needed
+in the repo. The cSpell version is pinned in the `Makefile`, CI runs the same
+`make spelling` target, and the cSpell IDE extension reads the same
+`cspell.json`, so local, CI and IDE checks all behave identically. Add valid
+words and relevant technical terms to `cspell.json`.
 
 ### IDE
 
