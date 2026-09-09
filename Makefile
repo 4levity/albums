@@ -4,28 +4,34 @@ UV := uv
 # with `npm view cspell version` (requires Node.js 22.18+).
 CSPELL := npx --yes cspell@10.3.0
 
-.PHONY: build install lint lint-markdown spelling fix test preview docs package pyinstaller clean
+.PHONY: build install static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
-build: install lint spelling test
+build: install static test
 	@echo "build complete"
 
 # --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
 install: ## Install project dependencies
 	$(UV) sync --locked
 
+# Umbrella for all static checks (no code execution) - the gate for builds, CI
+# and the commit hook. Subtargets run in order, cheapest first.
+static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
+
+lint: ## Lint and format-check Python (ruff)
+	$(UV) run ruff check .
+	$(UV) run ruff format . --check
+
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
 	$(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
-lint: lint-markdown ## Lint and static analysis
-	$(UV) run ruff check .
-	$(UV) run ruff format . --check
-	$(UV) run pyright
-	$(UV) run pyright -p tests
-
-spelling: ## Run spell check (requires Node.js, see docs/developing.md)
+spelling: ## Run spell check
 	@command -v npx >/dev/null 2>&1 || { echo "spelling requires Node.js (https://nodejs.org) - install it and re-run" >&2; exit 1; }
 	$(CSPELL) lint --gitignore * .github
+
+typecheck: ## Type check (pyright: strict for src, looser for tests)
+	$(UV) run pyright
+	$(UV) run pyright -p tests
 
 fix: install ## Automatically fix lint/format
 	$(UV) run ruff format

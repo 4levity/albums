@@ -19,10 +19,8 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: make install
-      - name: Lint/analyze source
-        run: make lint
-      - name: Spell check
-        run: make spelling
+      - name: Static checks
+        run: make static
       - name: Run tests
         env:
           TERM: "dumb"

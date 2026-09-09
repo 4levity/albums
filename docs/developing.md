@@ -6,25 +6,28 @@ icon: lucide/computer
 
 ## Prerequisites
 
-- [uv](https://docs.astral.sh/uv/) (manages the Python installation and project dependencies)
-- [Node.js](https://nodejs.org/) 22.18+ (only needed for the `spelling` target)
+- [uv](https://docs.astral.sh/uv/) (manages the Python installation and project
+  dependencies)
+- [Node.js](https://nodejs.org/) 22.18+ (needed for the spell check in
+  `make static`)
 - `make`
 
 ## Overview
 
-Run `make` to install dependencies + lint + test. If no suitable Python (3.12+)
-is installed, uv will download and use one automatically.
+Run `make` to install dependencies + static checks (lint, format, types,
+spelling) + test. If no suitable Python (3.12+) is installed, uv will download
+and use one automatically.
 
 The dependency lockfile (`uv.lock`) is committed, and `make install` fails if it
-is out of date with `pyproject.toml`. After changing dependencies, run
-`uv lock` (or `uv add`/`uv remove`) and commit the updated lockfile.
+is out of date with `pyproject.toml`. After changing dependencies, run `uv lock`
+(or `uv add`/`uv remove`) and commit the updated lockfile.
 
 ### Run
 
 Run the app with `uv run albums [...]`. The first time you do, you may run
-`uv run albums --db-file albums.db init` in the project directory, which
-will create a "local" `albums.db` there for a test environment (separate from
-the db used by a regular installation of `albums`).
+`uv run albums --db-file albums.db init` in the project directory, which will
+create a "local" `albums.db` there for a test environment (separate from the db
+used by a regular installation of `albums`).
 
 ### Project Files and Folders
 
@@ -52,12 +55,13 @@ every commit has a distinct version.
 
 During install or build, the computed version is written to
 `src/albums/_version.py` (gitignored), which the app reads for
-`albums --version`. `scripts/version.py` prints the same version for the
-current checkout, and `write` writes the `_version.py` file:
+`albums --version`. `scripts/version.py` prints the same version for the current
+checkout, and `write` writes the `_version.py` file:
 
 - `make package` builds the sdist and wheel in `dist/` (used to publish to PyPI)
 - `make pyinstaller` writes the version, then builds a standalone executable in
-  `dist/pyinstaller/<platform>/albums/` with [PyInstaller](https://pyinstaller.org/)
+  `dist/pyinstaller/<platform>/albums/` with
+  [PyInstaller](https://pyinstaller.org/)
 - `make docs` injects the version into the built docs site
 
 ### Python Project Structure
@@ -245,24 +249,27 @@ commit body should be omitted for small changes.
 
 ### Lint, format and static analysis
 
-No warnings, only pass/fail. Some lint/format problems can be automatically
-fixed with `make fix`.
+No warnings, only pass/fail. `make static` runs all static checks (it is the
+gate for builds, CI and the commit hook); each tool also has its own target for
+targeted runs: `make lint` (ruff), `make lint-markdown`, `make typecheck`
+(pyright), `make spelling`. Some lint/format problems can be automatically fixed
+with `make fix`.
 
 - lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
-  [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes
-  error rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on
-  Python files only (markdown is linted with pymarkdown)
+  [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error
+  rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
+  files only (markdown is linted with pymarkdown)
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
 
 ### Spell check
 
-Builds require [cSpell](https://cspell.org/) spell check to pass. `make
-spelling` runs cSpell via [npx](https://www.npmjs.com/package/npx) - it is
-fetched on first use and cached locally, so no Node project files are needed
-in the repo. The cSpell version is pinned in the `Makefile`, CI runs the same
-`make spelling` target, and the cSpell IDE extension reads the same
+Builds require [cSpell](https://cspell.org/) spell check to pass.
+`make spelling` runs cSpell via [npx](https://www.npmjs.com/package/npx) - it is
+fetched on first use and cached locally, so no Node project files are needed in
+the repo. The cSpell version is pinned in the `Makefile`, CI runs the same
+target as part of `make static`, and the cSpell IDE extension reads the same
 `cspell.json`, so local, CI and IDE checks all behave identically. Add valid
 words and relevant technical terms to `cspell.json`.
 
