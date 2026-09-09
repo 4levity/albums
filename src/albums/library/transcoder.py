@@ -37,6 +37,12 @@ class CacheStat:
         return self.timestamp < other.timestamp
 
 
+# Single shared view of every profile cache on disk (name -> stats). Deliberately global, not
+# per-instance: shrink_cache() must see other profiles' caches in order to evict the oldest
+# one. Every value derives from the on-disk cache, so no two instances can disagree.
+_global_cache_stats: dict[str, CacheStat] = {}
+
+
 class Transcoder:
     """Transcode tracks on demand into a per-profile cache, shrinking older profile caches to fit the configured size."""
 
@@ -48,7 +54,6 @@ class Transcoder:
     _this_cache: Path
     _descriptor: str
     _ffmpeg_options: Sequence[str]
-    _cache_stats: dict[str, CacheStat] = {}
 
     def __init__(self, ctx: Context, profile: str):
         self.ctx = ctx
@@ -74,22 +79,22 @@ class Transcoder:
 
         makedirs(self._this_cache / album.path, exist_ok=True)
         self._transcode(self.ctx.config.library / album.path, track, cache_path)
-        self._cache_stats[self._this_cache.name].size += cache_path.stat().st_size if cache_path.exists() else 0
+        _global_cache_stats[self._this_cache.name].size += cache_path.stat().st_size if cache_path.exists() else 0
         return cache_path
 
     def shrink_cache(self):
         """Delete entire older profile caches until the total cache size fits the configured maximum."""
-        if sum(c.size for c in self._cache_stats.values()) == 0:
+        if sum(c.size for c in _global_cache_stats.values()) == 0:
             self._scan_cache()
         cache_max = self.ctx.config.transcoder_cache_size
-        while len(self._cache_stats) > 1 and sum(c.size for c in self._cache_stats.values()) > cache_max:
-            oldest_other_cache = next((cache for cache in sorted(self._cache_stats.values()) if cache.name != self._this_cache.name))
+        while len(_global_cache_stats) > 1 and sum(c.size for c in _global_cache_stats.values()) > cache_max:
+            oldest_other_cache = next((cache for cache in sorted(_global_cache_stats.values()) if cache.name != self._this_cache.name))
             logger.info(f"deleting {humanize.naturalsize(oldest_other_cache.size, binary=True)} transcoder cache {oldest_other_cache.name}")
             rmtree(self.ctx.config.transcoder_cache / oldest_other_cache.name)
-            del self._cache_stats[oldest_other_cache.name]
+            del _global_cache_stats[oldest_other_cache.name]
             index = dict((k, v) for k, v in self._load_cache_index().items() if v != oldest_other_cache.name)
             self._update_cache_index(index)
-        if (total_cache_size := sum(c.size for c in self._cache_stats.values())) > cache_max:
+        if (total_cache_size := sum(c.size for c in _global_cache_stats.values())) > cache_max:
             logger.warning(
                 f"after deleting all but the most recently used profile, the transcoder cache size still exceeds configuration: {humanize.naturalsize(total_cache_size, binary=True)}"
             )
@@ -156,7 +161,7 @@ class Transcoder:
             if entry.is_dir():
                 if entry.name in cache_dirs:
                     cache_size = self._scan_profile_cache(entry)
-                    self._cache_stats[entry.name] = CacheStat(entry.name, cache_size, int(entry.stat().st_mtime))
+                    _global_cache_stats[entry.name] = CacheStat(entry.name, cache_size, int(entry.stat().st_mtime))
                 else:
                     self.ctx.console.print(f"removing unknown cache dir: {escape(entry.name)}")
                     rmtree(entry)
