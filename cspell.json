@@ -24,6 +24,7 @@
         "autohide",
         "autouse",
         "Brainz",
+        "caplog",
         "checkboxlist",
         "commitlint",
         "COMPOSERID",

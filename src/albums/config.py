@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from pathlib import Path
 from string import Template
-from typing import Dict, Final, Iterator, List, Mapping, Sequence, Tuple, Union
+from typing import Dict, Final, Iterable, List, Mapping, Sequence, Tuple, Union
 
 from platformdirs import PlatformDirs
 from sqlalchemy import Engine, Text, delete, select
@@ -264,7 +264,7 @@ class Configuration:
         return values
 
     @classmethod
-    def from_values(cls, values: Iterator[Tuple[str, SettingValueType]]) -> tuple[Configuration, bool]:
+    def from_values(cls, values: Iterable[Tuple[str, SettingValueType]]) -> tuple[Configuration, bool]:
         """Reconstruct application configuration from raw database ``setting`` rows.
 
         Settings with unexpected keys or type mismatches are logged as warnings and ignored
@@ -343,6 +343,9 @@ class Configuration:
                     ignored_values = True
                 elif not isinstance(value, list) or all(isinstance(item, str) for item in value):
                     config.checks[section][name] = value  # pyright: ignore[reportArgumentType]
+                else:
+                    logger.warning(f"ignoring {k}={value}, list items must all be strings - using default {json.dumps(config.checks[section][name])}")
+                    ignored_values = True
         return (config, ignored_values)
 
 
