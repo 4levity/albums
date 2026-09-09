@@ -93,8 +93,8 @@ the specified conditions will be included.
 
 `add` and `remove` - These commands add or remove associations between the
 selected albums and arbitrary named "collections," which can be used to filter
-future operations. Or use `select` to interactively add or remove albums
-from a list.
+future operations. Or use `select` to interactively add or remove albums from a
+list.
 
 `ignore` and `notice` - These commands cause the selected albums to ignore or
 stop ignoring certain checks.
@@ -110,8 +110,8 @@ the library - see [Import](./import.md).
 
 To set up `albums` configuration options interactively, run `albums config`. See
 `albums config --help` for other ways to configure. Configuration options for
-individual checks are described on the individual check pages (see [About
-Checks](./check_and_fix.md)).
+individual checks are described on the individual check pages (see
+[About Checks](./check_and_fix.md)).
 
 #### Global Settings
 
@@ -151,8 +151,8 @@ filenames. The compatibility options come from
 **`rescan`**: Rescan the library before performing other operations. If the
 operation is filtered then only selected albums will be re-scanned. Options:
 
-- `always`: always scan the library so you never need to run "albums scan"
-  (but scanning may be slow)
+- `always`: always scan the library so you never need to run "albums scan" (but
+  scanning may be slow)
 - `never`: never automatically scan the library, you must run "albums scan" if
   it has changed
 - `auto` _(default)_: scan on first run and before "check" or "sync" operations

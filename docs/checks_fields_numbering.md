@@ -28,19 +28,19 @@ Rule: for each track, if present, track/disc number/total fields should each
 have a single value and that value should be a positive number (0 is not valid).
 
 The check message names the fields that have problems (e.g. "tracktotal
-(multiple values)") and the number of tracks affected. When run
-interactively, a table lists all tracks with their track number, track total,
-disc number and disc total values; values that the fix will change or remove
-are marked (e.g. "9, 09 -> 9" or "0 -> removed").
+(multiple values)") and the number of tracks affected. When run interactively, a
+table lists all tracks with their track number, track total, disc number and
+disc total values; values that the fix will change or remove are marked (e.g.
+"9, 09 -> 9" or "0 -> removed").
 
 !!!success "Dependency"
 
     Requires the `disc-in-track-number` check to pass first.
 
 **Automatic fix**: For each of the noted fields in each track, discard all
-values that are non-numeric or 0. If exactly one unique number remains, save
-it without leading zeros (e.g. values "9" and "09" become "9"). Otherwise,
-delete the field.
+values that are non-numeric or 0. If exactly one unique number remains, save it
+without leading zeros (e.g. values "9" and "09" become "9"). Otherwise, delete
+the field.
 
 ## disc-numbering
 
@@ -74,32 +74,32 @@ can be entered instead.
 
 **Automatic fix** for missing disc numbers: When some tracks have disc number
 and some do not, a table lists each track's disc number and disc total, and
-options are offered to fill in the missing disc numbers. If a disc number can
-be read from each affected filename (e.g. `2-01`) and no filename disagrees
-with an existing disc number, the missing disc numbers can be set from the
-filenames; this is applied automatically when the result would be consistent
-(sequential discs from 1, not exceeding disc total). If the only disc number
-present is 1 (and disc total, if present, is 1), the missing disc numbers can
-be set to 1, or disc number 1 (and disc total 1) can be removed from all
-tracks; with `remove_redundant_discnumber` the removal is applied
-automatically, otherwise setting 1 is. If no option applies, a disc number can
-be entered to set on the affected tracks.
+options are offered to fill in the missing disc numbers. If a disc number can be
+read from each affected filename (e.g. `2-01`) and no filename disagrees with an
+existing disc number, the missing disc numbers can be set from the filenames;
+this is applied automatically when the result would be consistent (sequential
+discs from 1, not exceeding disc total). If the only disc number present is 1
+(and disc total, if present, is 1), the missing disc numbers can be set to 1, or
+disc number 1 (and disc total 1) can be removed from all tracks; with
+`remove_redundant_discnumber` the removal is applied automatically, otherwise
+setting 1 is. If no option applies, a disc number can be entered to set on the
+affected tracks.
 
-**Automatic fix** for redundant disc number: When every track has disc number
-1 (and disc total 1, if present), the disc number (and disc total) fields are
+**Automatic fix** for redundant disc number: When every track has disc number 1
+(and disc total 1, if present), the disc number (and disc total) fields are
 redundant. With `remove_redundant_discnumber` they are removed automatically.
-With `discs_in_separate_folders` disabled and
-`remove_redundant_discnumber` not set, the removal is offered but not applied
-automatically; with `discs_in_separate_folders` enabled, disc 1 might be part
-of a multi-disc set stored in another folder, so no issue is reported.
+With `discs_in_separate_folders` disabled and `remove_redundant_discnumber` not
+set, the removal is offered but not applied automatically; with
+`discs_in_separate_folders` enabled, disc 1 might be part of a multi-disc set
+stored in another folder, so no issue is reported.
 
 <!-- pyml disable line-length -->
 
-| Option = default                          | Description                                                    |
-| ----------------------------------------- | -------------------------------------------------------------- |
+| Option = default                          | Description                                                     |
+| ----------------------------------------- | --------------------------------------------------------------- |
 | `discs_in_separate_folders` = **true**    | if true, discs from one album may be stored in separate folders |
-| `remove_redundant_discnumber` = **false** | if true, redundant disc number 1 (and disc total 1) is removed |
-| `disctotal_policy` = `"consistent"`       | Set the field presence policy for disc total                   |
+| `remove_redundant_discnumber` = **false** | if true, redundant disc number 1 (and disc total 1) is removed  |
+| `disctotal_policy` = `"consistent"`       | Set the field presence policy for disc total                    |
 
 <!-- pyml enable line-length -->
 
@@ -112,8 +112,8 @@ of a multi-disc set stored in another folder, so no issue is reported.
 > **ignore** albums that have only one disc of a multiple disc set. But that
 > also means it cannot tell whether an album is missing a disc number or whether
 > disc total is correct. If you can put multiple-disc albums together in one
-> folder, do that and set `discs_in_separate_folders` to **false**. Then,
-> if desired, you can also set `remove_redundant_discnumber` to **true**.
+> folder, do that and set `discs_in_separate_folders` to **false**. Then, if
+> desired, you can also set `remove_redundant_discnumber` to **true**.
 
 ## track-numbering
 
@@ -140,8 +140,8 @@ The rules are:
 from some tracks but all track numbers can be guessed from the filename,
 recreate track number fields from filenames.
 
-The guess is a 1-3 digit number at the start of the filename, optionally after
-a disc number and dash (e.g. `03` or `1-03`). Longer numbers are not track
+The guess is a 1-3 digit number at the start of the filename, optionally after a
+disc number and dash (e.g. `03` or `1-03`). Longer numbers are not track
 numbers, and a date at the start of the filename (e.g. `2024-01-05`) is not a
 number at all. The fix is not offered if any filename indicates a disc number
 different from the disc being fixed, or if a track has no track number and no

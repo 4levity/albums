@@ -79,8 +79,7 @@ other formats.
 
 ## album-art
 
-Embedded images should be a reasonable size and in a
-widely-supported format.
+Embedded images should be a reasonable size and in a widely-supported format.
 
 Rules:
 
@@ -278,14 +277,13 @@ When there are existing embedded covers that do not meet the above requirements,
 the presence of more than one unique front cover image will prevent automatic
 fixes by this check, to avoid automatically overwriting per-track cover art.
 
-When the above requirements **are** met, this check will pass. To cause
-`albums` to embed new cover art when there is "good enough" cover art already,
-place high resolution cover art in the folder named `cover.jpg` (or another
-recognized front cover filename) and run the `cover-unique` check, which should
-offer to mark the new art as "front cover source". Afterwards, this check will
-embed the new cover into the tracks, as long as the previously embedded
-cover's size or MIME type differs from what this check is configured to
-generate.
+When the above requirements **are** met, this check will pass. To cause `albums`
+to embed new cover art when there is "good enough" cover art already, place high
+resolution cover art in the folder named `cover.jpg` (or another recognized
+front cover filename) and run the `cover-unique` check, which should offer to
+mark the new art as "front cover source". Afterwards, this check will embed the
+new cover into the tracks, as long as the previously embedded cover's size or
+MIME type differs from what this check is configured to generate.
 
 !!!success "Dependency"
 

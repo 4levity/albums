@@ -18,8 +18,8 @@ Enabled checks will run in order on each album:
 1. All "Pictures" checks
 1. Remaining "Path and File" checks
 
-Within each category, the checks run in the order they are listed on the
-check pages.
+Within each category, the checks run in the order they are listed on the check
+pages.
 
 ## Dependencies
 

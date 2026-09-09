@@ -1,8 +1,10 @@
 UV := uv
-# cSpell is installed on demand by npx (cached in ~/.npm, no npm project files
-# needed). Pinned here so all developers and CI use the same version - update
-# with `npm view cspell version` (requires Node.js 22.18+).
+# cSpell and Prettier are installed on demand by npx (cached in ~/.npm, no npm
+# project files needed). Pinned here so all developers and CI use the same
+# version - update with `npm view cspell version` / `npm view prettier version`
+# (requires Node.js 22.18+).
 CSPELL := npx --yes cspell@10.3.0
+PRETTIER := npx --yes prettier@3.9.6
 
 .PHONY: build install static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
@@ -26,7 +28,6 @@ lint-markdown: ## Lint markdown
 	$(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
 spelling: ## Run spell check
-	@command -v npx >/dev/null 2>&1 || { echo "spelling requires Node.js (https://nodejs.org) - install it and re-run" >&2; exit 1; }
 	$(CSPELL) lint --gitignore * .github
 
 typecheck: ## Type check (pyright: strict for src, looser for tests)
@@ -36,6 +37,8 @@ typecheck: ## Type check (pyright: strict for src, looser for tests)
 fix: install ## Automatically fix lint/format
 	$(UV) run ruff format
 	$(UV) run ruff check . --fix
+	# reflow markdown with the same config the IDE uses (.prettierrc)
+	$(PRETTIER) --write '**/*.md'
 
 test: install ## Run all tests with coverage, fail on any warnings
 	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=html

@@ -262,6 +262,8 @@ with `make fix`.
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
+- markdown reflow with [Prettier](https://prettier.io/) - wraps prose at 80
+  columns, run by `make fix` (same `.prettierrc` config as the IDE)
 
 ### Spell check
 

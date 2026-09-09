@@ -4,8 +4,8 @@ icon: lucide/folder-up
 
 # Import
 
-After setting up a library and configuring checks, `albums` can check new
-albums and then copy them into the library.
+After setting up a library and configuring checks, `albums` can check new albums
+and then copy them into the library.
 
 Example: `albums import Downloads --automatic`
 

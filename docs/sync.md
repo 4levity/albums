@@ -24,10 +24,10 @@ to a digital audio player, phone or memory card. The command
 
 If albums are removed from the collection, or folders/files are renamed, running
 another sync to the same destination could leave unwanted or duplicate files.
-Alternatively, with the `--delete` option, `albums` will **delete every file
-in the destination that is not being synced!** This is good if the destination
-is, for example, a folder on a memory card for a digital audio player, which
-doesn't contain any other data, and `albums sync` will manage everything there.
+Alternatively, with the `--delete` option, `albums` will **delete every file in
+the destination that is not being synced!** This is good if the destination is,
+for example, a folder on a memory card for a digital audio player, which doesn't
+contain any other data, and `albums sync` will manage everything there.
 
 ## Sync Destination
 

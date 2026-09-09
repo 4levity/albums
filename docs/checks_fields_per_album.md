@@ -66,10 +66,10 @@ See above for common behavior of this check.
 
 See above for common behavior of this check.
 
-The release date field is mapped for every supported track type: Vorbis
-Comment `date` (FLAC, Ogg), ID3 `TDRC` (MP3, AIFF), MP4 `aard` (M4A) and ASF
-`WM/Year` (WMA). The value may be a year (e.g. `2020`) or a more specific
-date (e.g. `2020-06`).
+The release date field is mapped for every supported track type: Vorbis Comment
+`date` (FLAC, Ogg), ID3 `TDRC` (MP3, AIFF), MP4 `aard` (M4A) and ASF `WM/Year`
+(WMA). The value may be a year (e.g. `2020`) or a more specific date (e.g.
+`2020-06`).
 
 !!!note
 

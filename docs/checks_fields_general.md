@@ -99,8 +99,8 @@ to all tracks that do not have an artist field.
 
 <!-- pyml disable line-length -->
 
-| Option = default                                                                                            |
-| ----------------------------------------------------------------------------------------------------------- |
+| Option = default                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------- |
 | `ignore_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists"]` |
 
 <!-- pyml enable line-length -->
@@ -242,8 +242,8 @@ Whether an album is a compilation is determined from the album's location and
 artist values. An album is a compilation when any of the following is true:
 
 - the name of the parent folder containing the album folder matches one of the
-  `compilation_parent_folders` values (case-insensitive). The default list is the
-  same as the `ignore_parent_folders` option of the `artist` check, or
+  `compilation_parent_folders` values (case-insensitive). The default list is
+  the same as the `ignore_parent_folders` option of the `artist` check, or
 - the album artist is "Various Artists", or
 - the album artist is not set, and the artist is "Various Artists" or two or
   more distinct artists appear on the tracks, or
@@ -251,12 +251,12 @@ artist values. An album is a compilation when any of the following is true:
 
 An album with one consistent album artist that is not "Various Artists" is
 **not** a compilation, even if some tracks have a different or additional
-artist, as in an artist album with a guest appearance. The album artist is
-what media players use to group the album, and the compilation flag only has a
+artist, as in an artist album with a guest appearance. The album artist is what
+media players use to group the album, and the compilation flag only has a
 purpose when the album has no single artist of its own. An album whose album
-artist is not "Various Artists" can still be treated as a compilation by
-placing the album folder in a matching parent folder, or by setting its album
-artist to "Various Artists".
+artist is not "Various Artists" can still be treated as a compilation by placing
+the album folder in a matching parent folder, or by setting its album artist to
+"Various Artists".
 
 The compilation flag must be set to the canonical "set" value (for that file
 type) on every track, or removed from every track. Any other state is flagged,
@@ -272,8 +272,8 @@ the album is a compilation, otherwise remove it from every track.
 
 <!-- pyml disable line-length -->
 
-| Option = default                                                                                              | Description                                                                                          |
-| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Option = default                                                                                                            | Description                                                             |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `compilation_parent_folders` = `["compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists"]` | List of parent folder names that always mean the album is a compilation |
 
 <!-- pyml enable line-length -->
