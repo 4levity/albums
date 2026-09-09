@@ -173,6 +173,7 @@
         "unpadded",
         "vcs",
         "venv",
+        "virtualenv",
         "viewports",
         "Vorbis",
         "wavpack",

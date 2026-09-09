@@ -8,8 +8,8 @@ icon: lucide/computer
 
 - [uv](https://docs.astral.sh/uv/) (manages the Python installation and project
   dependencies)
-- [Node.js](https://nodejs.org/) 22.18+ (needed for the spell check in
-  `make static`)
+- [Node.js](https://nodejs.org/) 22.18+ (needed for cspell, prettier and
+  pyright in `make static` / `make fix`)
 - `make`
 
 ## Overview
@@ -260,7 +260,9 @@ with `make fix`.
   rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
   files only (markdown is linted with pymarkdown)
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
-  strict mode for main project, looser rules for tests
+  strict mode for main project, looser rules for tests. Like cSpell, it is run
+  via [npx](https://www.npmjs.com/package/npx) (fetched on first use, cached
+  locally) with the version pinned in the `Makefile`
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
 - markdown reflow with [Prettier](https://prettier.io/) - wraps prose at 80
   columns, run by `make fix` (same `.prettierrc` config as the IDE)

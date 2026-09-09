@@ -1,10 +1,13 @@
 UV := uv
-# cSpell and Prettier are installed on demand by npx (cached in ~/.npm, no npm
-# project files needed). Pinned here so all developers and CI use the same
-# version - update with `npm view cspell version` / `npm view prettier version`
-# (requires Node.js 22.18+).
+# cSpell, Prettier and Pyright are installed on demand by npx (cached in
+# ~/.npm, no npm project files needed). Pinned here so all developers and CI
+# use the same version - update with `npm view cspell version` /
+# `npm view prettier version` / `npm view pyright version` (requires Node.js
+# 22.18+). Pyright runs via `uv run` so VIRTUAL_ENV points at the project
+# virtualenv, which pyright needs to resolve the project's packages.
 CSPELL := npx --yes cspell@10.3.0
 PRETTIER := npx --yes prettier@3.9.6
+PYRIGHT := $(UV) run npx --yes pyright@1.1.411
 
 .PHONY: build install static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
@@ -31,8 +34,8 @@ spelling: ## Run spell check
 	$(CSPELL) lint --gitignore * .github
 
 typecheck: ## Type check (pyright: strict for src, looser for tests)
-	$(UV) run pyright
-	$(UV) run pyright -p tests
+	$(PYRIGHT)
+	$(PYRIGHT) -p tests
 
 fix: install ## Automatically fix lint/format
 	$(UV) run ruff format
