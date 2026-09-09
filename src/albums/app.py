@@ -50,19 +50,23 @@ class Context(dict[Any, Any]):
         importing: ``True`` while running album import commands that mutate library folders.
     """
 
-    parent: Self | None = None
-    console = Console()  # single shared Console
+    is_persistent = True  # required by Click to propagate context across group subcommands
+    console = Console()  # intentional single shared Console
+
+    # attributes initialized with default values that may need to be changed after instantiation
+    parent: Self | None
+    verbose: int
+    prescanned: bool
+    importing: bool
+    config: Configuration
+    stored_checks: Mapping[str, CheckConfiguration]
+
+    # attributes that must be set after instantiation
     click_ctx: click.Context | None
     db: Engine
     db_path: Path
     select_album_entities: Callable[[Session], Iterator[Album]]
     is_filtered: bool
-    config: Configuration
-    stored_checks: Mapping[str, CheckConfiguration]
-    verbose: int = 0
-    is_persistent = True  # required by Click to propagate context across group subcommands
-    prescanned = False
-    importing = False
 
     def __init__(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Initialize a fresh application context with default configuration.
@@ -70,5 +74,9 @@ class Context(dict[Any, Any]):
         Arbitrary keyword arguments are forwarded to ``dict.__init__`` for legacy Click compatibility.
         """
         super(Context, self).__init__(*args, **kwargs)
+        self.parent = None
+        self.verbose = 0
+        self.prescanned = False
+        self.importing = False
         self.config = Configuration()
         self.stored_checks = deepcopy(self.config.checks)
