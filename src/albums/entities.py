@@ -79,7 +79,10 @@ class TrackPicture(Base):
         return {"picture_type": PictureType(self.picture_type), "description": self.description, "picture_info": self.picture_info.to_dict()}
 
     def to_picture(self) -> Picture:
-        """Convert this DB row into a plain ``Picture`` value object for tagger consumption."""
+        """Convert this DB row into a plain ``Picture`` value object for tagger consumption.
+
+        ``PictureFile.to_picture`` is the file-based analogue of this method.
+        """
         return Picture(self.picture_info, self.picture_type, self.description or "")
 
     def __lt__(self, other: TrackPicture) -> bool:
@@ -224,7 +227,10 @@ class PictureFile(Base):
         }
 
     def to_picture(self) -> Picture:
-        """Convert this row into a plain ``Picture`` value object for tagger consumption."""
+        """Convert this row into a plain ``Picture`` value object for tagger consumption.
+
+        ``TrackPicture.to_picture`` is the track-embedded analogue of this method.
+        """
         return Picture(self.picture_info, PictureType.from_filename(self.filename), "")
 
     def __lt__(self, other: Track | PictureFile | OtherFile):

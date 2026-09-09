@@ -41,7 +41,10 @@ def check_policy(
     required_field: BasicField | None,
     single_value_for_album: bool = False,
 ) -> CheckResult | None:
-    """Check that a field's presence on an album's tracks matches the given policy; return a CheckResult (with fixer) on violation, else ``None``."""
+    """Check that a field's presence on an album's tracks matches the given policy; return a CheckResult (with fixer) on violation, else ``None``.
+
+    Raises ValueError on invalid configuration combination.
+    """
     if policy == Policy.NEVER and single_value_for_album:
         raise ValueError("check_policy: Policy.NEVER cannot be used with single_value_for_album")
     on_all_tracks = all(t.has(field) for t in album.tracks)
@@ -110,6 +113,7 @@ def check_policy(
         return CheckResult(f"{field} policy={policy.name} but it appears on tracks", fixer)
     elif policy == Policy.CONSISTENT and on_all_tracks != on_any_tracks:
         return CheckResult(f"{field} policy={policy.name} but it is on some tracks and not others", fixer)
+    # Defensive, should be unreachable
     raise RuntimeError(f"internal error! field={field.value}, policy={policy.name}, on_all_tracks={on_all_tracks}, on_any_tracks={on_any_tracks}")
 
 
