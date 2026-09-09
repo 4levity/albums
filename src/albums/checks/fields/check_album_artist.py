@@ -6,7 +6,7 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import VARIOUS_ARTISTS, format_field_values
+from albums.checks.helpers import MAX_FIELD_CANDIDATES, VARIOUS_ARTISTS, format_field_values
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 
@@ -47,12 +47,14 @@ class CheckAlbumArtist(Check):
             else:
                 albumartists[""] += 1
 
-        # return top 12 artist/album artist matches sorted by how many times they appear on tracks, largest first
+        # return candidate artist/album artist matches sorted by how many times they appear on tracks, largest first
         candidates_scores = artists | albumartists
         candidates = sorted(
             filter(lambda k: k not in ["", VARIOUS_ARTISTS], candidates_scores.keys()), key=lambda a: candidates_scores[a], reverse=True
-        )[:12]
-        nonblank_albumartists = sorted(filter(lambda k: k not in [""], albumartists.keys()), key=lambda aa: albumartists[aa], reverse=True)[:12]
+        )[:MAX_FIELD_CANDIDATES]
+        nonblank_albumartists = sorted(filter(lambda k: k not in [""], albumartists.keys()), key=lambda aa: albumartists[aa], reverse=True)[
+            :MAX_FIELD_CANDIDATES
+        ]
         candidates_various = candidates + [VARIOUS_ARTISTS]
 
         redundant = len(artists) == 1 and list(artists.values())[0] == len(album.tracks)  # albumartist maybe not needed?

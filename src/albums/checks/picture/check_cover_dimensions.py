@@ -22,11 +22,11 @@ class CheckCoverDimensions(Check):
     name = "cover-dimensions"
     default_config = {
         "enabled": True,
-        "min_pixels": 100,
-        "max_pixels": 4096,
-        "squareness": 0.98,
-        "fixable_squareness": 0.8,
-        "max_crop": 0.03,
+        "min_pixels": 100,  # smaller covers are useless — players can't display them
+        "max_pixels": 4096,  # larger covers benefit no player and bloat files and the DB
+        "squareness": 0.98,  # tolerate near-square covers that players center-crop anyway
+        "fixable_squareness": 0.8,  # below this, squarify would crop >20% of the image — not worth it
+        "max_crop": 0.03,  # squarify crops at most 3% per side; beyond that, crop to exact
         "create_mime_type": "image/png",
         "create_jpeg_quality": 80,
     }

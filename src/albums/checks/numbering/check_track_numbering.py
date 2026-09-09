@@ -9,7 +9,14 @@ from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.field_policy import Policy, check_policy
-from albums.checks.helpers import describe_track_number, format_field_values, get_tracks_by_disc, ordered_tracks, parse_filename
+from albums.checks.helpers import (
+    DEFAULT_IGNORE_FOLDERS,
+    describe_track_number,
+    format_field_values,
+    get_tracks_by_disc,
+    ordered_tracks,
+    parse_filename,
+)
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural, pluralize
@@ -103,7 +110,7 @@ class TrackTotalFixer(Fixer):
 
 class CheckTrackNumbering(Check):
     name = "track-numbering"
-    default_config = {"enabled": True, "ignore_folders": ["misc"], "tracktotal_policy": "consistent"}
+    default_config = {"enabled": True, "ignore_folders": DEFAULT_IGNORE_FOLDERS, "tracktotal_policy": "consistent"}
     must_pass_checks = {"disc-numbering"}
 
     def init(self, check_config: dict[str, Any]):

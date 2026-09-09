@@ -14,11 +14,17 @@ from albums.tagger import BasicField
 from .check_types import FixResult
 
 FRONT_COVER_FILENAME: Final = "cover"
+# Albums whose folder sits in a "misc" catch-all are usually bulk downloads without usable
+# metadata, so the per-album field checks skip such folders by default.
+DEFAULT_IGNORE_FOLDERS: Final[list[str]] = ["misc"]
 # Artist/album artist value that always indicates a compilation album
 VARIOUS_ARTISTS: Final = "Various Artists"
 # Parent folder names that indicate an album with no single artist (a compilation album); shared default for the
 # artist check's `ignore_parent_folders` option and the compilation check's `compilation_parent_folders` option
 COMPILATION_PARENT_FOLDERS: Final = ("compilation", "compilations", "soundtrack", "soundtracks", "various", "various artists")
+# Fix menus show at most this many candidate values; beyond that the menu is unusable, and the
+# user can always enter a value by hand (free-text option).
+MAX_FIELD_CANDIDATES: Final = 12
 
 
 def album_display_name(ctx: Context, album: Album) -> str:

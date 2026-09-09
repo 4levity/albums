@@ -7,7 +7,7 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import format_field_values
+from albums.checks.helpers import DEFAULT_IGNORE_FOLDERS, MAX_FIELD_CANDIDATES, format_field_values
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural, pluralize
@@ -17,7 +17,7 @@ logger: Final = logging.getLogger(__name__)
 
 class CheckAlbumField(Check):
     name = "album"
-    default_config = {"enabled": True, "ignore_folders": ["misc"]}
+    default_config = {"enabled": True, "ignore_folders": DEFAULT_IGNORE_FOLDERS}
 
     def init(self, check_config: dict[str, Any]):
         ignore_folders: list[Any] = check_config.get("ignore_folders", CheckAlbumField.default_config["ignore_folders"])
@@ -45,7 +45,7 @@ class CheckAlbumField(Check):
                 track_album_fields[""] += 1
 
         album_fields = list(track_album_fields.keys())
-        candidates = sorted(filter(None, album_fields), key=lambda a: track_album_fields[a], reverse=True)[:12]
+        candidates = sorted(filter(None, album_fields), key=lambda a: track_album_fields[a], reverse=True)[:MAX_FIELD_CANDIDATES]
         if len(candidates) > 1:  # multiple conflicting album names (not including folder name)
             if folder_str not in candidates:
                 candidates.append(folder_str)
