@@ -56,7 +56,11 @@ class Checker:
         self._show_ignore_option = show_ignore_option
 
     def run_enabled(self, session: Session) -> int:
-        """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed."""
+        """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
+
+        Commits after each album's fixes and at the end of the run; individual fixes are
+        flushed (not committed) by ``_run_check``.
+        """
         need_checks = self.get_required_disabled_checks()
         if need_checks:
             self.ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")

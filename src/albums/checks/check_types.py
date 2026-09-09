@@ -45,6 +45,13 @@ class Fixer:
         option_automatic_index: Index into *options* representing the automatic choice or None if no automatic choice.
         table: Optional tabular data (headers + rows or row-factory callable) to display alongside options.
         prompt: Text displayed above the options when asking for user input.
+
+    Transactions:
+        A fixer callback must never call ``session.commit()``. It may mutate ORM entities
+        and files freely; the ``Checker`` owns the transaction: it flushes after a
+        successful fix and commits after each album and at the end of the run. Committing
+        from a fixer would break the re-run-after-fix behavior (all checks restart after
+        a change) and could persist a partially fixed album.
     """
 
     fix: Callable[[str], FixResult]
