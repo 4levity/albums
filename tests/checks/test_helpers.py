@@ -1,4 +1,4 @@
-from albums.checks.helpers import ordered_tracks, parse_filename
+from albums.checks.helpers import get_tracks_by_disc, ordered_tracks, parse_filename
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
@@ -123,3 +123,44 @@ class TestParseFilename:
 
     def test_long_number_is_not_a_track_number(self):
         assert parse_filename("1234 Song.mp3") == (None, None, "1234 Song")
+
+
+class TestGetTracksByDisc:
+    def test_normal_tracks_grouped_by_disc(self):
+        tracks = [
+            Track(filename="1-01.flac", tag={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "1"}),
+            Track(filename="1-02.flac", tag={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "2"}),
+            Track(filename="2-01.flac", tag={BasicField.DISCNUMBER: "2", BasicField.TRACKNUMBER: "1"}),
+        ]
+        result = get_tracks_by_disc(tracks)
+        assert result is not None
+        assert list(result.keys()) == [1, 2]
+        assert len(result[1]) == 2
+        assert len(result[2]) == 1
+
+    def test_tracks_without_disc_number_go_to_disc_0(self):
+        tracks = [
+            Track(filename="01.flac", tag={BasicField.TRACKNUMBER: "1"}),
+            Track(filename="02.flac", tag={BasicField.TRACKNUMBER: "2"}),
+        ]
+        result = get_tracks_by_disc(tracks)
+        assert result is not None
+        assert list(result.keys()) == [0]
+
+    def test_two_disc_numbers_returns_none(self):
+        tracks = [
+            Track(filename="01.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: ["1", "2"]}),
+        ]
+        assert get_tracks_by_disc(tracks) is None
+
+    def test_zero_disc_number_returns_none(self):
+        tracks = [
+            Track(filename="01.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "0"}),
+        ]
+        assert get_tracks_by_disc(tracks) is None
+
+    def test_non_numeric_disc_number_returns_none(self):
+        tracks = [
+            Track(filename="01.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "x"}),
+        ]
+        assert get_tracks_by_disc(tracks) is None

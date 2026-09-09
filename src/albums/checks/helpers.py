@@ -26,7 +26,12 @@ def album_display_name(ctx: Context, album: Album) -> str:
 
 
 def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | None:
-    """Group tracks by disc number (tracks without a disc number go to disc 0). Return None if any track has missing, multiple, non-numeric, or zero track/disc numbers."""
+    """Group tracks by disc number; tracks without a disc number go to disc 0.
+
+    Returns ``None`` if any track has a track or disc number field with multiple values, a
+    non-numeric (or empty) value, or a disc number of zero. Absent fields do not trigger this —
+    they are treated as the defaults above.
+    """
     if any(
         not (
             len(track.get(BasicField.TRACKNUMBER, default=["0"])) == 1
