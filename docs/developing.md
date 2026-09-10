@@ -187,8 +187,7 @@ end):
   and at the end of the run.
 - Committing from a fixer would break the re-run-after-fix behavior (all checks
   restart after a change) and could persist a partially fixed album.
-- The `Fixer` class docstring and the `Check` base class docstring document this
-  contract; fix new check authors should read those as well.
+- The `Fixer` class docstring and `Check` base class docstring document this.
 
 ### Writing Tests
 
