@@ -8,17 +8,6 @@
 # to 50). Git-generated messages that are not conventional style (e.g.
 # "Merge branch ..." and "Revert ..." messages) are accepted by commitlint
 # itself.
-#
-# Git invokes this hook as: commit-msg <message-file>, where the file holds
-# the final commit message (after any editor session). It fires for every
-# commit source (-m/-F, commit editor, --amend, merge, rebase reword,
-# cherry-pick), so the message is checked in all cases.
-#
-# If the check fails, git aborts the commit and the message is left in
-# .git/COMMIT_EDITMSG; re-run the git commit command and fix the message.
-#
-# Enabled by `make install` (it sets core.hooksPath to hooks/). Skip once
-# with `git commit --no-verify`. See docs/developing.md, "Git hooks".
 
 set -u
 root=$(git rev-parse --show-toplevel) || exit 1
@@ -40,17 +29,14 @@ should not happen. Re-run the git commit command."
 # be explicit if it is missing anyway (e.g. after a fresh clone).
 [ -x node_modules/.bin/commitlint ] || hook_fail "commitlint is not installed" \
     "Install the Node.js dev dependencies, then re-run the git commit command:
-  npm ci            # or: make install-js
+  make install-js  # or: npm ci
   git commit -m '<type>: <subject>'"
 
 hook_note "commit-msg: commit message must be Conventional Commits style (subject <= 50 chars)"
 if ! npx --no-install commitlint --edit "$msg_file"; then
     hook_fail "the commit message is not Conventional Commits style" \
 "Write the subject as '<type>(<scope>): <subject>' with a subject of at
-most 50 characters. Types used in this project (docs/developing.md,
-\"Commit style\"):
-  build, deps, docs, feat, fix, refactor, style, test
+most 50 characters. Refer to docs/developing.md.
 Then re-run the git commit command, e.g.:
-  git commit -m 'feat: <subject of at most 50 characters>'"
+  git commit -m '<conventional commit subject of at most 50 characters>'"
 fi
-hook_note "commit-msg: OK"

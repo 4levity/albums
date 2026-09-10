@@ -7,26 +7,27 @@ PRETTIER := npx --no-install prettier
 PYRIGHT := $(UV) run npx --no-install pyright
 SHELLCHECK := npx --no-install shellcheck
 
+# QUIET=1 reduces output for git hooks. Output is still shown on failure.
+ifeq ($(QUIET),1)
+STEP := @step() { _n=$$1; shift; printf '%s: ' "$$_n"; _o=$$(mktemp); if "$$@" >"$$_o" 2>&1; then rm -f "$$_o"; printf 'OK. '; else printf 'FAILED\n' "$$_n" >&2; cat "$$_o" >&2; rm -f "$$_o"; return 1; fi; }; step
+else
+STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
+endif
+
 .PHONY: build install install-js hooks static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
 build: install static test
 	@echo "build complete"
 
-# The git hooks (commit-msg, pre-commit, pre-push) live in hooks/ and are
-# enabled by pointing core.hooksPath at them (relative paths resolve from
-# the repo root). `install` depends on this, so a fresh clone gets the
-# hooks as soon as its dependencies are installed; it is a silent no-op
-# when the setting is already in place (the config value is checked, so it
-# self-heals if ever lost). See docs/developing.md, "Git hooks". Disable
-# with: git config --unset core.hooksPath
+# Git hooks will be enabled when install-js runs (any lint operation)
 hooks: ## Enable git hooks (commit-msg, pre-commit, pre-push)
 	@if git rev-parse --git-dir >/dev/null 2>&1; then if [ "$$(git config --get core.hooksPath)" != "hooks" ]; then git config core.hooksPath hooks; echo "git hooks enabled (core.hooksPath=hooks)"; fi; else echo "skipping git hooks (not a git repository)"; fi
 
 # --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
-install: hooks ## Install project dependencies
-	$(UV) sync --locked
+install: ## Install project dependencies
+	$(STEP) 'uv sync' $(UV) sync --locked
 
-install-js: node_modules ## Install static-check Node.js dependencies
+install-js: node_modules hooks ## Install static-check Node.js dependencies
 
 node_modules: package.json package-lock.json
 	npm ci
@@ -35,26 +36,25 @@ node_modules: package.json package-lock.json
 static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
 
 lint: install-js ## Lint Python (ruff) and shell (shellcheck)
-	$(UV) run ruff check .
-	$(UV) run ruff format . --check
-	$(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
+	$(STEP) lint $(UV) run ruff check .
+	$(STEP) format $(UV) run ruff format . --check
+	$(STEP) shellcheck $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
-	$(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
+	$(STEP) markdown $(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 
 spelling: install-js ## Run spell check
-	$(CSPELL) lint --gitignore * .github
+	$(STEP) spelling $(CSPELL) lint --gitignore * .github
 
 typecheck: install-js ## Type check (pyright: strict for src, looser for tests)
-	$(PYRIGHT)
-	$(PYRIGHT) -p tests
+	$(STEP) analyze $(PYRIGHT)
+	$(STEP) 'analyze (tests)' $(PYRIGHT) -p tests
 
 fix: install install-js ## Automatically fix lint/format
-	$(UV) run ruff format
-	$(UV) run ruff check . --fix
-	# reflow markdown with the same config the IDE uses (.prettierrc)
-	$(PRETTIER) --write '**/*.md'
+	$(STEP) formatter $(UV) run ruff format
+	$(STEP) 'lint-fix' $(UV) run ruff check . --fix
+	$(STEP) 'markdown-fix' $(PRETTIER) --write '**/*.md'
 
 test: install ## Run all tests with coverage, fail on any warnings
 	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
@@ -88,10 +88,6 @@ docs/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 	@ls -l $@
 
 # Build a standalone executable for this platform in dist/pyinstaller/<platform>/albums/.
-# The version is written to src/albums/_version.py first so the executable
-# reports the git-derived version (see scripts/version.py). --collect-data bundles
-# the package's non-Python files (the database migration SQL). Note: on Windows
-# runners, run these same commands directly (no make available).
 pyinstaller: install ## Build standalone pyinstaller executable for this platform
 	$(UV) run python scripts/version.py write
 	platform=$$($(UV) run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))") && \

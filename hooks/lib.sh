@@ -1,14 +1,5 @@
 # shellcheck shell=sh
-# Shared helpers for the albums git hooks (hooks/commit-msg,
-# hooks/pre-commit, hooks/pre-push).
-#
-# The hooks are enabled by `make install` (it sets core.hooksPath to hooks/).
-# See the "Git hooks" section of docs/developing.md for details.
-#
-# Failure messages are written to be actionable by both humans and agents:
-# they state what the hook requires, what failed, and the exact commands to
-# fix it. A hook can be skipped once by adding --no-verify to the git command
-# (git commit --no-verify / git push --no-verify).
+# Shared helpers for the albums git hooks
 
 # Print an informational line. $1: the text.
 hook_note() {
@@ -23,14 +14,11 @@ hook_fail() {
         if [ -n "${2:-}" ]; then
             printf '\nHow to fix it:\n%s\n' "$2"
         fi
-        printf '\nBypass this check once by adding --no-verify to the git command\n'
-        printf '(e.g. git commit --no-verify or git push --no-verify).\n'
     } >&2
     exit 1
 }
 
 # The checks run through the Makefile; fail clearly if make is missing
-# (for example, some Windows setups).
 require_make() {
     command -v make >/dev/null 2>&1 || hook_fail "make is not on PATH" \
         "Install make (or use a toolchain that provides it), then re-run the git command."

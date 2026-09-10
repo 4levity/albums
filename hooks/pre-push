@@ -4,13 +4,10 @@
 # A push that updates or creates refs is only allowed when:
 #   1. the working tree is fully clean (nothing staged, unstaged or
 #      untracked), and
-#   2. `make test` passes (full test suite with coverage).
+#   2. `make test` passes
 #
 # Git passes the refs being pushed on stdin. Pushes that update nothing
 # (all refs already up to date) or only delete refs skip the tests.
-#
-# Enabled by `make install` (it sets core.hooksPath to hooks/). Skip once
-# with `git push --no-verify`. See docs/developing.md, "Git hooks".
 
 set -u
 root=$(git rev-parse --show-toplevel) || exit 1
@@ -44,10 +41,11 @@ require_push_tree_clean
 
 require_make
 hook_note "pre-push: running 'make test' (full suite with coverage; may take a few minutes)"
-if ! make test; then
+# QUIET=1: quiet steps (e.g. uv sync) print one line as they start, full tool
+# output only on failure (see the Makefile). The pytest run itself keeps its
+# full output, since that is what you want to watch while it runs.
+if ! QUIET=1 make test; then
     hook_fail "make test failed" \
-"Fix the failing tests, then re-run the git push command:
-  uv run pytest -v                # re-run the full suite
-  uv run pytest tests/<path> -v   # or a targeted subset"
+"Fix the failing tests, commit, and push again"
 fi
 hook_note "pre-push: OK"

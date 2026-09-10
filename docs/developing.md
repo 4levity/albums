@@ -236,30 +236,16 @@ files with basic fields must read/write each one. Add a tag field by:
 ## Commit style
 
 This project uses
-[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). These
-format types are recommended:
-
-- `build` : Changes to the build process or tools and libraries
-- `deps` : Changes to upstream dependencies only
-- `docs` : Documentation-only changes
-- `feat` : A new feature
-- `fix` : A bug fix
-- `refactor` : A code change that neither fixes a bug nor adds a feature
-- `style` : Changes that do not affect the meaning of the code
-- `test` : Adding tests or correcting existing tests
-
-The subject line of the commit message should be 50 characters maximum. The
-commit body should be omitted for small changes.
-
-Commit messages are enforced by the `commit-msg` git hook (see
-[Git hooks](#git-hooks) below), which checks them with
-[commitlint](https://commitlint.js.org/) using `commitlint.config.js`.
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The
+subject line of the commit message must be <= 50 characters. The commit body
+should be omitted for small changes.
 
 ## Git hooks
 
 The `commit-msg`, `pre-commit` and `pre-push` hooks in [`hooks/`](hooks/) gate
 commits and pushes on commit message style, a clean working tree plus the
-relevant checks:
+relevant checks. The hooks are enabled when any lint operation runs and Node.js
+dependencies are installed. (The project can be built and tested without these.)
 
 | Hook         | Requires                                                       |
 | ------------ | -------------------------------------------------------------- |
@@ -273,25 +259,10 @@ relevant checks:
 subject limit). Standard git-generated messages (e.g. `Merge branch ...` and
 `Revert ...`) are accepted by commitlint itself.
 
+If `make fix` changes files during `pre-commit`, the changes are also staged.
+
 `pre-push` skips its checks when the push updates nothing (all refs already up
 to date) or only deletes refs, since no new commits are published.
-
-The hooks are enabled automatically: `make install` (so `make` too) sets
-`core.hooksPath` to `hooks/` in the repository's local git config, so no copy or
-symlink step is needed. A fresh clone picks them up on its first `make install`;
-`make hooks` does the same at any time.
-
-- Skip a hook for a single command with `--no-verify` (`git commit --no-verify`,
-  `git push --no-verify`).
-- Disable the hooks: `git config --unset core.hooksPath` (git falls back to the
-  default, empty `.git/hooks/` directory). Note that `core.hooksPath` replaces
-  `.git/hooks/` entirely, so any other hooks belong in `hooks/`.
-
-Hook failure messages are written to be actionable by both humans and agents:
-they state what the hook requires, what failed, and the exact commands to fix
-it. If `make fix` changes files during a commit, the pre-commit hook stages the
-fixes automatically and names the files in a note, so the committed tree passes
-the static checks.
 
 ## Tips
 
