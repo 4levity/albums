@@ -32,7 +32,6 @@ should not happen. Re-run the git commit command."
   make install-js  # or: npm ci
   git commit -m '<type>: <subject>'"
 
-hook_note "commit-msg: commit message must be Conventional Commits style (subject <= 50 chars)"
 if ! npx --no-install commitlint --edit "$msg_file"; then
     hook_fail "the commit message is not Conventional Commits style" \
 "Write the subject as '<type>(<scope>): <subject>' with a subject of at

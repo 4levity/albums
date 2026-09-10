@@ -19,7 +19,6 @@ cd "$root" || exit 1
 }
 . ./hooks/lib.sh
 
-hook_note "pre-commit: working tree must be clean (no unstaged changes, no untracked files)"
 require_commit_tree_clean
 
 require_make

@@ -36,7 +36,6 @@ if [ "$needs_tests" = no ]; then
     exit 0
 fi
 
-hook_note "pre-push: working tree must be fully clean (nothing staged, unstaged or untracked)"
 require_push_tree_clean
 
 require_make
