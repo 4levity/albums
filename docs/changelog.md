@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.30 - fix: VACUUM intermittent crash, decompress dep override
+
 v0.9.29 - Windows binary distribution fix, build and lint tooling, docs
 
 v0.9.28 - release-date, legacy-fields checks, sort-order, numbering, fixes, docs
