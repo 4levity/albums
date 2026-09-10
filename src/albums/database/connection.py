@@ -20,11 +20,19 @@ MEMORY: Final = ":memory:"
 
 
 @event.listens_for(Engine, "connect")
-def enable_foreign_keys(connection: Any, _):
-    """Enable SQLite foreign key enforcement on every new connection."""
+def apply_sqlite_pragmas(connection: Any, _):
+    """Apply albums' SQLite settings on every new connection.
+
+    Enforces foreign keys and uses the WAL journal mode with the recommended
+    synchronous=NORMAL, which makes commits much cheaper than the default
+    delete journal. The -wal and -shm side files that WAL uses are removed
+    automatically when the last connection to the database closes.
+    """
     if isinstance(connection, SQLite3Connection):
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = ON;")
+        cursor.execute("PRAGMA journal_mode = WAL;")
+        cursor.execute("PRAGMA synchronous = NORMAL;")
         cursor.close()
 
 

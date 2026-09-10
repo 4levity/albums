@@ -19,5 +19,7 @@ node_modules/
 # application/misc
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.db.bak
 /todo/
