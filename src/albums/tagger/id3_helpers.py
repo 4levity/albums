@@ -1,3 +1,4 @@
+import textwrap
 from typing import Tuple
 
 from mutagen.id3 import ID3
@@ -24,8 +25,6 @@ def get_text(id3: ID3 | None, frame_name: str) -> list[str] | None:
 
 def must_get_text(id3: ID3, frame_name: str) -> list[str]:
     """Return text values from an existing ID3 frame."""
-    import textwrap
-
     frame = id3[frame_name]  # pyright: ignore[reportUnknownVariableType]
     if hasattr(frame, "text") and isinstance(frame.text, list) and len(frame.text):  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         return [str(text) for text in frame.text]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnknownMemberType]

@@ -247,29 +247,10 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
         return str(property)
 
     def _get_wm_partofset(self) -> Tuple[str | None, str | None]:
-        if not self._file.tags or "WM/PartOfSet" not in self._file.tags:
-            return (None, None)
-        values = self._file.tags["WM/PartOfSet"]  # pyright: ignore[reportUnknownVariableType]
-        # TODO handle if stored as integer if mutagen doesn't do that automatically (?) +in tracknumber
-        if not isinstance(values, list) or len(values) < 1 or not values:  # pyright: ignore[reportUnnecessaryIsInstance, reportUnknownArgumentType]
-            return (None, None)
-        value = str(values[0])  # pyright: ignore[reportUnknownArgumentType]
-        if str.count(value, "/") == 1:
-            (disc_number, disc_total) = value.split("/")
-            return (disc_number, disc_total)
-        return (value, None)
+        return _get_asf_split_value(self._file.tags, "WM/PartOfSet")
 
     def _get_wm_tracknumber(self) -> Tuple[str | None, str | None]:
-        if not self._file.tags or "WM/TrackNumber" not in self._file.tags:
-            return (None, None)
-        values = self._file.tags["WM/TrackNumber"]  # pyright: ignore[reportUnknownVariableType]
-        if not isinstance(values, list) or len(values) < 1 or not values:  # pyright: ignore[reportUnnecessaryIsInstance, reportUnknownArgumentType]
-            return (None, None)
-        value = str(values[0])  # pyright: ignore[reportUnknownArgumentType]
-        if str.count(value, "/") == 1:
-            (track_number, track_total) = value.split("/")
-            return (track_number, track_total)
-        return (value, None)
+        return _get_asf_split_value(self._file.tags, "WM/TrackNumber")
 
     def _set_wm_partofset(self, disc_number: str | None, disc_total: str | None):
         if disc_number is None and disc_total is None:
@@ -302,3 +283,17 @@ class AsfTagger(AbstractMutagenTagger[ASF]):
             del fields["WM/TrackNumber"]
         elif value is not None and ("WM/TrackNumber" not in fields or fields["WM/TrackNumber"] != [value]):
             fields["WM/TrackNumber"] = [value]
+
+
+def _get_asf_split_value(tags: ASFTags | None, prop: str) -> Tuple[str | None, str | None]:
+    """Get a slash-separated ASF property value (e.g. WM/PartOfSet, WM/TrackNumber)."""
+    if not tags or prop not in tags:  # pyright: ignore[reportOperatorIssue]
+        return (None, None)
+    values = tags[prop]  # pyright: ignore[reportUnknownVariableType, reportIndexIssue, reportAttributeAccessIssue]
+    if not isinstance(values, list) or len(values) < 1 or not values:  # pyright: ignore[reportUnnecessaryIsInstance, reportUnknownArgumentType]
+        return (None, None)
+    value = str(values[0])  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
+    if str.count(value, "/") == 1:
+        (number, total) = value.split("/")
+        return (number, total)
+    return (value, None)

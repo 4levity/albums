@@ -35,7 +35,7 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
         flac_picture = album_picture_to_flac(new_picture, image_data)
         new_pictures = self._get_picture_blocks()
         new_pictures.append(base64.b64encode(flac_picture.write()).decode("ascii"))
-        self._file.tags["metadata_block_picture"] = new_pictures  # pyright: ignore[reportOptionalSubscript]
+        _set_picture_blocks(self._file.tags, new_pictures)
 
     @override
     def _get_codec(self):
@@ -52,7 +52,7 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
             for base64_block in self._get_picture_blocks()
             if scan_flac_picture(FlacPicture(base64.b64decode(base64_block)), self._picture_scanner)[0] != remove_picture
         ]
-        self._file.tags["metadata_block_picture"] = new_pictures  # pyright: ignore[reportOptionalSubscript]
+        _set_picture_blocks(self._file.tags, new_pictures)
 
     @override
     def get_fields(self):
@@ -74,3 +74,8 @@ class OggVorbisTagger(AbstractMutagenTagger[OggVorbis]):
 
     def _load_flac_pictures(self) -> Generator[FlacPicture, None, None]:
         return (FlacPicture(base64.b64decode(base64_block)) for base64_block in self._get_picture_blocks())
+
+
+def _set_picture_blocks(tags: object, blocks: list[str]) -> None:
+    """Set the METADATA_BLOCK_PICTURE vorbis comment."""
+    tags["metadata_block_picture"] = blocks  # pyright: ignore[reportOptionalSubscript, reportIndexIssue, reportAttributeAccessIssue]

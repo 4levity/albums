@@ -3,7 +3,7 @@
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Callable, Final, Generator, List, Tuple, override
+from typing import Callable, Final, Generator, Iterable, List, Tuple, override
 
 import av
 from mutagen._tags import PaddingInfo
@@ -86,17 +86,9 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]:
         if not self._file.tags:
             return
-        mp4_covers: list[MP4Cover] = self._file.tags["covr"] if "covr" in self._file.tags else []  # pyright: ignore[reportUnknownVariableType]
-        for cover in mp4_covers:  # pyright: ignore[reportUnknownVariableType]
-            match cover.imageformat:  # pyright: ignore[reportUnknownMemberType]
-                case MP4Cover.FORMAT_JPEG:
-                    expect_mime_type = "image/jpeg"
-                case MP4Cover.FORMAT_PNG:
-                    expect_mime_type = "image/png"
-                case _:  # pyright: ignore[reportUnknownVariableType]
-                    expect_mime_type = "invalid"  # causes loader to report MIME type mismatch
-
-            image_data = bytes(cover)  # pyright: ignore[reportUnknownArgumentType]
+        for cover in _get_mp4_covers(self._file.tags):
+            expect_mime_type = _mp4_cover_mime_type(cover)
+            image_data = _mp4_cover_bytes(cover)
             picture_info = self._picture_scanner.scan(image_data, expect_mime_type)
             picture = Picture(picture_info, PictureType.COVER_FRONT, "")
             yield (picture, image_data)
@@ -113,8 +105,8 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
             logger.warning(f'embedding picture {new_picture.type.name} as "cover", picture type not supported in {self._file.filename}')
 
         fields = self._ensure_tagged_mp4()
-        covers: list[MP4Cover] = fields["covr"] if "covr" in fields else []  # pyright: ignore[reportUnknownVariableType]
-        covers.append(MP4Cover(image_data, imageformat))  # pyright: ignore[reportUnknownMemberType]
+        covers = _get_or_create_covers(fields)
+        covers.append(MP4Cover(image_data, imageformat))
         fields["covr"] = covers
 
     @override
@@ -133,10 +125,10 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
     @override
     def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
         basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
-        if self._file.tags:  # pyright: ignore[reportUnknownMemberType]
+        if self._file.tags:
             tags = self._ensure_tagged_mp4()
-            basic_fields.extend((tag, tuple(tags[atom])) for tag, atom in M4A_TEXT_FRAMES if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
-            basic_fields.extend((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in M4A_BYTES_FRAMES if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnknownArgumentType]
+            basic_fields.extend(_mp4_text_values(tags, M4A_TEXT_FRAMES))
+            basic_fields.extend(_mp4_bytes_values(tags, M4A_BYTES_FRAMES))
             if "cpil" in tags and tags["cpil"]:  # mutagen parses cpil as a Python bool: True is "1", False means not set
                 basic_fields.append((BasicField.COMPILATION, (CANONICAL_COMPILATION_VALUE,)))
 
@@ -221,24 +213,10 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
         return self._file.tags  # pyright: ignore[reportReturnType]
 
     def _get_disk(self) -> Tuple[int | None, int | None]:
-        if not self._file.tags or "disk" not in self._file.tags:
-            return (None, None)
-        values = self._file.tags["disk"]  # pyright: ignore[reportUnknownVariableType]
-        if not isinstance(values, list) or len(values) < 1 or not isinstance(values[0], tuple):  # pyright: ignore[reportUnknownArgumentType]
-            return (None, None)
-        disk: Tuple[int, int] = values[0]  # pyright: ignore[reportUnknownVariableType]
-        (disc_number, disc_total) = disk
-        return (disc_number if disc_number else None, disc_total if disc_total else None)
+        return _get_mp4_tuple(self._file.tags, "disk")
 
     def _get_trkn(self) -> Tuple[int | None, int | None]:
-        if not self._file.tags or "trkn" not in self._file.tags:
-            return (None, None)
-        values = self._file.tags["trkn"]  # pyright: ignore[reportUnknownVariableType]
-        if not isinstance(values, list) or len(values) < 1 or not isinstance(values[0], tuple):  # pyright: ignore[reportUnknownArgumentType]
-            return (None, None)
-        trkn: Tuple[int, int] = values[0]  # pyright: ignore[reportUnknownVariableType]
-        (track_number, track_total) = trkn
-        return (track_number if track_number else None, track_total if track_total else None)
+        return _get_mp4_tuple(self._file.tags, "trkn")
 
     def _set_disk(self, disc_number: int | None, disc_total: int | None):
         fields = self._ensure_tagged_mp4()
@@ -247,6 +225,55 @@ class Mp4Tagger(AbstractMutagenTagger[MP4]):
     def _set_trkn(self, track_number: int | None, track_total: int | None):
         fields = self._ensure_tagged_mp4()
         fields["trkn"] = [(track_number if track_number else 0, track_total if track_total else 0)]
+
+
+def _get_mp4_covers(tags: object) -> list[MP4Cover]:
+    """Get the cover art list from MP4 tags."""
+    return list(tags["covr"]) if "covr" in tags else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportIndexIssue, reportOperatorIssue, reportAttributeAccessIssue, reportUnknownArgumentType]
+
+
+def _mp4_cover_mime_type(cover: MP4Cover) -> str:
+    """Get the expected MIME type for an MP4 cover."""
+    match cover.imageformat:  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        case MP4Cover.FORMAT_JPEG:
+            return "image/jpeg"
+        case MP4Cover.FORMAT_PNG:
+            return "image/png"
+        case _:
+            return "invalid"
+
+
+def _mp4_cover_bytes(cover: MP4Cover) -> bytes:
+    """Get the raw image data from an MP4 cover."""
+    return bytes(cover)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
+
+
+def _get_or_create_covers(fields: MP4Tags) -> list[MP4Cover]:
+    """Get existing covers or create an empty list."""
+    covers: list[MP4Cover] = fields["covr"] if "covr" in fields else []  # pyright: ignore[reportUnknownVariableType]
+    return covers  # pyright: ignore[reportUnknownVariableType]
+
+
+def _mp4_text_values(tags: MP4Tags, frames: Iterable[Tuple[BasicField, str]]) -> Iterable[Tuple[BasicField, Tuple[str, ...]]]:
+    """Get text field values from MP4 tags."""
+    return ((tag, tuple(tags[atom])) for tag, atom in frames if atom in tags)  # pyright: ignore[reportUnknownArgumentType]
+
+
+def _mp4_bytes_values(tags: MP4Tags, frames: Iterable[Tuple[BasicField, str]]) -> Iterable[Tuple[BasicField, Tuple[str, ...]]]:
+    """Get bytes field values from MP4 tags."""
+    return ((tag, tuple(v.decode("utf-8") for v in tags[atom])) for tag, atom in frames if atom in tags)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportUnknownVariableType]
+
+
+def _get_mp4_tuple(tags: MP4Tags | None, key: str) -> Tuple[int | None, int | None]:
+    """Get a tuple-valued MP4 tag like 'disk' or 'trkn'."""
+    if not tags or key not in tags:  # pyright: ignore[reportOperatorIssue]
+        return (None, None)
+    values = tags[key]  # pyright: ignore[reportUnknownVariableType, reportIndexIssue, reportAttributeAccessIssue]
+    if not isinstance(values, list) or len(values) < 1 or not isinstance(values[0], tuple):  # pyright: ignore[reportUnknownArgumentType]
+        return (None, None)
+    track: Tuple[int, int] = values[0]  # pyright: ignore[reportUnknownVariableType, reportIndexIssue, reportAttributeAccessIssue]
+    (number, total) = track
+    return (number if number else None, total if total else None)
 
 
 def _mp4_has_video(path: Path) -> bool:

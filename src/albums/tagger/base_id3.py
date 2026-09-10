@@ -45,8 +45,7 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
 
     def get_pictures(self) -> Generator[Tuple[Picture, bytes], None, None]:
         frames = self._ensure_id3()
-        picture_frames: list[APIC] = frames.getall("APIC") if frames else []  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        for frame in picture_frames:  # pyright: ignore[reportUnknownVariableType]
+        for frame in _get_all_picture_frames(frames):
             image_data: bytes = bytes(frame.data)  # type: ignore
             picture_type = PictureType(frame.type)  # type: ignore
             expect_mime_type = str(frame.mime) if frame.mime and isinstance(frame.mime, str) else "Unknown"  # type: ignore
@@ -82,14 +81,14 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
 
     @override
     def get_legacy_fields(self):
-        if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
+        if self._has_tags():
             return id3_legacy_fields(self._ensure_id3())
         return ()
 
     @override
     def get_fields(self) -> Tuple[Tuple[BasicField, Tuple[str, ...]], ...]:
         basic_fields: list[Tuple[BasicField, Tuple[str, ...]]] = []
-        if self._get_file().tags:  # pyright: ignore[reportUnknownMemberType]
+        if self._has_tags():
             frames = self._ensure_id3()
             field_values: dict[BasicField, list[str]] = {}
             for tag, frame in BASIC_ID3_TEXT_FRAMES:
@@ -114,11 +113,11 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
             basic_fields.extend((tag, tuple(values)) for tag, values in field_values.items())
 
             if "TCON" in frames:
-                basic_fields.append((BasicField.GENRE, tuple(frames["TCON"].genres)))  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                basic_fields.append((BasicField.GENRE, _get_tcon_genres(frames)))
 
             ufid_frame = f"UFID:{UFID_MUSICBRAINZ_OWNER}"
             if ufid_frame in frames:
-                ufid_data = bytes(frames[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                ufid_data = _get_ufid_data(frames, ufid_frame)
                 basic_fields.append((BasicField.MUSICBRAINZ_TRACKID, (ufid_data.decode("ascii"),)))
 
             track_number, track_total = self._get_trck()
@@ -245,3 +244,22 @@ class AbstractId3Tagger[_FT: MP3 | AIFF](AbstractMutagenTagger[_FT], ABC):
     def _set_trck(self, track_number: str | None, track_total: str | None):
         value = format_numbered_value(track_number, track_total)
         set_numbered_frame(self._ensure_id3(), value, "TRCK", TRCK)
+
+    def _has_tags(self) -> bool:
+        """Check if the file has ID3 tags."""
+        return bool(self._get_file().tags)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+
+
+def _get_all_picture_frames(frames: ID3) -> list[APIC]:
+    """Get all APIC frames from ID3 tags."""
+    return frames.getall("APIC") if frames else []  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+
+
+def _get_tcon_genres(frames: ID3) -> tuple[str, ...]:
+    """Get genre list from a TCON frame."""
+    return tuple(frames["TCON"].genres)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+
+
+def _get_ufid_data(frames: ID3, ufid_frame: str) -> bytes:
+    """Get MusicBrainz UFID data."""
+    return bytes(frames[ufid_frame].data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
