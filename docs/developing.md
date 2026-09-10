@@ -177,17 +177,18 @@ Tips:
 
 #### Transactions and fixers
 
-The check system uses a single database transaction per album (and one at run end):
+The check system uses a single database transaction per album (and one at run
+end):
 
-- **Fixers must never call ``session.commit()``.** They may mutate ORM entities
+- **Fixers must never call `session.commit()`.** They may mutate ORM entities
   and files freely, but they must not commit.
-- The ``Checker`` owns the transaction: it calls ``session.flush()`` after each
+- The `Checker` owns the transaction: it calls `session.flush()` after each
   successful fix (so the re-scan sees the changes) and commits after each album
   and at the end of the run.
 - Committing from a fixer would break the re-run-after-fix behavior (all checks
   restart after a change) and could persist a partially fixed album.
-- The ``Fixer`` class docstring and the ``Check`` base class docstring document
-  this contract; fix new check authors should read those as well.
+- The `Fixer` class docstring and the `Check` base class docstring document this
+  contract; fix new check authors should read those as well.
 
 ### Writing Tests
 

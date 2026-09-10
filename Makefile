@@ -56,7 +56,10 @@ fix: install install-js ## Automatically fix lint/format
 	$(STEP) 'lint-fix' $(UV) run ruff check . --fix
 	$(STEP) 'markdown-fix' $(PRETTIER) --write '**/*.md'
 
-test: install ## Run all tests with coverage, fail on any warnings
+test: install ## Run all tests, fail on any warnings
+	$(UV) run pytest --max-warnings=0
+
+coverage: install ## Run all tests with coverage, fail on any warnings
 	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
 	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
 

@@ -40,7 +40,7 @@ hook_note "pre-push: working tree must be fully clean (nothing staged, unstaged 
 require_push_tree_clean
 
 require_make
-hook_note "pre-push: running 'make test' (full suite with coverage; may take a few minutes)"
+hook_note "pre-push: running 'make test' (may take a minute)"
 # QUIET=1: quiet steps (e.g. uv sync) print one line as they start, full tool
 # output only on failure (see the Makefile). The pytest run itself keeps its
 # full output, since that is what you want to watch while it runs.
