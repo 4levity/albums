@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Any, Final, override
 
@@ -6,11 +5,9 @@ from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import COMPILATION_PARENT_FOLDERS, VARIOUS_ARTISTS
+from albums.checks.helpers import COMPILATION_PARENT_FOLDERS, VARIOUS_ARTISTS, valid_folder_list
 from albums.entities import Album, Track
 from albums.tagger import CANONICAL_COMPILATION_VALUE, AlbumTagger, BasicField, Cap
-
-logger: Final = logging.getLogger(__name__)
 
 OPTION_SET_COMPILATION: Final = ">> Set compilation flag on all tracks"
 OPTION_REMOVE_COMPILATION: Final = ">> Remove compilation flag from all tracks"
@@ -51,15 +48,12 @@ class CheckCompilationField(Check):
     must_pass_checks = {"artist"}
 
     def init(self, check_config: dict[str, Any]):
-        compilation_parent_folders: list[Any] = check_config.get(
-            "compilation_parent_folders", CheckCompilationField.default_config["compilation_parent_folders"]
+        self.compilation_parent_folders = valid_folder_list(
+            check_config,
+            "compilation",
+            "compilation_parent_folders",
+            CheckCompilationField.default_config["compilation_parent_folders"],
         )
-        if not isinstance(compilation_parent_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(f, str) or f == "" for f in compilation_parent_folders
-        ):
-            logger.warning(f'compilation.compilation_parent_folders must be a list of folders, ignoring value "{compilation_parent_folders}"')
-            compilation_parent_folders = []
-        self.compilation_parent_folders = set(str(folder).casefold() for folder in compilation_parent_folders)
 
     @override
     def check(self, album: Album) -> CheckResult | None:

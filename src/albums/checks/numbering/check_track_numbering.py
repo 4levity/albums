@@ -16,6 +16,7 @@ from albums.checks.helpers import (
     get_tracks_by_disc,
     ordered_tracks,
     parse_filename,
+    valid_folder_list,
 )
 from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField, Cap
@@ -114,18 +115,14 @@ class CheckTrackNumbering(Check):
     must_pass_checks = {"disc-numbering"}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckTrackNumbering.default_config["ignore_folders"])
-        if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(f, str) or f == "" for f in ignore_folders
-        ):
-            logger.warning(f'track-numbering.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
-            ignore_folders = []
-        self.ignore_folders = list(str(folder) for folder in ignore_folders)
+        self.ignore_folders = valid_folder_list(
+            check_config, "track-numbering", "ignore_folders", CheckTrackNumbering.default_config["ignore_folders"]
+        )
         self.tracktotal_policy = Policy.from_str(str(check_config.get("tracktotal_policy", self.default_config["tracktotal_policy"])))
 
     def check(self, album: Album):
         folder_str = Path(album.path).name
-        if folder_str in self.ignore_folders:
+        if folder_str.casefold() in self.ignore_folders:
             return None
 
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):

@@ -1,18 +1,15 @@
-import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Final
+from typing import Any
 
 from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import DEFAULT_IGNORE_FOLDERS, MAX_FIELD_CANDIDATES, format_field_values
+from albums.checks.helpers import DEFAULT_IGNORE_FOLDERS, MAX_FIELD_CANDIDATES, format_field_values, valid_folder_list
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural, pluralize
-
-logger: Final = logging.getLogger(__name__)
 
 
 class CheckAlbumField(Check):
@@ -20,17 +17,11 @@ class CheckAlbumField(Check):
     default_config = {"enabled": True, "ignore_folders": DEFAULT_IGNORE_FOLDERS}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckAlbumField.default_config["ignore_folders"])
-        if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(f, str) or f == "" for f in ignore_folders
-        ):
-            logger.warning(f'album.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
-            ignore_folders = []
-        self.ignore_folders = list(str(folder) for folder in ignore_folders)
+        self.ignore_folders = valid_folder_list(check_config, "album", "ignore_folders", CheckAlbumField.default_config["ignore_folders"])
 
     def check(self, album: Album):
         folder_str = Path(album.path).name
-        if folder_str in self.ignore_folders:
+        if folder_str.casefold() in self.ignore_folders:
             return None
 
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):

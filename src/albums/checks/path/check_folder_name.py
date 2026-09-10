@@ -1,21 +1,18 @@
-import logging
 import os
 from os import rename, sep
 from pathlib import Path
 from string import Template
-from typing import Any, Final
+from typing import Any
 
 from pathvalidate import sanitize_filename
 from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import DEFAULT_IGNORE_FOLDERS
+from albums.checks.helpers import DEFAULT_IGNORE_FOLDERS, valid_folder_list
 from albums.entities import Album
 from albums.tagger import BasicField
 from albums.utility import get_album_name_from_tracks, get_artist_from_tracks
-
-logger: Final = logging.getLogger(__name__)
 
 
 class CheckFolderName(Check):
@@ -28,19 +25,13 @@ class CheckFolderName(Check):
         for identifier in self.format.get_identifiers():
             if identifier not in {"artist", "album"}:
                 raise ValueError(f"invalid substitution '{identifier}' in folder-name.format")
-        ignore_folders: list[Any] = check_config.get("ignore_folders", CheckFolderName.default_config["ignore_folders"])
-        if not isinstance(ignore_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(f, str) or f == "" for f in ignore_folders
-        ):
-            logger.warning(f'folder-name.ignore_folders must be a list of folders, ignoring value "{ignore_folders}"')
-            ignore_folders = []
-        self.ignore_folders = list(str(folder) for folder in ignore_folders)
+        self.ignore_folders = valid_folder_list(check_config, "folder-name", "ignore_folders", CheckFolderName.default_config["ignore_folders"])
 
     def check(self, album: Album):
         if self.ctx.importing:
             return None  # don't rename folders while importing
 
-        if Path(album.path).name in self.ignore_folders:
+        if Path(album.path).name.casefold() in self.ignore_folders:
             return None
 
         if not self._can_generate_folder_name(album):

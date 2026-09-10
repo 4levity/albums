@@ -1,18 +1,15 @@
-import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Final
+from typing import Any
 
 from rich.markup import escape
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
-from albums.checks.helpers import COMPILATION_PARENT_FOLDERS, format_field_values
+from albums.checks.helpers import COMPILATION_PARENT_FOLDERS, format_field_values, valid_folder_list
 from albums.entities import Album
 from albums.tagger import AlbumTagger, BasicField, Cap
 from albums.words import plural
-
-logger: Final = logging.getLogger(__name__)
 
 
 class CheckArtistField(Check):
@@ -24,13 +21,9 @@ class CheckArtistField(Check):
     must_pass_checks = {"album-artist"}
 
     def init(self, check_config: dict[str, Any]):
-        ignore_parent_folders: list[Any] = check_config.get("ignore_parent_folders", CheckArtistField.default_config["ignore_parent_folders"])
-        if not isinstance(ignore_parent_folders, list) or any(  # pyright: ignore[reportUnnecessaryIsInstance]
-            not isinstance(f, str) or f == "" for f in ignore_parent_folders
-        ):
-            logger.warning(f'artist.ignore_parent_folders must be a list of folders, ignoring value "{ignore_parent_folders}"')
-            ignore_parent_folders = []
-        self.ignore_parent_folders = set(str(folder).casefold() for folder in ignore_parent_folders)
+        self.ignore_parent_folders = valid_folder_list(
+            check_config, "artist", "ignore_parent_folders", CheckArtistField.default_config["ignore_parent_folders"]
+        )
 
     def check(self, album: Album):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):

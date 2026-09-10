@@ -1,9 +1,10 @@
-"""Shared helpers for checks: track ordering and numbering, field value formatting, filename parsing and file deletion."""
+"""Shared helpers for checks: check option validation, track ordering and numbering, field value formatting, filename parsing and file deletion."""
 
+import logging
 import re
 from collections import defaultdict
 from os import unlink
-from typing import Collection, Final, List, Mapping, Sequence, Tuple
+from typing import Any, Collection, Final, List, Mapping, Sequence, Tuple
 
 from rich.markup import escape
 
@@ -12,6 +13,8 @@ from albums.entities import Album, Track
 from albums.tagger import BasicField
 
 from .check_types import FixResult
+
+logger: Final = logging.getLogger(__name__)
 
 FRONT_COVER_FILENAME: Final = "cover"
 # Albums whose folder sits in a "misc" catch-all are usually bulk downloads without usable
@@ -166,3 +169,19 @@ def delete_files_except(ctx: Context, keep_filename: str | None, album: Album, f
             unlink(path)
             changed = True
     return FixResult.of(changed)
+
+
+def _valid_folder_list(value: Any) -> list[str] | None:
+    if isinstance(value, list) and all(isinstance(f, str) and f != "" for f in value):  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
+        return value  # pyright: ignore[reportUnknownVariableType]
+    return None
+
+
+def valid_folder_list(check_config: dict[str, Any], section: str, key: str, default: Sequence[str]) -> set[str]:
+    """Validate a folder-list check option; returns [] (and logs a warning) if it is not a list of non-empty strings. ``section``/``key`` name the option in the warning message (e.g. "album" / "ignore_folders"). With ``casefold=True`` entries are case-folded."""
+    raw_value = check_config.get(key, default)
+    value = _valid_folder_list(raw_value)
+    if not value:
+        logger.warning(f'{section}.{key} must be a list of folders, ignoring value "{raw_value}"')
+        return set()
+    return set(str(f).casefold() for f in value)

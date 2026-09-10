@@ -1,4 +1,4 @@
-from albums.checks.helpers import get_tracks_by_disc, ordered_tracks, parse_filename
+from albums.checks.helpers import get_tracks_by_disc, ordered_tracks, parse_filename, valid_folder_list
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
@@ -164,3 +164,27 @@ class TestGetTracksByDisc:
             Track(filename="01.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "x"}),
         ]
         assert get_tracks_by_disc(tracks) is None
+
+
+class TestValidateFolderList:
+    def test_valid_list_passes_through(self):
+        assert valid_folder_list({"ignore_folders": ["misc", "misc2"]}, "album", "ignore_folders", []) == {"misc", "misc2"}
+
+    def test_missing_key_returns_default_without_warning(self, caplog):
+        assert valid_folder_list({}, "album", "ignore_folders", ["misc"]) == {"misc"}
+        assert not caplog.records
+
+    def test_non_list_value_is_ignored_with_warning(self, caplog):
+        assert valid_folder_list({"ignore_folders": "misc"}, "album", "ignore_folders", []) == set()
+        assert 'album.ignore_folders must be a list of folders, ignoring value "misc"' in caplog.text
+
+    def test_empty_string_entry_is_ignored_with_warning(self, caplog):
+        assert valid_folder_list({"ignore_folders": ["misc", ""]}, "album", "ignore_folders", []) == set()
+        assert "album.ignore_folders must be a list of folders" in caplog.text
+
+    def test_non_string_entry_is_ignored_with_warning(self, caplog):
+        assert valid_folder_list({"ignore_folders": [1]}, "album", "ignore_folders", []) == set()
+        assert "album.ignore_folders must be a list of folders" in caplog.text
+
+    def test_casefold_folds_entries(self):
+        assert valid_folder_list({"ignore_folders": ["MISC"]}, "album", "ignore_folders", []) == {"misc"}
