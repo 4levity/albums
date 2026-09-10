@@ -1,10 +1,11 @@
 UV := uv
-# cSpell, Prettier and Pyright are lint-only Node.js tools, defined in
-# package.json and installed by `make install-js` (requires Node.js 22.18+).
+# Lint tools are Node.js dev dependencies, defined in package.json and
+# installed by `make install-js` (requires Node.js 22.18+).
 CSPELL := npx --no-install cspell
 PRETTIER := npx --no-install prettier
 # pyright runs via `uv run` for correct project environment
 PYRIGHT := $(UV) run npx --no-install pyright
+SHELLCHECK := npx --no-install shellcheck
 
 .PHONY: build install install-js hooks static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
@@ -32,9 +33,10 @@ node_modules: package.json package-lock.json
 # cheapest first:
 static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
 
-lint: ## Lint and format-check Python (ruff)
+lint: install-js ## Lint Python (ruff) and shell (shellcheck)
 	$(UV) run ruff check .
 	$(UV) run ruff format . --check
+	$(SHELLCHECK) hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown

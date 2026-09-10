@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Shared helpers for the albums git hooks (hooks/pre-commit, hooks/pre-push).
 #
 # The hooks are enabled by `make install` (it sets core.hooksPath to hooks/).

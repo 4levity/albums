@@ -8,7 +8,7 @@ icon: lucide/computer
 
 - [uv](https://docs.astral.sh/uv/) (manages the Python installation and project
   dependencies)
-- [Node.js](https://nodejs.org/) 22.18+ (lint tools: cspell, prettier, pyright)
+- [Node.js](https://nodejs.org/) 22.18+ (lint tool dev dependencies)
 - `make`
 
 ## Overview
@@ -21,10 +21,10 @@ The dependency lockfile (`uv.lock`) is committed, and `make install` fails if it
 is out of date with `pyproject.toml`. After changing dependencies, run `uv lock`
 (or `uv add`/`uv remove`) and commit the updated lockfile.
 
-The static-check tools (cspell, prettier, pyright) are Node.js packages defined
-in `package.json` with versions pinned in `package-lock.json`. `make install-js`
-installs them into `node_modules/`; `make static` and `make fix` run it
-automatically, and it fails if the lockfile is out of date with `package.json`.
+The lint tools are Node.js dev dependencies defined in `package.json` with
+versions pinned in `package-lock.json`. `make install-js` installs them into
+`node_modules/`; `make static` and `make fix` run it automatically, and it fails
+if the lockfile is out of date with `package.json`.
 
 ### Run
 
@@ -44,7 +44,7 @@ used by a regular installation of `albums`).
 | `tests/`            | Tests!                                                 |
 | `Makefile`          | The Makefile                                           |
 | `hooks/`            | Git hooks (pre-commit, pre-push) set by `make install` |
-| `package.json`      | Node.js static-check tools (cspell, prettier, pyright) |
+| `package.json`      | Node.js dev dependencies (lint tools)                  |
 | `pyproject.toml`    | Project definition, tool configuration, dependencies   |
 | `zensical.toml`     | Configuration for this documentation                   |
 
@@ -286,7 +286,7 @@ the static checks.
 ### Lint, format and static analysis
 
 No warnings, only pass/fail. `make static` runs all static checks. Each tool
-also has its own target for targeted runs: `make lint` (ruff),
+also has its own target for targeted runs: `make lint` (ruff + shellcheck),
 `make lint-markdown`, `make typecheck` (pyright), `make spelling`. Some
 lint/format problems can be automatically fixed with `make fix`.
 
@@ -294,11 +294,10 @@ lint/format problems can be automatically fixed with `make fix`.
   [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error
   rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
   files only (markdown is linted with pymarkdown)
+- shell lint with [shellcheck](https://www.shellcheck.net/) - the git hook
+  scripts in `hooks/`, run by `make lint`
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
-  strict mode for main project, looser rules for tests. Like cSpell and
-  Prettier, it is a Node.js package installed by `make install-js` (versions
-  pinned in `package.json` / `package-lock.json`) and run via
-  [npx](https://www.npmjs.com/package/npx) from `node_modules/`
+  strict mode for main project, looser rules for tests.
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
 - markdown reflow with [Prettier](https://prettier.io/) - wraps prose at 80
   columns, run by `make fix` (uses `.prettierrc` config)

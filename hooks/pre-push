@@ -24,7 +24,8 @@ cd "$root" || exit 1
 
 zeros=0000000000000000000000000000000000000000
 needs_tests=no
-while read -r local_ref local_sha remote_ref remote_sha; do
+# _remote_ref: the remote ref name is unused; only the shas matter here.
+while read -r local_ref local_sha _remote_ref remote_sha; do
     [ -n "${local_ref:-}" ] || continue
     # A ref is new or updated when its local sha is set and differs from the
     # sha currently on the remote (all zeros for a brand-new ref).

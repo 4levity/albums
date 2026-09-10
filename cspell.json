@@ -132,6 +132,7 @@
         "skimage",
         "scm",
         "setuptools",
+        "shellcheck",
         "soaa",
         "soal",
         "specpath",
