@@ -43,6 +43,7 @@ used by a regular installation of `albums`).
 | `scripts/`          | Development scripts (e.g. `version.py`)                |
 | `tests/`            | Tests!                                                 |
 | `Makefile`          | The Makefile                                           |
+| `hooks/`            | Git hooks (pre-commit, pre-push) set by `make install` |
 | `package.json`      | Node.js static-check tools (cspell, prettier, pyright) |
 | `pyproject.toml`    | Project definition, tool configuration, dependencies   |
 | `zensical.toml`     | Configuration for this documentation                   |
@@ -250,15 +251,44 @@ format types are recommended:
 The subject line of the commit message should be 50 characters maximum. The
 commit body should be omitted for small changes.
 
+## Git hooks
+
+The `pre-commit` and `pre-push` hooks in [`hooks/`](hooks/) gate commits and
+pushes on a clean working tree plus the relevant checks:
+
+| Hook         | Requires                                                    |
+| ------------ | ----------------------------------------------------------- |
+| `pre-commit` | clean working tree + `make fix static` passes               |
+| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip) |
+
+`pre-push` skips its checks when the push updates nothing (all refs already up
+to date) or only deletes refs, since no new commits are published.
+
+The hooks are enabled automatically: `make install` (so `make` too) sets
+`core.hooksPath` to `hooks/` in the repository's local git config, so no copy or
+symlink step is needed. A fresh clone picks them up on its first `make install`;
+`make hooks` does the same at any time.
+
+- Skip a hook for a single command with `--no-verify` (`git commit --no-verify`,
+  `git push --no-verify`).
+- Disable the hooks: `git config --unset core.hooksPath` (git falls back to the
+  default, empty `.git/hooks/` directory). Note that `core.hooksPath` replaces
+  `.git/hooks/` entirely, so any other hooks belong in `hooks/`.
+
+Hook failure messages are written to be actionable by both humans and agents:
+they state what the hook requires, what failed, and the exact commands to fix
+it. If `make fix` changes files during a commit, the pre-commit hook stages the
+fixes automatically and names the files in a note, so the committed tree passes
+the static checks.
+
 ## Tips
 
 ### Lint, format and static analysis
 
-No warnings, only pass/fail. `make static` runs all static checks (it is the
-gate for builds, CI and the commit hook); each tool also has its own target for
-targeted runs: `make lint` (ruff), `make lint-markdown`, `make typecheck`
-(pyright), `make spelling`. Some lint/format problems can be automatically fixed
-with `make fix`.
+No warnings, only pass/fail. `make static` runs all static checks. Each tool
+also has its own target for targeted runs: `make lint` (ruff),
+`make lint-markdown`, `make typecheck` (pyright), `make spelling`. Some
+lint/format problems can be automatically fixed with `make fix`.
 
 - lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
   [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error

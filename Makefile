@@ -6,13 +6,22 @@ PRETTIER := npx --no-install prettier
 # pyright runs via `uv run` for correct project environment
 PYRIGHT := $(UV) run npx --no-install pyright
 
-.PHONY: build install install-js static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
+.PHONY: build install install-js hooks static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
 
 build: install static test
 	@echo "build complete"
 
+# The git hooks (pre-commit, pre-push) live in hooks/ and are enabled by
+# pointing core.hooksPath at them (relative paths resolve from the repo root).
+# `install` depends on this, so a fresh clone gets the hooks as soon as its
+# dependencies are installed; it is a silent no-op when the setting is already
+# in place (the config value is checked, so it self-heals if ever lost).
+# See docs/developing.md, "Git hooks". Disable with: git config --unset core.hooksPath
+hooks: ## Enable git hooks (pre-commit, pre-push)
+	@if git rev-parse --git-dir >/dev/null 2>&1; then if [ "$$(git config --get core.hooksPath)" != "hooks" ]; then git config core.hooksPath hooks; echo "git hooks enabled (core.hooksPath=hooks)"; fi; else echo "skipping git hooks (not a git repository)"; fi
+
 # --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
-install: ## Install project dependencies
+install: hooks ## Install project dependencies
 	$(UV) sync --locked
 
 install-js: node_modules ## Install static-check Node.js dependencies

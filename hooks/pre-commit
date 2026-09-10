@@ -1,0 +1,42 @@
+#!/bin/sh
+# albums pre-commit hook.
+#
+# A commit is only allowed when:
+#   1. the working tree is clean: every change is staged (no unstaged
+#      changes) and there are no untracked files, and
+#   2. `make fix static` passes: it auto-fixes lint/format (ruff, prettier),
+#      then runs all static checks (ruff, pymarkdown, cspell, pyright).
+#
+# If `make fix` changes files, they are staged automatically (with a note
+# naming them) so the commit includes the fixes.
+#
+# Enabled by `make install` (it sets core.hooksPath to hooks/). Skip once
+# with `git commit --no-verify`. See docs/developing.md, "Git hooks".
+
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+[ -f hooks/lib.sh ] || {
+    echo "albums hook: cannot find hooks/lib.sh next to this hook" >&2
+    echo "albums hook: (is core.hooksPath set to this repo's hooks/ directory?)" >&2
+    exit 1
+}
+. ./hooks/lib.sh
+
+hook_note "pre-commit: working tree must be clean (no unstaged changes, no untracked files)"
+require_commit_tree_clean
+
+require_make
+hook_note "pre-commit: running 'make fix static' (auto-fix, then all static checks; may take a minute)"
+if ! make fix static; then
+    hook_fail "make fix static failed" \
+"Fix the errors shown above, then re-run the git commit command:
+  make fix     # auto-fix what can be auto-fixed
+  git add -A   # if make fix changed files
+  make static  # verify all checks pass"
+fi
+
+# make fix may have modified tracked files; stage them so the commit
+# includes the fixes.
+stage_auto_fixes
+hook_note "pre-commit: OK"

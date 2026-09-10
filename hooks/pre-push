@@ -1,0 +1,52 @@
+#!/bin/sh
+# albums pre-push hook.
+#
+# A push that updates or creates refs is only allowed when:
+#   1. the working tree is fully clean (nothing staged, unstaged or
+#      untracked), and
+#   2. `make test` passes (full test suite with coverage).
+#
+# Git passes the refs being pushed on stdin. Pushes that update nothing
+# (all refs already up to date) or only delete refs skip the tests.
+#
+# Enabled by `make install` (it sets core.hooksPath to hooks/). Skip once
+# with `git push --no-verify`. See docs/developing.md, "Git hooks".
+
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+[ -f hooks/lib.sh ] || {
+    echo "albums hook: cannot find hooks/lib.sh next to this hook" >&2
+    echo "albums hook: (is core.hooksPath set to this repo's hooks/ directory?)" >&2
+    exit 1
+}
+. ./hooks/lib.sh
+
+zeros=0000000000000000000000000000000000000000
+needs_tests=no
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -n "${local_ref:-}" ] || continue
+    # A ref is new or updated when its local sha is set and differs from the
+    # sha currently on the remote (all zeros for a brand-new ref).
+    [ "$local_sha" = "$zeros" ] && continue
+    [ "$local_sha" = "$remote_sha" ] && continue
+    needs_tests=yes
+done
+
+if [ "$needs_tests" = no ]; then
+    hook_note "pre-push: nothing new to push (ref(s) up to date or deletion(s) only); skipping checks"
+    exit 0
+fi
+
+hook_note "pre-push: working tree must be fully clean (nothing staged, unstaged or untracked)"
+require_push_tree_clean
+
+require_make
+hook_note "pre-push: running 'make test' (full suite with coverage; may take a few minutes)"
+if ! make test; then
+    hook_fail "make test failed" \
+"Fix the failing tests, then re-run the git push command:
+  uv run pytest -v                # re-run the full suite
+  uv run pytest tests/<path> -v   # or a targeted subset"
+fi
+hook_note "pre-push: OK"
