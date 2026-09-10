@@ -34,7 +34,7 @@ class TestCliSync:
     @pytest.fixture(scope="function", autouse=True)
     def setup_tests(self):
         TestCliSync.library = create_library("cli_sync", albums)
-        helpers.init_db(TestCliSync.library)
+        helpers.init_db_cached(TestCliSync.library, albums)
         TestCliSync.dest = test_data_path / "cli_sync_filter_dest"
         shutil.rmtree(TestCliSync.dest, ignore_errors=True)
         os.makedirs(TestCliSync.dest)

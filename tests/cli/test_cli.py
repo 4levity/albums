@@ -35,7 +35,7 @@ class TestCli:
 
     def run(self, params: list[str], init=False):
         if init:
-            helpers.init_db(TestCli.library)
+            helpers.init_db_cached(TestCli.library, albums)
         return helpers.run(params, TestCli.library)
 
     def test_help(self):
@@ -44,7 +44,7 @@ class TestCli:
         assert "Usage: albums [OPTIONS] COMMAND [ARGS]" in result.output
 
     def test_scan(self):
-        result = helpers.init_db(TestCli.library)
+        result = helpers.init_db(TestCli.library)  # fresh init: this test exercises init itself
         assert result.exit_code == 0
         assert "creating database" in result.output
         result = self.run(["-v", "scan"])

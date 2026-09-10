@@ -1,16 +1,19 @@
-"""Shared test helpers: applying automatic fixes, a no-op mock tagger, CLI invocation, and a fake ffmpeg."""
+"""Shared test helpers: applying automatic fixes, a no-op mock tagger, CLI invocation, database initialization, and a fake ffmpeg."""
 
+import hashlib
+import json
+import shutil
 from pathlib import Path
-from typing import Generator, List, Sequence, Tuple
+from typing import Collection, Generator, List, Sequence, Tuple
 
 from click.testing import CliRunner
 
 from albums.checks.check_types import CheckResult, FixResult
 from albums.cli import entry_point
-from albums.entities import Track
+from albums.entities import Album, Track
 from albums.tagger import BasicField, Picture, StreamInfo, TaggerFile
 
-from .fixtures.create_library import create_track_file
+from .fixtures.create_library import create_track_file, test_data_path
 
 
 def apply_automatic_fix(result: CheckResult | None) -> FixResult:
@@ -54,8 +57,40 @@ class MockTagger(TaggerFile):
         pass
 
 
+def _db_snapshot_path(library: Path, albums: Collection[Album]) -> Path:
+    """Snapshot path for a database initialized from this exact library content."""
+    digest = hashlib.sha1(json.dumps([album.to_dict() for album in albums], sort_keys=True).encode()).hexdigest()[:12]
+    return test_data_path / f".db_snapshot_{library.name}_{digest}.db"
+
+
+class _CachedInitResult:
+    """Result stand-in for when a cached initialized database is copied into place by :func:`init_db_cached`."""
+
+    exit_code = 0
+    output = ""
+
+
 def init_db(library: Path):
     return CliRunner().invoke(entry_point.albums_group, ["--db-file", str(library / "albums.db"), "init", str(library)])
+
+
+def init_db_cached(library: Path, albums: Collection[Album]):
+    """Ensure ``library`` has an initialized database, reusing a cached copy when available.
+
+    The database ``albums init`` creates depends only on the library content, so a database
+    initialized for this exact content is copied into place instead of running init (and its
+    migration + scan pass) for every test. The snapshot is written by a real init the first
+    time it is needed. Tests that exercise ``init`` itself should call :func:`init_db` to
+    force a fresh database.
+    """
+    db_file = library / "albums.db"
+    snapshot = _db_snapshot_path(library, albums)
+    if snapshot.exists():
+        shutil.copy2(snapshot, db_file)
+        return _CachedInitResult()
+    result = init_db(library)
+    shutil.copy2(db_file, snapshot)
+    return result
 
 
 def run(params: list[str], library: Path):

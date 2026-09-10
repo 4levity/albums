@@ -17,7 +17,7 @@ class TestCliConfig:
 
     def run(self, params: list[str], init=False):
         if init:
-            helpers.init_db(TestCliConfig.library)
+            helpers.init_db_cached(TestCliConfig.library, [])  # empty library
         return helpers.run(params, TestCliConfig.library)
 
     def test_config(self):

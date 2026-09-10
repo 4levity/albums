@@ -31,7 +31,7 @@ class TestFolderContext:
         library = TestFolderContext.library / album1.path
         other_dir = TestFolderContext.library / album2.path
 
-        helpers.init_db(library)
+        helpers.init_db_cached(library, [album1])
         result = helpers.run(["list"], library)
         assert "foo" in result.output
 
