@@ -35,18 +35,18 @@ used by a regular installation of `albums`).
 
 ### Project Files and Folders
 
-| Path                | Description                                            |
-| ------------------- | ------------------------------------------------------ |
-| `.github/workflows` | Github workflows (build/publish/docs)                  |
-| `docs/`             | This documentation                                     |
-| `src/albums/`       | Python application (structure below)                   |
-| `scripts/`          | Development scripts (e.g. `version.py`)                |
-| `tests/`            | Tests!                                                 |
-| `Makefile`          | The Makefile                                           |
-| `hooks/`            | Git hooks (pre-commit, pre-push) set by `make install` |
-| `package.json`      | Node.js dev dependencies (lint tools)                  |
-| `pyproject.toml`    | Project definition, tool configuration, dependencies   |
-| `zensical.toml`     | Configuration for this documentation                   |
+| Path                | Description                                          |
+| ------------------- | ---------------------------------------------------- |
+| `.github/workflows` | Github workflows (build/publish/docs)                |
+| `docs/`             | This documentation                                   |
+| `src/albums/`       | Python application (structure below)                 |
+| `scripts/`          | Development scripts (e.g. `version.py`)              |
+| `tests/`            | Tests!                                               |
+| `Makefile`          | The Makefile                                         |
+| `hooks/`            | Git hooks (commit-msg, pre-commit, pre-push)         |
+| `package.json`      | Node.js dev dependencies (lint tools)                |
+| `pyproject.toml`    | Project definition, tool configuration, dependencies |
+| `zensical.toml`     | Configuration for this documentation                 |
 
 (not all files/folders included)
 
@@ -251,15 +251,27 @@ format types are recommended:
 The subject line of the commit message should be 50 characters maximum. The
 commit body should be omitted for small changes.
 
+Commit messages are enforced by the `commit-msg` git hook (see
+[Git hooks](#git-hooks) below), which checks them with
+[commitlint](https://commitlint.js.org/) using `commitlint.config.js`.
+
 ## Git hooks
 
-The `pre-commit` and `pre-push` hooks in [`hooks/`](hooks/) gate commits and
-pushes on a clean working tree plus the relevant checks:
+The `commit-msg`, `pre-commit` and `pre-push` hooks in [`hooks/`](hooks/) gate
+commits and pushes on commit message style, a clean working tree plus the
+relevant checks:
 
-| Hook         | Requires                                                    |
-| ------------ | ----------------------------------------------------------- |
-| `pre-commit` | clean working tree + `make fix static` passes               |
-| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip) |
+| Hook         | Requires                                                       |
+| ------------ | -------------------------------------------------------------- |
+| `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint) |
+| `pre-commit` | clean working tree + `make fix static` passes                  |
+| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)    |
+
+`commit-msg` checks the final commit message with
+[commitlint](https://commitlint.js.org/) (`@commitlint/cli`), configured in
+`commitlint.config.js` (extends `@commitlint/config-conventional`, 50 character
+subject limit). Standard git-generated messages (e.g. `Merge branch ...` and
+`Revert ...`) are accepted by commitlint itself.
 
 `pre-push` skips its checks when the push updates nothing (all refs already up
 to date) or only deletes refs, since no new commits are published.

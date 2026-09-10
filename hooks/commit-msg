@@ -1,0 +1,56 @@
+#!/bin/sh
+# albums commit-msg hook.
+#
+# Commit messages must follow Conventional Commits (type, optional scope,
+# subject) with a subject of at most 50 characters. The final message is
+# checked with commitlint (@commitlint/cli, config in commitlint.config.js,
+# which extends @commitlint/config-conventional and sets header-max-length
+# to 50). Git-generated messages that are not conventional style (e.g.
+# "Merge branch ..." and "Revert ..." messages) are accepted by commitlint
+# itself.
+#
+# Git invokes this hook as: commit-msg <message-file>, where the file holds
+# the final commit message (after any editor session). It fires for every
+# commit source (-m/-F, commit editor, --amend, merge, rebase reword,
+# cherry-pick), so the message is checked in all cases.
+#
+# If the check fails, git aborts the commit and the message is left in
+# .git/COMMIT_EDITMSG; re-run the git commit command and fix the message.
+#
+# Enabled by `make install` (it sets core.hooksPath to hooks/). Skip once
+# with `git commit --no-verify`. See docs/developing.md, "Git hooks".
+
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+[ -f hooks/lib.sh ] || {
+    echo "albums hook: cannot find hooks/lib.sh next to this hook" >&2
+    echo "albums hook: (is core.hooksPath set to this repo's hooks/ directory?)" >&2
+    exit 1
+}
+. ./hooks/lib.sh
+
+msg_file=${1-}
+[ -n "$msg_file" ] && [ -f "$msg_file" ] || hook_fail "missing commit message file" \
+    "This hook expects the commit message file as its first argument; this
+should not happen. Re-run the git commit command."
+
+# commitlint is a Node.js dev dependency (make install-js installs it). The
+# pre-commit hook runs first and ensures dev dependencies are installed, but
+# be explicit if it is missing anyway (e.g. after a fresh clone).
+[ -x node_modules/.bin/commitlint ] || hook_fail "commitlint is not installed" \
+    "Install the Node.js dev dependencies, then re-run the git commit command:
+  npm ci            # or: make install-js
+  git commit -m '<type>: <subject>'"
+
+hook_note "commit-msg: commit message must be Conventional Commits style (subject <= 50 chars)"
+if ! npx --no-install commitlint --edit "$msg_file"; then
+    hook_fail "the commit message is not Conventional Commits style" \
+"Write the subject as '<type>(<scope>): <subject>' with a subject of at
+most 50 characters. Types used in this project (docs/developing.md,
+\"Commit style\"):
+  build, deps, docs, feat, fix, refactor, style, test
+Then re-run the git commit command, e.g.:
+  git commit -m 'feat: <subject of at most 50 characters>'"
+fi
+hook_note "commit-msg: OK"

@@ -12,13 +12,14 @@ SHELLCHECK := npx --no-install shellcheck
 build: install static test
 	@echo "build complete"
 
-# The git hooks (pre-commit, pre-push) live in hooks/ and are enabled by
-# pointing core.hooksPath at them (relative paths resolve from the repo root).
-# `install` depends on this, so a fresh clone gets the hooks as soon as its
-# dependencies are installed; it is a silent no-op when the setting is already
-# in place (the config value is checked, so it self-heals if ever lost).
-# See docs/developing.md, "Git hooks". Disable with: git config --unset core.hooksPath
-hooks: ## Enable git hooks (pre-commit, pre-push)
+# The git hooks (commit-msg, pre-commit, pre-push) live in hooks/ and are
+# enabled by pointing core.hooksPath at them (relative paths resolve from
+# the repo root). `install` depends on this, so a fresh clone gets the
+# hooks as soon as its dependencies are installed; it is a silent no-op
+# when the setting is already in place (the config value is checked, so it
+# self-heals if ever lost). See docs/developing.md, "Git hooks". Disable
+# with: git config --unset core.hooksPath
+hooks: ## Enable git hooks (commit-msg, pre-commit, pre-push)
 	@if git rev-parse --git-dir >/dev/null 2>&1; then if [ "$$(git config --get core.hooksPath)" != "hooks" ]; then git config core.hooksPath hooks; echo "git hooks enabled (core.hooksPath=hooks)"; fi; else echo "skipping git hooks (not a git repository)"; fi
 
 # --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
@@ -36,7 +37,7 @@ static: lint lint-markdown spelling typecheck ## Run all static checks (lint, ma
 lint: install-js ## Lint Python (ruff) and shell (shellcheck)
 	$(UV) run ruff check .
 	$(UV) run ruff format . --check
-	$(SHELLCHECK) hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
+	$(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
