@@ -23,7 +23,9 @@ from .empty_files import (
 # legacy field names (Vorbis comment names and deprecated ID3 frames) to their canonical BasicField
 LEGACY_TAG_MAP: Mapping[str, BasicField] = dict(LEGACY_VORBIS_FIELDS) | dict(LEGACY_ID3_FIELDS)
 
-test_data_path = Path(__file__).resolve().parent / "libraries"
+# Gitignored scratch area for generated fixtures and the DB snapshot cache (helpers.init_db_cached).
+# Paths must stay stable: snapshot databases embed the library's absolute location.
+test_tmp_dir = Path(__file__).resolve().parent.parent / "tmp"
 
 
 def create_track_file(path: Path, spec: Track):
@@ -82,7 +84,7 @@ def create_album_in_library(library_path: Path, album: Album):
 
 
 def create_library(library_name: str, albums: Collection[Album]):
-    library_path = test_data_path / library_name
+    library_path = test_tmp_dir / library_name
     if library_path.exists():
         shutil.rmtree(library_path)
     os.makedirs(library_path)

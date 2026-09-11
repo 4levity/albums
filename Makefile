@@ -141,7 +141,7 @@ clean: ## Remove build and test files
 	rm -rf dist
 	rm -rf build
 	rm -rf src/albums/_version.py
-	rm -rf tests/fixtures/libraries
+	rm -rf tests/fixtures/libraries tests/tmp
 	rm -rf docs/database_diagram.png docs/screenshot_help.png docs/screenshot_help.png.tmp docs/screenshot_help.png.txt
 	rm -rf site
 	rm -rf docs/.cache

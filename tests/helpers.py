@@ -13,7 +13,7 @@ from albums.cli import entry_point
 from albums.entities import Album, Track
 from albums.tagger import BasicField, Picture, StreamInfo, TaggerFile
 
-from .fixtures.create_library import create_track_file, test_data_path
+from .fixtures.create_library import create_track_file, test_tmp_dir
 
 
 def apply_automatic_fix(result: CheckResult | None) -> FixResult:
@@ -60,7 +60,7 @@ class MockTagger(TaggerFile):
 def _db_snapshot_path(library: Path, albums: Collection[Album]) -> Path:
     """Snapshot path for a database initialized from this exact library content."""
     digest = hashlib.sha1(json.dumps([album.to_dict() for album in albums], sort_keys=True).encode()).hexdigest()[:12]
-    return test_data_path / f".db_snapshot_{library.name}_{digest}.db"
+    return test_tmp_dir / f"db_snapshot_{library.name}_{digest}.db"
 
 
 class _CachedInitResult:

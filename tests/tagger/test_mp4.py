@@ -67,7 +67,7 @@ album = Album(path="baz" + os.sep, tracks=[track1, track2], other_files=[video])
 class TestMp4:
     @pytest.fixture(scope="function", autouse=True)
     def setup_tests(self):
-        TestMp4.library = create_library("tagger_mp3", [album])
+        TestMp4.library = create_library("tagger_mp4", [album])
         TestMp4.tagger = AlbumTagger(TestMp4.library / album.path)
 
     def test_read_write_m4a_tag(self):

@@ -203,7 +203,7 @@ class TestMyCheck:
         assert mock_set_basic_fields.call_count == 1
 ```
 
-Library fixture data is in `tests/fixtures/libraries/`. Run `make test` for full
+Library fixture data is generated in `tests/tmp/`. Run `make test` for full
 suite, or `uv run pytest tests/path/to/test.py -v` for targeted runs.
 
 ### Music File Tag Support

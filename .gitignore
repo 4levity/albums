@@ -10,6 +10,7 @@ node_modules/
 /dist
 /src/albums/_version.py
 /tests/fixtures/libraries/
+/tests/tmp/
 /htmlcov
 /site
 /docs/database_diagram.png
