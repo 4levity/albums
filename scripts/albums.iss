@@ -41,5 +41,125 @@ Source: "..\dist\pyinstaller\win_amd64\albums\*"; DestDir: "{app}"; Flags: ignor
 Name: "{group}\albums"; Filename: "{app}\albums.exe"
 Name: "{autodesktop}\albums"; Filename: "{app}\albums.exe"; Tasks: desktopicon
 
-[Run]
-Filename: "{app}\albums.exe"; Description: "{cm:LaunchProgram,albums}"; Flags: nowait postinstall skipifsilent
+[Code]
+; Add {app} to the user's PATH, remove when uninstalled.
+const
+  InstallerRegSubkey = 'Software\4levity\albums';
+
+; Trim, unquote, strip trailing backslashes and expand a PATH entry so that
+; entries compare consistently.
+function CleanPathEntry(AEntry: String): String;
+begin
+  Result := Trim(AEntry);
+  if (Length(Result) >= 2) and (Result[1] = '"') and (Result[Length(Result)] = '"') then
+  begin
+    Delete(Result, 1, 1);
+    Delete(Result, Length(Result), 1);
+  end;
+  while (Length(Result) > 1) and (Result[Length(Result)] = '\') do
+    Delete(Result, Length(Result), 1);
+  Result := ExpandConstant(Result);
+end;
+
+function IsAppDirInUserPath(AAppDir: String): Boolean;
+var
+  Path, Entry: String;
+  SemicolonPos: Integer;
+begin
+  Result := False;
+  if not RegQueryString(HKCU, 'Environment', 'Path', Path) then
+    Exit;
+  while Path <> '' do
+  begin
+    SemicolonPos := Pos(';', Path);
+    if SemicolonPos = 0 then
+    begin
+      Entry := Path;
+      Path := '';
+    end
+    else
+    begin
+      Entry := Copy(Path, 1, SemicolonPos - 1);
+      Path := Copy(Path, SemicolonPos + 1, Length(Path) - SemicolonPos);
+    end;
+    if SameText(CleanPathEntry(Entry), AAppDir) then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+procedure AddAppDirToUserPath(AAppDir: String);
+var
+  Path: String;
+begin
+  Path := '';
+  if RegQueryString(HKCU, 'Environment', 'Path', Path)
+    and (Path <> '')
+    and (Path[Length(Path)] <> ';')
+  then
+    Path := Path + ';';
+  RegWriteStringValue(HKCU, 'Environment', 'Path', Path + AAppDir);
+end;
+
+procedure RemoveAppDirFromUserPath(AAppDir: String);
+var
+  Path, NewPath, Entry: String;
+  SemicolonPos: Integer;
+begin
+  if not RegQueryString(HKCU, 'Environment', 'Path', Path) then
+    Exit;
+  NewPath := '';
+  while Path <> '' do
+  begin
+    SemicolonPos := Pos(';', Path);
+    if SemicolonPos = 0 then
+    begin
+      Entry := Path;
+      Path := '';
+    end
+    else
+    begin
+      Entry := Copy(Path, 1, SemicolonPos - 1);
+      Path := Copy(Path, SemicolonPos + 1, Length(Path) - SemicolonPos);
+    end;
+    if not SameText(CleanPathEntry(Entry), AAppDir) then
+    begin
+      if NewPath <> '' then
+        NewPath := NewPath + ';';
+      NewPath := NewPath + Entry;
+    end;
+  end;
+  RegWriteStringValue(HKCU, 'Environment', 'Path', NewPath);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  AppDir: String;
+begin
+  if CurStep <> CS_POSTINSTALL then
+    Exit;
+  AppDir := ExpandConstant('{app}');
+  if IsAppDirInUserPath(AppDir) then
+    Exit;
+  AddAppDirToUserPath(AppDir);
+  RegWriteStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', 'yes');
+  Msg(
+    'albums was installed to:' + sLineBreak +
+    '  ' + AppDir + sLineBreak + sLineBreak +
+    'It was added to your user PATH.' + sLineBreak +
+    'Log out and log back in, then open a terminal and run: albums');
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  AddedToUserPath: String;
+begin
+  if CurUninstallStep <> usPostUninstall then
+    Exit;
+  if RegQueryString(HKCU, InstallerRegSubkey, 'AddedToUserPath', AddedToUserPath) then
+    RemoveAppDirFromUserPath(ExpandConstant('{app}'));
+  RegDeleteValue(HKCU, InstallerRegSubkey, 'AddedToUserPath');
+  RegDeleteKeyOnly(HKCU, InstallerRegSubkey);
+end;
