@@ -1,7 +1,5 @@
 """Scan the library (or a set of albums) into the database, tracking added, updated and removed albums."""
 
-import glob
-import itertools
 import logging
 import time
 from collections import defaultdict
@@ -20,6 +18,7 @@ from albums.tagger import AlbumTagger
 from albums.words import plural
 
 from .album_scanner import picture_cache
+from .folder import walk_paths
 from .scanner_types import AlbumScanResult
 
 logger = logging.getLogger(__name__)
@@ -63,17 +62,16 @@ def run_scan(
         last_folders = session.execute(select(ScanHistoryEntity.folders_scanned).order_by(desc(ScanHistoryEntity.timestamp))).first()
         if last_folders:
             # speed up scanning (progress bar included) by approximating the folder count from the last scan
-            paths = glob.iglob("**/", root_dir=ctx.config.library, recursive=True)
+            paths = walk_paths(ctx.config.library)
             # over-estimate slightly so the progress bar doesn't stick at 100% if albums were added since
             expected_path_count = int(last_folders[0] * 1.01)
             logger.info(f"expect to scan about {expected_path_count} paths")
         else:
             with ctx.console.status(f"finding folders in {escape(str(ctx.config.library))}", spinner="bouncingBar"):
-                path_list = glob.glob("**/", root_dir=ctx.config.library, recursive=True)
+                path_list = list(walk_paths(ctx.config.library))
             paths = iter(path_list)
             expected_path_count = len(path_list)
             check_first_full_scan_path_count(expected_path_count)
-        paths = itertools.chain(["."], paths)
 
     def do_scan(update_progress: Callable[[], None] = lambda: None):
         if scan_albums:
