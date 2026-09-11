@@ -53,6 +53,8 @@ jobs:
         shell: bash
       - name: Build installer
         run: |
+          echo iscc /DAppVersion="$(uv run --quiet python scripts/version.py | tr -d '\r')" \
+            /DFileVersion="$(uv run --quiet python scripts/version.py fileversion | tr -d '\r')" scripts/albums.iss
           iscc /DAppVersion="$(uv run --quiet python scripts/version.py | tr -d '\r')" \
             /DFileVersion="$(uv run --quiet python scripts/version.py fileversion | tr -d '\r')" scripts/albums.iss
           ls -l dist/installer
