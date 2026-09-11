@@ -250,7 +250,7 @@ dependencies are installed. (The project can be built and tested without these.)
 | Hook         | Requires                                                       |
 | ------------ | -------------------------------------------------------------- |
 | `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint) |
-| `pre-commit` | clean working tree + `make fix static` passes                  |
+| `pre-commit` | clean working tree + `make fix-static` passes                  |
 | `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)    |
 
 `commit-msg` checks the final commit message with
@@ -258,6 +258,12 @@ dependencies are installed. (The project can be built and tested without these.)
 `commitlint.config.js` (extends `@commitlint/config-conventional`, 50 character
 subject limit). Standard git-generated messages (e.g. `Merge branch ...` and
 `Revert ...`) are accepted by commitlint itself.
+
+`pre-commit` runs `make fix-static`: the `fix` steps plus all `static` checks,
+without re-running ruff (the fix steps already verify a clean tree) and without
+`uv sync` (uv run uses the existing environment). Pyright is skipped for code
+the commit does not touch: `src/` changes re-run both pyright projects (tests
+type check against src), `tests/`-only changes re-run only the tests project.
 
 If `make fix` changes files during `pre-commit`, the changes are also staged.
 

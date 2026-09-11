@@ -46,8 +46,8 @@ $list
   # re-run the original git commit command"
 }
 
-# For pre-commit, run after `make fix static` succeeds: `make fix` may have
-# modified tracked files (ruff format/fix, prettier). Stage them so the
+# For pre-commit, run after the make checks succeed: the auto-fix steps may
+# have modified tracked files. Stage them so the
 # commit includes the fixes - the static checks already ran on the fixed
 # tree. (The tree was clean before the hook ran, so any modified tracked
 # file was touched by the hook's own make run.) Fails if the hook left

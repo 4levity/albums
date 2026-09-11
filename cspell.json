@@ -112,6 +112,7 @@
         "pypa",
         "pypi",
         "pyproject",
+        "pyrightconfig",
         "pytest",
         "pyyaml",
         "rbloom",

@@ -5,7 +5,19 @@ CSPELL := npx --no-install cspell
 PRETTIER := npx --no-install prettier
 # pyright runs via `uv run` for correct project environment
 PYRIGHT := $(UV) run npx --no-install pyright
+PYRIGHT_TESTS := $(PYRIGHT) -p tests
 SHELLCHECK := npx --no-install shellcheck
+RUFF := $(UV) run ruff
+# Full tool invocations are defined once, so `fix`, the individual check
+# targets and the combined `fix-static` hook target run the same commands.
+RUFF_CHECK := $(RUFF) check .
+RUFF_CHECK_FIX := $(RUFF) check . --fix
+RUFF_FORMAT := $(RUFF) format
+RUFF_FORMAT_CHECK := $(RUFF) format . --check
+PRETTIER_WRITE := $(PRETTIER) --write '**/*.md'
+SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
+PYMARKDOWN_CHECK := $(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
+CSPELL_CHECK := $(CSPELL) lint --gitignore * .github
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
 ifeq ($(QUIET),1)
@@ -14,7 +26,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck spelling fix test preview docs package pyinstaller clean
+.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller clean
 
 build: install static test
 	@echo "build complete"
@@ -36,25 +48,48 @@ node_modules: package.json package-lock.json
 static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
 
 lint: install-js ## Lint Python (ruff) and shell (shellcheck)
-	$(STEP) lint $(UV) run ruff check .
-	$(STEP) format $(UV) run ruff format . --check
-	$(STEP) shellcheck $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
+	$(STEP) lint $(RUFF_CHECK)
+	$(STEP) format $(RUFF_FORMAT_CHECK)
+	$(STEP) shellcheck $(SHELLCHECK_CHECK)
 
 # glob is quoted so pymarkdown expands it (sh has no globstar)
 lint-markdown: ## Lint markdown
-	$(STEP) markdown $(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
+	$(STEP) markdown $(PYMARKDOWN_CHECK)
 
 spelling: install-js ## Run spell check
-	$(STEP) spelling $(CSPELL) lint --gitignore * .github
+	$(STEP) spelling $(CSPELL_CHECK)
 
-typecheck: install-js ## Type check (pyright: strict for src, looser for tests)
+# pyright runs per project; the pre-commit hook runs only the project(s)
+# the commit can affect (see hooks/pre-commit).
+typecheck: typecheck-src typecheck-tests ## Type check (pyright: strict for src, looser for tests)
+
+typecheck-src: install-js
 	$(STEP) analyze $(PYRIGHT)
-	$(STEP) 'analyze (tests)' $(PYRIGHT) -p tests
+
+typecheck-tests: install-js
+	$(STEP) 'analyze (tests)' $(PYRIGHT_TESTS)
+
+# The pre-commit path (see hooks/pre-commit): `fix` plus the `static`
+# checks, minus work the hook does not need:
+# - the ruff re-checks in `lint`: `ruff format` and `ruff check --fix`
+#   already verify a formatted, lint-clean tree (both fail otherwise).
+# - `install`: committing must not run `uv sync` (uv run uses the existing
+#   environment; `make install`/`fix`/`static` run the sync). node_modules
+#   is still auto-installed on a fresh checkout.
+# - typecheck: the hook adds typecheck-src and/or typecheck-tests for the
+#   pyright project(s) the commit can affect.
+fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
+	$(STEP) formatter $(RUFF_FORMAT)
+	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
+	$(STEP) 'markdown-fix' $(PRETTIER_WRITE)
+	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+	$(STEP) markdown $(PYMARKDOWN_CHECK)
+	$(STEP) spelling $(CSPELL_CHECK)
 
 fix: install install-js ## Automatically fix lint/format
-	$(STEP) formatter $(UV) run ruff format
-	$(STEP) 'lint-fix' $(UV) run ruff check . --fix
-	$(STEP) 'markdown-fix' $(PRETTIER) --write '**/*.md'
+	$(STEP) formatter $(RUFF_FORMAT)
+	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
+	$(STEP) 'markdown-fix' $(PRETTIER_WRITE)
 
 test: install ## Run all tests, fail on any warnings
 	$(UV) run pytest --max-warnings=0

@@ -4,9 +4,12 @@
 # A commit is only allowed when:
 #   1. the working tree is clean: every change is staged (no unstaged
 #      changes) and there are no untracked files, and
-#   2. `make fix static` passes: fix lint/format, run static checks
+#   2. the make checks below pass (auto-fix, then static checks).
 #
-# If `make fix` changes files, they are staged automatically (with a note
+# The make targets are composable (see Makefile); the hook picks the ones
+# the staged commit needs.
+#
+# If the make run changes files, they are staged automatically (with a note
 # naming them) so the commit includes the fixes.
 
 set -u
@@ -22,15 +25,38 @@ cd "$root" || exit 1
 require_commit_tree_clean
 
 require_make
-hook_note "pre-commit: running 'make fix static' (auto-fix, then all static checks; may take a minute)"
+
+# The staged files are exactly the commit (the tree must be clean), so
+# pyright only needs to run for the project(s) the commit can affect.
+# Tests type check against src, so src/ changes affect both projects;
+# shared type check config (pyproject deps/settings, uv.lock, typings/)
+# affects both too; scripts/ is part of the src project.
+changed=$(git diff --cached --name-only)
+src_typecheck=no
+tests_typecheck=no
+if [ -n "$changed" ]; then
+    if printf '%s\n' "$changed" | grep -q -e '^src/' -e '^scripts/' -e '^pyproject.toml$' -e '^uv\.lock$' -e '^typings/'; then
+        src_typecheck=yes
+    fi
+    if printf '%s\n' "$changed" | grep -q -e '^src/' -e '^tests/' -e '^pyproject.toml$' -e '^uv\.lock$' -e '^typings/' -e '^tests/pyrightconfig.json$'; then
+        tests_typecheck=yes
+    fi
+fi
+
+# The staged commit's checks: the base, plus the pyright project(s) it
+# can affect, if any.
+set -- fix-static
+[ "$src_typecheck" = yes ] && set -- "$@" typecheck-src
+[ "$tests_typecheck" = yes ] && set -- "$@" typecheck-tests
+hook_note "pre-commit: running 'make $*' (auto-fix, then all static checks; may take a minute)"
 # QUIET=1: one line per check as it starts, full tool output only on failure
 # (see the Makefile), so the hook's output stays short but never hides errors.
-if ! QUIET=1 make fix static; then
-    hook_fail "make fix static failed" \
+if ! QUIET=1 make "$@"; then
+    hook_fail "make $* failed" \
 "Fix the errors shown above, then re-run the git commit command"
 fi
 
-# make fix may have modified tracked files; stage them so the commit
-# includes the fixes.
+# The auto-fix steps may have modified tracked files; stage them so the
+# commit includes the fixes.
 stage_auto_fixes
 hook_note "pre-commit: OK"
