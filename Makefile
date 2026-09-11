@@ -6,7 +6,9 @@ PRETTIER := npx --no-install prettier
 # pyright runs via `uv run` for correct project environment
 PYRIGHT := $(UV) run npx --no-install pyright
 PYRIGHT_TESTS := $(PYRIGHT) -p tests
-SHELLCHECK := npx --no-install shellcheck
+# shellcheck runs via scripts/shellcheck.py, which on Linux downloads a pinned
+# release into .cache/shellcheck/ and elsewhere uses shellcheck from PATH
+SHELLCHECK := $(UV) run python scripts/shellcheck.py
 RUFF := $(UV) run ruff
 RUFF_CHECK := $(RUFF) check .
 RUFF_CHECK_FIX := $(RUFF) check . --fix

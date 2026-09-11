@@ -10,6 +10,8 @@ icon: lucide/computer
   dependencies)
 - [Node.js](https://nodejs.org/) 22.18+ (lint tool dev dependencies)
 - `make`
+- `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
+  release into `.cache/shellcheck/`)
 
 ## Overview
 
@@ -280,7 +282,9 @@ lint/format problems can be automatically fixed with `make fix`.
   rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
   files only (markdown is linted with pymarkdown)
 - shell lint with [shellcheck](https://www.shellcheck.net/) - the git hook
-  scripts in `hooks/`, run by `make lint`
+  scripts in `hooks/`, run by `make lint` via `scripts/shellcheck.py`, which on
+  Linux downloads a pinned release (v0.11.0) into `.cache/shellcheck/` and on
+  other platforms requires `shellcheck` on PATH
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests.
 - markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)

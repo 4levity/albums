@@ -52,6 +52,7 @@
         "EDITMSG",
         "eralchemy",
         "executescript",
+        "execv",
         "flac",
         "fontawesome",
         "freelist",
@@ -188,7 +189,6 @@
         "wavpack",
         "WORKID",
         "workpath",
-        "xhmikosr",
         "xxhash",
         "zbrush",
         "zensical"
