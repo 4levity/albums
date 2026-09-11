@@ -8,11 +8,12 @@ from PIL import Image
 from sqlalchemy import Engine, select, update
 from sqlalchemy.orm import Session
 
-from albums.app import SCANNER_VERSION, Context
+from albums.app import Context
 from albums.database import MEMORY, db_open
 from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.library import run_scan
-from albums.library.scanner_types import MAX_IMAGE_SIZE, TargetRescan
+from albums.library.rescan import SCANNER_VERSION
+from albums.library.scanner_types import MAX_IMAGE_SIZE, FileAspect, TargetRescan
 from albums.picture import PictureInfo
 from albums.selector import load_album_entities
 from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
@@ -538,9 +539,12 @@ class TestScanner:
             scan_streams = False
 
             def rescan_only_streams(scanner, file):
-                return TargetRescan(file, fields=False, images=True, streams=scan_streams)
+                aspects = {FileAspect.IMAGES}
+                if scan_streams:
+                    aspects.add(FileAspect.STREAMS)
+                return TargetRescan(file, aspects=frozenset(aspects))
 
-            mock_needs_rescan = mocker.patch("albums.library.album_scanner._needs_rescan", side_effect=rescan_only_streams)
+            mock_needs_rescan = mocker.patch("albums.library.album_scanner.needs_rescan", side_effect=rescan_only_streams)
             mock_find_codec = mocker.patch("albums.tagger.base_mutagen._find_codec", return_value="MP3")
 
             run_scan(ctx)

@@ -129,6 +129,7 @@
         "Renderable",
         "renderables",
         "rescan",
+        "rescanned",
         "RGBX",
         "sacad",
         "scikit",

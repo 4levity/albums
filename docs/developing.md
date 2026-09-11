@@ -303,7 +303,8 @@ Markdown text.
 
 Database migrations are SQL files in
 [`database/migrations/`](src/albums/database/migrations/). Scanner version
-(`SCANNER_VERSION` in `app.py`) tracks changes. To refresh the ER diagram run:
+(`SCANNER_VERSION` in [`library/rescan.py`](src/albums/library/rescan.py))
+tracks changes. To refresh the ER diagram run:
 
 ```bash
 make docs/database_diagram.png

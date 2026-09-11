@@ -12,7 +12,7 @@ from albums.utility import read_binary_file
 
 from .folder import MiniStat
 from .remove_file import remove_file
-from .scanner_types import MAX_IMAGE_SIZE, TargetRescan
+from .scanner_types import MAX_IMAGE_SIZE, FileAspect, TargetRescan
 
 logger = logging.getLogger(__name__)
 
@@ -20,21 +20,21 @@ logger = logging.getLogger(__name__)
 def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan: TargetRescan | None) -> Track | None:
     """Read the tags of an audio file; returns ``None`` if it is not a usable track (e.g. it contains video)."""
     with tagger.open(filename) as file:
-        if target_scan is None or target_scan.streams:
+        if target_scan is None or FileAspect.STREAMS in target_scan.aspects:
             if file.has_video():  # check file streams
                 return None
         else:
             if isinstance(target_scan.source, OtherFile):
                 return None
 
-        if target_scan is not None and not target_scan.fields and isinstance(target_scan.source, Track):
+        if target_scan is not None and FileAspect.FIELDS not in target_scan.aspects and isinstance(target_scan.source, Track):
             fields = [FieldV(field=t.field, value=t.value) for t in target_scan.source.fields]
             legacy_fields = list(target_scan.source.legacy_fields)
         else:
             fields = [FieldV(field=field, value=value) for field, values in file.get_fields() for value in values]
             legacy_fields = [field_name for (field_name, _) in file.get_legacy_fields()]
 
-        if target_scan is not None and not target_scan.images and isinstance(target_scan.source, Track):
+        if target_scan is not None and FileAspect.IMAGES not in target_scan.aspects and isinstance(target_scan.source, Track):
             pictures = [
                 TrackPicture(picture_type=p.picture_type, picture_info=p.picture_info, description=p.description, embed_ix=p.embed_ix)
                 for p in target_scan.source.pictures
@@ -45,7 +45,7 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
                 for embed_ix, picture in enumerate(picture for (picture, _data) in file.get_pictures())
             ]
 
-        if target_scan is not None and not target_scan.streams and isinstance(target_scan.source, Track):
+        if target_scan is not None and FileAspect.STREAMS not in target_scan.aspects and isinstance(target_scan.source, Track):
             stream = target_scan.source.stream
         else:
             stream = file.get_stream_info()
@@ -63,7 +63,7 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
 
 def _scan_picture_file(tagger: AlbumTagger, filename: str, stat: MiniStat, scan_target: TargetRescan | None) -> PictureFile | None:
     """Scan an image file's dimensions/metadata; returns ``None`` if the file is not a usable picture (e.g. too large)."""
-    if scan_target is not None and not scan_target.images and isinstance(scan_target.source, PictureFile):
+    if scan_target is not None and FileAspect.IMAGES not in scan_target.aspects and isinstance(scan_target.source, PictureFile):
         p = scan_target.source
         return PictureFile(filename=p.filename, modify_timestamp=p.modify_timestamp, cover_source=p.cover_source, picture_info=p.picture_info)
 

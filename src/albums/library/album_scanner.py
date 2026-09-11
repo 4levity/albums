@@ -13,7 +13,8 @@ from albums.tagger import AlbumTagger
 from .file_scanner import scan_file
 from .folder import MiniStat, stat_dir
 from .remove_file import remove_file
-from .scanner_types import AlbumScanResult, TargetRescan
+from .rescan import needs_rescan
+from .scanner_types import AlbumScanResult
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +35,6 @@ def picture_cache(album: Album | None) -> PictureScannerCache:
     )
 
 
-def _needs_rescan(scanner: int, file: Track | PictureFile | OtherFile) -> TargetRescan | None:
-    """Determine what aspects of a file need re-scanning given the scanner version that last scanned it."""
-    if scanner < 6:
-        return TargetRescan(file, fields=True, images=True, streams=True)
-    if scanner < 7:
-        return TargetRescan(file, fields=False, images=False, streams=True)  # v7 added more stream info
-    if scanner < 8:
-        return TargetRescan(file, fields=True, images=False, streams=False)  # v7 tags are suspect due to orm issues
-    if scanner == 8:
-        return TargetRescan(file, fields=False, images=False, streams=True)  # v8 could incorrectly treat video as track after rescan
-    if scanner == 9:
-        return TargetRescan(file, fields=True, images=False, streams=False)  # v10 reads several new fields
-    return None
-
-
 def scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = False) -> AlbumScanResult:
     """Compare the album folder contents against the database and update the album; returns an AlbumScanResult."""
     album_path = ctx.config.library / album.path
@@ -65,7 +51,7 @@ def scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = F
         if path.name in stored_files:
             (stored_stat, file) = stored_files[path.name]
             targeted = None
-            if reread or stat != stored_stat or path.name in duplicate_files or (targeted := _needs_rescan(album.scanner, file)):
+            if reread or stat != stored_stat or path.name in duplicate_files or (targeted := needs_rescan(album.scanner, file)):
                 logger.debug(f"re-scanning file: {str(path)}")
                 scan_file(album, tagger, path, stat, targeted)
                 updated = True  # TODO if reread==True, check whether file actually changed

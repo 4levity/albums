@@ -11,7 +11,7 @@ from rich.progress import Progress
 from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session, selectinload
 
-from albums.app import SCANNER_VERSION, Context
+from albums.app import Context
 from albums.entities import Album, ScanHistoryEntity, Track
 from albums.library.album_scanner import scan_album
 from albums.tagger import AlbumTagger
@@ -19,6 +19,7 @@ from albums.words import plural
 
 from .album_scanner import picture_cache
 from .folder import walk_paths
+from .rescan import SCANNER_VERSION
 from .scanner_types import AlbumScanResult
 
 logger = logging.getLogger(__name__)
