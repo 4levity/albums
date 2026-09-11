@@ -1,7 +1,7 @@
 import json
 import os
-import shutil
 import time
+from pathlib import Path
 from unittest.mock import call
 
 import pytest
@@ -12,16 +12,14 @@ from albums.library.transcoder import Transcoder
 from albums.picture import PictureInfo
 from albums.tagger import AlbumTagger, BasicField, PictureType
 
-from ..fixtures.create_library import create_library, test_data_path
+from ..fixtures.create_library import create_library
 from ..helpers import fake_ffmpeg
 
 
 class TestTranscoder:
-    @pytest.fixture(scope="function", autouse=True)
-    def setup_tests(self):
-        os.makedirs(test_data_path, exist_ok=True)
-        TestTranscoder.transcoder_cache = test_data_path / "transcoder_cache"
-        shutil.rmtree(TestTranscoder.transcoder_cache, ignore_errors=True)
+    @pytest.fixture(autouse=True)
+    def setup_tests(self, tmp_path: Path):
+        TestTranscoder.transcoder_cache = tmp_path / "transcoder_cache"
 
     def test_transcoder(self, mocker):
         album = Album(

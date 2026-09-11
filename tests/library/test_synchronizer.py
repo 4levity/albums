@@ -1,6 +1,6 @@
 import json
 import os
-import shutil
+from pathlib import Path
 from string import Template
 from unittest.mock import call
 
@@ -14,18 +14,16 @@ from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity,
 from albums.library.synchronizer import Synchronizer
 from albums.tagger import AlbumTagger, BasicField, StreamInfo
 
-from ..fixtures.create_library import create_library, test_data_path
+from ..fixtures.create_library import create_library
 from ..helpers import fake_ffmpeg
 
 
 class TestSynchronizer:
-    @pytest.fixture(scope="function", autouse=True)
-    def setup_tests(self):
-        TestSynchronizer.transcoder_cache = test_data_path / "sync_transcoder_cache"
-        TestSynchronizer.destination = test_data_path / "sync_dest"
-        shutil.rmtree(TestSynchronizer.destination, ignore_errors=True)
-        shutil.rmtree(TestSynchronizer.transcoder_cache, ignore_errors=True)
-        os.makedirs(TestSynchronizer.destination)
+    @pytest.fixture(autouse=True)
+    def setup_tests(self, tmp_path: Path):
+        TestSynchronizer.transcoder_cache = tmp_path / "transcoder_cache"
+        TestSynchronizer.destination = tmp_path / "dest"
+        TestSynchronizer.destination.mkdir()
         (TestSynchronizer.destination / "extra.txt").write_text("abc")
 
     def test_synchronizer(self, mocker):

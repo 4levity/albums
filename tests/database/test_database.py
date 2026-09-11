@@ -29,12 +29,8 @@ class TestDatabase:
         finally:
             db.dispose()
 
-    def test_schema_too_new(self):
-        test_data_path = Path(__file__).resolve().parent / "fixtures" / "libraries"
-        os.makedirs(test_data_path, exist_ok=True)
-        db_file = test_data_path / "test_database.db"
-        if db_file.exists():
-            db_file.unlink()
+    def test_schema_too_new(self, tmp_path: Path):
+        db_file = tmp_path / "test_database.db"
         db = db_open(db_file)
         try:
             with Session(db) as session:

@@ -1,6 +1,6 @@
 import json
 import os
-import shutil
+from pathlib import Path
 
 import pytest
 
@@ -9,7 +9,7 @@ from albums.picture import PictureInfo
 from albums.tagger import BasicField
 
 from .. import helpers
-from ..fixtures.create_library import create_library, test_data_path
+from ..fixtures.create_library import create_library
 
 albums = [
     Album(
@@ -31,13 +31,12 @@ class TestCliSync:
     def run(self, params: list[str]):
         return helpers.run(params, TestCliSync.library)
 
-    @pytest.fixture(scope="function", autouse=True)
-    def setup_tests(self):
+    @pytest.fixture(autouse=True)
+    def setup_tests(self, tmp_path: Path):
         TestCliSync.library = create_library("cli_sync", albums)
         helpers.init_db_cached(TestCliSync.library, albums)
-        TestCliSync.dest = test_data_path / "cli_sync_filter_dest"
-        shutil.rmtree(TestCliSync.dest, ignore_errors=True)
-        os.makedirs(TestCliSync.dest)
+        TestCliSync.dest = tmp_path / "dest"
+        TestCliSync.dest.mkdir()
 
     def test_sync_filter_no_destination(self):
         result = self.run(["-rp", "bar", "sync"])
@@ -69,10 +68,9 @@ class TestCliSync:
         assert (TestCliSync.dest / "bar" / "1.flac").is_file()
         assert (TestCliSync.dest / "bar" / "2.flac").is_file()
 
-    def test_sync_existing(self):
-        dest = test_data_path / "cli_sync_existing_dest"
-        shutil.rmtree(dest, ignore_errors=True)
-        os.makedirs(dest)
+    def test_sync_existing(self, tmp_path: Path):
+        dest = tmp_path / "existing_dest"
+        dest.mkdir()
 
         result = self.run(["-rp", "bar", "sync", str(dest)])
         assert result.exit_code == 0
