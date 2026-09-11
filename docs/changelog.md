@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.31 - faster library scan, WAL mode, case-insensitive ignore_folders, fixes
+
 v0.9.30 - fix: VACUUM intermittent crash, decompress dep override
 
 v0.9.29 - Windows binary distribution fix, build and lint tooling, docs
