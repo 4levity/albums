@@ -6,9 +6,6 @@
 #      changes) and there are no untracked files, and
 #   2. the make checks below pass (auto-fix, then static checks).
 #
-# The make targets are composable (see Makefile); the hook picks the ones
-# the staged commit needs.
-#
 # If the make run changes files, they are staged automatically (with a note
 # naming them) so the commit includes the fixes.
 
@@ -27,10 +24,10 @@ require_commit_tree_clean
 require_make
 
 # The staged files are exactly the commit (the tree must be clean), so
-# pyright only needs to run for the project(s) the commit can affect.
-# Tests type check against src, so src/ changes affect both projects;
-# shared type check config (pyproject deps/settings, uv.lock, typings/)
-# affects both too; scripts/ is part of the src project.
+# pyright only needs to run on the project(s) the commit can affect.
+# changing src/ or project config or deps = analyze all
+# changing scripts/ = analyze src
+# changing tests/ = analyze tests
 changed=$(git diff --cached --name-only)
 src_typecheck=no
 tests_typecheck=no

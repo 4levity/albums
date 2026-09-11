@@ -8,8 +8,6 @@ PYRIGHT := $(UV) run npx --no-install pyright
 PYRIGHT_TESTS := $(PYRIGHT) -p tests
 SHELLCHECK := npx --no-install shellcheck
 RUFF := $(UV) run ruff
-# Full tool invocations are defined once, so `fix`, the individual check
-# targets and the combined `fix-static` hook target run the same commands.
 RUFF_CHECK := $(RUFF) check .
 RUFF_CHECK_FIX := $(RUFF) check . --fix
 RUFF_FORMAT := $(RUFF) format
@@ -59,25 +57,14 @@ lint-markdown: ## Lint markdown
 spelling: install-js ## Run spell check
 	$(STEP) spelling $(CSPELL_CHECK)
 
-# pyright runs per project; the pre-commit hook runs only the project(s)
-# the commit can affect (see hooks/pre-commit).
-typecheck: typecheck-src typecheck-tests ## Type check (pyright: strict for src, looser for tests)
+typecheck: install-js typecheck-src typecheck-tests ## Type check (pyright: strict for src, looser for tests)
 
-typecheck-src: install-js
+typecheck-src: node_modules
 	$(STEP) analyze $(PYRIGHT)
 
-typecheck-tests: install-js
+typecheck-tests: node_modules
 	$(STEP) 'analyze (tests)' $(PYRIGHT_TESTS)
 
-# The pre-commit path (see hooks/pre-commit): `fix` plus the `static`
-# checks, minus work the hook does not need:
-# - the ruff re-checks in `lint`: `ruff format` and `ruff check --fix`
-#   already verify a formatted, lint-clean tree (both fail otherwise).
-# - `install`: committing must not run `uv sync` (uv run uses the existing
-#   environment; `make install`/`fix`/`static` run the sync). node_modules
-#   is still auto-installed on a fresh checkout.
-# - typecheck: the hook adds typecheck-src and/or typecheck-tests for the
-#   pyright project(s) the commit can affect.
 fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
 	$(STEP) formatter $(RUFF_FORMAT)
 	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
