@@ -51,8 +51,6 @@ jobs:
             --specpath build/$platform/.specs --contents-directory _albums_internal
           ls -l dist/pyinstaller/$platform/albums
         shell: bash
-      - name: Install Inno Setup
-        run: choco install innosetup --version 6 -y
       - name: Build installer
         run: |
           iscc /DAppVersion="$(uv run python scripts/version.py)" \
