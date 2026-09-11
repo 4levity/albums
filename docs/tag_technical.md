@@ -27,11 +27,15 @@ most files and tools, and it remains the de facto standard. The `TDRL` frame is
 largely ignored by other software, and when both frames are present they can
 disagree and create confusion.
 
+#### How `albums` handles this
+
 To match what is actually seen in the wild, `albums` writes the release date to
-`TDRC` and treats `TDRL` as a deprecated alias for the release date: on read,
-non-duplicate values from `TDRL` are merged into the release date field (so a
-file that only has `TDRL` still shows its date), and the `legacy-fields` check
-reports files with a `TDRL` frame and converts it to `TDRC`.
+`TDRC` and treats `TDRL` as a deprecated alias:
+
+1. **On read**: non-duplicate values from `TDRL` are merged into the release
+   date field (so a file that only has `TDRL` still shows its date).
+2. **On check**: the `legacy-fields` check reports files with a `TDRL` frame.
+3. **On fix**: the `legacy-fields` check converts `TDRL` to `TDRC`.
 
 ### Deprecated fields
 
@@ -41,7 +45,7 @@ from a legacy field are merged into the standard field (skipping duplicates),
 and the `legacy-fields` check reports files that still have legacy fields and
 converts them to the standard names.
 
-Legacy Vorbis comment names (FLAC, Ogg Vorbis):
+#### Legacy Vorbis comment names (FLAC, Ogg Vorbis)
 
 | legacy name        | standard field |
 | ------------------ | -------------- |
@@ -58,7 +62,7 @@ Legacy Vorbis comment names (FLAC, Ogg Vorbis):
 | `totaltracks`      | `tracktotal`   |
 | `trackc`           | `tracktotal`   |
 
-Deprecated ID3 frames (MP3, AIFF):
+#### Deprecated ID3 frames (MP3, AIFF)
 
 | frame  | standard field |
 | ------ | -------------- |

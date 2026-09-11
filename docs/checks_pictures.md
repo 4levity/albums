@@ -105,32 +105,33 @@ checks to re-embed proper cover art.
 
 ## cover-available
 
-If any track has embedded pictures, or if there are any image files in the
-folder, the album is expected to have front cover art, meaning one of the
-embedded images or image files should be recognizable as cover art. Optionally,
-cover art can be required for all albums (see settings).
+If any track has embedded pictures or image files exist in the folder, the album
+is expected to have front cover art — one of the embedded images or image files
+should be recognizable as cover art. Optionally, cover art can be required for
+all albums (see settings).
 
-If there are any non-cover images available, this check offers a fix to select
-one of them as the front cover by renaming or extracting it to an image file
-with a standard name.
+If non-cover images are available, this check offers a fix to select one as the
+front cover by renaming or extracting it to an image file with a standard name.
 
-Rules:
+### Rules
 
-- If there are any embedded images or image files, one or more of them should be
-  in a file `cover.jpg` (or similar) to be recognized as the front cover image.
-- When "cover_required" setting is true, a front cover image **must** be
-  present. If a download tool is available, it can be tried (see below).
+- If there are any embedded images or image files, one or more should be in a
+  file `cover.jpg` (or similar) to be recognized as the front cover image.
+- When the `cover_required` setting is true, a front cover image **must** be
+  present. If a download tool is available, it can be tried.
 
 !!!success "Dependency"
 
     Requires the `duplicate-image` check to pass first.
 
-**Automatic fix**: If the album has no front cover art, but there is exactly one
-unique image (embedded and/or image file), make that image the cover art by
-renaming the image file to `cover.jpg`/`.png`/etc. **or** by extracting the
-embedded image from one of the tracks to `cover.jpg` or `.png`.
+### Automatic fixes
 
-**Automatic fix**: If the album has no front cover art, **and** there is no
+**Single unique image**: If the album has no front cover art but there is
+exactly one unique image (embedded and/or image file), make that image the cover
+art by renaming the image file to `cover.jpg`/`.png`/etc. **or** by extracting
+the embedded image from one of the tracks.
+
+**Download cover art**: If the album has no front cover art, **and** there is no
 other art embedded or in the folder that can be used as cover art, **and**
 `cover_required` is enabled, **and** `get_cover_command` is set or the default
 tool [SACAD](https://github.com/desbma/sacad) is found: run the external tool to
@@ -139,8 +140,10 @@ try to download cover art.
 !!!warning
 
     If you use the automatic fix with `cover_required` enabled, and a tool is
-    available but the tool fails to download an image, the fix will keep trying
-    every time you run the check again.
+    available but fails to download an image, the fix will keep trying every
+    time you run the check again.
+
+### Cover download command
 
 The `get_cover_command` option is a template. The template substitutions are:
 
@@ -151,7 +154,7 @@ The `get_cover_command` option is a template. The template substitutions are:
 | **`$filename`** | `cover.jpg`         | The cover filename to use\* |
 | **`$path`**     | `/library/foo/bar/` | Path to album               |
 
-\* - Cover filename is taken from \*_cover-filename_ configuration
+\* - Cover filename is taken from the `cover-filename` configuration.
 
 If [SACAD](https://github.com/desbma/sacad) is installed (assumed if the command
 `sacad` and `sacad_r` are both found on the path), the default
@@ -170,35 +173,33 @@ If [SACAD](https://github.com/desbma/sacad) is installed (assumed if the command
 
 ## cover-unique
 
-Usually, albums should have a single unique image as cover art, or one cover
-image embedded in the tracks plus a higher-resolution image file.
+Albums should have a single unique image as cover art, or one cover image
+embedded in the tracks plus a higher-resolution image file.
 
-Rules:
+### Rules (cover-unique)
 
 - All front cover art associated with the album should be the same image,
-  including embedded `COVER_FRONT` as well as image files matching the filenames
-  above, **except:**
-- There can be two unique cover images, if one of them (like a high-res version
-  of the cover) is a file and it is marked in `albums` as "front cover source"
+  including embedded `COVER_FRONT` and image files matching the expected cover
+  filenames.
+- **Exception**: there can be two unique cover images if one of them (e.g. a
+  high-res version) is a file marked in `albums` as "front cover source".
 
-Tracks may have any number of embedded images that are not marked as
-`COVER_FRONT`. Other image files in the album folder, where the filename does
-not match the expected cover art filenames above, will be treated as picture
-type `OTHER`.
+Non-cover image files (not matching expected cover filenames) are treated as
+picture type `OTHER`. Tracks may have any number of non-cover embedded images.
 
 !!!success "Dependency"
 
     Requires the `duplicate-image` check to pass first.
 
-**Automatic fix**: If there are multiple cover images but one of them is a file
-that is larger than the other files and/or embedded images, mark that file as
-"front cover source" so that file will no longer count as a duplicate. This
-might not completely fix the check if there are more front cover images. The
-next automatic fix would delete the other image files identified as cover art:
+### Automatic fixes (cover-unique)
 
-**Automatic fix**: If there are multiple image files (not embedded) recognized
-as front cover source by their filenames, and one of them has already been
-marked as "front cover source", delete the other front cover art image files.
+**Mark high-res file**: If there are multiple cover images but one is a file
+larger than the others, mark that file as "front cover source" so it no longer
+counts as a duplicate.
+
+**Delete extras**: If there are multiple image files recognized as front cover
+source by their filenames, and one has already been marked as "front cover
+source", delete the others.
 
 ## conflicting-embedded
 
@@ -223,35 +224,35 @@ No automated fix yet.
 
 ## cover-dimensions
 
-Images treated as picture type COVER_FRONT should be square and within a range
-of acceptable sizes.
+Cover art images should be square and within a range of acceptable sizes.
 
-Rules:
+### Rules (cover-dimensions)
 
 - If an image is marked as front cover source, only that image is evaluated.
   Using the front cover source to fix embedded images is a separate task.
-- The width/height of cover art should not be too small or large (see options)
-- Cover art should be square (see options)
+- Width/height should not be too small or large (see options below).
+- Cover art should be square (see options below).
 
 !!!success "Dependency"
 
     Requires the `cover-available` check to pass first.
 
-**Automatic fix**: If the front cover image (embedded or in a file) is not as
-square as the `squareness` setting but at least as square as the
-`fixable_squareness` setting, fix it by cropping first (see options), and if
-necessary squashing it the rest of the way. The new square cover image will be
-saved as a file with the configured type and marked as "front cover source" for
-the album. If the unsquare source is an image file, it will be deleted.
+### Automatic fix (cover-dimensions)
 
-If **embedded** front cover images are present they are **not** changed by this
-fix. The new cover image file is set as "front cover source".
+If the front cover image (embedded or in a file) is not as square as the
+`squareness` setting but at least as square as the `fixable_squareness` setting,
+fix it by cropping first, then squashing the rest of the way. The new square
+cover image is saved as a file and marked as "front cover source". If the
+unsquare source is an image file, it is deleted.
+
+**Embedded** front cover images are **not** changed by this fix — only the file
+source is modified.
 
 <!-- pyml disable line-length -->
 
 | Option = default                   | Description                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------- |
-| `squareness` = **0.98**            | cover art minimum width/height ratio - **1** for square, **0** to disable |
+| `squareness` = **0.98**            | cover art minimum width/height ratio — **1** for square, **0** to disable |
 | `max_pixels` = **2048**            | front cover art should not be larger than this width/height               |
 | `min_pixels` = **100**             | front cover art should be at least this width/height                      |
 | `fixable_squareness` = **0.8**     | if image is at least this square, offer automatic fix with crop + squash  |
@@ -263,41 +264,42 @@ fix. The new cover image file is set as "front cover source".
 
 ## cover-embedded
 
-If there is any front cover image (file or embedded), all tracks should have
-_some_ front cover image embedded. It should not be larger than the maximum size
-and should be the required MIME type if set (see `max_height_width` and
-`require_mime_type` options).
+If any front cover image exists (file or embedded), all tracks should have it
+embedded. The embedded cover should not exceed the maximum size and should use
+the required MIME type if set (see `max_height_width` and `require_mime_type`).
 
-Furthermore, if there is a front cover image that has been marked as "front
-cover source" in `albums`, all tracks should have a front cover image that
-exactly matches the specs (dimensions and MIME type) configured in this check
-(see `create_*` options).
+If a "front cover source" image has been marked in `albums`, all tracks should
+have a front cover image matching the specs (dimensions and MIME type)
+configured here (see `create_*` options).
 
-When there are existing embedded covers that do not meet the above requirements,
-the presence of more than one unique front cover image will prevent automatic
-fixes by this check, to avoid automatically overwriting per-track cover art.
+### How it works
 
-When the above requirements **are** met, this check will pass. To cause `albums`
-to embed new cover art when there is "good enough" cover art already, place high
-resolution cover art in the folder named `cover.jpg` (or another recognized
-front cover filename) and run the `cover-unique` check, which should offer to
-mark the new art as "front cover source". Afterwards, this check will embed the
-new cover into the tracks, as long as the previously embedded cover's size or
-MIME type differs from what this check is configured to generate.
+When existing embedded covers don't meet requirements, the presence of more than
+one unique front cover image will **prevent** automatic fixes — this avoids
+overwriting per-track cover art. When requirements **are** met, the check
+passes.
+
+To embed new cover art when "good enough" cover already exists:
+
+1. Place high-resolution cover art as `cover.jpg` (or another recognized name)
+2. Run the `cover-unique` check to mark it as "front cover source"
+3. Re-run `cover-embedded` — it will embed the new cover if the existing one's
+   size or MIME type differs from the configured specs.
 
 !!!success "Dependency"
 
-    Requires the `duplicate-image` check to pass first. For automation,
+    Requires the `duplicate-image` check to pass first. For full automation,
     `cover-unique` and `cover-dimensions` are recommended.
 
-**Automatic fix**: When there is a front cover source file and there is not more
-than one unique front cover image embedded in the tracks, generate a new cover
-from the cover source and embed it in every track, replacing any existing cover.
+### Automatic fixes (cover-embedded)
 
-**Automatic fix**: When there is no front cover source, but there is only one
-unique cover image, that image can be extracted to a file (if it is not already
-a file) and marked as front cover source. Rechecking will then offer the
-automatic fix above.
+**From cover source**: When there is a front cover source file and no more than
+one unique front cover image embedded, generate a new cover from the source and
+embed it in every track, replacing any existing cover.
+
+**Create cover source**: When there is no front cover source but only one unique
+cover image, extract it to a file and mark it as front cover source. Rechecking
+will then offer the fix above.
 
 <!-- pyml disable line-length -->
 
@@ -311,5 +313,5 @@ automatic fix above.
 
 <!-- pyml enable line-length -->
 
-Note: The `max_height_width` and `require_mime_type` settings only apply to
-albums where no "front cover source" image is defined.
+> **Note**: The `max_height_width` and `require_mime_type` settings only apply
+> to albums where no "front cover source" image is defined.

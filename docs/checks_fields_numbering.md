@@ -50,7 +50,7 @@ control whether multiple disc sets should be required to have all tracks in one
 folder. Mismatching disc total values are one reason players incorrectly split
 albums.
 
-Rules:
+### Rules
 
 - If any track has disc number, all tracks should have disc number
 - Disc numbers should start at 1 and be sequential (1, 2, 3...)
@@ -67,29 +67,31 @@ Rules:
     Requires the `invalid-track-or-disc-number` and `legacy-fields` checks to
     pass first.
 
-**Automatic fix** for disc total policy: If the policy is "never", always remove
-the field. If the policy is "always", and a consistent total is set on some
-tracks, set the same total on the others; if no track has disc total, a value
-can be entered instead.
+### Automatic fixes
 
-**Automatic fix** for missing disc numbers: When some tracks have disc number
-and some do not, a table lists each track's disc number and disc total, and
-options are offered to fill in the missing disc numbers. If a disc number can be
-read from each affected filename (e.g. `2-01`) and no filename disagrees with an
-existing disc number, the missing disc numbers can be set from the filenames;
-this is applied automatically when the result would be consistent (sequential
-discs from 1, not exceeding disc total). If the only disc number present is 1
-(and disc total, if present, is 1), the missing disc numbers can be set to 1, or
-disc number 1 (and disc total 1) can be removed from all tracks; with
-`remove_redundant_discnumber` the removal is applied automatically, otherwise
-setting 1 is. If no option applies, a disc number can be entered to set on the
-affected tracks.
+**Disc total policy**: If the policy is "never", always remove the field. If the
+policy is "always", and a consistent total is set on some tracks, set the same
+total on the others; if no track has disc total, a value can be entered instead.
 
-**Automatic fix** for redundant disc number: When every track has disc number 1
-(and disc total 1, if present), the disc number (and disc total) fields are
-redundant. With `remove_redundant_discnumber` they are removed automatically.
-With `discs_in_separate_folders` disabled and `remove_redundant_discnumber` not
-set, the removal is offered but not applied automatically; with
+**Missing disc numbers**: When some tracks have disc number and some do not, a
+table lists each track's disc number and disc total, and options are offered to
+fill in the missing disc numbers. If a disc number can be read from each
+affected filename (e.g. `2-01`) and no filename disagrees with an existing disc
+number, the missing disc numbers can be set from the filenames; this is applied
+automatically when the result would be consistent (sequential discs from 1, not
+exceeding disc total).
+
+If the only disc number present is 1 (and disc total, if present, is 1), the
+missing disc numbers can be set to 1, or disc number 1 (and disc total 1) can be
+removed from all tracks; with `remove_redundant_discnumber` the removal is
+applied automatically, otherwise setting 1 is. If no option applies, a disc
+number can be entered to set on the affected tracks.
+
+**Redundant disc number**: When every track has disc number 1 (and disc total 1,
+if present), the disc number (and disc total) fields are redundant. With
+`remove_redundant_discnumber` they are removed automatically. With
+`discs_in_separate_folders` disabled and `remove_redundant_discnumber` not set,
+the removal is offered but not applied automatically; with
 `discs_in_separate_folders` enabled, disc 1 might be part of a multi-disc set
 stored in another folder, so no issue is reported.
 
@@ -120,7 +122,7 @@ stored in another folder, so no issue is reported.
 Reports on several issues with track numbers and track totals, including
 apparently missing tracks.
 
-The rules are:
+### Rules (track-numbering)
 
 - Every track should have a single decimal track number
 - For each disc, track numbers should start at 1 and be sequential
@@ -136,9 +138,11 @@ The rules are:
 
     Requires the `disc-numbering` check to pass first.
 
-**Automatic fix** for missing track numbers: If track number fields are missing
-from some tracks but all track numbers can be guessed from the filename,
-recreate track number fields from filenames.
+### Automatic fixes (track-numbering)
+
+**Missing track numbers**: If track number fields are missing from some tracks
+but all track numbers can be guessed from the filename, recreate track number
+fields from filenames.
 
 The guess is a 1-3 digit number at the start of the filename, optionally after a
 disc number and dash (e.g. `03` or `1-03`). Longer numbers are not track
@@ -147,9 +151,9 @@ number at all. The fix is not offered if any filename indicates a disc number
 different from the disc being fixed, or if a track has no track number and no
 number can be read from its filename.
 
-**Automatic fix** for track total policy: If the policy is "never", always
-remove the field. If the policy is "always", and a consistent total is set on
-some tracks, set the same total on the others.
+**Track total policy**: If the policy is "never", always remove the field. If
+the policy is "always", and a consistent total is set on some tracks, set the
+same total on the others.
 
 <!-- pyml disable line-length -->
 
