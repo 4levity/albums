@@ -23,9 +23,15 @@ def get_albums_version() -> str:
 
 
 def get_file_version(version: str) -> str:
-    """Return a 4-part numeric file version (e.g. 1.2.3.0) for Windows file metadata."""
-    core = re.split(r"\.post|\.dev|\+", version, maxsplit=1)[0]
-    parts = core.split(".") + ["0"] * 4
+    """Return a 4-part numeric file version (e.g. 1.2.3.0) for Windows file metadata.
+
+    The fourth part is the post/dev release number (at least 1) if present,
+    else 0, so file versions sort with the releases they came from.
+    """
+    match = re.search(r"\.(post|dev)(\d+)", version)
+    core = version[: match.start()] if match else version
+    fourth = max(int(match.group(2)), 1) if match else 0
+    parts = core.split(".") + [str(fourth)] * 5
     return ".".join(parts[:4])
 
 
