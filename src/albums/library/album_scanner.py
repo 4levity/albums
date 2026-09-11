@@ -2,6 +2,7 @@
 
 import itertools
 import logging
+from collections import Counter
 from typing import List, Tuple
 
 from albums.app import Context
@@ -56,7 +57,8 @@ def scan_album(ctx: Context, tagger: AlbumTagger, album: Album, reread: bool = F
     ]
     stored_files_list.extend((f.filename, (MiniStat(f.picture_info.file_size, f.modify_timestamp), f)) for f in album.picture_files)
     stored_files_list.extend((o.filename, (MiniStat(o.file_size, o.modify_timestamp), o)) for o in album.other_files)
-    duplicate_files = set(filename for (filename, _) in stored_files_list if sum(1 if filename == fn else 0 for (fn, _) in stored_files_list) > 1)
+    counts = Counter(filename for (filename, _) in stored_files_list)
+    duplicate_files = {filename for filename, count in counts.items() if count > 1}
     stored_files = dict(stored_files_list)
     updated = False
     for path, stat in stat_dir(album_path):

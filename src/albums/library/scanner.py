@@ -8,14 +8,13 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from typing import Callable, Iterator, Mapping
 
-from rbloom import Bloom
 from rich.markup import escape
 from rich.progress import Progress
 from sqlalchemy import delete, desc, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from albums.app import SCANNER_VERSION, Context
-from albums.entities import Album, ScanHistoryEntity
+from albums.entities import Album, ScanHistoryEntity, Track
 from albums.library.album_scanner import scan_album
 from albums.tagger import AlbumTagger
 from albums.words import plural
@@ -118,22 +117,22 @@ def scan_library(
     ctx: Context, session: Session, paths: Iterator[str], update_progress: Callable[[], None], reread: bool = False
 ) -> Mapping[AlbumScanResult, int]:
     """Scan every folder path in the library, adding, updating or removing albums as needed."""
-    current_album_paths = Bloom(100000, 0.01)
-    unvisited_album_ids: set[int] = set()
-    for (
-        album_id,
-        path,
-    ) in session.execute(select(Album.album_id, Album.path)).tuples():
-        if album_id is not None:  # always non-NULL
-            current_album_paths.add(path)
-            unvisited_album_ids.add(album_id)
+    albums_by_path: dict[str, Album] = {
+        album.path: album
+        for album in session.execute(
+            select(Album).options(
+                selectinload(Album.tracks).selectinload(Track.pictures),
+                selectinload(Album.picture_files),
+                selectinload(Album.other_files),
+            )
+        )
+        .scalars()
+        .unique()
+    }
+    unvisited_album_ids = {album.album_id for album in albums_by_path.values() if album.album_id is not None}
     scan_results: defaultdict[AlbumScanResult, int] = defaultdict(int)
     for path in paths:
-        if path in current_album_paths:  # bloom filter: assume present unless it says otherwise
-            album_match = session.execute(select(Album).where(Album.path == path)).tuples().one_or_none() or (None,)
-        else:
-            album_match = (None,)
-        (album,) = album_match
+        album = albums_by_path.get(path)
         tagger = AlbumTagger(ctx.config.library / path, preload={} if reread else picture_cache(album))
         with session.begin_nested() as path_scan_transaction:
             if album and album.album_id is not None:
