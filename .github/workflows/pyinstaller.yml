@@ -53,8 +53,8 @@ jobs:
         shell: bash
       - name: Build installer
         run: |
-          iscc /DAppVersion="$(uv run python scripts/version.py)" \
-            /DFileVersion="$(uv run python scripts/version.py fileversion)" scripts/albums.iss
+          iscc /DAppVersion="$(uv run --quiet python scripts/version.py | tr -d '\r')" \
+            /DFileVersion="$(uv run --quiet python scripts/version.py fileversion | tr -d '\r')" scripts/albums.iss
           ls -l dist/installer
         shell: bash
       - name: Upload installer artifact
