@@ -3,10 +3,9 @@ on:
   push:
     tags:
       - "v*"
-    # Tags auto-created by dispatch runs (post-release versions like
-    # v0.9.30.post24+g1234abcd) must not retrigger this workflow.
-    tags-ignore:
-      - "v*.post*+*"
+      # Exclude tags auto-created by dispatch runs (post-release versions
+      # like v0.9.30.post24+g1234abcd) so they do not retrigger this workflow.
+      - "!v*.post*+*"
   workflow_dispatch:
 
 jobs:
