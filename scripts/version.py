@@ -41,7 +41,8 @@ def main() -> int:
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     version = get_albums_version()
     if command == "write":
-        dump_version(".", version, "src/albums/_version.py")
+        # scm_version=None: we only dump the computed string, not ScmVersion data
+        dump_version(".", version, "src/albums/_version.py", scm_version=None)
         print(f"wrote src/albums/_version.py: {version}")
     elif command == "fileversion":
         print(get_file_version(version))

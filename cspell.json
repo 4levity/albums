@@ -27,6 +27,7 @@
         "autouse",
         "Brainz",
         "caplog",
+        "capsys",
         "checkboxlist",
         "commitlint",
         "COMPOSERID",
