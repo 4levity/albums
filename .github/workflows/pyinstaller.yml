@@ -5,7 +5,7 @@ on:
       - "v*"
       # Exclude tags auto-created by dispatch runs (post-release versions
       # like v0.9.30.post24+g1234abcd) so they do not retrigger this workflow.
-      - "!v*.post*+*"
+      - "!v*post*"
   workflow_dispatch:
 
 jobs:
