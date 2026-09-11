@@ -51,11 +51,19 @@ jobs:
             --specpath build/$platform/.specs --contents-directory _albums_internal
           ls -l dist/pyinstaller/$platform/albums
         shell: bash
-      - name: Upload pyinstaller artifact
+      - name: Install Inno Setup
+        run: choco install innosetup --version 6 -y
+      - name: Build installer
+        run: |
+          iscc /DAppVersion="$(uv run python scripts/version.py)" \
+            /DFileVersion="$(uv run python scripts/version.py fileversion)" scripts/albums.iss
+          ls -l dist/installer
+        shell: bash
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v7
         with:
-          name: albums-pyinstaller-win
-          path: dist/pyinstaller/win_amd64/albums/
+          name: albums-installer-win
+          path: dist/installer/*.exe
 
   release:
     needs: [build-linux, build-win]
@@ -76,20 +84,18 @@ jobs:
         with:
           name: albums-pyinstaller-linux
           path: albums_linux_x86_64/
-      - name: Download Windows executable
+      - name: Download Windows installer
         uses: actions/download-artifact@v8
         with:
-          name: albums-pyinstaller-win
+          name: albums-installer-win
           path: albums_win_x86_64/
       - name: Get version
         id: get-version
         run: |
           chmod a+x albums_linux_x86_64/albums
           echo "ALBUMS_VERSION=$(albums_linux_x86_64/albums --version | awk -F ' ' '{ print $3 }')" >> "$GITHUB_OUTPUT"
-      - name: Create archives
-        run: |
-          zip -r albums_win_x86_64.zip albums_win_x86_64
-          zip -r albums_linux_x86_64.zip albums_linux_x86_64
+      - name: Create archive
+        run: zip -r albums_linux_x86_64.zip albums_linux_x86_64
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -107,4 +113,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
-        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64.zip albums_linux_x86_64.zip --clobber
+        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_x86_64.zip --clobber

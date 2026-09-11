@@ -22,9 +22,11 @@ This documentation is for `albums` version **%%version_placeholder%%**.
 **Installation Option 1:** In an environment with Python 3.12 or newer, run
 `pipx install albums`
 
-**Installation Option 2 _(64-bit Linux and Windows only)_:** Download the
-[self-contained binary release from GitHub](https://github.com/4levity/albums/releases).
-Extract the contents to a folder and add that folder to your PATH.
+**Installation Option 2 _(64-bit Linux and Windows only)_:** Download the binary
+release for your platform from
+[GitHub releases](https://github.com/4levity/albums/releases). On Windows, run
+the installer; on Linux, extract the contents to a folder and add that folder to
+your PATH.
 
 You can watch this
 [video about how to use albums](https://www.youtube.com/watch?v=B5tBG_GaG7A).
