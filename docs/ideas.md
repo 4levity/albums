@@ -33,3 +33,9 @@ icon: lucide/flask-conical
 - automatic visual similarity check for front cover art, so it can be stored in
   multiple formats and resolutions without disabling uniqueness check
 - repair combined tracknumber/tracktotal and discnumber/disctotal in FLAC/Ogg
+
+### Scan performance
+
+- speed up first scan/reread with worker threads reading file metadata
+  (mutagen + picture scan) into plain data, applied to the ORM by the main
+  thread (sessions aren't thread-safe); est. 3-4x on the file-reading phase
