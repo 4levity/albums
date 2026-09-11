@@ -63,6 +63,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v5
+        # already built but need checkout to create release
+        with:
+          fetch-depth: 0
       - name: Prepare folders
         run: |
           mkdir albums_win_x86_64
