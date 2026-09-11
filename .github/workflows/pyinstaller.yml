@@ -3,6 +3,10 @@ on:
   push:
     tags:
       - "v*"
+    # Tags auto-created by dispatch runs (post-release versions like
+    # v0.9.30.post24+g1234abcd) must not retrigger this workflow.
+    tags-ignore:
+      - "v*.post*+*"
   workflow_dispatch:
 
 jobs:
@@ -57,8 +61,6 @@ jobs:
   release:
     needs: [build-linux, build-win]
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
     steps:
@@ -86,30 +88,20 @@ jobs:
           zip -r albums_win_x86_64.zip albums_win_x86_64
           zip -r albums_linux_x86_64.zip albums_linux_x86_64
       - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get-version.outputs.ALBUMS_VERSION }}
-          release_name: Release v${{ steps.get-version.outputs.ALBUMS_VERSION }}
-          draft: ${{ github.ref == 'refs/heads/main' }}
-          prerelease: false
-      - name: Upload albums_win_x86_64.zip
-        uses: actions/upload-release-asset@v1
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
+          # Point the auto-created tag at the triggering commit (tip of the
+          # selected branch on dispatch); ignored when the tag already exists.
+          TARGET: ${{ github.sha }}
+          # Draft for manual dispatch runs, published for tag pushes.
+          IS_DRAFT: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          args=(--title "Release v${ALBUMS_VERSION}" --target "${TARGET}")
+          if [ "$IS_DRAFT" = "true" ]; then args+=(--draft); fi
+          gh release create "v${ALBUMS_VERSION}" "${args[@]}"
+      - name: Upload release assets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./albums_win_x86_64.zip
-          asset_name: albums_win_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload albums_linux_x86_64.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./albums_linux_x86_64.zip
-          asset_name: albums_linux_x86_64.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
+        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64.zip albums_linux_x86_64.zip --clobber
