@@ -51,12 +51,12 @@ jobs:
             --specpath build/$platform/.specs --contents-directory _albums_internal
           ls -l dist/pyinstaller/$platform/albums
         shell: bash
+      - name: Create installer script
+        run: uv run python scripts/render_iss.py
+        shell: bash
       - name: Build installer
         run: |
-          echo iscc /DAppVersion="$(uv run --quiet python scripts/version.py | tr -d '\r')" \
-            /DFileVersion="$(uv run --quiet python scripts/version.py fileversion | tr -d '\r')" scripts/albums.iss
-          iscc /DAppVersion="$(uv run --quiet python scripts/version.py | tr -d '\r')" \
-            /DFileVersion="$(uv run --quiet python scripts/version.py fileversion | tr -d '\r')" scripts/albums.iss
+          iscc build/albums.iss
           ls -l dist/installer
         shell: bash
       - name: Upload installer artifact

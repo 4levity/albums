@@ -70,6 +70,9 @@ checkout, and `write` writes the `_version.py` file:
 - `make pyinstaller` writes the version, then builds a standalone executable in
   `dist/pyinstaller/<platform>/albums/` with
   [PyInstaller](https://pyinstaller.org/)
+- The Windows CI renders the `scripts/albums.iss` template (0.0.0 placeholder
+  versions) into `build/albums.iss` with `scripts/render_iss.py`, then Inno
+  Setup compiles it into `dist/installer/`
 - `make docs` injects the version into the built docs site
 
 ### Python Project Structure
