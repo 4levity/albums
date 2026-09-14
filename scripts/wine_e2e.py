@@ -1,13 +1,16 @@
 """Install, run and uninstall the Inno Setup installer in a temporary wine
 prefix (make wine-e2e).
 
-The installer is not rebuilt. It must already exist in dist/installer/ with a
-name matching the current version (make wine-build builds it); an existing
-build is used as-is, with a warning that it may be stale.
+By default the installer is not rebuilt: it must already exist in
+dist/installer/ with a name matching the current version (make wine-build
+builds it), and a warning that it may be stale is printed. With --build a
+fresh installer is built first (like make wine-build, creating the wine
+environment if needed) and the warning is skipped.
 
-Usage: python scripts/wine_e2e.py
+Usage: python scripts/wine_e2e.py [--build]
 """
 
+import argparse
 import re
 import shutil
 import subprocess
@@ -17,7 +20,10 @@ from pathlib import Path
 # allow package imports (scripts.*) when run as a plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import wine_common, wine_setup
+from scripts import wine_build, wine_common, wine_setup
+
+# temporary prefix the installer is tested in, recreated on every run
+E2E_PREFIX = wine_common.ROOT / "build" / "wine-e2e"
 
 INSTALLER_SWITCHES = ["/VERYSILENT", "/SUPPRESSMSGBOXES"]
 # Inno Setup logs, written inside the prefix (on the host under
@@ -31,7 +37,7 @@ UNINSTALL_KEY = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\{d03e
 
 
 def current_version() -> str:
-    return subprocess.run(
+    return wine_common.run(
         ["uv", "run", "python", "scripts/version.py"],
         cwd=wine_common.ROOT,
         capture_output=True,
@@ -40,9 +46,9 @@ def current_version() -> str:
     ).stdout.strip()
 
 
-def find_installer() -> Path:
+def find_installer(just_built: bool) -> Path:
     """Return the installer in dist/installer/ matching the current version."""
-    file_version = subprocess.run(
+    file_version = wine_common.run(
         ["uv", "run", "python", "scripts/version.py", "fileversion"],
         cwd=wine_common.ROOT,
         capture_output=True,
@@ -52,9 +58,10 @@ def find_installer() -> Path:
     installer = wine_common.ROOT / "dist" / "installer" / f"albums_win_x86_64-{file_version}-setup.exe"
     if not installer.is_file():
         wine_common.fail(f"no installer for version {file_version} in dist/installer; run `make wine-build` first")
-    print("WARNING: using an existing installer build from dist/installer, not one built by this run:")
-    print(f"WARNING:   {installer.relative_to(wine_common.ROOT)}")
-    print("WARNING: if the source changed since it was built, rebuild it with `make wine-build` first")
+    if not just_built:
+        print("WARNING: using an existing installer build from dist/installer, not one built by this run:")
+        print(f"WARNING:   {installer.relative_to(wine_common.ROOT)}")
+        print("WARNING: if the source changed since it was built, rebuild it with `make wine-build` or rerun this script with --build")
     return installer
 
 
@@ -86,22 +93,21 @@ def print_failure_logs(prefix: Path) -> None:
 
 def test_installer(wine: str, installer: Path) -> None:
     print("testing installer in a temporary wine prefix")
-    prefix = wine_common.ROOT / "build" / "wine-e2e"
     # a wineserver left by a killed run would be reused by the first wine
     # command with stale state, so kill it before removing the old prefix
-    wine_common.kill_wineserver(prefix)
-    shutil.rmtree(prefix, ignore_errors=True)
-    prefix.mkdir(parents=True)
+    wine_common.kill_wineserver(E2E_PREFIX)
+    shutil.rmtree(E2E_PREFIX, ignore_errors=True)
+    E2E_PREFIX.mkdir(parents=True)
     try:
-        _test_installer_steps(wine, installer, prefix)
+        _test_installer_steps(wine, installer, E2E_PREFIX)
     except BaseException:
         try:
-            print_failure_logs(prefix)
+            print_failure_logs(E2E_PREFIX)
         except BaseException:
             print("could not print failure logs", file=sys.stderr)
         raise
     finally:
-        wine_common.kill_wineserver(prefix)
+        wine_common.kill_wineserver(E2E_PREFIX)
     print("installer test passed")
 
 
@@ -186,13 +192,22 @@ def _test_installer_steps(wine: str, installer: Path, prefix: Path) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Install, run and uninstall the Inno Setup installer in a temporary wine prefix")
+    parser.add_argument(
+        "--build", action="store_true", help="build a fresh installer first (like make wine-build, creating the wine environment if needed)"
+    )
+    args = parser.parse_args()
     wine = wine_common.find_wine()
-    try:
-        wine_setup.ensure(wine)
-        installer = find_installer()
-        test_installer(wine, installer)
-    finally:
-        wine_common.kill_wineserver()
+    if args.build:
+        try:
+            wine_setup.ensure(wine)
+            print("building installer")
+            wine_build.build_setup(wine)
+        finally:
+            # the build ran in the build prefix; flush its server
+            wine_common.kill_wineserver(wine_common.BUILD_PREFIX)
+    installer = find_installer(just_built=args.build)
+    test_installer(wine, installer)
     return 0
 
 

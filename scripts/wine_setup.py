@@ -8,7 +8,6 @@ installer runs under xvfb-run, which needs the xvfb package.
 Usage: python scripts/wine_setup.py
 """
 
-import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -33,15 +32,15 @@ INNO_LOG = "inno-setup-install.log"
 
 
 def ensure_prefix(wine: str) -> None:
-    if (wine_common.PREFIX / "drive_c").is_dir():
+    if (wine_common.BUILD_PREFIX / "drive_c").is_dir():
         print("wine prefix exists")
         return
-    print(f"creating wine prefix in {wine_common.PREFIX.relative_to(wine_common.ROOT)}")
+    print(f"creating wine prefix in {wine_common.BUILD_PREFIX.relative_to(wine_common.ROOT)}")
     wine_common.WINE_ROOT.mkdir(parents=True, exist_ok=True)
     # a fresh prefix's X support only initializes when wineboot runs on a display
-    wine_common.run_wine(wine_common.display_wine_cmd(wine), ["wineboot", "--init"], timeout=300)
-    if not (wine_common.PREFIX / "drive_c").is_dir():
-        wine_common.fail(f"wineboot did not create {wine_common.PREFIX.relative_to(wine_common.ROOT)}/drive_c")
+    wine_common.run_wine(wine_common.display_wine_cmd(wine), ["wineboot", "--init"], prefix=wine_common.BUILD_PREFIX, timeout=300)
+    if not (wine_common.BUILD_PREFIX / "drive_c").is_dir():
+        wine_common.fail(f"wineboot did not create {wine_common.BUILD_PREFIX.relative_to(wine_common.ROOT)}/drive_c")
 
 
 def ensure_uv() -> None:
@@ -64,9 +63,9 @@ def ensure_uv() -> None:
 
 def ensure_python(wine: str) -> None:
     uv_exe = str(wine_common.BIN / "uv.exe")
-    check = subprocess.run(
+    check = wine_common.run(
         [wine, uv_exe, "python", "find", PYTHON_VERSION],
-        env=wine_common.wine_env(),
+        env=wine_common.wine_env(wine_common.BUILD_PREFIX),
         cwd=wine_common.ROOT,
         capture_output=True,
         text=True,
@@ -95,7 +94,7 @@ def ensure_innosetup(wine: str) -> Path:
         check=False,
     )
     if not wine_common.ISCC.is_file():
-        log = wine_common.PREFIX / "drive_c" / INNO_LOG
+        log = wine_common.BUILD_PREFIX / "drive_c" / INNO_LOG
         tail = "\n".join(log.read_text(errors="replace").splitlines()[-15:]) if log.is_file() else ""
         detail = f"\ninstaller log:\n{tail}" if tail else ""
         wine_common.fail(f"Inno Setup install did not produce {wine_common.ISCC}{detail}")
@@ -116,7 +115,7 @@ def main() -> int:
     try:
         ensure(wine_common.find_wine())
     finally:
-        wine_common.kill_wineserver()
+        wine_common.kill_wineserver(wine_common.BUILD_PREFIX)
     return 0
 
 

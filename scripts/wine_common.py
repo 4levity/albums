@@ -9,15 +9,15 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 WINE_ROOT = ROOT / ".cache" / "wine"
-PREFIX = WINE_ROOT / "prefix"
+BUILD_PREFIX = WINE_ROOT / "prefix"  # prefix for wine_setup, wine_build, wine_pytest
 BIN = WINE_ROOT / "bin"
 UV_CACHE = WINE_ROOT / "uv-cache"
 VENV = WINE_ROOT / "venv"  # wine venv for `uv sync` (used by wine_build.py)
-ISCC = PREFIX / "drive_c" / "InnoSetup7" / "ISCC.exe"
+ISCC = BUILD_PREFIX / "drive_c" / "InnoSetup7" / "ISCC.exe"
 
 WINE_MIN_VERSION = (11, 0)
 
@@ -27,22 +27,28 @@ def fail(message: str) -> NoReturn:
     sys.exit(1)
 
 
+def run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
+    """Run a subprocess, printing the command to the console as it is executed."""
+    print(f"running: {' '.join(cmd)}")
+    return subprocess.run(cmd, **kwargs)
+
+
 def find_wine() -> str:
     wine = shutil.which("wine")
     if wine is None:
         fail(f"wine not found on PATH; install wine {WINE_MIN_VERSION[0]}.{WINE_MIN_VERSION[1]} or newer")
-    output = subprocess.run([wine, "--version"], capture_output=True, text=True).stdout.strip()
+    output = run([wine, "--version"], capture_output=True, text=True).stdout.strip()
     match = re.search(r"(\d+)\.(\d+)", output)
     if match is None or (int(match.group(1)), int(match.group(2))) < WINE_MIN_VERSION:
         fail(f"wine {output} is too old; {WINE_MIN_VERSION[0]}.{WINE_MIN_VERSION[1]} or newer is required")
     return wine
 
 
-def wine_env(prefix: Path | None = None) -> dict[str, str]:
-    """Environment for wine commands: project prefix, quiet, uv cache on the host filesystem."""
+def wine_env(prefix: Path) -> dict[str, str]:
+    """Environment for wine commands: the given prefix, quiet, uv cache on the host filesystem."""
     env = {
         **os.environ,
-        "WINEPREFIX": str(prefix if prefix is not None else PREFIX),
+        "WINEPREFIX": str(prefix),
         "WINEDEBUG": "-all",
         "UV_CACHE_DIR": str(UV_CACHE),
         "UV_PROJECT_ENVIRONMENT": str(VENV),
@@ -64,37 +70,33 @@ def display_wine_cmd(wine: str) -> list[str]:
     return [xvfb, "-a", wine]
 
 
-def run_wine(cmd: list[str], args: list[str], timeout: int = 600, check: bool = True, prefix: Path | None = None) -> None:
+def run_wine(cmd: list[str], args: list[str], prefix: Path, timeout: int = 600, check: bool = True) -> None:
     """Run a program under wine in the prefix, streaming its output."""
     try:
-        subprocess.run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, check=check, timeout=timeout)
+        run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, check=check, timeout=timeout)
     except subprocess.CalledProcessError as e:
         fail(f"wine command failed (exit {e.returncode}): {' '.join(cmd + args)}")
     except subprocess.TimeoutExpired:
         fail(f"wine command timed out after {timeout}s: {' '.join(cmd + args)}")
 
 
-def kill_wineserver(prefix: Path | None = None) -> None:
+def kill_wineserver(prefix: Path) -> None:
     """Stop a prefix's wineserver (flushes its registry to disk).
 
     Kill a prefix after using it: deleting a prefix while its server is running
     is unsafe (the server may recreate it), and `make clean` or `git clean`
-    can delete the prefix at any time. Uses the project prefix when none is
-    given. No-op if the prefix does not exist, as running wineserver would
-    create it.
+    can delete the prefix at any time. No-op if the prefix does not exist, as
+    running wineserver would create it.
     """
-    prefix = prefix if prefix is not None else PREFIX
     if not prefix.is_dir():
         return
     run_wine(["wineserver"], ["-k"], check=False, prefix=prefix)
 
 
-def wine_capture(
-    cmd: list[str], args: list[str], timeout: int = 300, check: bool = True, prefix: Path | None = None
-) -> subprocess.CompletedProcess[str]:
+def wine_capture(cmd: list[str], args: list[str], prefix: Path, timeout: int = 300, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run a program under wine in the prefix, capturing output; return the process."""
     try:
-        return subprocess.run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, capture_output=True, text=True, timeout=timeout, check=check)
+        return run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, capture_output=True, text=True, timeout=timeout, check=check)
     except subprocess.CalledProcessError as e:
         lines = (e.stdout or "").splitlines() + (e.stderr or "").splitlines()
         fail(f"wine command failed (exit {e.returncode}): {' '.join(cmd + args)}\n" + "\n".join(lines[-10:]))

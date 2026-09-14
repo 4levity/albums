@@ -51,7 +51,8 @@ No Windows machine is needed: wine runs the same Windows build.
 
 Tests run natively with `make test` on Linux and Windows.
 
-`make wine-pytest` runs the test suite in the wine venv.
+`make wine-pytest` runs the test suite in the wine venv. It needs the wine
+environment, so the target depends on `wine-setup`.
 
 `make wine-e2e` tests the installer in a temporary wine prefix: it installs it
 with `/VERYSILENT /SUPPRESSMSGBOXES`, checks that albums is installed, added to
@@ -59,10 +60,13 @@ the user PATH and runs, then uninstalls it and checks that it is gone. Like the
 Inno Setup install in `make wine-setup`, installing and uninstalling need a
 display, or xvfb when headless.
 
-`make wine-e2e` does not build the installer. It uses the installer in
-`dist/installer/` whose name matches the current version (built by
+`make wine-e2e` does not build the installer by default: it uses the installer
+in `dist/installer/` whose name matches the current version (built by
 `make wine-build`), warns that it is an existing build that may be stale, and
-fails if no matching installer is found.
+fails if no matching installer is found. Run
+`uv run python scripts/wine_e2e.py --build` to build a fresh installer first
+(the wine environment is created if needed); the stale-build warning is then
+skipped.
 
 ## Certificate
 

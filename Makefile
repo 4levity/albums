@@ -127,13 +127,16 @@ pyinstaller: install ## Build standalone pyinstaller executable for this platfor
 # Windows installer on Linux via wine: wine_setup.py idempotently creates the
 # wine environment (prefix, uv + Windows Python, Inno Setup) in gitignored
 # .cache/wine/, wine_build.py builds dist/installer/ like the Windows CI job.
+# wine-pytest needs the wine environment (hence depends on wine-setup);
+# wine-e2e tests the existing installer, or builds a fresh one first with
+# --build (which also creates the wine environment).
 wine-setup: ## Create the wine environment for Windows installer builds
 	$(UV) run python scripts/wine_setup.py
 
 wine-build: ## Build the Windows installer on Linux via wine (dist/installer/)
 	$(UV) run python scripts/wine_build.py
 
-wine-pytest: ## Run the test suite under wine
+wine-pytest: wine-setup ## Run the test suite under wine
 	$(UV) run python scripts/wine_pytest.py
 
 wine-e2e: ## Install, run and uninstall the installer in a temporary wine prefix
