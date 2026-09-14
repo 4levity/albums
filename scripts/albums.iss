@@ -141,12 +141,12 @@ begin
     Exit;
   AddAppDirToUserPath(AppDir);
   RegWriteStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', 'yes');
-  MsgBox(
+  SuppressibleMsgBox(
     'albums was installed to:'#13#10 +
     '  ' + AppDir + #13#10#13#10 +
     'It was added to your user PATH.' + #13#10 +
     'Log out and log back in, then open a terminal and run: albums',
-    mbInformation, MB_OK);
+    mbInformation, MB_OK, IDOK);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
