@@ -12,7 +12,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 # allow package imports (scripts.*) when run as a plain script
@@ -77,40 +76,36 @@ def to_host(prefix: Path, win_path: str) -> Path:
 
 def kill_wineserver(prefix: Path) -> None:
     """Stop the prefix's wineserver (flushes its registry to disk)."""
-    wine_common.run_wine(["wineserver"], ["-k0"], check=False, prefix=prefix)
     wine_common.run_wine(["wineserver"], ["-k"], check=False, prefix=prefix)
 
 
-def keep_failure_evidence(prefix: Path) -> None:
-    """Keep a failed test prefix under .cache/wine/ and print the Inno log tails."""
-    kill_wineserver(prefix)
+def print_failure_logs(prefix: Path) -> None:
+    """Print the Inno log tails; the prefix stays under build/ for inspection."""
     for win_log in (INSTALL_LOG, UNINSTALL_LOG):
         log = to_host(prefix, win_log)
         if log.is_file():
             print(f"--- {log.name} (last 40 lines) ---")
             print("\n".join(log.read_text(errors="replace").splitlines()[-40:]))
-    kept = wine_common.WINE_ROOT / f"failed-{prefix.name}"
-    shutil.move(str(prefix), kept)
-    print(f"failed wine prefix kept for inspection: {kept}")
+    print(f"failed wine prefix kept for inspection: {prefix}")
 
 
 def test_installer(wine: str, installer: Path) -> None:
     print("testing installer in a temporary wine prefix")
-    with tempfile.TemporaryDirectory(prefix="albums-wine-e2e-") as tmp:
-        prefix = Path(tmp)
-        kept = False
+    prefix = wine_common.ROOT / "build" / "wine-e2e"
+    # a wineserver left by a killed run would be reused by the first wine
+    # command with stale state, so kill it before removing the old prefix
+    if prefix.is_dir():
+        kill_wineserver(prefix)
+        shutil.rmtree(prefix)
+    prefix.mkdir(parents=True)
+    try:
+        _test_installer_steps(wine, installer, prefix)
+    except BaseException:
         try:
-            _test_installer_steps(wine, installer, prefix)
+            print_failure_logs(prefix)
         except BaseException:
-            try:
-                keep_failure_evidence(prefix)
-            except BaseException:
-                print("could not keep failure evidence", file=sys.stderr)
-            kept = True
-            raise
-        finally:
-            if not kept:
-                kill_wineserver(prefix)
+            print("could not print failure logs", file=sys.stderr)
+        raise
     print("installer test passed")
 
 
@@ -137,8 +132,7 @@ def _test_installer_steps(wine: str, installer: Path, prefix: Path) -> None:
             return []
         return [clean_path_entry(entry) for entry in path.split(";")]
 
-    # the prefix is created automatically by the first wine command; the
-    # installer is a GUI app, so it needs a display (xvfb when headless)
+    # the installer is a GUI app, so it needs a display (xvfb when headless)
     print("--- install ---")
     wine_common.run_wine(wine_common.display_wine_cmd(wine), [str(installer), *INSTALLER_SWITCHES, f"/LOG={INSTALL_LOG}"], timeout=900, prefix=prefix)
 
