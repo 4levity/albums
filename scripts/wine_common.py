@@ -9,7 +9,7 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 WINE_ROOT = ROOT / ".cache" / "wine"
@@ -30,7 +30,8 @@ def fail(message: str) -> NoReturn:
 def run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     """Run a subprocess, printing the command to the console as it is executed."""
     print(f"running: {' '.join(cmd)}")
-    return subprocess.run(cmd, **kwargs)
+    # cast: **kwargs is Any, so pyright cannot infer subprocess.run's return type
+    return cast("subprocess.CompletedProcess[Any]", subprocess.run(cmd, **kwargs))
 
 
 def find_wine() -> str:

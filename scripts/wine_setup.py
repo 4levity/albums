@@ -74,7 +74,12 @@ def ensure_python(wine: str) -> None:
         print(f"Python {PYTHON_VERSION} (Windows) installed: {check.stdout.strip()}")
         return
     print(f"installing Python {PYTHON_VERSION} (Windows, via uv)")
-    wine_common.run_wine([wine], [uv_exe, "python", "install", PYTHON_VERSION], timeout=600)
+    wine_common.run_wine(
+        [wine],
+        [uv_exe, "python", "install", PYTHON_VERSION],
+        prefix=wine_common.BUILD_PREFIX,
+        timeout=600,
+    )
 
 
 def ensure_innosetup(wine: str) -> Path:
@@ -91,6 +96,7 @@ def ensure_innosetup(wine: str) -> Path:
     wine_common.run_wine(
         wine_common.display_wine_cmd(wine),
         [str(installer), "/SILENT", "/ALLUSERS", "/NORESTART", f"/DIR={INNO_DIR}", f"/LOG=C:\\{INNO_LOG}"],
+        prefix=wine_common.BUILD_PREFIX,
         check=False,
     )
     if not wine_common.ISCC.is_file():

@@ -1,0 +1,17 @@
+# Markdown lint + format (rumdl). Docs: https://rumdl.dev
+
+[global]
+# wrap prose at 80 columns
+line-length = 80
+# MD057 checks that relative links resolve relative to the markdown file,
+# but the docs link to repo paths (e.g. src/albums/...) relative to the
+# project root, so it would flag them
+disable = ["MD057"]
+
+# 4-space list indent
+[MD007]
+indent = 4
+
+# reflow prose to line-length when fixing
+[MD013]
+reflow = true

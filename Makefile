@@ -2,7 +2,7 @@ UV := uv
 # Lint tools are Node.js dev dependencies, defined in package.json and
 # installed by `make install-js` (requires Node.js 22.18+).
 CSPELL := npx --no-install cspell
-PRETTIER := npx --no-install prettier
+RUMDL := npx --no-install rumdl
 # pyright runs via `uv run` for correct project environment
 PYRIGHT := $(UV) run npx --no-install pyright
 PYRIGHT_TESTS := $(PYRIGHT) -p tests
@@ -14,9 +14,10 @@ RUFF_CHECK := $(RUFF) check .
 RUFF_CHECK_FIX := $(RUFF) check . --fix
 RUFF_FORMAT := $(RUFF) format
 RUFF_FORMAT_CHECK := $(RUFF) format . --check
-PRETTIER_WRITE := $(PRETTIER) --write '**/*.md'
+# rumdl scans . for markdown files and respects .gitignore
+RUMDL_CHECK := $(RUMDL) check .
+RUMDL_CHECK_FIX := $(RUMDL) check --fix .
 SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
-PYMARKDOWN_CHECK := $(UV) run pymarkdown --strict-config scan --respect-gitignore '**/*.md'
 CSPELL_CHECK := $(CSPELL) lint --gitignore * .github
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
@@ -52,9 +53,8 @@ lint: install-js ## Lint Python (ruff) and shell (shellcheck)
 	$(STEP) format $(RUFF_FORMAT_CHECK)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
 
-# glob is quoted so pymarkdown expands it (sh has no globstar)
-lint-markdown: ## Lint markdown
-	$(STEP) markdown $(PYMARKDOWN_CHECK)
+lint-markdown: install-js ## Lint markdown
+	$(STEP) markdown $(RUMDL_CHECK)
 
 spelling: install-js ## Run spell check
 	$(STEP) spelling $(CSPELL_CHECK)
@@ -70,15 +70,14 @@ typecheck-tests: node_modules
 fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
 	$(STEP) formatter $(RUFF_FORMAT)
 	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
-	$(STEP) 'markdown-fix' $(PRETTIER_WRITE)
+	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
-	$(STEP) markdown $(PYMARKDOWN_CHECK)
 	$(STEP) spelling $(CSPELL_CHECK)
 
 fix: install install-js ## Automatically fix lint/format
 	$(STEP) formatter $(RUFF_FORMAT)
 	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
-	$(STEP) 'markdown-fix' $(PRETTIER_WRITE)
+	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
 
 test: install ## Run all tests, fail on any warnings
 	$(UV) run pytest --max-warnings=0

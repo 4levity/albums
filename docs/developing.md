@@ -282,16 +282,15 @@ lint/format problems can be automatically fixed with `make fix`.
 - lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
   [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error
   rules (E4, E7, E9, F) plus isort (I), 150 character line limit, on Python
-  files only (markdown is linted with pymarkdown)
+  files only (markdown is linted with rumdl)
 - shell lint with [shellcheck](https://www.shellcheck.net/) - the git hook
   scripts in `hooks/`, run by `make lint` via `scripts/shellcheck.py`, which on
   Linux downloads a pinned release (v0.11.0) into `.cache/shellcheck/` and on
   other platforms requires `shellcheck` on PATH
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests.
-- markdown lint with [PyMarkdown](https://pymarkdown.readthedocs.io/en/latest/)
-- markdown reflow with [Prettier](https://prettier.io/) - wraps prose at 80
-  columns, run by `make fix` (uses `.prettierrc` config)
+- markdown lint + reflow with [rumdl](https://rumdl.dev) - wraps prose at 80
+  columns, run by `make fix` (uses `.rumdl.toml` config)
 
 ### Spell check
 
@@ -304,7 +303,7 @@ valid words and relevant technical terms to `cspell.json`.
 Use an IDE like [Visual Studio Code](https://code.visualstudio.com/) that
 supports ruff/Black formatting and a
 [pyright](https://microsoft.github.io/pyright/) language server and
-[cSpell](https://cspell.org/). [Prettier](https://prettier.io/) can reflow
+[cSpell](https://cspell.org/). [rumdl](https://rumdl.dev) can reflow
 Markdown text.
 
 ### Database Schema
@@ -320,8 +319,8 @@ make docs/database_diagram.png
 
 This generates the sample database, then renders it with
 [eralchemy](https://eralchemy.com/), which invokes the Graphviz `dot`
-executable. So in addition to the project dependencies, the [GraphViz]
-(https://graphviz.org/) binaries must be installed (e.g.
+executable. So in addition to the project dependencies, the
+[GraphViz](https://graphviz.org/) binaries must be installed (e.g.
 `sudo apt install graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
 
 ![albums database schema diagram](./database_diagram.png)
