@@ -31,7 +31,9 @@ def render_installer_script(template: str, app_version: str, file_version: str) 
     """
     lines: list[str] = []
     for line in template.split("\n"):
-        if not line.lstrip().startswith(";"):
+        stripped = line.lstrip()
+        # ; comments (outside [Code]) and // comments (inside [Code])
+        if not stripped.startswith(("//", ";")):
             line = re.sub(r"(?<![\d.])0\.0\.0\.0(?![\d.])", file_version, line)
             line = re.sub(r"(?<![\d.])0\.0\.0(?![\d.])", app_version, line)
         lines.append(line)

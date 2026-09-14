@@ -26,7 +26,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller clean
+.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build clean
 
 build: install static test
 	@echo "build complete"
@@ -123,6 +123,15 @@ pyinstaller: install ## Build standalone pyinstaller executable for this platfor
 	--workpath build/$$platform --distpath dist/pyinstaller/$$platform \
 	--specpath build/$$platform/.specs --contents-directory _albums_internal && \
 	ls -l dist/pyinstaller/$$platform/albums
+
+# Windows installer on Linux via wine: wine_setup.py idempotently creates the
+# wine environment (prefix, uv + Windows Python, Inno Setup) in gitignored
+# .cache/wine/, wine_build.py builds dist/installer/ like the Windows CI job.
+wine-setup: ## Create the wine environment for Windows installer builds
+	$(UV) run python scripts/wine_setup.py
+
+wine-build: ## Build the Windows installer on Linux via wine (dist/installer/)
+	$(UV) run python scripts/wine_build.py
 
 package: ## Create sdist and wheel in dist/
 	$(UV) build

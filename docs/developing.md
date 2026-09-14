@@ -12,6 +12,7 @@ icon: lucide/computer
 - `make`
 - `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
   release into `.cache/shellcheck/`)
+- `wine` 11.0+ (only to build the Windows installer on Linux)
 
 ## Overview
 
@@ -74,6 +75,16 @@ checkout, and `write` writes the `_version.py` file:
   versions) into `build/albums.iss` with `scripts/render_iss.py`, then Inno
   Setup compiles it into `dist/installer/`
 - `make docs` injects the version into the built docs site
+
+### Windows installer on Linux
+
+The Windows installer can also be built on Linux with wine; no Windows machine
+is needed. `make wine-setup` idempotently creates a wine prefix in the
+gitignored `.cache/wine/` and installs uv (which downloads the Windows Python)
+and Inno Setup. `make wine-build` then builds
+`dist/installer/albums_win_x86_64-<version>-setup.exe` from the current source,
+following the Windows CI job (`uv sync` from `uv.lock`, pyinstaller, iscc). The
+Inno Setup step runs a silent installer, which needs a desktop session.
 
 ### Python Project Structure
 

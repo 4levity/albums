@@ -31,23 +31,19 @@ ArchitecturesInstallIn64BitMode=x64compatible
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-
 [Files]
 Source: "..\dist\pyinstaller\win_amd64\albums\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\albums"; Filename: "{app}\albums.exe"
-Name: "{autodesktop}\albums"; Filename: "{app}\albums.exe"; Tasks: desktopicon
 
 [Code]
-; Add {app} to the user's PATH, remove when uninstalled.
+// Add {app} to the user's PATH, remove when uninstalled.
 const
   InstallerRegSubkey = 'Software\4levity\albums';
 
-; Trim, unquote, strip trailing backslashes and expand a PATH entry so that
-; entries compare consistently.
+// Trim, unquote, strip trailing backslashes and expand a PATH entry so that
+// entries compare consistently.
 function CleanPathEntry(AEntry: String): String;
 begin
   Result := Trim(AEntry);
@@ -67,7 +63,7 @@ var
   SemicolonPos: Integer;
 begin
   Result := False;
-  if not RegQueryString(HKCU, 'Environment', 'Path', Path) then
+  if not RegQueryStringValue(HKCU, 'Environment', 'Path', Path) then
     Exit;
   while Path <> '' do
   begin
@@ -95,7 +91,7 @@ var
   Path: String;
 begin
   Path := '';
-  if RegQueryString(HKCU, 'Environment', 'Path', Path)
+  if RegQueryStringValue(HKCU, 'Environment', 'Path', Path)
     and (Path <> '')
     and (Path[Length(Path)] <> ';')
   then
@@ -108,7 +104,7 @@ var
   Path, NewPath, Entry: String;
   SemicolonPos: Integer;
 begin
-  if not RegQueryString(HKCU, 'Environment', 'Path', Path) then
+  if not RegQueryStringValue(HKCU, 'Environment', 'Path', Path) then
     Exit;
   NewPath := '';
   while Path <> '' do
@@ -138,18 +134,19 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   AppDir: String;
 begin
-  if CurStep <> CS_POSTINSTALL then
+  if CurStep <> ssPostInstall then
     Exit;
   AppDir := ExpandConstant('{app}');
   if IsAppDirInUserPath(AppDir) then
     Exit;
   AddAppDirToUserPath(AppDir);
   RegWriteStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', 'yes');
-  Msg(
-    'albums was installed to:' + sLineBreak +
-    '  ' + AppDir + sLineBreak + sLineBreak +
-    'It was added to your user PATH.' + sLineBreak +
-    'Log out and log back in, then open a terminal and run: albums');
+  MsgBox(
+    'albums was installed to:'#13#10 +
+    '  ' + AppDir + #13#10#13#10 +
+    'It was added to your user PATH.' + #13#10 +
+    'Log out and log back in, then open a terminal and run: albums',
+    mbInformation, MB_OK);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -158,8 +155,8 @@ var
 begin
   if CurUninstallStep <> usPostUninstall then
     Exit;
-  if RegQueryString(HKCU, InstallerRegSubkey, 'AddedToUserPath', AddedToUserPath) then
+  if RegQueryStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', AddedToUserPath) then
     RemoveAppDirFromUserPath(ExpandConstant('{app}'));
   RegDeleteValue(HKCU, InstallerRegSubkey, 'AddedToUserPath');
-  RegDeleteKeyOnly(HKCU, InstallerRegSubkey);
+  RegDeleteKeyIfEmpty(HKCU, InstallerRegSubkey);
 end;
