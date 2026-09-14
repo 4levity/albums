@@ -2,13 +2,15 @@
 
 Idempotent. Creates a wine prefix in the gitignored `.cache/wine/` folder and
 installs into it: uv (which downloads the Windows Python the build uses) and
-Inno Setup. Requires wine 11.0 or newer.
+Inno Setup. Requires wine 11.0 or newer; on headless systems the Inno Setup
+installer runs under xvfb-run, which needs the xvfb package.
 
 Usage: python scripts/wine_setup.py
 """
 
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,11 +46,29 @@ def fail(message: str) -> NoReturn:
     sys.exit(1)
 
 
+WINE_MIN_VERSION = (11, 0)
+
+
 def find_wine() -> str:
     wine = shutil.which("wine")
     if wine is None:
-        fail("wine not found on PATH; install it (e.g. `sudo apt install wine64` on Debian/Ubuntu)")
+        fail(f"wine not found on PATH; install wine {WINE_MIN_VERSION[0]}.{WINE_MIN_VERSION[1]} or newer")
+    output = subprocess.run([wine, "--version"], capture_output=True, text=True).stdout.strip()
+    match = re.search(r"(\d+)\.(\d+)", output)
+    if match is None or (int(match.group(1)), int(match.group(2))) < WINE_MIN_VERSION:
+        fail(f"wine {output} is too old; {WINE_MIN_VERSION[0]}.{WINE_MIN_VERSION[1]} or newer is required")
+    _wine = wine
     return wine
+
+
+def display_wine_cmd(wine: str) -> list[str]:
+    """Wine command for the Inno Setup installer, which needs a display even in silent mode."""
+    if os.environ.get("DISPLAY"):
+        return [wine]
+    xvfb = shutil.which("xvfb-run")
+    if xvfb is None:
+        fail("no display and xvfb-run not found; install xvfb (e.g. `sudo apt install xvfb`)")
+    return [xvfb, "-a", wine]
 
 
 def wine_env() -> dict[str, str]:
@@ -67,14 +87,14 @@ def wine_env() -> dict[str, str]:
     return env
 
 
-def run_wine(wine: str, args: list[str], timeout: int = 600, check: bool = True) -> None:
+def run_wine(cmd: list[str], args: list[str], timeout: int = 600, check: bool = True) -> None:
     """Run a program under wine in the prefix, streaming its output."""
     try:
-        subprocess.run([wine, *args], env=wine_env(), cwd=ROOT, check=check, timeout=timeout)
+        subprocess.run([*cmd, *args], env=wine_env(), cwd=ROOT, check=check, timeout=timeout)
     except subprocess.CalledProcessError as e:
-        fail(f"wine command failed (exit {e.returncode}): wine {' '.join(args)}")
+        fail(f"wine command failed (exit {e.returncode}): {' '.join(cmd + args)}")
     except subprocess.TimeoutExpired:
-        fail(f"wine command timed out after {timeout}s: wine {' '.join(args)}")
+        fail(f"wine command timed out after {timeout}s: {' '.join(cmd + args)}")
 
 
 def download(url: str, dest: Path, sha256: str) -> Path:
@@ -106,12 +126,13 @@ def ensure_prefix(wine: str) -> None:
         return
     print(f"creating wine prefix in {PREFIX.relative_to(ROOT)}")
     WINE_ROOT.mkdir(parents=True, exist_ok=True)
-    run_wine(wine, ["wineboot", "--init"], timeout=300)
+    # a fresh prefix's X support only initializes when wineboot runs on a display
+    run_wine(display_wine_cmd(wine), ["wineboot", "--init"], timeout=300)
     if not (PREFIX / "drive_c").is_dir():
         fail(f"wineboot did not create {PREFIX.relative_to(ROOT)}/drive_c")
 
 
-def ensure_uv(wine: str) -> None:
+def ensure_uv() -> None:
     uv_exe = BIN / "uv.exe"
     if uv_exe.is_file():
         print(f"uv {UV_VERSION} (Windows) installed")
@@ -142,7 +163,7 @@ def ensure_python(wine: str) -> None:
         print(f"Python {PYTHON_VERSION} (Windows) installed: {check.stdout.strip()}")
         return
     print(f"installing Python {PYTHON_VERSION} (Windows, via uv)")
-    run_wine(wine, [uv_exe, "python", "install", PYTHON_VERSION], timeout=600)
+    run_wine([wine], [uv_exe, "python", "install", PYTHON_VERSION], timeout=600)
 
 
 def ensure_innosetup(wine: str) -> Path:
@@ -154,9 +175,13 @@ def ensure_innosetup(wine: str) -> Path:
     tag = f"is-{INNOSETUP_VERSION.replace('.', '_')}"
     url = f"https://github.com/jrsoftware/issrc/releases/download/{tag}/{asset}"
     installer = download(url, DOWNLOADS / asset, INNOSETUP_SHA256)
-    # /SILENT still creates hidden windows, so this needs a desktop session
+    # /SILENT still creates hidden windows, so it needs a display (xvfb if headless)
     print(f"installing Inno Setup {INNOSETUP_VERSION}")
-    run_wine(wine, [str(installer), "/SILENT", "/ALLUSERS", "/NORESTART", f"/DIR={INNO_DIR}", f"/LOG=C:\\{INNO_LOG}"], check=False)
+    run_wine(
+        display_wine_cmd(wine),
+        [str(installer), "/SILENT", "/ALLUSERS", "/NORESTART", f"/DIR={INNO_DIR}", f"/LOG=C:\\{INNO_LOG}"],
+        check=False,
+    )
     if not ISCC.is_file():
         log = PREFIX / "drive_c" / INNO_LOG
         tail = "\n".join(log.read_text(errors="replace").splitlines()[-15:]) if log.is_file() else ""
@@ -165,11 +190,10 @@ def ensure_innosetup(wine: str) -> Path:
     return ISCC
 
 
-def ensure() -> Path:
+def ensure(wine: str) -> Path:
     """Idempotently create the full wine environment. Returns the path to ISCC.exe."""
-    wine = find_wine()
     ensure_prefix(wine)
-    ensure_uv(wine)
+    ensure_uv()
     ensure_python(wine)
     iscc = ensure_innosetup(wine)
     print(f"wine environment ready ({WINE_ROOT.relative_to(ROOT)})")
@@ -177,7 +201,7 @@ def ensure() -> Path:
 
 
 def main() -> int:
-    ensure()
+    ensure(find_wine())
     return 0
 
 

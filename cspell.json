@@ -210,6 +210,7 @@
         "WINEPREFIX",
         "WORKID",
         "workpath",
+        "xvfb",
         "xxhash",
         "zbrush",
         "zensical"

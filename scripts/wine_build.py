@@ -24,16 +24,16 @@ PLATFORM = "win_amd64"
 
 def main() -> int:
     wine = wine_setup.find_wine()
-    iscc = wine_setup.ensure()
+    iscc = wine_setup.ensure(wine)
     print("syncing wine venv from uv.lock")
-    wine_setup.run_wine(wine, [str(wine_setup.BIN / "uv.exe"), "sync", "--locked"], timeout=3600)
+    wine_setup.run_wine([wine], [str(wine_setup.BIN / "uv.exe"), "sync", "--locked"], timeout=3600)
     print("writing version")
     subprocess.run(["uv", "run", "python", "scripts/version.py", "write"], cwd=ROOT, check=True)
     print("rendering installer script")
     subprocess.run(["uv", "run", "python", "scripts/render_iss.py"], cwd=ROOT, check=True)
     print(f"building pyinstaller executable ({PLATFORM})")
     wine_setup.run_wine(
-        wine,
+        [wine],
         [
             str(wine_setup.BIN / "uv.exe"),
             "run",
@@ -58,7 +58,7 @@ def main() -> int:
         timeout=3600,
     )
     print("compiling installer with Inno Setup")
-    wine_setup.run_wine(wine, [str(iscc), r"build\albums.iss"], timeout=1800)
+    wine_setup.run_wine([wine], [str(iscc), r"build\albums.iss"], timeout=1800)
     exes = sorted((ROOT / "dist" / "installer").glob("*.exe"))
     if not exes:
         wine_setup.fail("no installer found in dist/installer")

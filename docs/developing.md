@@ -12,7 +12,8 @@ icon: lucide/computer
 - `make`
 - `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
   release into `.cache/shellcheck/`)
-- `wine` 11.0+ (only to build the Windows installer on Linux)
+- `wine` 11.0+ (only to build the Windows installer on Linux; `xvfb` on headless
+  systems)
 
 ## Overview
 
@@ -84,7 +85,8 @@ gitignored `.cache/wine/` and installs uv (which downloads the Windows Python)
 and Inno Setup. `make wine-build` then builds
 `dist/installer/albums_win_x86_64-<version>-setup.exe` from the current source,
 following the Windows CI job (`uv sync` from `uv.lock`, pyinstaller, iscc). The
-Inno Setup step runs a silent installer, which needs a desktop session.
+Inno Setup silent installer needs a display; on headless systems it runs under
+xvfb-run.
 
 ### Python Project Structure
 
