@@ -35,6 +35,7 @@ nav = [
     {"Technical Information" = [
         "tag_technical.md",
         "developing.md",
+        "developing_windows.md",
         "ideas.md",
         "changelog.md",
     ]},

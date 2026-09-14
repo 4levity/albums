@@ -12,10 +12,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+# allow package imports (scripts.*) when run as a plain script
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import wine_setup  # noqa: E402
+from scripts import wine_common, wine_setup  # noqa: E402
 
 # sysconfig.get_platform() of the 64-bit Windows Python; the .iss [Files]
 # source path expects dist/pyinstaller/win_amd64
@@ -23,19 +23,19 @@ PLATFORM = "win_amd64"
 
 
 def main() -> int:
-    wine = wine_setup.find_wine()
+    wine = wine_common.find_wine()
     iscc = wine_setup.ensure(wine)
     print("syncing wine venv from uv.lock")
-    wine_setup.run_wine([wine], [str(wine_setup.BIN / "uv.exe"), "sync", "--locked"], timeout=3600)
+    wine_common.run_wine([wine], [str(wine_common.BIN / "uv.exe"), "sync", "--locked"], timeout=3600)
     print("writing version")
-    subprocess.run(["uv", "run", "python", "scripts/version.py", "write"], cwd=ROOT, check=True)
+    subprocess.run(["uv", "run", "python", "scripts/version.py", "write"], cwd=wine_common.ROOT, check=True)
     print("rendering installer script")
-    subprocess.run(["uv", "run", "python", "scripts/render_iss.py"], cwd=ROOT, check=True)
+    subprocess.run(["uv", "run", "python", "scripts/render_iss.py"], cwd=wine_common.ROOT, check=True)
     print(f"building pyinstaller executable ({PLATFORM})")
-    wine_setup.run_wine(
+    wine_common.run_wine(
         [wine],
         [
-            str(wine_setup.BIN / "uv.exe"),
+            str(wine_common.BIN / "uv.exe"),
             "run",
             "pyinstaller",
             "src/albums/__main__.py",
@@ -58,10 +58,10 @@ def main() -> int:
         timeout=3600,
     )
     print("compiling installer with Inno Setup")
-    wine_setup.run_wine([wine], [str(iscc), r"build\albums.iss"], timeout=1800)
-    exes = sorted((ROOT / "dist" / "installer").glob("*.exe"))
+    wine_common.run_wine([wine], [str(iscc), r"build\albums.iss"], timeout=1800)
+    exes = sorted((wine_common.ROOT / "dist" / "installer").glob("*.exe"))
     if not exes:
-        wine_setup.fail("no installer found in dist/installer")
+        wine_common.fail("no installer found in dist/installer")
     for exe in exes:
         print(f"installer: {exe} ({exe.stat().st_size / 1024 / 1024:.1f} MiB)")
     return 0

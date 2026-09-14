@@ -12,8 +12,6 @@ icon: lucide/computer
 - `make`
 - `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
   release into `.cache/shellcheck/`)
-- `wine` 11.0+ (only to build the Windows installer on Linux; `xvfb` on headless
-  systems)
 
 ## Overview
 
@@ -72,21 +70,9 @@ checkout, and `write` writes the `_version.py` file:
 - `make pyinstaller` writes the version, then builds a standalone executable in
   `dist/pyinstaller/<platform>/albums/` with
   [PyInstaller](https://pyinstaller.org/)
-- The Windows CI renders the `scripts/albums.iss` template (0.0.0 placeholder
-  versions) into `build/albums.iss` with `scripts/render_iss.py`, then Inno
-  Setup compiles it into `dist/installer/`
 - `make docs` injects the version into the built docs site
-
-### Windows installer on Linux
-
-The Windows installer can also be built on Linux with wine; no Windows machine
-is needed. `make wine-setup` idempotently creates a wine prefix in the
-gitignored `.cache/wine/` and installs uv (which downloads the Windows Python)
-and Inno Setup. `make wine-build` then builds
-`dist/installer/albums_win_x86_64-<version>-setup.exe` from the current source,
-following the Windows CI job (`uv sync` from `uv.lock`, pyinstaller, iscc). The
-Inno Setup silent installer needs a display; on headless systems it runs under
-xvfb-run.
+- Windows builds (release CI, local Windows, and Linux with wine) are documented
+  in [Windows Builds](./developing_windows.md)
 
 ### Python Project Structure
 
