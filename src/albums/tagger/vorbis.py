@@ -25,7 +25,7 @@ LEGACY_VORBIS_FIELDS: Final[Tuple[Tuple[str, BasicField], ...]] = (
     ("numtracks", BasicField.TRACKTOTAL),
     ("number_of_tracks", BasicField.TRACKTOTAL),
     ("totaltracks", BasicField.TRACKTOTAL),
-    ("trackc", BasicField.TRACKTOTAL),  # cspell: ignore trackc
+    ("trackc", BasicField.TRACKTOTAL),
 )
 
 

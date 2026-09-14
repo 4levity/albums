@@ -54,7 +54,7 @@ def wine_env(prefix: Path) -> dict[str, str]:
         "UV_CACHE_DIR": str(UV_CACHE),
         "UV_PROJECT_ENVIRONMENT": str(VENV),
         # do not prompt to install wine-mono (not needed)
-        "WINEDLLOVERRIDES": 'mscoree=""',  # cspell: ignore WINEDLLOVERRIDES, mscoree
+        "WINEDLLOVERRIDES": 'mscoree=""',
     }
     # drop the host venv: wine's uv would try to inspect it with Windows paths
     env.pop("VIRTUAL_ENV", None)

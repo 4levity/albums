@@ -98,6 +98,5 @@ def a_plural(items: int | Sized, single_thing: str) -> str:
     if count != 1:
         article = ""
     else:
-        # cSpell: disable-next-line
         article = "an " if re.match("[aeiou]", single_thing) else "a "
     return f"{article}{pluralize(single_thing, items)}"
