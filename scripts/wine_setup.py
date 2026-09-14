@@ -113,7 +113,10 @@ def ensure(wine: str) -> Path:
 
 
 def main() -> int:
-    ensure(wine_common.find_wine())
+    try:
+        ensure(wine_common.find_wine())
+    finally:
+        wine_common.kill_wineserver()
     return 0
 
 

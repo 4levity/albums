@@ -74,11 +74,6 @@ def to_host(prefix: Path, win_path: str) -> Path:
     return prefix / f"drive_{drive.lower()}" / rest.replace("\\", "/").lstrip("/")
 
 
-def kill_wineserver(prefix: Path) -> None:
-    """Stop the prefix's wineserver (flushes its registry to disk)."""
-    wine_common.run_wine(["wineserver"], ["-k"], check=False, prefix=prefix)
-
-
 def print_failure_logs(prefix: Path) -> None:
     """Print the Inno log tails; the prefix stays under build/ for inspection."""
     for win_log in (INSTALL_LOG, UNINSTALL_LOG):
@@ -94,9 +89,8 @@ def test_installer(wine: str, installer: Path) -> None:
     prefix = wine_common.ROOT / "build" / "wine-e2e"
     # a wineserver left by a killed run would be reused by the first wine
     # command with stale state, so kill it before removing the old prefix
-    if prefix.is_dir():
-        kill_wineserver(prefix)
-        shutil.rmtree(prefix)
+    wine_common.kill_wineserver(prefix)
+    shutil.rmtree(prefix, ignore_errors=True)
     prefix.mkdir(parents=True)
     try:
         _test_installer_steps(wine, installer, prefix)
@@ -106,6 +100,8 @@ def test_installer(wine: str, installer: Path) -> None:
         except BaseException:
             print("could not print failure logs", file=sys.stderr)
         raise
+    finally:
+        wine_common.kill_wineserver(prefix)
     print("installer test passed")
 
 
@@ -191,9 +187,12 @@ def _test_installer_steps(wine: str, installer: Path, prefix: Path) -> None:
 
 def main() -> int:
     wine = wine_common.find_wine()
-    wine_setup.ensure(wine)
-    installer = find_installer()
-    test_installer(wine, installer)
+    try:
+        wine_setup.ensure(wine)
+        installer = find_installer()
+        test_installer(wine, installer)
+    finally:
+        wine_common.kill_wineserver()
     return 0
 
 

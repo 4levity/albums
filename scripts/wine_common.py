@@ -74,6 +74,21 @@ def run_wine(cmd: list[str], args: list[str], timeout: int = 600, check: bool = 
         fail(f"wine command timed out after {timeout}s: {' '.join(cmd + args)}")
 
 
+def kill_wineserver(prefix: Path | None = None) -> None:
+    """Stop a prefix's wineserver (flushes its registry to disk).
+
+    Kill a prefix after using it: deleting a prefix while its server is running
+    is unsafe (the server may recreate it), and `make clean` or `git clean`
+    can delete the prefix at any time. Uses the project prefix when none is
+    given. No-op if the prefix does not exist, as running wineserver would
+    create it.
+    """
+    prefix = prefix if prefix is not None else PREFIX
+    if not prefix.is_dir():
+        return
+    run_wine(["wineserver"], ["-k"], check=False, prefix=prefix)
+
+
 def wine_capture(
     cmd: list[str], args: list[str], timeout: int = 300, check: bool = True, prefix: Path | None = None
 ) -> subprocess.CompletedProcess[str]:
