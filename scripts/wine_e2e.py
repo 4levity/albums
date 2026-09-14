@@ -1,11 +1,11 @@
-"""Test the Windows build under wine: run the test suite, then install, run,
-and uninstall the Inno Setup installer in a temporary wine prefix.
+"""Install, run and uninstall the Inno Setup installer in a temporary wine
+prefix (make wine-e2e).
 
 The installer is not rebuilt. It must already exist in dist/installer/ with a
 name matching the current version (make wine-build builds it); an existing
 build is used as-is, with a warning that it may be stale.
 
-Usage: python scripts/wine_test.py
+Usage: python scripts/wine_e2e.py
 """
 
 import re
@@ -75,13 +75,6 @@ def to_host(prefix: Path, win_path: str) -> Path:
     return prefix / f"drive_{drive.lower()}" / rest.replace("\\", "/").lstrip("/")
 
 
-def run_tests(wine: str) -> None:
-    print("running test suite under wine")
-    wine_common.run_wine(
-        [wine], [str(wine_common.BIN / "uv.exe"), "run", "pytest", "-o", "console_output_style=none", "--max-warnings=0"], timeout=3600
-    )
-
-
 def kill_wineserver(prefix: Path) -> None:
     """Stop the prefix's wineserver (flushes its registry to disk)."""
     wine_common.run_wine(["wineserver"], ["-k0"], check=False, prefix=prefix)
@@ -103,7 +96,7 @@ def keep_failure_evidence(prefix: Path) -> None:
 
 def test_installer(wine: str, installer: Path) -> None:
     print("testing installer in a temporary wine prefix")
-    with tempfile.TemporaryDirectory(prefix="albums-wine-test-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="albums-wine-e2e-") as tmp:
         prefix = Path(tmp)
         kept = False
         try:
@@ -205,7 +198,6 @@ def _test_installer_steps(wine: str, installer: Path, prefix: Path) -> None:
 def main() -> int:
     wine = wine_common.find_wine()
     wine_setup.ensure(wine)
-    run_tests(wine)
     installer = find_installer()
     test_installer(wine, installer)
     return 0

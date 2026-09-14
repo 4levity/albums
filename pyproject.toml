@@ -87,7 +87,7 @@ extend-exclude = ["typings", "src/albums/_version.py", "**/*.md", "pyproject.tom
 lint.select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.pytest.ini_options]
-# tests/ only: scripts/wine_test.py matches pytest's *_test.py pattern but is a dev script
+# limit test collection to tests/; dev scripts in scripts/ are not tests
 testpaths = ["tests"]
 
 [tool.pyright]
