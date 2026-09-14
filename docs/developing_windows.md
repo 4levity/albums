@@ -39,6 +39,13 @@ job shows these commands in one place.
 
 No Windows machine is needed: wine runs the same Windows build.
 
+!!!warning
+
+    Wine prefixes are large: `.cache/wine/` (the wine environment) uses
+    about 2.5 GB and `build/wine-e2e/` (the e2e prefix) another 1.4 GB.
+    `make clean` removes the e2e prefix but keeps `.cache/wine/`; remove
+    it manually to reclaim the space, it is re-created as needed.
+
 - Prerequisites: `wine` 11.0+ and, on headless systems, `xvfb`.
 - `make wine-setup` idempotently creates the environment in the gitignored
   `.cache/wine/` folder: a wine prefix, uv (which downloads the Windows Python),

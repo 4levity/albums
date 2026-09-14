@@ -27,7 +27,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean
+.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
 
 build: install static test
 	@echo "build complete"
@@ -168,4 +168,8 @@ clean: ## Remove build and test files
 	rm -rf .coverage
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
+	rm -rf .rumdl_cache
 	rm -rf sample/albums.db
+
+extraclean: clean ## Remove build/test files, caches and installed dependencies
+	rm -rf .cache .venv node_modules

@@ -58,6 +58,7 @@
         "eralchemy",
         "executescript",
         "execv",
+        "extraclean",
         "fileversion",
         "flac",
         "fontawesome",
