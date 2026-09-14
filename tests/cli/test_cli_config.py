@@ -1,5 +1,4 @@
 import json
-import os
 import re
 
 import pytest
@@ -156,4 +155,4 @@ class TestCliConfig:
         result = self.run(["config", "settings.library"], init=True)
         assert f"settings.library = {str(TestCliConfig.library)}" in result.output  # not reset
         result = self.run(["config", "settings.tagger"])
-        assert f"settings.tagger = {os.linesep}" in result.output  # reset
+        assert "settings.tagger = \n" in result.output  # reset to empty default

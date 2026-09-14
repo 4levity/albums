@@ -26,7 +26,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build clean
+.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-test clean
 
 build: install static test
 	@echo "build complete"
@@ -132,6 +132,9 @@ wine-setup: ## Create the wine environment for Windows installer builds
 
 wine-build: ## Build the Windows installer on Linux via wine (dist/installer/)
 	$(UV) run python scripts/wine_build.py
+
+wine-test: ## Run the test suite under wine and test the installer in a temp prefix
+	$(UV) run python scripts/wine_test.py
 
 package: ## Create sdist and wheel in dist/
 	$(UV) build

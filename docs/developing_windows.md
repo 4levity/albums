@@ -49,12 +49,19 @@ No Windows machine is needed: wine runs the same Windows build.
 
 ## Testing
 
-Tests run natively with `make test` on Linux and Windows. Running the test suite
-against a Windows build in CI or wine is not yet automated.
+Tests run natively with `make test` on Linux and Windows.
 
-The wine build uses the same locked dependencies, PyInstaller arguments, and
-installer script as the Windows CI job, so it produces the same kind of
-installer. Testing the installer is not yet automated.
+`make wine-test` runs the test suite in the wine venv, then tests the installer
+in a temporary wine prefix: it installs it with `/VERYSILENT /SUPPRESSMSGBOXES`,
+checks that albums is installed, added to the user PATH and runs, then
+uninstalls it and checks that it is gone. Like the Inno Setup install in
+`make wine-setup`, installing and uninstalling need a display, or xvfb when
+headless.
+
+`make wine-test` does not build the installer. It uses the installer in
+`dist/installer/` whose name matches the current version (built by
+`make wine-build`), warns that it is an existing build that may be stale, and
+fails if no matching installer is found.
 
 ## Certificate
 

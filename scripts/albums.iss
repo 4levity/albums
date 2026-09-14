@@ -42,6 +42,32 @@ Name: "{group}\albums"; Filename: "{app}\albums.exe"
 const
   InstallerRegSubkey = 'Software\4levity\albums';
 
+// Inno Setup Pascal has no runtime enum names; these map steps to names
+// for the /LOG file.
+function SetupStepName(AStep: TSetupStep): String;
+begin
+  case AStep of
+    ssPreInstall: Result := 'ssPreInstall';
+    ssInstall: Result := 'ssInstall';
+    ssPostInstall: Result := 'ssPostInstall';
+    ssDone: Result := 'ssDone';
+  else
+    Result := 'unknown';
+  end;
+end;
+
+function UninstallStepName(AStep: TUninstallStep): String;
+begin
+  case AStep of
+    usAppMutexCheck: Result := 'usAppMutexCheck';
+    usUninstall: Result := 'usUninstall';
+    usPostUninstall: Result := 'usPostUninstall';
+    usDone: Result := 'usDone';
+  else
+    Result := 'unknown';
+  end;
+end;
+
 // Trim, unquote, strip trailing backslashes and expand a PATH entry so that
 // entries compare consistently.
 function CleanPathEntry(AEntry: String): String;
@@ -97,6 +123,7 @@ begin
   then
     Path := Path + ';';
   RegWriteStringValue(HKCU, 'Environment', 'Path', Path + AAppDir);
+  Log('install: user PATH is now ' + Path + AAppDir);
 end;
 
 procedure RemoveAppDirFromUserPath(AAppDir: String);
@@ -105,7 +132,10 @@ var
   SemicolonPos: Integer;
 begin
   if not RegQueryStringValue(HKCU, 'Environment', 'Path', Path) then
+  begin
+    Log('uninstall: no user PATH value found, nothing to remove');
     Exit;
+  end;
   NewPath := '';
   while Path <> '' do
   begin
@@ -128,19 +158,26 @@ begin
     end;
   end;
   RegWriteStringValue(HKCU, 'Environment', 'Path', NewPath);
+  Log('uninstall: user PATH is now ' + NewPath);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   AppDir: String;
 begin
+  Log('install: step ' + SetupStepName(CurStep));
   if CurStep <> ssPostInstall then
     Exit;
   AppDir := ExpandConstant('{app}');
+  Log('install: app dir ' + AppDir);
   if IsAppDirInUserPath(AppDir) then
+  begin
+    Log('install: app dir already in user PATH, not adding');
     Exit;
+  end;
   AddAppDirToUserPath(AppDir);
   RegWriteStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', 'yes');
+  Log('install: marked AddedToUserPath=yes');
   SuppressibleMsgBox(
     'albums was installed to:'#13#10 +
     '  ' + AppDir + #13#10#13#10 +
@@ -153,10 +190,17 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   AddedToUserPath: String;
 begin
+  Log('uninstall: step ' + UninstallStepName(CurUninstallStep));
   if CurUninstallStep <> usPostUninstall then
     Exit;
   if RegQueryStringValue(HKCU, InstallerRegSubkey, 'AddedToUserPath', AddedToUserPath) then
+  begin
+    Log('uninstall: AddedToUserPath present, removing app dir from user PATH');
     RemoveAppDirFromUserPath(ExpandConstant('{app}'));
+  end
+  else
+    Log('uninstall: AddedToUserPath not present, user PATH untouched');
   RegDeleteValue(HKCU, InstallerRegSubkey, 'AddedToUserPath');
   RegDeleteKeyIfEmpty(HKCU, InstallerRegSubkey);
+  Log('uninstall: removed AddedToUserPath value and installer registry key');
 end;

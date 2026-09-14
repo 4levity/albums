@@ -58,8 +58,9 @@ class MockTagger(TaggerFile):
 
 
 def _db_snapshot_path(library: Path, albums: Collection[Album]) -> Path:
-    """Snapshot path for a database initialized from this exact library content."""
-    digest = hashlib.sha1(json.dumps([album.to_dict() for album in albums], sort_keys=True).encode()).hexdigest()[:12]
+    """Snapshot path for a database initialized from this exact library location and content."""
+    payload = json.dumps([str(library), *[album.to_dict() for album in albums]], sort_keys=True)
+    digest = hashlib.sha1(payload.encode()).hexdigest()[:12]
     return test_tmp_dir / f"db_snapshot_{library.name}_{digest}.db"
 
 

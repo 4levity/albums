@@ -38,11 +38,11 @@ def find_wine() -> str:
     return wine
 
 
-def wine_env() -> dict[str, str]:
+def wine_env(prefix: Path | None = None) -> dict[str, str]:
     """Environment for wine commands: project prefix, quiet, uv cache on the host filesystem."""
     env = {
         **os.environ,
-        "WINEPREFIX": str(PREFIX),
+        "WINEPREFIX": str(prefix if prefix is not None else PREFIX),
         "WINEDEBUG": "-all",
         "UV_CACHE_DIR": str(UV_CACHE),
         "UV_PROJECT_ENVIRONMENT": str(VENV),
@@ -64,12 +64,25 @@ def display_wine_cmd(wine: str) -> list[str]:
     return [xvfb, "-a", wine]
 
 
-def run_wine(cmd: list[str], args: list[str], timeout: int = 600, check: bool = True) -> None:
+def run_wine(cmd: list[str], args: list[str], timeout: int = 600, check: bool = True, prefix: Path | None = None) -> None:
     """Run a program under wine in the prefix, streaming its output."""
     try:
-        subprocess.run([*cmd, *args], env=wine_env(), cwd=ROOT, check=check, timeout=timeout)
+        subprocess.run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, check=check, timeout=timeout)
     except subprocess.CalledProcessError as e:
         fail(f"wine command failed (exit {e.returncode}): {' '.join(cmd + args)}")
+    except subprocess.TimeoutExpired:
+        fail(f"wine command timed out after {timeout}s: {' '.join(cmd + args)}")
+
+
+def wine_capture(
+    cmd: list[str], args: list[str], timeout: int = 300, check: bool = True, prefix: Path | None = None
+) -> subprocess.CompletedProcess[str]:
+    """Run a program under wine in the prefix, capturing output; return the process."""
+    try:
+        return subprocess.run([*cmd, *args], env=wine_env(prefix), cwd=ROOT, capture_output=True, text=True, timeout=timeout, check=check)
+    except subprocess.CalledProcessError as e:
+        lines = (e.stdout or "").splitlines() + (e.stderr or "").splitlines()
+        fail(f"wine command failed (exit {e.returncode}): {' '.join(cmd + args)}\n" + "\n".join(lines[-10:]))
     except subprocess.TimeoutExpired:
         fail(f"wine command timed out after {timeout}s: {' '.join(cmd + args)}")
 

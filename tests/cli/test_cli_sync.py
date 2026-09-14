@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -41,7 +42,8 @@ class TestCliSync:
     def test_sync_filter_no_destination(self):
         result = self.run(["-rp", "bar", "sync"])
         assert result.exit_code == 1
-        assert "specify the destination directory" in result.output
+        # \s+: console output may wrap the message across lines
+        assert re.search(r"specify the destination\s+directory", result.output)
 
     def test_sync_relative_destination(self):
         result = self.run(["-rp", "bar", "sync", "."])
