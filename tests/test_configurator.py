@@ -76,10 +76,13 @@ class TestConfigurator:
                 "",
                 "relpath_template_artist",
                 "relpath_template_compilation",
-                "convert_profile",
+                "convert_file_type",
+                "mp3",
+                "convert_bitrate",
+                "320",
                 "save",
                 "back",
-            ]  # new destination, new collection, set template 1, set template 2, set conversion profile, save destination, back to main menu
+            ]  # new destination, new collection, set template 1, set template 2, set transcode file type, set transcode bitrate, save destination, back to main menu
             mock_prompt = mocker.patch("albums.interactive.setup_destination.prompt")
             template1 = f"$artist{os.sep}$album"
             template2 = f"Various{os.sep}$album"
@@ -88,14 +91,13 @@ class TestConfigurator:
                 "test",
                 template1,
                 template2,
-                "-b:a 320k mp3",
-            ]  # destination path, collection name, relpath_template_artist, relpath_template_compilation, convert_profile
+            ]  # destination path, collection name, relpath_template_artist, relpath_template_compilation
 
             interactive_config(ctx)
 
             assert mock_main_menu_choice.call_count == 2
-            assert mock_destinations_choice.call_count == 7
-            assert mock_prompt.call_count == 5
+            assert mock_destinations_choice.call_count == 10
+            assert mock_prompt.call_count == 4
             config = config_load(ctx.db)
             assert len(config.sync_destinations) == 1
             dest = config.sync_destinations[0]
@@ -103,6 +105,7 @@ class TestConfigurator:
             assert dest.collection == "test"
             assert dest.relpath_template_artist.template == template1
             assert dest.relpath_template_compilation.template == template2
-            assert dest.convert_profile == "-b:a 320k mp3"
+            assert dest.convert_file_type == "mp3"
+            assert dest.convert_bitrate == "320"
         finally:
             ctx.db.dispose()

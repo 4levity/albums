@@ -50,7 +50,7 @@ class Synchronizer:
             raise RuntimeError("Synchronizer cannot be initialized without library path")
         self._ctx = ctx
         self._dest = dest
-        self._transcoder = Transcoder(self._ctx, self._dest.convert_profile)
+        self._transcoder = Transcoder(self._ctx, self._dest)
 
     def do_sync(self, delete: bool, force: bool):
         """Perform the full sync: analyze, delete extraneous destination files (if requested), transcode and copy albums."""
@@ -208,7 +208,7 @@ class Synchronizer:
         return self._dest.path_root / (dest_relpath if dest_relpath else album.path)
 
     def _converted_track_filename(self, original_filename: str):
-        suffix = f".{self._dest.convert_profile.split(' ')[-1]}"
+        suffix = f".{self._dest.convert_file_type}"
         return str(Path(original_filename).with_suffix(suffix))
 
     def _use_transcoded_album(self, album: Album) -> bool:

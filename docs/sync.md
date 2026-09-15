@@ -57,10 +57,6 @@ they are in the library.
     If transcoder options are enabled, the transcoder cache created by
     `albums` can consume a very large amount of disk space. See options below.
 
-!!!note
-
-    **ffmpeg** must be installed and available on the PATH to use transcoder options.
-
 By default, sync copies audio files from the library to the destination. But if
 it is configured with a sync destination, `albums` can also convert audio files
 to a format that is suitable for the destination as needed. Using these options
@@ -77,13 +73,16 @@ Transcoded files will be tagged with basic tags and pictures as supported by
 | `max_kbps`            | Maximum bitrate, kbps - if higher (album average), transcode album |
 | `max_sample_rate`     | Maximum sample rate, Hz - if higher (any track), transcode album   |
 | `max_bits_per_sample` | Maximum bits per sample - if higher (any track), transcode album   |
-| `convert_profile`     | Conversion profile including _ffmpeg_ options and file type        |
+| `convert_file_type`   | Transcode output file type: `mp3`, `m4a` (aac) or `flac`           |
+| `convert_bitrate`     | Transcode output bitrate: `vbr` or a fixed kbps (`flac` has none)  |
 
 <!-- pyml enable line-length -->
 
-The convert profile is formatted as `[FFMPEG_OUTPUT_OPTIONS] FILE_TYPE`
-
-Example convert profile for 320kbps MP3: `-b:a 320k mp3`
+`vbr` is only offered for `mp3` (~192 kbps); `m4a` uses fixed bitrates.
+Transcoded output is at most 16-bit and stereo, and the sample rate is capped at
+`max_sample_rate` if set. All supported source formats can be transcoded, but
+only `mp3`, `m4a` and `flac` are output types - for example, ogg vorbis albums
+can be transcoded to mp3, but ogg output is not available.
 
 ### Transcoder Cache
 

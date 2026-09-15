@@ -1,19 +1,19 @@
-"""Shared test helpers: applying automatic fixes, a no-op mock tagger, CLI invocation, database initialization, and a fake ffmpeg."""
+"""Shared test helpers: applying automatic fixes, a no-op mock tagger, and CLI invocation and database initialization."""
 
 import hashlib
 import json
 import shutil
 from pathlib import Path
-from typing import Collection, Generator, List, Sequence, Tuple
+from typing import Collection, Generator, List, Tuple
 
 from click.testing import CliRunner
 
 from albums.checks.check_types import CheckResult, FixResult
 from albums.cli import entry_point
-from albums.entities import Album, Track
+from albums.entities import Album
 from albums.tagger import BasicField, Picture, StreamInfo, TaggerFile
 
-from .fixtures.create_library import create_track_file, test_tmp_dir
+from .fixtures.create_library import test_tmp_dir
 
 
 def apply_automatic_fix(result: CheckResult | None) -> FixResult:
@@ -96,8 +96,3 @@ def init_db_cached(library: Path, albums: Collection[Album]):
 
 def run(params: list[str], library: Path):
     return CliRunner().invoke(entry_point.albums_group, ["--db-file", str(library / "albums.db")] + params)
-
-
-def fake_ffmpeg(args: Sequence[str], cwd: Path) -> None:
-    file = Path(args[-1])
-    create_track_file(file.parent, Track(filename=file.name))

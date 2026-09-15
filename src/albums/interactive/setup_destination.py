@@ -10,7 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.config import ALL_ALBUMS, SyncDestination, config_save
+from albums.config import (
+    ALL_ALBUMS,
+    CONVERT_BITRATES,
+    CONVERT_FILE_TYPES,
+    DEFAULT_CONVERT_BITRATES,
+    SyncDestination,
+    config_save,
+    convert_bitrate_label,
+)
 from albums.entities import CollectionEntity
 from albums.library import show_template_path_help
 from albums.tagger import AUDIO_FILE_SUFFIXES
@@ -92,7 +100,8 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ("max_kbps", f"Max audio bitrate in kbps or 0 for none: {dest.max_kbps}"),
             ("max_sample_rate", f"Max sample rate in Hz or 0 for none: {dest.max_sample_rate}"),
             ("max_bits_per_sample", f"Max bits per sample (if applicable) or 0 for none: {dest.max_bits_per_sample}"),
-            ("convert_profile", f"If wrong type or over max kbps, use transcode options: {dest.convert_profile}"),
+            ("convert_file_type", f"Transcode output file type: {dest.convert_file_type}"),
+            ("convert_bitrate", f"Transcode output bitrate: {convert_bitrate_label(dest.convert_file_type, dest.convert_bitrate)}"),
             ("save", ">> Save"),
             ("delete", ">> Delete this destination"),
             ("cancel", ">> Cancel"),
@@ -141,16 +150,29 @@ def _configure_destination(ctx: Context, destination_ix: int):
             ):
                 pass
             dest.max_bits_per_sample = int(max_bits_per_sample)
-        elif option == "convert_profile":
-            ctx.console.print()
-            ctx.console.print("Profile is formatted as: [bold]\\[FFMPEG_OUTPUT_OPTIONS] FILE_TYPE[/bold]")
-            ctx.console.print("Example (320kbps MP3): [bold]-b:a 320k mp3[/bold]", highlight=False)
-            conversion_profile = prompt("Conversion profile: ", default=dest.convert_profile)
-            file_type = conversion_profile.split(" ")[-1]
-            if f".{file_type}" in AUDIO_FILE_SUFFIXES:
-                dest.convert_profile = str.lower(conversion_profile)
-            else:
-                ctx.console.print(f"Error: unknown file type {file_type}")
+        elif option == "convert_file_type":
+            file_type = choice(
+                message="Transcode output file type: ",
+                options=[
+                    ("mp3", "mp3 (vbr or fixed kbps)"),
+                    ("m4a", "m4a / aac (fixed kbps)"),
+                    ("flac", "flac (lossless, variable)"),
+                ],
+                default=dest.convert_file_type,
+            )
+            if file_type != dest.convert_file_type:
+                dest.convert_file_type = file_type
+                if dest.convert_bitrate not in CONVERT_BITRATES[dest.convert_file_type]:
+                    dest.convert_bitrate = DEFAULT_CONVERT_BITRATES[dest.convert_file_type]
+        elif option == "convert_bitrate":
+            if dest.convert_file_type not in CONVERT_FILE_TYPES or not CONVERT_BITRATES[dest.convert_file_type]:
+                ctx.console.print(f"{dest.convert_file_type} has no bitrate option")
+                continue
+            dest.convert_bitrate = choice(
+                message="Transcode output bitrate: ",
+                options=[(bitrate, convert_bitrate_label(dest.convert_file_type, bitrate)) for bitrate in CONVERT_BITRATES[dest.convert_file_type]],
+                default=dest.convert_bitrate,
+            )
 
     if option in {"save", "delete"}:
         if option == "delete":

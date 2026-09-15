@@ -100,8 +100,63 @@ def default_checks_config() -> Mapping[str, CheckConfiguration]:
     return dict((check.name, check.default_config.copy()) for check in ALL_CHECKS)
 
 
-# Audio file conversion profile used by default when syncing to destinations that require transcoding.
-DEFAULT_FILE_CONVERT_PROFILE: Final = "mp3"
+# File types that sync can transcode to, and the bitrate options (kbps) for each,
+# in the order they are presented in the configuration menu. "vbr" is only offered
+# for mp3: the bundled FFmpeg (via PyAV) has LAME's VBR-capable MP3 encoder but
+# only the CBR-only native AAC encoder, and flac is lossless (no bitrate at all).
+CONVERT_FILE_TYPES: Final = ("mp3", "m4a", "flac")
+CONVERT_BITRATES: Final = {
+    "mp3": ("vbr", "320", "256", "192", "160", "128", "96"),
+    "m4a": ("320", "256", "192", "160", "128", "96"),
+    "flac": (),
+}
+# Default transcode bitrate per file type ("" = no bitrate, flac is lossless).
+DEFAULT_CONVERT_BITRATES: Final = {"mp3": "vbr", "m4a": "192", "flac": ""}
+DEFAULT_CONVERT_FILE_TYPE: Final = "mp3"
+
+
+def convert_bitrate_label(file_type: str, bitrate: str) -> str:
+    """Human-readable label for a transcode bitrate, for configuration menus and warnings."""
+    if file_type == "flac" or not bitrate:
+        return "variable (lossless)"
+    if bitrate == "vbr":
+        return "vbr (~192 kbps)"
+    return f"{bitrate} kbps"
+
+
+def _migrate_legacy_convert_profile(profile: str) -> tuple[str, str] | None:
+    """Map a legacy "[FFMPEG_OUTPUT_OPTIONS] FILE_TYPE" convert profile to (file type, bitrate).
+
+    Returns None when the profile does not map exactly to the new options: an unknown or
+    unsupported file type (e.g. ogg), an option other than "-b" / "-b:a" (e.g. "-ar", "-q:a"),
+    or a bitrate outside the supported set. Callers fall back to the defaults.
+    """
+    parts = profile.split()
+    if not parts:
+        return None
+    file_type = parts[-1].lower()
+    if file_type == "mp4":
+        file_type = "m4a"
+    if file_type not in CONVERT_FILE_TYPES:
+        return None
+    bitrate: str | None = None
+    options = parts[:-1]
+    index = 0
+    while index < len(options):
+        if options[index] not in ("-b", "-b:a"):
+            return None
+        index += 1
+        if index >= len(options):
+            return None
+        value = options[index]
+        index += 1
+        if not (value.endswith("k") and value[:-1].isdigit()) or value[:-1] not in CONVERT_BITRATES[file_type]:
+            return None
+        if bitrate is not None and bitrate != value[:-1]:
+            return None
+        bitrate = value[:-1]
+    return (file_type, bitrate if bitrate is not None else DEFAULT_CONVERT_BITRATES[file_type])
+
 
 # Marker string placed in UI lists to signify the "no-collection" option (all albums).
 ALL_ALBUMS = "< use all albums >"
@@ -121,10 +176,11 @@ class SyncDestination:
         relpath_template_artist: Path template for artist albums; supports ``$artist``, ``$album``, etc.
         relpath_template_compilation: Path template for compilation albums with multiple artists.
         allow_file_types: Whitelist of audio file extensions to include (empty accepts all supported types).
-        convert_profile: Transcoding profile identifier for the destination player or device.
-        max_kbps: Target bitrate cap in kilobits per second (0 = no limit).
-        max_sample_rate: Target sample rate cap in Hz (0 = no limit).
-        max_bits_per_sample: Target sample depth cap (0 = no limit).
+        convert_file_type: File type to transcode to when transcoding is needed (one of CONVERT_FILE_TYPES).
+        convert_bitrate: Transcode bitrate in kbps (one of CONVERT_BITRATES for the file type; "" for flac).
+        max_kbps: Maximum source bitrate in kilobits per second (0 = no limit) - albums above it are transcoded.
+        max_sample_rate: Maximum source sample rate in Hz (0 = no limit) - albums above it are transcoded; also caps output rate.
+        max_bits_per_sample: Maximum source sample depth (0 = no limit) - albums above it are transcoded.
     """
 
     collection: str
@@ -132,7 +188,8 @@ class SyncDestination:
     relpath_template_artist: Template = Template("")
     relpath_template_compilation: Template = Template("")
     allow_file_types: List[str] = field(default_factory=list[str])
-    convert_profile: str = DEFAULT_FILE_CONVERT_PROFILE
+    convert_file_type: str = DEFAULT_CONVERT_FILE_TYPE
+    convert_bitrate: str = DEFAULT_CONVERT_BITRATES[DEFAULT_CONVERT_FILE_TYPE]
     max_kbps: int = 0
     max_sample_rate: int = 0
     max_bits_per_sample: int = 0
@@ -155,32 +212,68 @@ class SyncDestination:
             "relpath_template_artist": self.relpath_template_artist.template,
             "relpath_template_compilation": self.relpath_template_compilation.template,
             "allow_file_types": self.allow_file_types,
-            "convert_profile": self.convert_profile,
+            "convert_file_type": self.convert_file_type,
+            "convert_bitrate": self.convert_bitrate,
             "max_kbps": self.max_kbps,
             "max_sample_rate": self.max_sample_rate,
             "max_bits_per_sample": self.max_bits_per_sample,
         }
 
     @classmethod
-    def from_dict(cls, values: SerializedSyncDestination) -> SyncDestination:  # noqa: ANN102
+    def from_dict(cls, values: SerializedSyncDestination) -> tuple[SyncDestination, bool]:
         """Construct a ``SyncDestination`` from JSON-serializable data loaded from the database.
+
+        Destinations saved with the legacy "convert_profile" string option are migrated to the
+        convert_file_type/convert_bitrate options (defaults are used when the legacy profile does
+        not map exactly, with a warning).
 
         Args:
             values: Dict previously produced by :meth:`to_dict` or equivalent structure.
 
         Returns:
-            A fully initialized sync destination instance.
+            A tuple of the fully initialized sync destination instance and whether it was migrated.
         """
-        return SyncDestination(
-            str(values["collection"]),
-            Path(str(values["path_root"])),
-            Template(str(values.get("relpath_template_artist", ""))),
-            Template(str(values.get("relpath_template_compilation", ""))),
-            values["allow_file_types"] if ("allow_file_types" in values and isinstance(values["allow_file_types"], list)) else [],
-            str(values.get("convert_profile", DEFAULT_FILE_CONVERT_PROFILE)),
-            int(str(values.get("max_kbps", 0))),
-            int(str(values.get("max_sample_rate", 0))),
-            int(str(values.get("max_bits_per_sample", 0))),
+        convert_file_type = str(values.get("convert_file_type", ""))
+        convert_bitrate = str(values.get("convert_bitrate", ""))
+        migrated = False
+        if "convert_profile" in values:
+            legacy_profile = str(values.get("convert_profile", ""))
+            mapping = _migrate_legacy_convert_profile(legacy_profile)
+            if mapping is None:
+                logger.warning(
+                    f"sync destination {str(values.get('collection', ''))!r} -> {str(values.get('path_root', ''))}: legacy convert profile "
+                    f"{legacy_profile!r} cannot be migrated to the new convert options (supported: '-b:a <96|128|160|192|256|320>k mp3', 'mp3', 'm4a', 'flac'); "
+                    f"using defaults (file type '{DEFAULT_CONVERT_FILE_TYPE}', bitrate '{convert_bitrate_label(DEFAULT_CONVERT_FILE_TYPE, DEFAULT_CONVERT_BITRATES[DEFAULT_CONVERT_FILE_TYPE])}')"
+                )
+                convert_file_type = DEFAULT_CONVERT_FILE_TYPE
+                convert_bitrate = DEFAULT_CONVERT_BITRATES[DEFAULT_CONVERT_FILE_TYPE]
+            else:
+                logger.warning(
+                    f"sync destination {str(values.get('collection', ''))!r} -> {str(values.get('path_root', ''))}: legacy convert profile {legacy_profile!r} converted to "
+                    f"file type '{mapping[0]}', bitrate '{convert_bitrate_label(mapping[0], mapping[1])}'"
+                )
+                convert_file_type, convert_bitrate = mapping
+            logger.warning(
+                f"sync destination {str(values.get('collection', ''))!r} -> {str(values.get('path_root', ''))}: its transcoder cache is invalidated and will be deleted on the next sync"
+            )
+            migrated = True
+        if convert_file_type not in CONVERT_FILE_TYPES or convert_bitrate not in CONVERT_BITRATES[convert_file_type]:
+            convert_file_type = DEFAULT_CONVERT_FILE_TYPE
+            convert_bitrate = DEFAULT_CONVERT_BITRATES[DEFAULT_CONVERT_FILE_TYPE]
+        return (
+            SyncDestination(
+                str(values["collection"]),
+                Path(str(values["path_root"])),
+                Template(str(values.get("relpath_template_artist", ""))),
+                Template(str(values.get("relpath_template_compilation", ""))),
+                values["allow_file_types"] if ("allow_file_types" in values and isinstance(values["allow_file_types"], list)) else [],
+                convert_file_type,
+                convert_bitrate,
+                int(str(values.get("max_kbps", 0))),
+                int(str(values.get("max_sample_rate", 0))),
+                int(str(values.get("max_bits_per_sample", 0))),
+            ),
+            migrated,
         )
 
 
@@ -327,7 +420,12 @@ class Configuration:
                     config.id3v1 = ID3v1Policy(value)
                 elif name == "sync_destinations":
                     if isinstance(value, list) and all(isinstance(item, dict) for item in value):
-                        config.sync_destinations = [SyncDestination.from_dict(dest) for dest in value]  # pyright: ignore[reportArgumentType]
+                        destinations: list[SyncDestination] = []
+                        for dest in value:
+                            (destination, migrated) = SyncDestination.from_dict(dest)  # pyright: ignore[reportArgumentType]
+                            destinations.append(destination)
+                            changed_values = changed_values or migrated
+                        config.sync_destinations = destinations
                     else:
                         logger.warning(f"ignoring {k}={str(value)}, not a list of sync destination dictionaries")
                         changed_values = True
