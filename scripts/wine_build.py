@@ -2,8 +2,8 @@
 
 Creates the wine environment if needed (scripts/wine_setup.py), then runs the
 same steps as the Windows CI job: `uv sync` from uv.lock into the wine venv,
-write the version, render the installer script, pyinstaller, and Inno Setup's
-iscc. Writes dist/installer/albums_win_x86_64-<version>-setup.exe.
+write the version, render the installer script and project icon, pyinstaller,
+and Inno Setup's iscc. Writes dist/installer/albums_win_x86_64-<version>-setup.exe.
 
 Usage: python scripts/wine_build.py
 """
@@ -33,6 +33,8 @@ def build_setup(wine: str) -> None:
     wine_common.run(["uv", "run", "python", "scripts/version.py", "write"], cwd=wine_common.ROOT, check=True)
     print("rendering installer script")
     wine_common.run(["uv", "run", "python", "scripts/render_iss.py"], cwd=wine_common.ROOT, check=True)
+    print("rendering project icon")
+    wine_common.run(["uv", "run", "python", "scripts/render_icon.py"], cwd=wine_common.ROOT, check=True)
     print(f"building pyinstaller executable ({PLATFORM})")
     wine_common.run_wine(
         [wine],
@@ -48,6 +50,11 @@ def build_setup(wine: str) -> None:
             "--clean",
             "--collect-data",
             "albums",
+            # absolute path: PyInstaller resolves relative --icon paths against
+            # the spec file's directory, and the wine process sees the POSIX
+            # root as the Z: drive
+            "--icon",
+            "Z:/" + Path("build/icon.ico").resolve().as_posix().lstrip("/"),
             "--workpath",
             f"build/{PLATFORM}",
             "--distpath",

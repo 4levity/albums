@@ -1,7 +1,8 @@
 ; Inno Setup script for the albums Windows installer. The 0.0.0 version
-; values are placeholders so this file is directly compilable;
-; scripts/render_iss.py renders build/albums.iss from it with the real
-; versions (the same directory depth keeps the relative paths below valid).
+; values are placeholders; scripts/render_iss.py renders
+; build/albums.iss from it with the real versions and
+; scripts/render_icon.py renders that icon (the same directory depth keeps
+; the relative paths below valid).
 
 [Setup]
 ; unique and stable, so upgrades and uninstalls find earlier installs
@@ -27,6 +28,8 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+; rendered by scripts/render_icon.py (see the header comment)
+SetupIconFile=icon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

@@ -10,7 +10,7 @@ parts of the library to digital audio players or portable storage.
 
 This documentation is for `albums` version **%%version_placeholder%%**.
 
-![screenshot_help](screenshot_help.png)
+![screenshot_help](images/screenshot_help.png)
 
 ## License
 

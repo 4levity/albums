@@ -10,17 +10,20 @@ installer. The steps for building the Windows installer are:
 1. Install the project and dependencies in a Windows Python environment
    (`uv sync --locked`).
 2. Write the version into the package (see [Developing](./developing.md))
-3. Render the installer script template into `build/albums.iss` with the real
+3. Render the project icon into `build/icon.ico` (`scripts/render_icon.py`);
+   PyInstaller and Inno Setup use it for the executable and installer.
+4. Render the installer script template into `build/albums.iss` with the real
    version (`scripts/render_iss.py`).
-4. Build the standalone executable with PyInstaller into
+5. Build the standalone executable with PyInstaller into
    `dist/pyinstaller/win_amd64/albums/`.
-5. Compile the installer with Inno Setup's command-line compiler `iscc` into
+6. Compile the installer with Inno Setup's command-line compiler `iscc` into
    `dist/installer/`.
 
 ## Inno Setup script
 
 The installer script template is in `scripts/albums.iss`. It is a valid Inno
-Setup 6+ installer script, with 0.0.0 placeholder versions.
+Setup 6+ installer script, with 0.0.0 placeholder versions, and it expects
+the rendered icon (`build/icon.ico`) next to the rendered script.
 
 ## Windows CI (releases)
 

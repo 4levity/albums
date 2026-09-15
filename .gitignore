@@ -14,8 +14,7 @@ node_modules/
 /tests/tmp/
 /htmlcov
 /site
-/docs/database_diagram.png
-/docs/screenshot_help.png*
+/docs/images/
 /build
 
 # application/misc

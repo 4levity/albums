@@ -42,7 +42,8 @@ nav = [
 ]
 
 [project.theme]
-#favicon = "images/favicon.png"
+favicon = "images/favicon.png"
+logo = "images/logo.png"
 language = "en"
 features = [
     # Zensical includes an announcement bar. This feature allows users to

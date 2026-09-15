@@ -70,7 +70,8 @@ checkout, and `write` writes the `_version.py` file:
 - `make pyinstaller` writes the version, then builds a standalone executable in
   `dist/pyinstaller/<platform>/albums/` with
   [PyInstaller](https://pyinstaller.org/)
-- `make docs` injects the version into the built docs site
+- `make docs` renders the docs images, including the project icon from
+  `docs/art/icon.png`, and injects the version into the built docs site
 - Windows builds (release CI, local Windows, and Linux with wine) are documented
   in [Windows Builds](./developing_windows.md)
 
@@ -314,7 +315,7 @@ Database migrations are SQL files in
 tracks changes. To refresh the ER diagram run:
 
 ```bash
-make docs/database_diagram.png
+make docs/images/database_diagram.png
 ```
 
 This generates the sample database, then renders it with
@@ -323,7 +324,7 @@ executable. So in addition to the project dependencies, the
 [GraphViz](https://graphviz.org/) binaries must be installed (e.g.
 `sudo apt install graphviz` on Debian/Ubuntu, `brew install graphviz` on macOS).
 
-![albums database schema diagram](./database_diagram.png)
+![albums database schema diagram](./images/database_diagram.png)
 
 ### Querying the Database
 
