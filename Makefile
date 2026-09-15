@@ -27,7 +27,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean icons
+.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
 
 build: install static test
 	@echo "build complete"
@@ -36,7 +36,6 @@ build: install static test
 hooks: ## Enable git hooks (commit-msg, pre-commit, pre-push)
 	@if git rev-parse --git-dir >/dev/null 2>&1; then if [ "$$(git config --get core.hooksPath)" != "hooks" ]; then git config core.hooksPath hooks; echo "git hooks enabled (core.hooksPath=hooks)"; fi; else echo "skipping git hooks (not a git repository)"; fi
 
-# --locked: fail if uv.lock is out of date with pyproject.toml (run `uv lock` to update it)
 install: ## Install project dependencies
 	$(STEP) 'uv sync' $(UV) sync --locked
 
@@ -46,9 +45,9 @@ node_modules: package.json package-lock.json
 	npm ci
 
 # cheapest first:
-static: lint lint-markdown spelling typecheck ## Run all static checks (lint, markdown, spelling, types)
+static: lint spelling typecheck ## Run all static checks (lint, spelling, types)
 
-lint: install-js ## Lint Python (ruff) and shell (shellcheck)
+lint: install-js lint-markdown ## Lint Python, shell and markdown
 	$(STEP) lint $(RUFF_CHECK)
 	$(STEP) format $(RUFF_FORMAT_CHECK)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
@@ -118,11 +117,11 @@ docs/images/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 # Render derived images from the committed master icon (docs/art/icon.png):
 # the docs site favicon and header logo (docs/images/) and the Windows icon
 # (build/icon.ico) for the PyInstaller executable and Inno Setup installer.
-icons:
+docs/images/favicon.png docs/images/logo.png build/icon.ico &: docs/art/icon.png scripts/render_icon.py
 	$(UV) run python scripts/render_icon.py
 
 # Build a standalone executable for this platform in dist/pyinstaller/<platform>/albums/.
-pyinstaller: install icons ## Build standalone pyinstaller executable for this platform
+pyinstaller: install build/icon.ico ## Build standalone pyinstaller executable for this platform
 	$(UV) run python scripts/version.py write
 	platform=$$($(UV) run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))") && \
 	case $$platform in win*) iconopt="--icon $$(pwd)/build/icon.ico" ;; *) iconopt="" ;; esac && \
@@ -153,7 +152,7 @@ wine-e2e: ## Install, run and uninstall the installer in a temporary wine prefix
 package: ## Create sdist and wheel in dist/
 	$(UV) build
 
-docs: install lint-markdown icons docs/images/database_diagram.png docs/images/screenshot_help.png ## Build docs
+docs: install lint-markdown docs/images/favicon.png docs/images/logo.png docs/images/database_diagram.png docs/images/screenshot_help.png ## Build docs
 	$(UV) run zensical build --clean
 	# portable version of sed -i (GNU-only): write to tmp file and move into place
 	@version=$$($(UV) run python scripts/version.py) && \
@@ -161,7 +160,7 @@ docs: install lint-markdown icons docs/images/database_diagram.png docs/images/s
 	sed "s/%%version_placeholder%%/$$version/g" site/index.html > site/index.html.tmp && \
 	mv site/index.html.tmp site/index.html
 
-preview: icons docs/images/database_diagram.png docs/images/screenshot_help.png ## Preview docs (does not automatically install)
+preview: docs/images/favicon.png docs/images/logo.png docs/images/database_diagram.png docs/images/screenshot_help.png ## Preview docs (does not automatically install)
 	$(UV) run zensical serve
 
 clean: ## Remove build and test files

@@ -9,7 +9,7 @@ icon: lucide/computer
 - [uv](https://docs.astral.sh/uv/) (manages the Python installation and project
   dependencies)
 - [Node.js](https://nodejs.org/) 22.18+ (lint tool dev dependencies)
-- `make`
+- `make` 4.3+ (the rendered-icon targets use grouped targets, `&:`)
 - `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
   release into `.cache/shellcheck/`)
 
