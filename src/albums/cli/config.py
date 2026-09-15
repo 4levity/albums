@@ -86,11 +86,13 @@ def _import(ctx: Context, import_file: str):
         logger.error(f'error parsing file "{import_file}": {repr(ex)}')
         raise SystemExit(1)
 
-    (new_config, ignored) = Configuration.from_values(chain(ctx.config.to_values().items(), ((k, v) for k, v in config_items)))
+    (new_config, changed) = Configuration.from_values(chain(ctx.config.to_values().items(), ((k, v) for k, v in config_items)))
     if (
-        ignored
+        changed
         and ctx.console.is_interactive
-        and not confirm("Some values from a different version of albums were ignored. Are you sure you want to import this configuration?")
+        and not confirm(
+            "Some values from a different version of albums were changed (ignored or migrated). Are you sure you want to import this configuration?"
+        )
     ):
         ctx.console.print("Aborted")
         raise SystemExit(1)

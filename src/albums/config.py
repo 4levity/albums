@@ -275,15 +275,15 @@ class Configuration:
 
         Returns:
             A two-element tuple containing the populated ``Configuration`` object and a boolean flag
-            indicating whether any database rows were skipped due to validation failures.
+            indicating whether any configuration items were ignored or migrated.
         """
         config = Configuration()
-        ignored_values = False
+        changed_values = False
         for k, value in values:
             tokens = k.split(".")
             if len(tokens) != 2:
                 logger.warning(f"ignoring invalid configuration key {k} (expected section.name)")
-                ignored_values = True
+                changed_values = True
                 continue
             [section, name] = tokens
             if section == "settings":
@@ -297,14 +297,14 @@ class Configuration:
                         config.more_import_paths = tuple(Template(v) for v in value)  # pyright: ignore[reportArgumentType]
                     else:
                         logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.more_import_paths)}")
-                        ignored_values = True
+                        changed_values = True
                 elif name == "import_scan_max_paths":
                     max_paths = str(value)
                     if str.isdecimal(max_paths):
                         config.import_scan_max_paths = int(max_paths)
                     else:
                         logger.warning(f"ignoring {k}={max_paths}, not a number - using default {config.import_scan_max_paths}")
-                        ignored_values = True
+                        changed_values = True
                 elif name == "library":
                     config.library = Path(str(value))
                 elif name == "transcoder_cache":
@@ -330,23 +330,23 @@ class Configuration:
                         config.sync_destinations = [SyncDestination.from_dict(dest) for dest in value]  # pyright: ignore[reportArgumentType]
                     else:
                         logger.warning(f"ignoring {k}={str(value)}, not a list of sync destination dictionaries")
-                        ignored_values = True
+                        changed_values = True
                 else:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
-                    ignored_values = True
+                    changed_values = True
             else:
                 if section not in config.checks or name not in config.checks[section]:
                     logger.warning(f"ignoring unknown configuration item {k} = {str(value)}")
-                    ignored_values = True
+                    changed_values = True
                 elif type(value) is not type(config.checks[section][name]):
                     logger.warning(f"ignoring configuration item {k} with wrong type {type(value)} (expected {type(config.checks[section][name])})")
-                    ignored_values = True
+                    changed_values = True
                 elif not isinstance(value, list) or all(isinstance(item, str) for item in value):
                     config.checks[section][name] = value  # pyright: ignore[reportArgumentType]
                 else:
                     logger.warning(f"ignoring {k}={value}, list items must all be strings - using default {json.dumps(config.checks[section][name])}")
-                    ignored_values = True
-        return (config, ignored_values)
+                    changed_values = True
+        return (config, changed_values)
 
 
 def config_save(db: Engine, configuration: Configuration):
@@ -366,8 +366,8 @@ def config_load(db: Engine) -> Configuration:
     Returns valid settings and discards any unknown keys with a warning.
     """
     with Session(db) as session:
-        (config, ignored_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
+        (config, changed_values) = Configuration.from_values(((setting.name, setting.value)) for setting in session.scalars(select(SettingEntity)))
 
-    if ignored_values:
+    if changed_values:
         config_save(db, config)  # showed warnings, now save valid config
     return config
