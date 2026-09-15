@@ -17,7 +17,8 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.12"
+          # embedded Python: ceiling of the supported range; uv picks the latest 3.14.x
+          python-version: "3.14"
       - name: Install dependencies
         run: make install
       - name: Build executable
@@ -36,7 +37,8 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.12"
+          # embedded Python: ceiling of the supported range; uv picks the latest 3.14.x
+          python-version: "3.14"
       # the windows runner image has no make, so run the make pyinstaller steps directly
       - name: Install dependencies
         run: uv sync --locked

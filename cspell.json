@@ -130,6 +130,7 @@
         "pyproject",
         "pyrightconfig",
         "pytest",
+        "pyvenv",
         "pyyaml",
         "rbloom",
         "recordingdate",

@@ -8,6 +8,7 @@ installer runs under xvfb-run, which needs the xvfb package.
 Usage: python scripts/wine_setup.py
 """
 
+import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -20,12 +21,12 @@ from scripts import wine_common  # noqa: E402
 DOWNLOADS = wine_common.WINE_ROOT / "downloads"
 
 # Pinned releases and the sha256 of their release assets. Python is not
-# pinned: uv picks the latest 3.12.x, as the Windows CI job does.
+# pinned: uv picks the latest 3.14.x, as the Windows CI job does.
 UV_VERSION = "0.9.26"
 UV_SHA256 = "eb02fd95d8e0eed462b4a67ecdd320d865b38c560bffcda9a0b87ec944bdf036"  # uv-x86_64-pc-windows-msvc.zip
 INNOSETUP_VERSION = "7.1.0"
 INNOSETUP_SHA256 = "0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f"  # innosetup-7.1.0-x64.exe
-PYTHON_VERSION = "3.12"
+PYTHON_VERSION = "3.14"
 # deterministic Inno Setup install location, passed to its own installer via /DIR
 INNO_DIR = r"C:\InnoSetup7"
 INNO_LOG = "inno-setup-install.log"
@@ -82,6 +83,26 @@ def ensure_python(wine: str) -> None:
     )
 
 
+def ensure_venv() -> None:
+    """Remove the wine venv if its Python no longer matches PYTHON_VERSION.
+
+    uv reuses an existing venv even when a newer Python is installed, so a
+    PYTHON_VERSION bump would otherwise silently keep the old interpreter in
+    the built installer. The next `uv sync` recreates the venv with the new
+    Python.
+    """
+    cfg = wine_common.VENV / "Scripts" / "pyvenv.cfg"
+    if not cfg.is_file():
+        return
+    for line in cfg.read_text().splitlines():
+        if line.startswith("version = "):
+            venv_python = line.partition("=")[2].strip()
+            if not venv_python.startswith(PYTHON_VERSION):
+                print(f"removing wine venv built for Python {venv_python}; will rebuild for {PYTHON_VERSION}")
+                shutil.rmtree(wine_common.VENV)
+            return
+
+
 def ensure_innosetup(wine: str) -> Path:
     """Install Inno Setup in the prefix and return the path to ISCC.exe."""
     if wine_common.ISCC.is_file():
@@ -112,6 +133,7 @@ def ensure(wine: str) -> Path:
     ensure_prefix(wine)
     ensure_uv()
     ensure_python(wine)
+    ensure_venv()
     iscc = ensure_innosetup(wine)
     print(f"wine environment ready ({wine_common.WINE_ROOT.relative_to(wine_common.ROOT)})")
     return iscc

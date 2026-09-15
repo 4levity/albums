@@ -4,13 +4,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # floor and ceiling of the supported Python range
+        python: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24

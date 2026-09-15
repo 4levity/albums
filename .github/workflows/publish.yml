@@ -7,13 +7,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # floor and ceiling of the supported Python range
+        python: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -26,8 +31,11 @@ jobs:
           TERM: "dumb"
         run: make test
       - name: Create package
+        # package once, on the ceiling version; the build is version independent
+        if: matrix.python == '3.14'
         run: make package
       - name: Upload package artifact
+        if: matrix.python == '3.14'
         uses: actions/upload-artifact@v7
         with:
           name: albums-package
