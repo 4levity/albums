@@ -15,3 +15,7 @@ indent = 4
 # reflow prose to line-length when fixing
 [MD013]
 reflow = true
+
+# keep table columns consistently aligned
+[MD060]
+enabled = true
