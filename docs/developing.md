@@ -293,6 +293,9 @@ lint/format problems can be automatically fixed with `make fix`.
   strict mode for main project, looser rules for tests.
 - markdown lint + reflow with [rumdl](https://rumdl.dev) - wraps prose at 80
   columns, run by `make fix` (uses `.rumdl.toml` config)
+- config file syntax with [node](https://nodejs.org/) - `node --check` for
+  `commitlint.config.js` and jsonc-parser for the JSONC (comments allowed)
+  files in `.vscode/`
 
 ### Spell check
 

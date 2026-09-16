@@ -25,6 +25,11 @@ SHELL_FILES := $(shell find . -name '*.sh' \
 	-not -path './build/*' -not -path './dist/*' \
 	-not -path './site/*')
 SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(SHELL_FILES)
+# syntax checks for the config files that have no dedicated linter:
+# node --check for commitlint.config.js and jsonc-parser for .vscode/*.json
+# (JSONC with comments, which strict JSON parsers reject)
+JSONC_CHECK := node scripts/check_jsonc.js .vscode/*.json
+JS_CHECK := node --check commitlint.config.js
 # cspell skips hidden (dot) files and dirs when walking, so besides `.`
 # (everything else; gitignored paths skipped by --gitignore) the root dot
 # entries are passed explicitly. .git is not listed in .gitignore, so it is
@@ -58,10 +63,12 @@ node_modules: package.json package-lock.json
 # cheapest first:
 static: lint spelling typecheck ## Run all static checks (lint, spelling, types)
 
-lint: install-js lint-markdown ## Lint Python, shell and markdown
+lint: install-js lint-markdown ## Lint Python, shell, markdown and config files
 	$(STEP) lint $(RUFF_CHECK)
 	$(STEP) format $(RUFF_FORMAT_CHECK)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+	$(STEP) jsonc $(JSONC_CHECK)
+	$(STEP) js $(JS_CHECK)
 
 lint-markdown: install-js ## Lint markdown
 	$(STEP) markdown $(RUMDL_CHECK)
@@ -82,6 +89,8 @@ fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
 	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
 	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+	$(STEP) jsonc $(JSONC_CHECK)
+	$(STEP) js $(JS_CHECK)
 	$(STEP) spelling $(CSPELL_CHECK)
 
 fix: install install-js ## Automatically fix lint/format
