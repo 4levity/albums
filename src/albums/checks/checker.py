@@ -1,4 +1,4 @@
-"""Run the enabled checks (and fixes) against selected albums, in automatic, preview, fix or interactive modes."""
+"""Run the enabled checks (and fixes) against selected albums, in automatic, fix or interactive modes."""
 
 import logging
 from dataclasses import dataclass
@@ -31,7 +31,6 @@ class CheckDisposition:
     deleted: bool
     user_quit: bool
     displayed: bool
-    suppressed_failure_message: str | None
 
 
 class Checker:
@@ -39,18 +38,13 @@ class Checker:
 
     ctx: Context
     _automatic: bool
-    _preview: bool
     _fix: bool
     _interactive: bool
     _show_ignore_option: bool
 
-    def __init__(self, ctx: Context, automatic: bool, preview: bool, fix: bool, interactive: bool, show_ignore_option: bool):
-        if preview and (automatic or fix or interactive):
-            ctx.console.print("--preview cannot be used with other fix options")
-            raise SystemExit(1)
+    def __init__(self, ctx: Context, automatic: bool, fix: bool, interactive: bool, show_ignore_option: bool):
         self.ctx = ctx
         self._automatic = automatic
-        self._preview = preview
         self._fix = fix
         self._interactive = interactive
         self._show_ignore_option = show_ignore_option
@@ -67,10 +61,6 @@ class Checker:
             for check, deps in need_checks.items():
                 self.ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
             raise SystemExit(1)
-        if self._preview and (self._automatic or self._fix or self._interactive):
-            raise ValueError("invalid preview setting")  # not allowed by cli
-        preview_failed_checks: list[str] = []
-
         tagger = AlbumTaggerProvider(self.ctx.config.library, id3v1=self.ctx.config.id3v1)
         check_instances = [check(self.ctx, tagger=tagger, session=session) for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
 
@@ -86,16 +76,12 @@ class Checker:
             deleted = False
             check_all = True
             while check_all and not deleted:
-                preview_failed_checks = []
                 checks_passed: set[str] = set()
                 check_all = False
                 for check in check_instances:
                     if check.name not in album.ignore_checks:
                         missing_dependent_checks = check.must_pass_checks - checks_passed
                         if missing_dependent_checks:
-                            for message in preview_failed_checks:
-                                self.ctx.console.print(message, highlight=False)
-                            preview_failed_checks = []
                             self.ctx.console.print(
                                 f'[bold]dependency not met for check {check.name}[/bold] on "{album_display_name(self.ctx, album)}": {" and ".join(missing_dependent_checks)} must pass first',
                                 highlight=False,
@@ -119,8 +105,6 @@ class Checker:
                                 break
                             elif disposition.passed:
                                 checks_passed.add(check.name)
-                            elif disposition.suppressed_failure_message:
-                                preview_failed_checks.append(disposition.suppressed_failure_message)
                     else:
                         logger.debug(f"skipping ignored check {check.name} for album {album.path}")
         session.commit()
@@ -146,13 +130,10 @@ class Checker:
         passed = False
         quit = False
         displayed = False
-        suppressed_failure_message = None
         while maybe_fixable and not passed and not quit and not deleted:
             check_result = check.check(album)
             if check_result:
                 disposition = self._handle_check_result(session, check, check_result, album)
-                if disposition.suppressed_failure_message:
-                    suppressed_failure_message = disposition.suppressed_failure_message
                 displayed |= disposition.displayed
                 maybe_changed |= disposition.maybe_changed
                 quit = disposition.user_quit
@@ -169,7 +150,7 @@ class Checker:
                     maybe_fixable = False
             else:
                 passed = True
-        return CheckDisposition(passed, maybe_changed, deleted, quit, displayed, suppressed_failure_message)
+        return CheckDisposition(passed, maybe_changed, deleted, quit, displayed)
 
     def _handle_check_result(self, session: Session, check: Check, check_result: CheckResult, album: Album) -> CheckDisposition:
         fixer = check_result.fixer
@@ -177,15 +158,7 @@ class Checker:
         maybe_changed = False
         deleted = False
         user_quit = False
-        suppressed_failure_message = None
-        if self._preview and fixer and fixer.option_automatic_index is not None:
-            self.ctx.console.print(
-                f'[bold]preview automatic fix {check.name}:[/bold] [bold cyan]"{album_display_name(self.ctx, album)}"[/bold cyan]', highlight=False
-            )
-            self.ctx.console.print(f"    {escape(check_result.message)}", highlight=False)
-            self.ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}", highlight=False)
-            displayed_any = True
-        elif self._automatic and fixer and fixer.option_automatic_index is not None:
+        if self._automatic and fixer and fixer.option_automatic_index is not None:
             self.ctx.console.print(
                 f'[bold]automatically fixing {check.name}:[/bold] [bold cyan]"{album_display_name(self.ctx, album)}"[/bold cyan] - [bold yellow]{escape(check_result.message)}[/bold yellow]',
                 highlight=False,
@@ -202,10 +175,7 @@ class Checker:
             displayed_any = True
         else:
             message = f'[bold]{check.name}[/bold] [bold yellow]{escape(check_result.message)}[/bold yellow] : [bold cyan]"{album_display_name(self.ctx, album)}"[/bold cyan]'
-            if self._preview:
-                suppressed_failure_message = message
-            else:
-                self.ctx.console.print(message, highlight=False)
-                displayed_any = True
+            self.ctx.console.print(message, highlight=False)
+            displayed_any = True
 
-        return CheckDisposition(False, maybe_changed, deleted, user_quit, displayed_any, suppressed_failure_message)
+        return CheckDisposition(False, maybe_changed, deleted, user_quit, displayed_any)

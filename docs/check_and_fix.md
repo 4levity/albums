@@ -58,7 +58,6 @@ look for and/or fix issues.
 | Run enabled checks in matching folders                 | `albums -m path~Foo check`                         |
 | Run a specific check (and checks it requires)          | `albums check duplicate-image`                     |
 | When there is a quick fix, stop and ask what to do     | `albums check --fix`                               |
-| Check for fully automatic fixes but don't run them     | `albums check --preview`                           |
 | Run automatic fixes on one album (exact path)          | `albums -m path="Artist/Album/" check --automatic` |
 | Run automatic fixes, ask what to do for manual fixes   | `albums check --automatic --fix`                   |
 | For every issue, ask what to do (even if no quick fix) | `albums check --interactive`                       |

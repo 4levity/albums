@@ -68,8 +68,8 @@ class Importer:
         """Check and fix each scanned album interactively, then copy it into the library at a chosen path."""
         from albums.checks.checker import Checker  # avoid circular dependency
 
-        checker = Checker(self.ctx, self._automatic, preview=False, fix=False, interactive=True, show_ignore_option=True)
-        non_interactive_checker = Checker(self.ctx, False, False, False, False, False)
+        checker = Checker(self.ctx, self._automatic, fix=False, interactive=True, show_ignore_option=True)
+        non_interactive_checker = Checker(self.ctx, False, False, False, False)
         with Session(self.ctx.db) as session:
             for album in self.ctx.select_album_entities(session):
                 (exists, ok) = self._check_existing_destination(album, self._make_library_paths(album))

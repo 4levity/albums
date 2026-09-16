@@ -26,6 +26,11 @@ icon: lucide/flask-conical
 - scan date(s), require/special validate, use in file/folder name templates
 - support new field checks for composer, lyricist (and their aliases) to address
   possible split-albums
+- restore the preview option to review automatic fixes without running them.
+  Note that doing this accurately requires simulating the automatic fixes in
+  a way that lets the checkers re-run, exposing additional automatic checks
+  or in corner cases allowing other checks without automatic fixes to fail
+  against the result of a simulated automatic fix.
 - many suggested fixes for current no-fix check failures in TODOs
 - low bitrate or suboptimal codec
 - not all tracks encoded the same (file type or bitrate target)
