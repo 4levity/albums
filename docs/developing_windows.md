@@ -33,9 +33,9 @@ No Windows runner is used: the Windows installer is built on Linux with wine
 `.github/workflows/release.yml` (tag pushes `v*`, manual dispatch) via the
 reusable workflow `.github/workflows/build-test.yml`. Their `wine` job
 installs wine 11 from the WineHQ apt repository (the distro package is too
-old), caches the wine environment, then builds the installer
-(`make wine-build`), runs the test suite under wine (`make wine-pytest`), and
-tests the installer end-to-end (`make wine-e2e`). The `release` job in
+old), caches the wine environment, then runs the test suite under wine
+(`make wine-pytest`), builds the installer (`make wine-build`), and tests it
+end-to-end (`make wine-e2e`). The `release` job in
 `release.yml` publishes the installer, the Linux executable, and the source
 archive as GitHub release assets: published for tag pushes, draft for manual
 dispatch.
