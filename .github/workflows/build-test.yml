@@ -81,14 +81,16 @@ jobs:
           python-version: "3.14"
       - name: Install wine
         # the distro wine is too old (the scripts require 11+); WineHQ ships
-        # current releases, and the wine packages require the i386 architecture
+        # current releases, and the wine packages require the i386
+        # architecture. No recommends needed: headless build, and the runner
+        # image already has the display/fonts.
         run: |
           sudo dpkg --add-architecture i386
           sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq.key
           codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
           echo "deb [signed-by=/etc/apt/keyrings/winehq.key] https://dl.winehq.org/wine-builds/ubuntu/ ${codename} main" | sudo tee /etc/apt/sources.list.d/winehq.list
           sudo apt-get update
-          sudo apt-get install --install-recommends winehq-stable
+          sudo apt-get install --no-install-recommends winehq-stable
       - name: Check wine version
         run: wine --version
       - name: Install dependencies
