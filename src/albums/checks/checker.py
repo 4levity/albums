@@ -14,7 +14,7 @@ from albums.library import run_scan
 from albums.selector import Match, load_album_entities
 from albums.tagger import AlbumTaggerProvider
 
-from .all import ALL_CHECKS
+from .all import ALL_CHECKS, implicitly_ignored_checks
 from .base_check import Check
 from .check_types import CheckResult, FixResult
 from .helpers import album_display_name
@@ -79,7 +79,12 @@ class Checker:
                 checks_passed: set[str] = set()
                 check_all = False
                 for check in check_instances:
-                    if check.name not in album.ignore_checks:
+                    ignored = set(album.ignore_checks)
+                    if check.name in ignored:
+                        logger.debug(f"skipping ignored check {check.name} for album {album.path}")
+                    elif check.name in implicitly_ignored_checks(ignored):
+                        logger.debug(f"skipping implicitly ignored check {check.name} for album {album.path}, a check it depends on is ignored")
+                    else:
                         missing_dependent_checks = check.must_pass_checks - checks_passed
                         if missing_dependent_checks:
                             self.ctx.console.print(
@@ -87,7 +92,7 @@ class Checker:
                                 highlight=False,
                             )
                             if self._interactive and album.album_id is not None:
-                                prompt_ignore_checks(session, album.album_id, check.name)
+                                prompt_ignore_checks(self.ctx, session, album.album_id, check.name)
 
                             issues_displayed += 1
 
@@ -105,8 +110,6 @@ class Checker:
                                 break
                             elif disposition.passed:
                                 checks_passed.add(check.name)
-                    else:
-                        logger.debug(f"skipping ignored check {check.name} for album {album.path}")
         session.commit()
         return issues_displayed
 

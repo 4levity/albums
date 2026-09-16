@@ -1,4 +1,4 @@
-from typing import Final
+from typing import Final, Iterable
 
 from .base_check import Check
 from .fields.check_album import CheckAlbumField
@@ -95,3 +95,60 @@ ALL_CHECKS: Final[tuple[type[Check], ...]] = (
 )
 
 ALL_CHECK_NAMES: Final = frozenset(check.name for check in ALL_CHECKS)
+
+
+def _check_dependency_graphs() -> tuple[dict[str, frozenset[str]], dict[str, frozenset[str]]]:
+    """Build the check dependency graph from each check's must_pass_checks: check name -> the checks it
+    depends on and the checks that depend on it."""
+    dependencies: dict[str, set[str]] = {}
+    dependents: dict[str, set[str]] = {}
+    for check in ALL_CHECKS:
+        dependencies.setdefault(check.name, set()).update(check.must_pass_checks)
+        for dep in check.must_pass_checks:
+            dependents.setdefault(dep, set()).add(check.name)
+    return ({name: frozenset(deps) for name, deps in dependencies.items()}, {name: frozenset(deps) for name, deps in dependents.items()})
+
+
+CHECK_DEPENDENCIES, CHECK_DEPENDENTS = _check_dependency_graphs()
+
+
+def transitive_dependencies(check_name: str) -> set[str]:
+    """Return the check names that ``check_name`` directly or transitively depends on (its must_pass_checks, recursively)."""
+    dependencies: set[str] = set()
+    stack = [check_name]
+    while stack:
+        for dep in CHECK_DEPENDENCIES.get(stack.pop(), frozenset()):
+            if dep not in dependencies:
+                dependencies.add(dep)
+                stack.append(dep)
+    return dependencies
+
+
+def transitive_dependents(check_name: str) -> set[str]:
+    """Return the check names that directly or transitively depend on ``check_name`` (they run after it in ALL_CHECKS order)."""
+    dependents: set[str] = set()
+    stack = [check_name]
+    while stack:
+        for dependent in CHECK_DEPENDENTS.get(stack.pop(), frozenset()):
+            if dependent not in dependents:
+                dependents.add(dependent)
+                stack.append(dependent)
+    return dependents
+
+
+def implicitly_ignored_checks(ignored_checks: Iterable[str]) -> set[str]:
+    """Return the check names implicitly ignored for an album with the given ignored checks.
+
+    An ignored check never passes, so every check that depends on it, directly or transitively, cannot run
+    and is ignored implicitly, without additional configuration.
+    """
+    implicitly_ignored: set[str] = set()
+    for ignored_check in ignored_checks:
+        implicitly_ignored |= transitive_dependents(ignored_check)
+    return implicitly_ignored
+
+
+def check_run_order(check_names: Iterable[str]) -> list[str]:
+    """Return the given check names in the order the checks would run (their order in ALL_CHECKS)."""
+    position = {check.name: i for i, check in enumerate(ALL_CHECKS)}
+    return sorted(check_names, key=lambda name: position[name])

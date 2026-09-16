@@ -1,7 +1,8 @@
+import io
 import os
 from typing import Sequence, Tuple
 
-from rich.console import RenderableType
+from rich.console import Console, RenderableType
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -59,6 +60,68 @@ class TestCheckFixInteractive:
 
                 rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album.album_id})
                 assert rows == 1
+        finally:
+            ctx.db.dispose()
+
+    def test_fix_ignore_check_shows_implicit_ignores(self, mocker):
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
+        ctx = Context()
+        ctx.db = db_open(MEMORY)
+        buffer = io.StringIO()
+        ctx.console = Console(file=buffer, width=200)  # wide enough that messages are not wrapped
+        try:
+            with Session(ctx.db) as session:
+                session.add(album)
+                session.flush()
+
+                fixer = MockFixer(ctx, album)
+                mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
+                mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
+
+                interact(ctx, session, "disc-in-track-number", CheckResult("hello", fixer), album, True)
+
+            output = buffer.getvalue()
+            assert 'Ignoring check "disc-in-track-number" will also implicitly ignore these checks for this album:' in output
+            # the implicitly ignored checks are listed as bullets in the order the checks would run
+            positions = [
+                output.index(f"- {name}")
+                for name in ("invalid-track-or-disc-number", "disc-numbering", "track-numbering", "zero-pad-numbers", "track-filename")
+            ]
+            assert positions == sorted(positions)
+            assert mock_confirm.call_count == 1
+        finally:
+            ctx.db.dispose()
+
+    def test_fix_ignore_check_already_implicitly_ignored(self, mocker):
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
+        album.ignore_checks.append("disc-in-track-number")
+        ctx = Context()
+        ctx.db = db_open(MEMORY)
+        buffer = io.StringIO()
+        ctx.console = Console(file=buffer, width=200)  # wide enough that messages are not wrapped
+        try:
+            with Session(ctx.db) as session:
+                session.add(album)
+                session.flush()
+
+                fixer = MockFixer(ctx, album)
+                mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
+                mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
+
+                (changed, deleted, quit) = interact(ctx, session, "invalid-track-or-disc-number", CheckResult("hello", fixer), album, True)
+                # the check is (implicitly) ignored, so the prompt reports it as ignored and does not confirm or add a row
+                assert changed
+                assert quit
+                assert not deleted
+                assert mock_confirm.call_count == 0
+                rows = session.scalar(text("SELECT COUNT(*) FROM album_ignore_check WHERE album_id = :id"), {"id": album.album_id})
+                assert rows == 1
+
+            output = buffer.getvalue()
+            assert (
+                'cannot ignore check "invalid-track-or-disc-number" for this album: it is already implicitly ignored '
+                'because it depends on ignored check "disc-in-track-number"' in output
+            )
         finally:
             ctx.db.dispose()
 

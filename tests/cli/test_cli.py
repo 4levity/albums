@@ -12,6 +12,12 @@ from albums.tagger import BasicField
 from .. import helpers
 from ..fixtures.create_library import create_library
 
+
+def unwrapped(output: str) -> str:
+    """Collapse whitespace, so rich line-wrapping doesn't split messages and prevent them from being matched as plain text."""
+    return " ".join(output.split())
+
+
 albums = [
     Album(
         path="foo" + os.sep,
@@ -95,12 +101,35 @@ class TestCli:
         assert "foo" + os.sep not in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
+    def test_ignore_check_implicitly_ignored(self):
+        self.run(["scan"], init=True)
+        self.run(["-p", "foo" + os.sep, "ignore", "legacy-fields"])
+        # disc-in-track-number depends on legacy-fields, so it is already implicitly ignored for this album
+        result = self.run(["-p", "foo" + os.sep, "ignore", "album", "disc-in-track-number"])
+        assert result.exit_code == 0
+        assert f"album foo{os.sep} - ignore album" in result.output  # the independent ignore is still applied
+        assert (
+            "cannot ignore disc-in-track-number for album foo"
+            + os.sep
+            + ': it is already implicitly ignored because it depends on ignored check "legacy-fields"'
+            in unwrapped(result.output)
+        )
+
+        # the redundant ignore was not added, and the valid one was
+        result = self.run(["-p", "foo" + os.sep, "notice", "--force", "album"])
+        assert f"album foo{os.sep} will stop ignoring album" in result.output
+        result = self.run(["-p", "foo" + os.sep, "notice", "--force", "disc-in-track-number"])
+        assert (
+            f'album foo{os.sep} does not explicitly ignore disc-in-track-number: it is implicitly ignored because it depends on ignored check "legacy-fields"'
+            in unwrapped(result.output)
+        )
+
     def test_notice_check_not_ignored(self):
         self.run(["scan"], init=True)
         result = self.run(["-rp", "(foo|bar)", "notice", "--force", "album"])  # filtered so that album names will not be suppressed
         assert result.exit_code == 0
-        assert f"album foo{os.sep} was already not ignoring album" in result.output
-        assert f"album bar{os.sep} was already not ignoring album" in result.output
+        assert f"album foo{os.sep} does not ignore album" in result.output
+        assert f"album bar{os.sep} does not ignore album" in result.output
 
     def test_notice_check(self):
         self.run(["scan"], init=True)
