@@ -102,7 +102,7 @@ checkout, and `write` writes the `_version.py` file:
 - **`CheckConfiguration`** (`checks/check_types.py`) - Per-check config dict
   type.
 - **`Fixer`/`CheckResult`** (`checks/check_types.py`) - Problem reporting and
-  fix contracts.
+  fix contracts (see [Fixers](#fixers)).
 
 ## Adding Functionality
 
@@ -174,6 +174,26 @@ The fixer may also optionally define a table (headers and row data) that should
 be displayed to the user in interactive modes to help them decide which option
 to pick. Generating row data can be deferred until display so the check can be
 fast if that is slow.
+
+The `fix(option)` callback does the work and returns a `FixResult`. The
+`Checker` owns the database transaction: after an applied fix that changed
+anything, it re-scans the album from disk (rebuilding the album's database rows
+from the files) and re-runs the checks until the album passes. The fixer
+contract follows from that:
+
+- **Persist all file changes to disk.** The re-scan re-reads every file, so
+  tagging, renaming, moving and deleting must be real file changes; edits made
+  only to ORM entities (e.g. editing `track.fields`) are reverted.
+- **Mutate ORM entities directly only for metadata not stored in the files**,
+  which the re-scan leaves alone (e.g. `PictureFile.cover_source`,
+  `Album.collections`, `Album.ignore_checks`); update `Album.path` when
+  renaming the album folder on disk.
+- **Return the matching `FixResult`.** `NO_CHANGE` skips the re-scan and
+  commit; `CHANGED_ALBUM`/`CHANGED_OTHER` trigger the re-scan and a commit;
+  `DELETED_ALBUM` removes the album's rows, which are committed at the end of
+  the run (a crash in between is harmless: the next run removes the stale rows).
+- **Never call `session.commit()`.** Committing from a fixer would break the
+  re-run-after-fix behavior and could persist a partially fixed album.
 
 Tips:
 

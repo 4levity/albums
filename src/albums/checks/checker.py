@@ -52,8 +52,10 @@ class Checker:
     def run_enabled(self, session: Session) -> int:
         """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
 
-        ``_run_check`` flushes (not commits) after each successful fix so the re-scan sees
-        the changes; commits happen after each applied fix and at the end of the run.
+        ``_run_check`` flushes (not commits) after each applied fix so the post-fix re-scan
+        sees the changes; the ``Checker`` commits after the re-scan and at the end of the run
+        (a deleted album's rows are committed at the end of the run and self-heal on the next
+        run if the run is interrupted). See the ``Fixer`` docstring for the fixer contract.
         """
         need_checks = self.get_required_disabled_checks()
         if need_checks:
