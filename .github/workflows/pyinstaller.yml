@@ -53,9 +53,9 @@ jobs:
           uv run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
             --collect-data albums \
             --icon "$(pwd)/build/icon.ico" \
-            --workpath build/$platform --distpath dist/pyinstaller/$platform \
-            --specpath build/$platform/.specs --contents-directory _albums_internal
-          ls -l dist/pyinstaller/$platform/albums
+            --workpath "build/$platform" --distpath "dist/pyinstaller/$platform" \
+            --specpath "build/$platform/.specs" --contents-directory _albums_internal
+          ls -l "dist/pyinstaller/$platform/albums"
         shell: bash
       - name: Create installer script
         run: uv run python scripts/render_iss.py

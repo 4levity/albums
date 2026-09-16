@@ -35,6 +35,15 @@ JS_CHECK := node --check commitlint.config.js
 # entries are passed explicitly. .git is not listed in .gitignore, so it is
 # excluded explicitly (its objects would otherwise be spell-checked).
 CSPELL_CHECK := $(CSPELL) lint --gitignore --exclude .git . .[!.]*
+# actionlint runs via scripts/actionlint.py, which on Linux downloads a
+# pinned release into .cache/actionlint/ and elsewhere uses actionlint from
+# PATH. The pinned shellcheck folder (populated by the shellcheck step, which
+# runs earlier) is prepended to PATH so actionlint can shellcheck the
+# workflows' run: blocks; the entry is harmless where the folder is missing
+SHELLCHECK_VERSION := $(shell sed -n 's/^VERSION = "\(.*\)".*/\1/p' scripts/shellcheck.py)
+ACTIONLINT := $(UV) run python scripts/actionlint.py
+ACTIONLINT_CHECK := env PATH="$(CURDIR)/.cache/shellcheck/shellcheck-v$(SHELLCHECK_VERSION):$(PATH)" \
+	$(ACTIONLINT) .github/workflows/*.yml
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
 ifeq ($(QUIET),1)
@@ -67,6 +76,7 @@ lint: install-js lint-markdown ## Lint Python, shell, markdown and config files
 	$(STEP) lint $(RUFF_CHECK)
 	$(STEP) format $(RUFF_FORMAT_CHECK)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+	$(STEP) actionlint $(ACTIONLINT_CHECK)
 	$(STEP) jsonc $(JSONC_CHECK)
 	$(STEP) js $(JS_CHECK)
 
@@ -89,6 +99,7 @@ fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
 	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
 	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
 	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+	$(STEP) actionlint $(ACTIONLINT_CHECK)
 	$(STEP) jsonc $(JSONC_CHECK)
 	$(STEP) js $(JS_CHECK)
 	$(STEP) spelling $(CSPELL_CHECK)

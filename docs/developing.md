@@ -12,6 +12,8 @@ icon: lucide/computer
 - `make` 4.3+ (the rendered-icon targets use grouped targets, `&:`)
 - `shellcheck` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
   release into `.cache/shellcheck/`)
+- `actionlint` on PATH (non-Linux only; on Linux, `make lint` downloads a pinned
+  release into `.cache/actionlint/`)
 
 ## Overview
 
@@ -277,7 +279,7 @@ to date) or only deletes refs, since no new commits are published.
 
 No warnings, only pass/fail. `make static` runs all static checks. Each tool
 also has its own target for targeted runs: `make lint` (ruff, shellcheck,
-config syntax), `make lint-markdown`, `make typecheck` (pyright),
+workflows, config syntax), `make lint-markdown`, `make typecheck` (pyright),
 `make spelling`. Some lint/format problems can be automatically fixed with
 `make fix`.
 
@@ -290,6 +292,11 @@ config syntax), `make lint-markdown`, `make typecheck` (pyright),
   by `make lint` via `scripts/shellcheck.py`, which on Linux downloads a
   pinned release (v0.11.0) into `.cache/shellcheck/` and on other platforms
   requires `shellcheck` on PATH
+- workflow lint with [actionlint](https://github.com/rhysd/actionlint) -
+  GitHub Actions workflows, including shellcheck of their `run:` shell
+  blocks, run by `make lint` via `scripts/actionlint.py`, which on Linux
+  downloads a pinned release (v1.7.9) into `.cache/actionlint/` and on other
+  platforms requires `actionlint` on PATH
 - static type checking with [pyright](https://microsoft.github.io/pyright/) -
   strict mode for main project, looser rules for tests.
 - markdown lint + reflow with [rumdl](https://rumdl.dev) - wraps prose at 80
