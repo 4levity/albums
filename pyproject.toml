@@ -93,6 +93,10 @@ testpaths = ["tests"]
 
 [tool.pyright]
 ignore = ["tests", "**/typings"]
+# non-project and generated folders; `**/.*` is a blanket performance guard
+# (skips .venv, caches, ...) so Python in dot-dirs is not typechecked - if
+# Python is ever added to a dot-dir (e.g. .github/actions), narrow `**/.*`
+# to the specific cache dirs
 exclude = [
     ".cache",
     ".github",

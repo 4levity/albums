@@ -276,9 +276,10 @@ to date) or only deletes refs, since no new commits are published.
 ### Lint, format and static analysis
 
 No warnings, only pass/fail. `make static` runs all static checks. Each tool
-also has its own target for targeted runs: `make lint` (ruff + shellcheck),
-`make lint-markdown`, `make typecheck` (pyright), `make spelling`. Some
-lint/format problems can be automatically fixed with `make fix`.
+also has its own target for targeted runs: `make lint` (ruff, shellcheck,
+config syntax), `make lint-markdown`, `make typecheck` (pyright),
+`make spelling`. Some lint/format problems can be automatically fixed with
+`make fix`.
 
 - lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
   [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error
@@ -296,6 +297,13 @@ lint/format problems can be automatically fixed with `make fix`.
 - config file syntax with [node](https://nodejs.org/) - `node --check` for
   `commitlint.config.js` and jsonc-parser for the JSONC (comments allowed)
   files in `.vscode/`
+
+Not linted, validated elsewhere instead: `scripts/albums.iss` is compiled by
+Inno Setup (`iscc`) in the release builds, and the SQL migrations are
+exercised by the migration tests. The JS files (`commitlint.config.js`,
+`scripts/check_jsonc.js`) are deliberately not linted beyond the
+`node --check` syntax check, since the project's JS is minimal config and the
+linter itself.
 
 ### Spell check
 
