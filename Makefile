@@ -17,7 +17,14 @@ RUFF_FORMAT_CHECK := $(RUFF) format . --check
 # rumdl scans . for markdown files and respects .gitignore
 RUMDL_CHECK := $(RUMDL) check .
 RUMDL_CHECK_FIX := $(RUMDL) check --fix .
-SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
+# all shell scripts in the project, excluding VCS, dependency and generated
+# folders (add exclusions here if a new generated folder contains *.sh)
+SHELL_FILES := $(shell find . -name '*.sh' \
+	-not -path './.git/*' -not -path './node_modules/*' \
+	-not -path './.venv/*' -not -path './.cache/*' \
+	-not -path './build/*' -not -path './dist/*' \
+	-not -path './site/*')
+SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(SHELL_FILES)
 # cspell skips hidden (dot) files and dirs when walking, so besides `.`
 # (everything else; gitignored paths skipped by --gitignore) the root dot
 # entries are passed explicitly. .git is not listed in .gitignore, so it is
