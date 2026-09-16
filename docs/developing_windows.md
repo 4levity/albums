@@ -25,18 +25,26 @@ The installer script template is in `scripts/albums.iss`. It is a valid Inno
 Setup 6+ installer script, with 0.0.0 placeholder versions, and it expects
 the rendered icon (`build/icon.ico`) next to the rendered script.
 
-## Windows CI (releases)
+## CI
 
-`.github/workflows/pyinstaller.yml` runs on tag pushes (`v*`) and manual
-dispatch. Its Windows job performs the steps above on a Windows runner (the
-runner image ships with Inno Setup) and uploads the installer; the release job
-publishes the installer and the Linux executable as GitHub release assets.
+No Windows runner is used: the Windows installer is built on Linux with wine
+(see below). The build/test jobs are shared between `.github/workflows/ci.yml`
+(pushes to main, pull requests, manual dispatch) and
+`.github/workflows/release.yml` (tag pushes `v*`, manual dispatch) via the
+reusable workflow `.github/workflows/build-test.yml`. Their `wine` job
+installs wine 11 and xvfb from the WineHQ apt repository (the distro package
+is too old), caches the wine environment, then builds the installer
+(`make wine-build`), runs the test suite under wine (`make wine-pytest`), and
+tests the installer end-to-end (`make wine-e2e`). The `release` job in
+`release.yml` publishes the installer, the Linux executable, and the source
+archive as GitHub release assets: published for tag pushes, draft for manual
+dispatch.
 
 ## Local Windows
 
 The same steps run directly on a Windows machine. Inno Setup must be installed.
-If `make` is not installed, the commands can be run individually; the Windows CI
-job shows these commands in one place.
+If `make` is not installed, the commands can be run individually;
+`scripts/wine_build.py` runs the same commands in one place.
 
 ## Linux with wine
 

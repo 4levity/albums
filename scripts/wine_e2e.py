@@ -5,12 +5,15 @@ By default the installer is not rebuilt: it must already exist in
 dist/installer/ with a name matching the current version (make wine-build
 builds it), and a warning that it may be stale is printed. With --build a
 fresh installer is built first (like make wine-build, creating the wine
-environment if needed) and the warning is skipped.
+environment if needed) and the warning is skipped. The warning is also
+suppressed in CI (GITHUB_ACTIONS set), where the workflow builds the
+installer in the same run.
 
 Usage: python scripts/wine_e2e.py [--build]
 """
 
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -58,7 +61,7 @@ def find_installer(just_built: bool) -> Path:
     installer = wine_common.ROOT / "dist" / "installer" / f"albums_win_x86_64-{file_version}-setup.exe"
     if not installer.is_file():
         wine_common.fail(f"no installer for version {file_version} in dist/installer; run `make wine-build` first")
-    if not just_built:
+    if not just_built and not os.environ.get("GITHUB_ACTIONS"):
         print("WARNING: using an existing installer build from dist/installer, not one built by this run:")
         print(f"WARNING:   {installer.relative_to(wine_common.ROOT)}")
         print("WARNING: if the source changed since it was built, rebuild it with `make wine-build` or rerun this script with --build")
