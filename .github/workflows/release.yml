@@ -1,4 +1,4 @@
-name: Make Pyinstaller Executables
+name: Release
 on:
   push:
     tags:
@@ -7,8 +7,9 @@ on:
       # like v0.9.30.post24+g1234abcd) so they do not retrigger this workflow.
       - "!v*post*"
   workflow_dispatch:
-
 jobs:
+  build-test:
+    uses: ./.github/workflows/build-test.yml
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -17,74 +18,40 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.0.1
         with:
-          # embedded Python: ceiling of the supported range; uv picks the latest 3.14.x
           python-version: "3.14"
       - name: Install dependencies
         run: make install
       - name: Build executable
-        run: make pyinstaller && ls -l dist && ls -l dist/pyinstaller
-      - name: Upload package artifact
+        run: make pyinstaller && ls -l dist/pyinstaller
+      - name: Upload executable artifact
         uses: actions/upload-artifact@v7
         with:
           name: albums-pyinstaller-linux
           path: dist/pyinstaller/linux_x86_64/albums/
-
-  build-win:
-    runs-on: windows-latest
+  publish:
+    needs: [build-test]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Use OIDC permissions for trusted publishing
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v8
         with:
-          fetch-depth: 0
-      - uses: astral-sh/setup-uv@v10.0.1
-        with:
-          # embedded Python: ceiling of the supported range; uv picks the latest 3.14.x
-          python-version: "3.14"
-      # the windows runner image has no make, so run the make pyinstaller steps directly
-      - name: Install dependencies
-        run: uv sync --locked
-        shell: bash
-      - name: Render project icon
-        run: uv run python scripts/render_icon.py
-        shell: bash
-      - name: Build executable
-        run: |
-          uv run python scripts/version.py write
-          platform=$(uv run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))")
-          uv run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
-            --collect-data albums \
-            --icon "$(pwd)/build/icon.ico" \
-            --workpath "build/$platform" --distpath "dist/pyinstaller/$platform" \
-            --specpath "build/$platform/.specs" --contents-directory _albums_internal
-          ls -l "dist/pyinstaller/$platform/albums"
-        shell: bash
-      - name: Create installer script
-        run: uv run python scripts/render_iss.py
-        shell: bash
-      - name: Build installer
-        run: |
-          iscc build/albums.iss
-          ls -l dist/installer
-        shell: bash
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: albums-installer-win
-          path: dist/installer/*.exe
-
+          name: albums-package
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
   release:
-    needs: [build-linux, build-win]
+    needs: [build-test, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v5
-        # already built but need checkout to create release
+        # already built, but the release is created from this checkout
         with:
           fetch-depth: 0
-      - name: Prepare folders
-        run: |
-          mkdir albums_win_x86_64
-          mkdir albums_linux_x86_64
       - name: Download Linux executable
         uses: actions/download-artifact@v8
         with:
@@ -95,6 +62,11 @@ jobs:
         with:
           name: albums-installer-win
           path: albums_win_x86_64/
+      - name: Download package
+        uses: actions/download-artifact@v8
+        with:
+          name: albums-package
+          path: dist/
       - name: Get version
         id: get-version
         run: |
@@ -119,4 +91,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
-        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_x86_64.zip --clobber
+        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_x86_64.zip dist/*.tar.gz --clobber

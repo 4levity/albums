@@ -41,7 +41,7 @@ used by a regular installation of `albums`).
 
 | Path                | Description                                          |
 | ------------------- | ---------------------------------------------------- |
-| `.github/workflows` | Github workflows (build/publish/docs)                |
+| `.github/workflows` | Github workflows (ci, build-test, release, docs)     |
 | `docs/`             | This documentation                                   |
 | `src/albums/`       | Python application (structure below)                 |
 | `scripts/`          | Development scripts (e.g. `version.py`)              |

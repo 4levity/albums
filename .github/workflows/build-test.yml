@@ -1,0 +1,116 @@
+name: Build / Test
+on:
+  workflow_call:
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: make install
+      - name: Static checks
+        run: make static
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # floor and ceiling of the supported Python range
+        python: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: make install
+      - name: Run tests
+        if: matrix.python == '3.12'
+        env:
+          TERM: "dumb"
+        run: make test
+      - name: Run tests with coverage
+        if: matrix.python == '3.14'
+        env:
+          TERM: "dumb"
+        run: make coverage
+      - name: Upload coverage report
+        if: matrix.python == '3.14'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-py314
+          path: htmlcov/
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: "3.14"
+      - name: Create package
+        run: make package
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: albums-package
+          path: dist/
+
+  wine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: "3.14"
+      - name: Install wine
+        # the distro wine is too old (the scripts require 11+); WineHQ ships
+        # current releases. xvfb provides the display the GUI installers need.
+        run: |
+          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq.key
+          codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+          echo "deb [signed-by=/etc/apt/keyrings/winehq.key] https://dl.winehq.org/wine-builds/ubuntu/ ${codename} main" | sudo tee /etc/apt/sources.list.d/winehq.list
+          sudo apt-get update
+          sudo apt-get install --install-recommends winehq-stable xvfb
+      - name: Check wine version
+        run: wine --version
+      - name: Install dependencies
+        run: make install
+      - name: Cache wine environment
+        uses: actions/cache@v6
+        with:
+          # cache keys are immutable, so include uv.lock: a lock change saves a
+          # fresh warm state under the new key, and the restore-keys fallback
+          # (same tool pins) gives a near-warm restore that wine_build's
+          # `uv sync --locked` tops up with the small delta
+          path: .cache/wine
+          key: wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-
+      - name: Build Windows installer
+        run: make wine-build
+      - name: Run test suite under wine
+        run: make wine-pytest
+      - name: Test installer end-to-end
+        run: make wine-e2e
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: albums-installer-win
+          path: dist/installer/*.exe
