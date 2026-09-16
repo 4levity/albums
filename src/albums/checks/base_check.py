@@ -20,7 +20,7 @@ class Check:
     and override :meth:`init` for configuration validation or other one-time initialization.
     The ``ctx``, ``session`` and ``tagger`` instance values are available to subclasses.
     Fixers returned by ``check()`` must not commit the session; see the ``Fixer`` docstring
-    for the transaction contract.
+    for the fixer contract.
     """
 
     name: str

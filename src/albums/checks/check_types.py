@@ -11,12 +11,12 @@ type CheckConfiguration = Dict[str, Union[str, int, float, bool, Sequence[str]]]
 
 
 class FixResult(Enum):
-    """Outcome codes returned by fixer callbacks to signal database mutation status."""
+    """Outcome of a fix callback; tells the ``Checker`` what to do next (see the Fixers section of docs/developing.md)."""
 
-    NO_CHANGE = auto()  # The fix ran but did not alter any persisted data.
-    CHANGED_ALBUM = auto()  # Album-level metadata was mutated; re-scan may be required.
-    DELETED_ALBUM = auto()  # An entire album was deleted.
-    CHANGED_OTHER = auto()  # Non-album resources (files, collections) were modified.
+    NO_CHANGE = auto()  # Nothing changed: no re-scan, no commit.
+    CHANGED_ALBUM = auto()  # This album changed; the ``Checker`` re-scans it from disk and commits.
+    DELETED_ALBUM = auto()  # This album was deleted from disk; its rows are removed now and committed at the end of the run.
+    CHANGED_OTHER = auto()  # Something outside this album changed (e.g. a duplicate album deleted); re-scan and commit.
 
     @staticmethod
     def of(changed: bool) -> "FixResult":
@@ -46,12 +46,17 @@ class Fixer:
         table: Optional tabular data (headers + rows or row-factory callable) to display alongside options.
         prompt: Text displayed above the options when asking for user input.
 
-    Transactions:
-        A fixer callback must never call ``session.commit()``. It may mutate ORM entities
-        and files freely; the ``Checker`` owns the transaction: it flushes after each
-        successful fix so the re-scan sees the changes, and commits after each applied fix
-        and at the end of the run. Committing from a fixer would break the re-run-after-fix
-        behavior (all checks restart after a change) and could persist a partially fixed album.
+    Contract (details in the Fixers section of docs/developing.md):
+        - Persist all file changes to disk: after an applied fix the album is re-scanned
+          (``reread=True``) and its database rows are rebuilt from the files, so ORM-only
+          edits to file-derived data (e.g. ``track.fields``) are reverted.
+        - Mutate ORM entities directly only for metadata not stored in the files, which
+          the re-scan leaves alone (e.g. ``PictureFile.cover_source``, ``Album.collections``,
+          ``Album.ignore_checks``).
+        - Return the matching ``FixResult``: the ``Checker`` re-scans and commits for
+          changes, while a ``DELETED_ALBUM`` deletion is committed at the end of the run
+          (stale rows self-heal on the next run if the run is interrupted).
+        - Never call ``session.commit()``; the ``Checker`` owns the transaction.
     """
 
     fix: Callable[[str], FixResult]
