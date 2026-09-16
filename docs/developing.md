@@ -257,7 +257,7 @@ dependencies are installed. (The project can be built and tested without these.)
 | Hook         | Requires                                                       |
 | ------------ | -------------------------------------------------------------- |
 | `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint) |
-| `pre-commit` | clean working tree + `make fix-static` passes                  |
+| `pre-commit` | clean working tree + the checks the commit can affect pass     |
 | `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)    |
 
 `commit-msg` checks the final commit message with
@@ -266,9 +266,14 @@ dependencies are installed. (The project can be built and tested without these.)
 subject limit). Standard git-generated messages (e.g. `Merge branch ...` and
 `Revert ...`) are accepted by commitlint itself.
 
-`pre-commit` runs `make fix-static` plus pyright on src/ and tests/ if changed.
+`pre-commit` runs only the checks the commit can affect, chosen by the staged
+files' types: ruff (fix) for `*.py`, rumdl (fix) for `*.md`, shellcheck for
+`*.sh` and `hooks/`, actionlint for `.github` workflow yml, jsonc for
+`*.json`/`*.jsonc`/`*.json5`, node for `*.js`, cspell for everything, plus
+pyright on src/ and tests/ if changed.
 
-If `make fix` changes files during `pre-commit`, the changes are also staged.
+If the auto-fixing checks change files during `pre-commit`, the changes are
+also staged.
 
 `pre-push` skips its checks when the push updates nothing (all refs already up
 to date) or only deletes refs, since no new commits are published.
@@ -278,10 +283,11 @@ to date) or only deletes refs, since no new commits are published.
 ### Lint, format and static analysis
 
 No warnings, only pass/fail. `make static` runs all static checks. Each tool
-also has its own target for targeted runs: `make lint` (ruff, shellcheck,
-workflows, config syntax), `make lint-markdown`, `make typecheck` (pyright),
-`make spelling`. Some lint/format problems can be automatically fixed with
-`make fix`.
+also has its own target for targeted runs: `make lint-python` (ruff),
+`make lint-markdown` (rumdl), `make shellcheck`, `make actionlint`,
+`make jsonc`, `make js`, `make typecheck` (pyright), `make spelling`. Some
+lint/format problems can be automatically fixed with `make fix-python` and
+`make fix-markdown` (or `make fix` for both).
 
 - lint/format with [ruff](https://docs.astral.sh/ruff/) (format same as
   [Black](https://black.readthedocs.io/en/stable/)) - pycodestyle/pyflakes error

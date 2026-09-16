@@ -37,13 +37,10 @@ JS_CHECK := node --check commitlint.config.js
 CSPELL_CHECK := $(CSPELL) lint --gitignore --exclude .git . .[!.]*
 # actionlint runs via scripts/actionlint.py, which on Linux downloads a
 # pinned release into .cache/actionlint/ and elsewhere uses actionlint from
-# PATH. The pinned shellcheck folder (populated by the shellcheck step, which
-# runs earlier) is prepended to PATH so actionlint can shellcheck the
-# workflows' run: blocks; the entry is harmless where the folder is missing
-SHELLCHECK_VERSION := $(shell sed -n 's/^VERSION = "\(.*\)".*/\1/p' scripts/shellcheck.py)
+# PATH; it also ensures the pinned shellcheck (importing scripts/shellcheck.py)
+# is on its PATH, since actionlint shellchecks the workflows' run: blocks
 ACTIONLINT := $(UV) run python scripts/actionlint.py
-ACTIONLINT_CHECK := env PATH="$(CURDIR)/.cache/shellcheck/shellcheck-v$(SHELLCHECK_VERSION):$(PATH)" \
-	$(ACTIONLINT) .github/workflows/*.yml
+ACTIONLINT_CHECK := $(ACTIONLINT) .github/workflows/*.yml
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
 ifeq ($(QUIET),1)
@@ -52,7 +49,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-markdown typecheck typecheck-src typecheck-tests spelling fix fix-static test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
+.PHONY: build install install-js hooks static lint lint-python lint-markdown shellcheck actionlint jsonc js typecheck typecheck-src typecheck-tests spelling fix fix-python fix-markdown test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
 
 build: install static test
 	@echo "build complete"
@@ -72,16 +69,35 @@ node_modules: package.json package-lock.json
 # cheapest first:
 static: lint spelling typecheck ## Run all static checks (lint, spelling, types)
 
-lint: install-js lint-markdown ## Lint Python, shell, markdown and config files
+# one target per tool (fix-python/fix-markdown auto-fix), so callers such as
+# the pre-commit hook can run only the tools a change can affect
+lint: install-js lint-python lint-markdown shellcheck actionlint jsonc js ## Lint Python, shell, markdown and config files
+
+lint-python: ## Lint and format-check Python (ruff)
 	$(STEP) lint $(RUFF_CHECK)
 	$(STEP) format $(RUFF_FORMAT_CHECK)
-	$(STEP) shellcheck $(SHELLCHECK_CHECK)
-	$(STEP) actionlint $(ACTIONLINT_CHECK)
-	$(STEP) jsonc $(JSONC_CHECK)
-	$(STEP) js $(JS_CHECK)
 
-lint-markdown: install-js ## Lint markdown
+fix-python: ## Format and fix Python (ruff)
+	$(STEP) formatter $(RUFF_FORMAT)
+	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
+
+lint-markdown: install-js ## Lint markdown (rumdl)
 	$(STEP) markdown $(RUMDL_CHECK)
+
+fix-markdown: install-js ## Fix markdown (rumdl)
+	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
+
+shellcheck: ## Shellcheck all shell scripts (hooks/ + *.sh)
+	$(STEP) shellcheck $(SHELLCHECK_CHECK)
+
+actionlint: ## Lint the GitHub workflows (actionlint)
+	$(STEP) actionlint $(ACTIONLINT_CHECK)
+
+jsonc: install-js ## Check the JSONC config syntax (.vscode/*.json)
+	$(STEP) jsonc $(JSONC_CHECK)
+
+js: ## Syntax-check commitlint.config.js (node --check)
+	$(STEP) js $(JS_CHECK)
 
 spelling: install-js ## Run spell check
 	$(STEP) spelling $(CSPELL_CHECK)
@@ -94,20 +110,7 @@ typecheck-src: node_modules
 typecheck-tests: node_modules
 	$(STEP) 'analyze (tests)' $(PYRIGHT_TESTS)
 
-fix-static: node_modules ## Fix + static checks except pyright (pre-commit path)
-	$(STEP) formatter $(RUFF_FORMAT)
-	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
-	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
-	$(STEP) shellcheck $(SHELLCHECK_CHECK)
-	$(STEP) actionlint $(ACTIONLINT_CHECK)
-	$(STEP) jsonc $(JSONC_CHECK)
-	$(STEP) js $(JS_CHECK)
-	$(STEP) spelling $(CSPELL_CHECK)
-
-fix: install install-js ## Automatically fix lint/format
-	$(STEP) formatter $(RUFF_FORMAT)
-	$(STEP) 'lint-fix' $(RUFF_CHECK_FIX)
-	$(STEP) 'markdown-fix' $(RUMDL_CHECK_FIX)
+fix: install fix-python fix-markdown ## Automatically fix lint/format
 
 test: install ## Run all tests, fail on any warnings
 	$(UV) run pytest --max-warnings=0

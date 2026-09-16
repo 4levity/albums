@@ -68,18 +68,22 @@ def fetch_linux(arch: str) -> Path:
     return binary
 
 
-def main() -> int:
-    args = sys.argv[1:]
+def ensure_binary() -> Path:
+    """Return the shellcheck binary, downloading the pinned release on Linux."""
     if sys.platform == "linux":
         arch = MACHINE_ARCH.get(platform.machine().lower())
         if arch is None:
             fail(f"no shellcheck download for Linux {platform.machine()!r}; install it on PATH")
-        binary = fetch_linux(arch)
-    else:
-        binary = shutil.which("shellcheck")
-        if binary is None:
-            fail("shellcheck is not on PATH; install it (e.g. brew install shellcheck) and re-run")
-    os.execv(binary, (str(binary), *args))
+        return fetch_linux(arch)
+    binary = shutil.which("shellcheck")
+    if binary is None:
+        fail("shellcheck is not on PATH; install it (e.g. brew install shellcheck) and re-run")
+    return Path(binary)
+
+
+def main() -> int:
+    binary = ensure_binary()
+    os.execv(str(binary), (str(binary), *sys.argv[1:]))
 
 
 if __name__ == "__main__":

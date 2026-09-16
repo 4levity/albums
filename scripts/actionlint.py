@@ -5,6 +5,11 @@ On Linux, downloads the pinned release into the project's (gitignored)
 platforms, runs `actionlint` from PATH; install it there (see
 docs/developing.md).
 
+actionlint shellchecks the workflows' run: blocks itself, so this also
+ensures a shellcheck via shellcheck.ensure_binary() (imported from
+scripts/shellcheck.py, not spawned): the pinned binary on Linux (its folder
+is prepended to PATH), or `shellcheck` from PATH elsewhere.
+
 Usage: python scripts/actionlint.py [actionlint arguments]
 """
 
@@ -18,6 +23,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 from typing import NoReturn
+
+import shellcheck
 
 # Pinned release and the sha256 of its Linux assets
 # (actionlint_{VERSION}_linux_{arch}.tar.gz from the GitHub release).
@@ -76,11 +83,15 @@ def main() -> int:
         if arch is None:
             fail(f"no actionlint download for Linux {platform.machine().lower()!r}; install it on PATH")
         binary = fetch_linux(arch)
+        # put the pinned shellcheck's folder on actionlint's PATH
+        env = dict(os.environ, PATH=f"{shellcheck.ensure_binary().parent}:{os.environ['PATH']}")
+        os.execve(str(binary), (str(binary), *args), env)
     else:
+        shellcheck.ensure_binary()  # fail clearly if actionlint's shellcheck is missing
         binary = shutil.which("actionlint")
         if binary is None:
             fail("actionlint is not on PATH; install it (e.g. brew install actionlint) and re-run")
-    os.execv(binary, (str(binary), *args))
+        os.execv(binary, (str(binary), *args))
 
 
 if __name__ == "__main__":

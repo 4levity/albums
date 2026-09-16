@@ -23,12 +23,13 @@ require_commit_tree_clean
 
 require_make
 
-# The staged files are exactly the commit (the tree must be clean), so
-# pyright only needs to run on the project(s) the commit can affect.
-# changing src/ or project config or deps = analyze all
-# changing scripts/ = analyze src
-# changing tests/ = analyze tests
+# The staged files are exactly the commit (the tree must be clean), so each
+# check only needs to run if the commit can affect it.
 changed=$(git diff --cached --name-only)
+
+# pyright: the project(s) the commit can affect
+# (changing src/ or project config or deps = analyze all; changing scripts/
+# = analyze src; changing tests/ = analyze tests)
 src_typecheck=no
 tests_typecheck=no
 if [ -n "$changed" ]; then
@@ -40,12 +41,38 @@ if [ -n "$changed" ]; then
     fi
 fi
 
-# The staged commit's checks: the base, plus the pyright project(s) it
-# can affect, if any.
-set -- fix-static
+# lint tools by the file types each covers (spelling covers everything and
+# always runs): *.py -> fix-python (ruff), *.md -> fix-markdown (rumdl),
+# *.sh or hooks/ -> shellcheck, .github workflow yml -> actionlint,
+# *.json, *.jsonc, *.json5 -> jsonc (jsonc-parser), *.js -> js (node --check)
+python=no
+markdown=no
+shell=no
+workflows=no
+jsonc=no
+js=no
+if [ -n "$changed" ]; then
+    printf '%s\n' "$changed" | grep -q '\.py$' && python=yes
+    printf '%s\n' "$changed" | grep -q '\.md$' && markdown=yes
+    printf '%s\n' "$changed" | grep -q -e '\.sh$' -e '^hooks/' && shell=yes
+    printf '%s\n' "$changed" | grep -q '^\.github/.*\.yml$' && workflows=yes
+    printf '%s\n' "$changed" | grep -q -e '\.json$' -e '\.jsonc$' -e '\.json5$' && jsonc=yes
+    printf '%s\n' "$changed" | grep -q '\.js$' && js=yes
+fi
+
+# The staged commit's checks: spelling always, each other tool only if the
+# commit can affect it, plus the pyright project(s) it can affect, if any.
+set --
+[ "$python" = yes ] && set -- "$@" fix-python
+[ "$markdown" = yes ] && set -- "$@" fix-markdown
+[ "$shell" = yes ] && set -- "$@" shellcheck
+[ "$workflows" = yes ] && set -- "$@" actionlint
+[ "$jsonc" = yes ] && set -- "$@" jsonc
+[ "$js" = yes ] && set -- "$@" js
+set -- "$@" spelling
 [ "$src_typecheck" = yes ] && set -- "$@" typecheck-src
 [ "$tests_typecheck" = yes ] && set -- "$@" typecheck-tests
-hook_note "pre-commit: running 'make $*' (auto-fix, then all static checks; may take a minute)"
+hook_note "pre-commit: running 'make $*' (only the checks this commit can affect; may take a minute)"
 # QUIET=1: one line per check as it starts, full tool output only on failure
 # (see the Makefile), so the hook's output stays short but never hides errors.
 if ! QUIET=1 make "$@"; then
