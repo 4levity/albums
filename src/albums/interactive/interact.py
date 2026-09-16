@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.checks.check_types import CheckResult, FixResult
 from albums.entities import Album
+from albums.words import pluralize
 
 logger: Final = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def interact(
                     maybe_changed = True
                     done = True
                 elif selection == OPTION_IGNORE_CHECK:
-                    done = prompt_ignore_checks(session, album.album_id, check_name) if album.album_id is not None else False
+                    done = prompt_ignore_checks(ctx, session, album.album_id, check_name) if album.album_id is not None else False
                     maybe_changed |= done
                     user_quit = done
                 elif selection == OPTION_OPEN_FOLDER:
@@ -133,13 +134,34 @@ def interact(
     return (maybe_changed, deleted, user_quit)
 
 
-def prompt_ignore_checks(session: Session, album_id: int, check_name: str):
-    """Ask whether to ignore the given check for the album, persisting the choice; returns whether the check is now ignored."""
+def prompt_ignore_checks(ctx: Context, session: Session, album_id: int, check_name: str):
+    """Ask whether to ignore the given check for the album, persisting the choice; returns whether the check is now ignored.
+
+    Refuses to ignore a check that is already implicitly ignored because it depends on an ignored check,
+    and shows the other enabled checks that ignoring the check will also implicitly ignore.
+    """
+    # deferred import to avoid a circular import: albums.checks.all imports a check class that imports this module
+    from albums.checks.all import check_run_order, implicitly_ignored_checks, transitive_dependencies
+
     album = session.execute(select(Album).where(Album.album_id == album_id)).tuples().one()[0]
     if check_name in album.ignore_checks:
         logger.error(f'did not expect "{check_name}" to already be ignored for {album.path}')
         return True
 
+    ignored = set(album.ignore_checks)
+    if check_name in implicitly_ignored_checks(ignored):
+        ignored_dependencies = [f'"{name}"' for name in check_run_order(transitive_dependencies(check_name) & ignored)]
+        ctx.console.print(
+            f'[bold red]cannot ignore check "{check_name}" for this album[/bold red]: it is already implicitly ignored because it depends on ignored {pluralize("check", ignored_dependencies)} {" and ".join(ignored_dependencies)}',
+            highlight=False,
+        )
+        return True
+
+    also_ignored = [name for name in check_run_order(implicitly_ignored_checks(ignored | {check_name})) if ctx.config.checks[name]["enabled"]]
+    if also_ignored:
+        ctx.console.print(f'Ignoring check "{check_name}" will also implicitly ignore these checks for this album:')
+        for name in also_ignored:
+            ctx.console.print(f"  - {name}")
     if confirm(f'Do you want to ignore the check "{check_name}" for this album?'):
         album.ignore_checks.append(check_name)
         session.commit()

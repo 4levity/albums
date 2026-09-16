@@ -1,4 +1,4 @@
-"""Cross-cutting tests over the whole migration chain (all of 01-18)."""
+"""Cross-cutting tests over the whole migration chain (all versions)."""
 
 import pytest
 from sqlalchemy import text

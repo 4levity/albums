@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
 from albums.app import Context
-from albums.checks.all import ALL_CHECK_NAMES
+from albums.checks.all import ALL_CHECK_NAMES, check_run_order, implicitly_ignored_checks, transitive_dependencies
 from albums.checks.helpers import album_display_name
 from albums.words import pluralize
 
@@ -31,7 +31,15 @@ def checks_notice(ctx: Context, force: bool, check_names: list[str]):
                     ctx.console.print(f"album {album_display_name(ctx, album)} will stop ignoring {target_check}")
                     changed = True
                 elif ctx.is_filtered:  # don't show individual albums if operating on all albums (confirm below)
-                    ctx.console.print(f"album {album_display_name(ctx, album)} was already not ignoring {target_check}")
+                    if target_check in implicitly_ignored_checks(set(album.ignore_checks)):
+                        ignored_dependencies = [
+                            f'"{name}"' for name in check_run_order(transitive_dependencies(target_check) & set(album.ignore_checks))
+                        ]
+                        ctx.console.print(
+                            f"album {album_display_name(ctx, album)} does not explicitly ignore {target_check}: it is implicitly ignored because it depends on ignored {pluralize('check', ignored_dependencies)} {' and '.join(ignored_dependencies)}"
+                        )
+                    else:
+                        ctx.console.print(f"album {album_display_name(ctx, album)} does not ignore {target_check}")
 
             if changed and not error:
                 if force or ctx.is_filtered or confirm(f"stop ignoring {pluralize('check', check_names)} {', '.join(check_names)} for all albums?"):

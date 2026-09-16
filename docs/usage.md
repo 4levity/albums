@@ -97,7 +97,9 @@ future operations. Or use `select` to interactively add or remove albums from a
 list.
 
 `ignore` and `notice` - These commands cause the selected albums to ignore or
-stop ignoring certain checks.
+stop ignoring certain checks. Because a check that depends on an ignored check
+can never run, ignoring a check also implicitly ignores every check that
+depends on it, directly or transitively.
 
 `import` - Search a folder outside the library for new albums, check them for
 tag/picture/filename/etc issues, fix everything interactively, then add them to

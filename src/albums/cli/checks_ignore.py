@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
 from albums.app import Context
-from albums.checks.all import ALL_CHECK_NAMES
+from albums.checks.all import ALL_CHECK_NAMES, check_run_order, implicitly_ignored_checks, transitive_dependencies
 from albums.checks.helpers import album_display_name
 from albums.words import pluralize
 
@@ -28,6 +28,11 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
                     error = True
                 if target_check in album.ignore_checks:
                     ctx.console.print(f"album {album_display_name(ctx, album)} is already configured to ignore {target_check}")
+                elif target_check in implicitly_ignored_checks(set(album.ignore_checks)):
+                    ignored_dependencies = [f'"{name}"' for name in check_run_order(transitive_dependencies(target_check) & set(album.ignore_checks))]
+                    ctx.console.print(
+                        f"cannot ignore {target_check} for album {album_display_name(ctx, album)}: it is already implicitly ignored because it depends on ignored {pluralize('check', ignored_dependencies)} {' and '.join(ignored_dependencies)}"
+                    )
                 else:
                     album.ignore_checks.append(target_check)
                     changed = True

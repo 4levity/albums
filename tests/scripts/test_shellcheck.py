@@ -34,7 +34,7 @@ class TestMain:
         calls = []
         monkeypatch.setattr(os, "execv", lambda path, argv: calls.append((path, argv)))
         shellcheck.main()
-        assert calls == [(binary, (str(binary), "--version"))]
+        assert calls == [(str(binary), (str(binary), "--version"))]
 
     def test_darwin_execs_shellcheck_from_path(self, monkeypatch, tmp_path):
         shell = tmp_path / "shellcheck"
