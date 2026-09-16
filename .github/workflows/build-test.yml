@@ -106,10 +106,10 @@ jobs:
           key: wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-
-      - name: Build Windows installer
-        run: make wine-build
       - name: Run test suite under wine
         run: make wine-pytest
+      - name: Build Windows installer
+        run: make wine-build
       - name: Test installer end-to-end
         run: make wine-e2e
       - name: Upload installer artifact
