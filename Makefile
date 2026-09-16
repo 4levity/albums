@@ -18,7 +18,11 @@ RUFF_FORMAT_CHECK := $(RUFF) format . --check
 RUMDL_CHECK := $(RUMDL) check .
 RUMDL_CHECK_FIX := $(RUMDL) check --fix .
 SHELLCHECK_CHECK := $(SHELLCHECK) hooks/commit-msg hooks/pre-commit hooks/pre-push $(wildcard hooks/*.sh)
-CSPELL_CHECK := $(CSPELL) lint --gitignore * .github
+# cspell skips hidden (dot) files and dirs when walking, so besides `.`
+# (everything else; gitignored paths skipped by --gitignore) the root dot
+# entries are passed explicitly. .git is not listed in .gitignore, so it is
+# excluded explicitly (its objects would otherwise be spell-checked).
+CSPELL_CHECK := $(CSPELL) lint --gitignore --exclude .git . .[!.]*
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
 ifeq ($(QUIET),1)
