@@ -1,6 +1,10 @@
 name: Build / Test
 on:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
+        description: Codecov upload token
 jobs:
   static:
     runs-on: ubuntu-latest

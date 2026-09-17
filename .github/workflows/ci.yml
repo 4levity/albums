@@ -10,3 +10,5 @@ concurrency:
 jobs:
   build-test:
     uses: ./.github/workflows/build-test.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
