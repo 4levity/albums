@@ -389,7 +389,8 @@ class Configuration:
                     if isinstance(value, list) and all(isinstance(item, str) for item in value):
                         config.more_import_paths = tuple(Template(v) for v in value)  # pyright: ignore[reportArgumentType]
                     else:
-                        logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {json.dumps(config.more_import_paths)}")
+                        default = json.dumps([path_T.template for path_T in config.more_import_paths])
+                        logger.warning(f"ignoring {k}={str(value)}, not a list of strings - using default {default}")
                         changed_values = True
                 elif name == "import_scan_max_paths":
                     max_paths = str(value)

@@ -1,6 +1,17 @@
 """Tests for Configuration.from_values() config loading and validation."""
 
-from albums.config import Configuration
+from sqlalchemy.orm import Session
+
+from albums.config import (
+    DEFAULT_IMPORT_SCAN_MAX_PATHS,
+    DEFAULT_MORE_IMPORT_PATHS,
+    Configuration,
+    SettingEntity,
+    _migrate_legacy_convert_profile,
+    config_load,
+    convert_bitrate_label,
+)
+from albums.database import MEMORY, db_open
 
 
 class TestFromValues:
@@ -42,6 +53,80 @@ class TestFromValues:
         config, changed = Configuration.from_values([("nonsense.option", 1)])
         assert changed is True
         assert any("unknown configuration item" in record.message for record in caplog.records)
+
+    def test_key_without_section_warns(self, caplog):
+        """Keys without a dotted section trigger a warning and are ignored."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("nonsense", 1)])
+        assert changed is True
+        assert any("expected section.name" in record.message for record in caplog.records)
+
+    def test_more_import_paths_not_string_list_warns(self, caplog):
+        """A non-list value for more_import_paths triggers a warning and keeps the default."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("settings.more_import_paths", "not-a-list")])
+        assert changed is True
+        assert config.more_import_paths == DEFAULT_MORE_IMPORT_PATHS
+        assert any("not a list of strings" in record.message for record in caplog.records)
+
+    def test_import_scan_max_paths_not_number_warns(self, caplog):
+        """A non-numeric import_scan_max_paths triggers a warning and keeps the default."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("settings.import_scan_max_paths", "abc")])
+        assert changed is True
+        assert config.import_scan_max_paths == DEFAULT_IMPORT_SCAN_MAX_PATHS
+        assert any("not a number" in record.message for record in caplog.records)
+
+    def test_sync_destinations_not_dict_list_warns(self, caplog):
+        """A non-list value for sync_destinations triggers a warning and keeps the default."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("settings.sync_destinations", "not-a-list")])
+        assert changed is True
+        assert config.sync_destinations == []
+        assert any("not a list of sync destination dictionaries" in record.message for record in caplog.records)
+
+    def test_unknown_settings_item_warns(self, caplog):
+        """Unknown settings items trigger a warning."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("settings.nonsense", 1)])
+        assert changed is True
+        assert any("unknown configuration item" in record.message for record in caplog.records)
+
+
+class TestConfigLoad:
+    def test_config_load_saves_repaired_config(self):
+        """config_load re-saves the repaired config after ignoring an invalid stored value."""
+        db = db_open(MEMORY)
+        with Session(db) as session:
+            session.add(SettingEntity(name="settings.import_scan_max_paths", value="abc"))
+            session.commit()
+        config = config_load(db)
+        assert config.import_scan_max_paths == DEFAULT_IMPORT_SCAN_MAX_PATHS
+        with Session(db) as session:
+            assert session.get(SettingEntity, "settings.import_scan_max_paths").value == DEFAULT_IMPORT_SCAN_MAX_PATHS
+
+
+class TestConvertBitrateLabel:
+    def test_flac_is_variable_lossless(self):
+        assert convert_bitrate_label("flac", "") == "variable (lossless)"
+
+    def test_empty_bitrate_is_variable_lossless(self):
+        assert convert_bitrate_label("mp3", "") == "variable (lossless)"
+
+    def test_vbr_and_cbr_labels(self):
+        assert convert_bitrate_label("mp3", "vbr") == "vbr (~192 kbps)"
+        assert convert_bitrate_label("m4a", "192") == "192 kbps"
+
+
+class TestMigrateLegacyConvertProfile:
+    def test_empty_profile_returns_none(self):
+        assert _migrate_legacy_convert_profile("") is None
+
+    def test_bitrate_option_without_value_returns_none(self):
+        assert _migrate_legacy_convert_profile("-b:a mp3") is None
+
+    def test_conflicting_bitrates_return_none(self):
+        assert _migrate_legacy_convert_profile("-b:a 128k -b:a 192k mp3") is None
 
 
 class TestSyncDestinationMigration:
