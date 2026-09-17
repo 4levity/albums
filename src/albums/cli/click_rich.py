@@ -73,8 +73,8 @@ def _truthy(value: str) -> bool | None:
 
 
 def _force_terminal_default() -> bool | None:
-    """Force color output when FORCE_COLOR / PY_COLORS / GITHUB_ACTIONS is set (rich-click parity)."""
-    for env_var in ("FORCE_COLOR", "PY_COLORS", "GITHUB_ACTIONS"):
+    """Force color output when FORCE_COLOR / PY_COLORS is set (rich-click parity, minus its GITHUB_ACTIONS case, which would force color on captured CI output)."""
+    for env_var in ("FORCE_COLOR", "PY_COLORS"):
         if env_var in os.environ:
             return _truthy(os.environ[env_var])
     return None
