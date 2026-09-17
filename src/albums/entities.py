@@ -267,6 +267,26 @@ class OtherFile(Base):
         return self.filename < other.filename
 
 
+class LibraryFolder(Base):
+    """A folder in the library directory tree, recorded by the full library scan.
+
+    Every folder the scanner walks is stored, whether or not it is an album folder, keyed by
+    (parent path, name), with the name also casefolded (``name_cf``) so checks can find sibling
+    folders that differ only in case from the database alone. The table reflects the last full scan.
+    """
+
+    __tablename__ = "library_folder"
+    __table_args__ = (
+        Index("library_folder_path", "parent_path", "name", unique=True),
+        Index("idx_library_folder_cf", "parent_path", "name_cf", "name"),
+    )
+
+    library_folder_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
+    parent_path: Mapped[str] = mapped_column(Text, nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    name_cf: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class Album(Base):
     """Top-level entity representing a physical album folder in the music library.
 

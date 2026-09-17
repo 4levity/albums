@@ -10,6 +10,18 @@ To prevent issues with case-insensitive file systems (and software designed for
 them), filenames should not be "case-insensitive duplicates". For example, an
 album should not have two files named `folder.jpg` and `Folder.JPG`.
 
+## duplicate-folder-name
+
+An album folder, or any folder in its path, should not have a sibling folder
+that is a "case-insensitive duplicate" of it. For example, `Artist/Album` and
+`Artist/album` (or `Artist` and `artist`) can coexist on a case-sensitive file
+system, but they break case-insensitive pathing and conflict in synced copies.
+The check reports such albums using the folders recorded by the last full scan.
+
+There is no automatic fix: renaming folders that differ only in case can be
+dangerous on some file systems or mounts. Rename the folders manually, then run
+a full scan (`albums scan`) to update the check's data.
+
 ## illegal-pathname
 
 Filenames should not include invalid characters or be operating system reserved

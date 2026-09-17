@@ -23,7 +23,7 @@ class CheckDuplicatePathname(Check):
         for duplicate_filename in (filename for (filename, count) in filenames.items() if count > 1):
             issues.add(f"non-unique filename - {filenames[duplicate_filename]} files are variations of {duplicate_filename}")
 
-        # TODO also check album.path
+        # the album's own path elements are checked by the duplicate-folder-name check
 
         if issues:
             # TODO fix by automatically renaming affected files
