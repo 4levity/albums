@@ -1,7 +1,14 @@
+import os
+
+import pytest
+
 from albums.app import Context
+from albums.checks.check_types import FixResult
 from albums.checks.fields.check_genre_present import CheckGenrePresent
 from albums.entities import Album, Track
-from albums.tagger import BasicField
+from albums.tagger import AlbumTagger, BasicField
+
+from ...fixtures.create_library import create_library
 
 
 class TestCheckGenrePresent:
@@ -39,3 +46,36 @@ class TestCheckGenrePresent:
         result = CheckGenrePresent(ctx).check(album)
         assert result is not None
         assert "genre policy=ALWAYS but it is not on all tracks" in result.message
+
+    def test_select_genres_must_be_list_of_strings(self):
+        ctx = Context()
+        ctx.config.checks[CheckGenrePresent.name]["select_genres"] = "Rock"
+        with pytest.raises(ValueError, match="select_genres"):
+            CheckGenrePresent(ctx)
+        ctx.config.checks[CheckGenrePresent.name]["select_genres"] = ["Rock", 3]  # pyright: ignore[reportArgumentType]
+        with pytest.raises(ValueError):
+            CheckGenrePresent(ctx)
+
+    def test_unsupported_file_type_skipped(self):
+        tracks = [Track(filename="1.xyz", tag={BasicField.GENRE: "Rock"})]
+        album = Album(path="foo", tracks=tracks)
+        assert CheckGenrePresent(Context()).check(album) is None
+
+
+class TestFixSetGenre:
+    def test_fix_set_genre(self):
+        tracks = [
+            Track(filename="1.flac", tag={BasicField.GENRE: "Jazz"}),
+            Track(filename="2.flac", tag={BasicField.GENRE: "Rock"}),
+        ]
+        album = Album(path="foo" + os.sep, tracks=tracks)
+        library = create_library("genre_fix", [album])
+        ctx = Context()
+        ctx.config.library = library
+        result = CheckGenrePresent(ctx).check(album)
+        assert result is not None and result.fixer
+        assert result.fixer.fix("Jazz") == FixResult.CHANGED_ALBUM
+        tagger = AlbumTagger(library / album.path)
+        for filename in ("1.flac", "2.flac"):
+            with tagger.open(filename) as tag:
+                assert dict(tag.get_fields())[BasicField.GENRE] == ("Jazz",)
