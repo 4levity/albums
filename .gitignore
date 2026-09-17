@@ -12,7 +12,7 @@ node_modules/
 /src/albums/_version.py
 /tests/fixtures/libraries/
 /tests/tmp/
-/htmlcov
+/coverage.xml
 /site
 /docs/images/
 /build

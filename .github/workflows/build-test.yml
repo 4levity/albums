@@ -46,12 +46,15 @@ jobs:
         env:
           TERM: "dumb"
         run: make coverage
-      - name: Upload coverage report
+      - name: Upload to Codecov
         if: matrix.python == '3.14'
-        uses: actions/upload-artifact@v7
+        uses: codecov/codecov-action@v5
         with:
-          name: coverage-py314
-          path: htmlcov/
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Add coverage link to job summary
+        if: matrix.python == '3.14'
+        run: 'echo "Coverage report: https://app.codecov.io/gh/4levity/albums" >> "$GITHUB_STEP_SUMMARY"'
 
   package:
     runs-on: ubuntu-latest
