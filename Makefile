@@ -116,8 +116,8 @@ test: install ## Run all tests, fail on any warnings
 	$(UV) run pytest --max-warnings=0
 
 coverage: install ## Run all tests with coverage, fail on any warnings
-	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=html
-	@echo Coverage report in file://$(CURDIR)/htmlcov/index.html
+	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=xml
+	@echo Coverage XML in $(CURDIR)/coverage.xml
 
 # regenerate sample db if schema or schema-creation code changed
 SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \
@@ -206,7 +206,6 @@ clean: ## Remove build and test files
 	rm -rf docs/images
 	rm -rf site
 	rm -rf docs/.cache
-	rm -rf htmlcov
 	rm -rf .coverage
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
