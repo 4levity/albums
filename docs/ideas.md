@@ -44,3 +44,11 @@ icon: lucide/flask-conical
 - speed up first scan/reread with worker threads reading file metadata
   (mutagen + picture scan) into plain data, applied to the ORM by the main
   thread (sessions aren't thread-safe); est. 3-4x on the file-reading phase
+
+### Check performance
+
+- Defer per-check setup until first use: `duplicate-album` builds its
+  duplicate-group index in `__init__` even when `check()` never runs for it
+  (e.g. a non-persistent `--dir` run, or a run where no album passes its
+  `album`/`artist` dependencies). Build it lazily on the first `check()` call
+  instead.

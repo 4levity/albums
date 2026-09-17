@@ -148,8 +148,9 @@ seconds):
    attributes should be set in `init()` from the check configuration (or be the
    injected `ctx`/`tagger`/`session`), and `check()` must not set any state on
    the Check object. The one exception is `duplicate-album`, which holds an
-   in-memory index of the library built in `__init__` to compare albums across
-   the whole library; see its docstring for the justification.
+   in-memory index of the duplicate (artist, album name) groups, built in
+   `__init__` by a single grouped query, to compare albums across the whole
+   library; see its docstring for the justification.
 
 Related guidance:
 
