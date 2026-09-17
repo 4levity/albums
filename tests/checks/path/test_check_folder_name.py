@@ -98,9 +98,13 @@ class TestCheckFolderName:
                 assert not (ctx.config.library / "Foo (2026)").exists()
                 assert (ctx.config.library / "Foo").exists()
 
+                # the rescan reports a change: the library folder table picks up the renamed folder;
+                # the following scan is stable
                 (_, any_changes) = run_scan(ctx, session)
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert "cover-unique" in album.ignore_checks
+                assert any_changes
+                (_, any_changes) = run_scan(ctx, session)
                 assert not any_changes
 
         finally:

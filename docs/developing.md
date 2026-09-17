@@ -97,8 +97,8 @@ checkout, and `write` writes the `_version.py` file:
 
 - **`Context`** (`app.py`) - Carries shared state (db engine, config, console)
   across invocation.
-- **`Album`/`Track`/`PictureFile`/`OtherFile`** (`entities.py`) - SQLAlchemy ORM
-  models representing the data model.
+- **`Album`/`Track`/`PictureFile`/`OtherFile`/`LibraryFolder`** (`entities.py`)
+  SQLAlchemy ORM models representing the data model.
 - **`CheckConfiguration`** (`checks/check_types.py`) - Per-check config dict
   type.
 - **`Fixer`/`CheckResult`** (`checks/check_types.py`) - Problem reporting and
