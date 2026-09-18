@@ -6,7 +6,10 @@ from albums.tagger import BasicField
 
 class TestCheckReleaseTypeField:
     def test_releasetype_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.RELEASETYPE: "Album"}), Track(filename="2.flac", tag={BasicField.RELEASETYPE: "Album"})]
+        tracks = [
+            Track(filename="1.flac", fields={BasicField.RELEASETYPE: "Album"}),
+            Track(filename="2.flac", fields={BasicField.RELEASETYPE: "Album"}),
+        ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeField(Context()).check(album)
         assert result is None
@@ -19,8 +22,8 @@ class TestCheckReleaseTypeField:
 
     def test_releasetype_ok_multi(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
-            Track(filename="2.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="1.flac", fields={BasicField.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="2.flac", fields={BasicField.RELEASETYPE: ["Live", "Album"]}),
         ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeField(Context()).check(album)
@@ -28,8 +31,8 @@ class TestCheckReleaseTypeField:
 
     def test_releasetype_conflict_multi(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.RELEASETYPE: ["Live", "Album"]}),
-            Track(filename="2.flac", tag={BasicField.RELEASETYPE: ["Live"]}),
+            Track(filename="1.flac", fields={BasicField.RELEASETYPE: ["Live", "Album"]}),
+            Track(filename="2.flac", fields={BasicField.RELEASETYPE: ["Live"]}),
         ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseTypeField(Context()).check(album)

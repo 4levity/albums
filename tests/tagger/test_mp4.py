@@ -16,7 +16,7 @@ UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
 track1 = Track(
     filename="1.m4a",
-    tag={
+    fields={
         BasicField.ARTIST: "A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",
@@ -42,7 +42,7 @@ track1 = Track(
 )
 track2 = Track(
     filename="2.mp4",
-    tag={
+    fields={
         BasicField.ARTIST: "A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",

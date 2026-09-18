@@ -14,15 +14,15 @@ from ...helpers import apply_automatic_fix
 class TestCheckTrackFilename:
     def test_track_filename_ok(self):
         tracks = [
-            Track(filename="1 foo.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
-            Track(filename="2 bar.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
+            Track(filename="1 foo.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="2 bar.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
         ]
         assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_ok_custom_format(self):
         tracks = [
-            Track(filename="1 - foo.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
-            Track(filename="2 - bar.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
+            Track(filename="1 - foo.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="2 - bar.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
         ]
         ctx = Context()
         ctx.config.checks["track-filename"]["format"] = "$track_auto - $title_auto"
@@ -32,11 +32,11 @@ class TestCheckTrackFilename:
         tracks = [
             Track(
                 filename="[disc 1 track 1] baz - foo.flac",
-                tag={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "1", BasicField.ARTIST: "baz", BasicField.TITLE: "foo"},
+                fields={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "1", BasicField.ARTIST: "baz", BasicField.TITLE: "foo"},
             ),
             Track(
                 filename="[disc 1 track 2] baz - bar.flac",
-                tag={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "2", BasicField.ARTIST: "baz", BasicField.TITLE: "bar"},
+                fields={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "2", BasicField.ARTIST: "baz", BasicField.TITLE: "bar"},
             ),
         ]
         ctx = Context()
@@ -45,17 +45,17 @@ class TestCheckTrackFilename:
 
     def test_track_filename_ok_no_title(self):
         tracks = [
-            Track(filename="1 Track 1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-            Track(filename="2 Track 2.flac", tag={BasicField.TRACKNUMBER: "2"}),
+            Track(filename="1 Track 1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+            Track(filename="2 Track 2.flac", fields={BasicField.TRACKNUMBER: "2"}),
         ]
         assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_disc_ok(self):
         tracks = [
-            Track(filename="2-01 foo.flac", tag={BasicField.DISCNUMBER: "2", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "foo"}),
+            Track(filename="2-01 foo.flac", fields={BasicField.DISCNUMBER: "2", BasicField.TRACKNUMBER: "01", BasicField.TITLE: "foo"}),
             Track(
                 filename="2-02 bar.flac",
-                tag={
+                fields={
                     BasicField.DISCNUMBER: "2",
                     BasicField.TRACKNUMBER: "02",
                     BasicField.TITLE: "bar",
@@ -68,7 +68,7 @@ class TestCheckTrackFilename:
         tracks = [
             Track(
                 filename="1 baz - foo.flac",
-                tag={
+                fields={
                     BasicField.TRACKNUMBER: "1",
                     BasicField.TITLE: "foo",
                     BasicField.ARTIST: "baz",
@@ -77,7 +77,7 @@ class TestCheckTrackFilename:
             ),
             Track(
                 filename="2 mob - bar.flac",
-                tag={
+                fields={
                     BasicField.TRACKNUMBER: "2",
                     BasicField.TITLE: "bar",
                     BasicField.ARTIST: "mob",
@@ -91,7 +91,7 @@ class TestCheckTrackFilename:
         tracks = [
             Track(
                 filename="1 foo.flac",
-                tag={
+                fields={
                     BasicField.TRACKNUMBER: "1",
                     BasicField.TITLE: "foo",
                     BasicField.ARTIST: "baz",
@@ -100,7 +100,7 @@ class TestCheckTrackFilename:
             ),
             Track(
                 filename="2 mob - bar.flac",
-                tag={
+                fields={
                     BasicField.TRACKNUMBER: "2",
                     BasicField.TITLE: "bar",
                     BasicField.ARTIST: "mob",
@@ -112,8 +112,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_not_unique(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
-            Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
         ]
         result = CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
         assert result
@@ -121,7 +121,7 @@ class TestCheckTrackFilename:
 
     def test_track_filename_blank(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
             Track(filename="2.flac"),
         ]
         result = CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
@@ -130,9 +130,9 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set(self, mocker):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
-            Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
-            Track(filename="3 is correct.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "is correct"}),
+            Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
+            Track(filename="3 is correct.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "is correct"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -150,16 +150,16 @@ class TestCheckTrackFilename:
     def test_track_filename_pad_m4a(self, mocker):
         # these track numbers get padding per default zero-pad-numbers settings because m4a track numbers are numeric and cannot store formatting
         tracks = [
-            Track(filename="1.m4a", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
-            Track(filename="10.m4a", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
-            Track(filename="2.m4a", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
-            Track(filename="3.m4a", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
-            Track(filename="4.m4a", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
-            Track(filename="5.m4a", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
-            Track(filename="6.m4a", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
-            Track(filename="7.m4a", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
-            Track(filename="8.m4a", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
-            Track(filename="9.m4a", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+            Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="2.m4a", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.m4a", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.m4a", fields={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.m4a", fields={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.m4a", fields={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.m4a", fields={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.m4a", fields={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.m4a", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -191,16 +191,16 @@ class TestCheckTrackFilename:
         # ctx.stored_checks["zero-pad-numbers"]["enabled"] is still True (set from defaults at Context creation)
         assert ctx.stored_checks["zero-pad-numbers"]["enabled"]
         tracks = [
-            Track(filename="1.m4a", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
-            Track(filename="10.m4a", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
-            Track(filename="2.m4a", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
-            Track(filename="3.m4a", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
-            Track(filename="4.m4a", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
-            Track(filename="5.m4a", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
-            Track(filename="6.m4a", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
-            Track(filename="7.m4a", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
-            Track(filename="8.m4a", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
-            Track(filename="9.m4a", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+            Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="2.m4a", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.m4a", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.m4a", fields={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.m4a", fields={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.m4a", fields={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.m4a", fields={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.m4a", fields={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.m4a", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(ctx).check(album)
@@ -230,16 +230,16 @@ class TestCheckTrackFilename:
         ctx.stored_checks["zero-pad-numbers"]["enabled"] = False
         ctx.config.checks["zero-pad-numbers"]["enabled"] = True
         tracks = [
-            Track(filename="1.m4a", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
-            Track(filename="10.m4a", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
-            Track(filename="2.m4a", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
-            Track(filename="3.m4a", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
-            Track(filename="4.m4a", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
-            Track(filename="5.m4a", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
-            Track(filename="6.m4a", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
-            Track(filename="7.m4a", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
-            Track(filename="8.m4a", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
-            Track(filename="9.m4a", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+            Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="2.m4a", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.m4a", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.m4a", fields={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.m4a", fields={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.m4a", fields={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.m4a", fields={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.m4a", fields={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.m4a", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(ctx).check(album)
@@ -265,16 +265,16 @@ class TestCheckTrackFilename:
     def test_track_filename_use_formatted_tag(self, mocker):
         # unlike above test, these track numbers will not get padding because ID3 track numbers are formatted strings
         tracks = [
-            Track(filename="1.mp3", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
-            Track(filename="2.mp3", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
-            Track(filename="3.mp3", tag={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
-            Track(filename="4.mp3", tag={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
-            Track(filename="5.mp3", tag={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
-            Track(filename="6.mp3", tag={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
-            Track(filename="7.mp3", tag={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
-            Track(filename="8.mp3", tag={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
-            Track(filename="9.mp3", tag={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
-            Track(filename="10.mp3", tag={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
+            Track(filename="1.mp3", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
+            Track(filename="2.mp3", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "two"}),
+            Track(filename="3.mp3", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "three"}),
+            Track(filename="4.mp3", fields={BasicField.TRACKNUMBER: "4", BasicField.TITLE: "four"}),
+            Track(filename="5.mp3", fields={BasicField.TRACKNUMBER: "5", BasicField.TITLE: "five"}),
+            Track(filename="6.mp3", fields={BasicField.TRACKNUMBER: "6", BasicField.TITLE: "six"}),
+            Track(filename="7.mp3", fields={BasicField.TRACKNUMBER: "7", BasicField.TITLE: "seven"}),
+            Track(filename="8.mp3", fields={BasicField.TRACKNUMBER: "8", BasicField.TITLE: "eight"}),
+            Track(filename="9.mp3", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
+            Track(filename="10.mp3", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -299,8 +299,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_swap(self, mocker):
         tracks = [
-            Track(filename="1 foo.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
-            Track(filename="2 bar.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
+            Track(filename="1 foo.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
+            Track(filename="2 bar.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -319,8 +319,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal(self, mocker):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo?bar"}),
-            Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
+            Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo?bar"}),
+            Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
         result = CheckTrackFilename(Context()).check(album)
@@ -337,8 +337,8 @@ class TestCheckTrackFilename:
 
     def test_track_filename_set_illegal_custom(self, mocker):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo?bar"}),
-            Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
+            Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo?bar"}),
+            Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
         ctx = Context()

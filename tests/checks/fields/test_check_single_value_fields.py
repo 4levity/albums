@@ -14,8 +14,8 @@ class TestCheckSingleValueFields:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueFields(Context()).check(album)
@@ -27,12 +27,12 @@ class TestCheckSingleValueFields:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={
+                    fields={
                         BasicField.ARTIST: ["Alice", "Bob"],
                         BasicField.TITLE: ["blue", "no, yellow"],
                     },
                 ),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckSingleValueFields(Context()).check(album)
@@ -65,8 +65,8 @@ class TestCheckSingleValueFields:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: ["Alice", "Bob"], BasicField.TITLE: ["blue", "no, yellow"]}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: ["Alice", "Bob"], BasicField.TITLE: ["blue", "no, yellow"]}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         ctx = Context()
@@ -91,7 +91,7 @@ class TestCheckSingleValueFields:
     def test_single_value_fields_duplicates(self, mocker):
         album = Album(
             path="",
-            tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: ["Alice", "Alice", "Bob"], BasicField.TITLE: ["blue", "blue", "blue"]})],
+            tracks=[Track(filename="1.flac", fields={BasicField.ARTIST: ["Alice", "Alice", "Bob"], BasicField.TITLE: ["blue", "blue", "blue"]})],
         )
         result = CheckSingleValueFields(Context()).check(album)
         assert "multiple values for single value fields" in result.message

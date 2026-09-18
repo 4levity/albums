@@ -174,7 +174,7 @@ class TestTranscoder:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={BasicField.TITLE: "one"},
+                    fields={BasicField.TITLE: "one"},
                     pictures=[TrackPicture(picture_info=PictureInfo("image/jpeg", 400, 400, 24, 1024, b""), picture_type=PictureType.COVER_FRONT)],
                 )
             ],

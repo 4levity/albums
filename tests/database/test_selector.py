@@ -19,7 +19,7 @@ class TestSelector:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={BasicField.TITLE: "Foo", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists", BasicField.ALBUM: "=:="},
+                    fields={BasicField.TITLE: "Foo", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists", BasicField.ALBUM: "=:="},
                     stream=StreamInfo(1.0, 128000, 6, "FLAC", 48000, 24),
                     pictures=[
                         TrackPicture(
@@ -44,12 +44,12 @@ class TestSelector:
                 Track(
                     filename="1.flac",
                     stream=StreamInfo(1.0, 64000, 2, "FLAC", 44100, 16),
-                    tag={BasicField.TITLE: "A", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
+                    fields={BasicField.TITLE: "A", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
                 ),
                 Track(
                     filename="2.flac",
                     stream=StreamInfo(1.0, 128000, 2, "MP3", 44100, 0),
-                    tag={BasicField.TITLE: "Foo", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
+                    fields={BasicField.TITLE: "Foo", BasicField.ARTIST: "Baz", BasicField.ALBUM: "al bum"},
                 ),
             ],
             collections=["bar"],

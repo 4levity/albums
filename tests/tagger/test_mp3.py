@@ -18,7 +18,7 @@ UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.mp3",
-    tag={
+    fields={
         BasicField.ARTIST: "A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",
@@ -43,7 +43,7 @@ track = Track(
 # release date stored only in the deprecated TDRL frame, as is common in the wild
 track_tdrl = Track(
     filename="2.mp3",
-    tag={BasicField.DATE: "2019"},
+    fields={BasicField.DATE: "2019"},
     legacy_fields=["TDRL"],
 )
 album = Album(path="baz" + os.sep, tracks=[track, track_tdrl])

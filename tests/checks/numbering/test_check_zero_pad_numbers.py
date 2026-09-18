@@ -14,16 +14,16 @@ class TestZeroPadNumbers:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3"}),
-                Track(filename="4.flac", tag={BasicField.TRACKNUMBER: "4"}),
-                Track(filename="5.flac", tag={BasicField.TRACKNUMBER: "5"}),
-                Track(filename="6.flac", tag={BasicField.TRACKNUMBER: "6"}),
-                Track(filename="7.flac", tag={BasicField.TRACKNUMBER: "7"}),
-                Track(filename="8.flac", tag={BasicField.TRACKNUMBER: "8"}),
-                Track(filename="9.flac", tag={BasicField.TRACKNUMBER: "9"}),
-                Track(filename="10.flac", tag={BasicField.TRACKNUMBER: "10"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3"}),
+                Track(filename="4.flac", fields={BasicField.TRACKNUMBER: "4"}),
+                Track(filename="5.flac", fields={BasicField.TRACKNUMBER: "5"}),
+                Track(filename="6.flac", fields={BasicField.TRACKNUMBER: "6"}),
+                Track(filename="7.flac", fields={BasicField.TRACKNUMBER: "7"}),
+                Track(filename="8.flac", fields={BasicField.TRACKNUMBER: "8"}),
+                Track(filename="9.flac", fields={BasicField.TRACKNUMBER: "9"}),
+                Track(filename="10.flac", fields={BasicField.TRACKNUMBER: "10"}),
             ],
         )
         ctx = Context()
@@ -52,7 +52,7 @@ class TestZeroPadNumbers:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={
+                    fields={
                         BasicField.TRACKNUMBER: "01",
                         BasicField.TRACKTOTAL: "02",
                         BasicField.DISCNUMBER: "01",
@@ -61,7 +61,7 @@ class TestZeroPadNumbers:
                 ),
                 Track(
                     filename="2.flac",
-                    tag={
+                    fields={
                         BasicField.TRACKNUMBER: "02",
                         BasicField.TRACKTOTAL: "02",
                         BasicField.DISCNUMBER: "01",
@@ -160,7 +160,7 @@ class TestZeroPadNumbers:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={
+                    fields={
                         BasicField.TRACKNUMBER: "01",
                         BasicField.TRACKTOTAL: "2",
                         BasicField.DISCNUMBER: "01",
@@ -169,7 +169,7 @@ class TestZeroPadNumbers:
                 ),
                 Track(
                     filename="2.flac",
-                    tag={
+                    fields={
                         BasicField.TRACKNUMBER: "2",
                         BasicField.TRACKTOTAL: "2",
                         BasicField.DISCNUMBER: "1",
@@ -207,7 +207,7 @@ class TestZeroPadNumbers:
         )
 
     def test_check_pad_with_id3(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.mp3", tag={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "2"})])
+        album = Album(path="", tracks=[Track(filename="1.mp3", fields={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "2"})])
         ctx = Context()
         ctx.config.checks = {
             "zero-pad-numbers": {

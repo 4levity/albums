@@ -26,7 +26,7 @@ track2 = Track(
 )
 track3 = Track(
     filename="3.flac",
-    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2", BasicField.DATE: "2020"},
+    fields={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2", BasicField.DATE: "2020"},
     legacy_fields=["label", "album artist", "totaldiscs"],
 )
 

@@ -18,7 +18,7 @@ UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.wma",
-    tag={
+    fields={
         BasicField.ARTIST: "A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",

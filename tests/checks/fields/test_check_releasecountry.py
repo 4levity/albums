@@ -6,7 +6,10 @@ from albums.tagger import BasicField
 
 class TestCheckReleaseCountryField:
     def test_releasecountry_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.RELEASECOUNTRY: "US"}), Track(filename="2.flac", tag={BasicField.RELEASECOUNTRY: "US"})]
+        tracks = [
+            Track(filename="1.flac", fields={BasicField.RELEASECOUNTRY: "US"}),
+            Track(filename="2.flac", fields={BasicField.RELEASECOUNTRY: "US"}),
+        ]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseCountryField(Context()).check(album)
         assert result is None
@@ -18,7 +21,7 @@ class TestCheckReleaseCountryField:
         assert result is None
 
     def test_releasecountry_ok_inconsistent(self):
-        tracks = [Track(filename="1.flac"), Track(filename="2.flac", tag={BasicField.RELEASECOUNTRY: "US"})]
+        tracks = [Track(filename="1.flac"), Track(filename="2.flac", fields={BasicField.RELEASECOUNTRY: "US"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseCountryField(Context()).check(album)
         assert result is not None
@@ -28,7 +31,7 @@ class TestCheckReleaseCountryField:
         assert result.fixer.option_automatic_index == 0
 
     def test_releasecountry_ok_inconsistent_mixed(self):
-        tracks = [Track(filename="1.flac"), Track(filename="2.mp3", tag={BasicField.RELEASECOUNTRY: "US"})]
+        tracks = [Track(filename="1.flac"), Track(filename="2.mp3", fields={BasicField.RELEASECOUNTRY: "US"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseCountryField(Context()).check(album)
         assert result is not None

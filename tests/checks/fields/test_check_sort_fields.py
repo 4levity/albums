@@ -13,7 +13,7 @@ from ...helpers import MockTagger, apply_automatic_fix
 
 
 def _album(*tags):
-    return Album(path="album", tracks=[Track(filename=f"{n}.flac", tag=tag) for n, tag in enumerate(tags, 1)])
+    return Album(path="album", tracks=[Track(filename=f"{n}.flac", fields=tag) for n, tag in enumerate(tags, 1)])
 
 
 def _run(check_cls, album, presence="consistent"):

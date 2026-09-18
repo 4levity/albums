@@ -16,7 +16,7 @@ UUID0 = "00000000-0000-0000-0000-000000000000"
 UUID1 = "11111111-1111-1111-1111-111111111111"
 track = Track(
     filename="1.ogg",
-    tag={
+    fields={
         BasicField.ARTIST: "C",
         BasicField.TITLE: "one",
         BasicField.ALBUM: "foobar",
@@ -39,7 +39,7 @@ track = Track(
 )
 track_legacy = Track(
     filename="2.ogg",
-    tag={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
+    fields={BasicField.ORGANIZATION: "ABC", BasicField.ALBUMARTIST: "foo artist", BasicField.DISCTOTAL: "2"},
     legacy_fields=["label", "album artist", "totaldiscs"],
 )
 album = Album(path="foobar" + os.sep, tracks=[track, track_legacy])

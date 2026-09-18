@@ -65,7 +65,7 @@ class TestCheckInvalidTrackOrDiscNumber:
                 Track(filename="1.flac"),  # no tags is ok
                 Track(
                     filename="2.flac",
-                    tag={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "12", BasicField.DISCNUMBER: "01", BasicField.DISCTOTAL: "2"},
+                    fields={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "12", BasicField.DISCNUMBER: "01", BasicField.DISCTOTAL: "2"},
                 ),
             ],
         )
@@ -73,11 +73,11 @@ class TestCheckInvalidTrackOrDiscNumber:
         assert not result
 
     def test_unsupported_track_number_format(self):
-        album = Album(path="", tracks=[Track(filename="1.m4a", tag={BasicField.TRACKTOTAL: ["9", "09"]})])
+        album = Album(path="", tracks=[Track(filename="1.m4a", fields={BasicField.TRACKTOTAL: ["9", "09"]})])
         assert CheckInvalidTrackOrDiscNumber(Context()).check(album) is None
 
     def test_duplicate_values_are_kept(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["1", "1"]})])
+        album = Album(path="", tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: ["1", "1"]})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.message == "bad values in track/disc number fields: tracknumber (multiple values) on 1 track"
@@ -97,8 +97,8 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: ["9", "09"]}),  # will be set to 9
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "9"}),  # valid
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: ["9", "09"]}),  # will be set to 9
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "9"}),  # valid
             ],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -120,7 +120,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         mock_set_basic_fields.assert_called_once_with(Path(album.path) / "1.flac", [(BasicField.TRACKTOTAL, "9")])
 
     def test_multiple_distinct_values_are_removed(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["1", "2"]})])  # ambiguous will be deleted
+        album = Album(path="", tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: ["1", "2"]})])  # ambiguous will be deleted
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.message == "bad values in track/disc number fields: tracknumber (multiple values) on 1 track"
@@ -135,7 +135,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         mock_set_basic_fields.assert_called_once_with(Path(album.path) / "1.flac", [(BasicField.TRACKNUMBER, None)])
 
     def test_non_numeric_value_is_removed(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "one"})])
+        album = Album(path="", tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "one"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.message == "bad values in track/disc number fields: tracknumber (non-numeric values) on 1 track"
@@ -149,7 +149,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         mock_set_basic_fields.assert_called_once_with(Path(album.path) / "1.flac", [(BasicField.TRACKNUMBER, None)])
 
     def test_zero_value_is_removed(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "0"})])
+        album = Album(path="", tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "0"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.message == "bad values in track/disc number fields: tracknumber (value is 0) on 1 track"
@@ -166,8 +166,8 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["0", "1"]}),  # 1 will be kept
-                Track(filename="2.flac", tag={BasicField.TRACKTOTAL: ["x", "7"]}),  # 7 will be kept
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: ["0", "1"]}),  # 1 will be kept
+                Track(filename="2.flac", fields={BasicField.TRACKTOTAL: ["x", "7"]}),  # 7 will be kept
             ],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -199,7 +199,7 @@ class TestCheckInvalidTrackOrDiscNumber:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={
+                    fields={
                         BasicField.TRACKNUMBER: ["1", "1"],  # 1 will be kept
                         BasicField.TRACKTOTAL: ["9", "09"],  # 9 will be kept
                         BasicField.DISCNUMBER: "foo",  # removed
@@ -233,9 +233,9 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(
             path="",
             tracks=[
-                Track(filename="2.b.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: ["9", "09"]}),
-                Track(filename="1.a.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="3.c.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.DISCTOTAL: "2"}),
+                Track(filename="2.b.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: ["9", "09"]}),
+                Track(filename="1.a.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="3.c.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.DISCTOTAL: "2"}),
             ],
         )
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
@@ -253,7 +253,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: ["1", "2"]}),  # ambiguous will be deleted
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: ["1", "2"]}),  # ambiguous will be deleted
                 Track(filename="2.flac"),  # no number fields at all, leave alone
             ],
         )
@@ -267,7 +267,7 @@ class TestCheckInvalidTrackOrDiscNumber:
         mock_set_basic_fields.assert_called_once_with(Path(album.path) / "1.flac", [(BasicField.TRACKNUMBER, None)])
 
     def test_invalid_option_raises(self):
-        album = Album(path="", tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "0"})])
+        album = Album(path="", tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "0"})])
         result = CheckInvalidTrackOrDiscNumber(Context()).check(album)
         assert result
         assert result.fixer
@@ -279,7 +279,7 @@ class TestCheckInvalidTrackOrDiscNumberInteractive:
     def test_interactive_fix(self, mocker):
         album = Album(
             path="foo",
-            tracks=[Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: ["9", "09"]})],
+            tracks=[Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: ["9", "09"]})],
         )
         ctx = Context()
         ctx.db = db_open(MEMORY)

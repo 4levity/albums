@@ -15,14 +15,14 @@ from ..fixtures.create_library import create_library
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
+        tracks=[Track(filename="1.mp3", fields={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
-            Track(filename="2.flac", tag={BasicField.TITLE: "two", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
+            Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
+            Track(filename="2.flac", fields={BasicField.TITLE: "two", BasicField.ALBUM: "bar", BasicField.ARTIST: "foo"}),
         ],
     ),
 ]

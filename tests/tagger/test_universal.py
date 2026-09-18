@@ -12,8 +12,8 @@ from ..fixtures.create_library import create_library
 album = Album(
     path="foo" + os.sep,
     tracks=[
-        Track(filename="1.ogg", tag={BasicField.ARTIST: "C", BasicField.TITLE: "one", BasicField.ALBUM: "foobar"}),
-        Track(filename="2.ogg", tag={BasicField.ORGANIZATION: "ABC", BasicField.DISCTOTAL: "2"}, legacy_fields=["label", "totaldiscs"]),
+        Track(filename="1.ogg", fields={BasicField.ARTIST: "C", BasicField.TITLE: "one", BasicField.ALBUM: "foobar"}),
+        Track(filename="2.ogg", fields={BasicField.ORGANIZATION: "ABC", BasicField.DISCTOTAL: "2"}, legacy_fields=["label", "totaldiscs"]),
     ],
 )
 picture = Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, "")

@@ -33,30 +33,30 @@ class TestScanner:
         Album(
             path="bar" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "1"}),
-                Track(filename="2.flac", tag={BasicField.TITLE: "2"}),
-                Track(filename="3.flac", tag={BasicField.TITLE: "3"}),
+                Track(filename="1.flac", fields={BasicField.TITLE: "1"}),
+                Track(filename="2.flac", fields={BasicField.TITLE: "2"}),
+                Track(filename="3.flac", fields={BasicField.TITLE: "3"}),
             ],
             picture_files=[PictureFile(filename="cover.jpg", picture_info=PictureInfo("image/png", 410, 410, 24, 0, b""))],
         ),
         Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1"}), Track(filename="2.mp3", tag={BasicField.TITLE: "2"})],
+            tracks=[Track(filename="1.mp3", fields={BasicField.TITLE: "1"}), Track(filename="2.mp3", fields={BasicField.TITLE: "2"})],
         ),
         Album(
             path="baz" + os.sep,
-            tracks=[Track(filename="1.wma", tag={BasicField.TITLE: "one"}), Track(filename="2.wma", tag={BasicField.TITLE: "two"})],
+            tracks=[Track(filename="1.wma", fields={BasicField.TITLE: "one"}), Track(filename="2.wma", fields={BasicField.TITLE: "two"})],
         ),
         Album(
             path="eee" + os.sep,
             tracks=[
-                Track(filename="1.m4a", tag={BasicField.TITLE: "one"}),
-                Track(filename="2.m4a", tag={BasicField.TITLE: "two"}),
+                Track(filename="1.m4a", fields={BasicField.TITLE: "one"}),
+                Track(filename="2.m4a", fields={BasicField.TITLE: "two"}),
             ],
         ),
         Album(
             path="mob" + os.sep,
-            tracks=[Track(filename="1.aiff", tag={BasicField.TITLE: "one"}), Track(filename="2.aiff", tag={BasicField.TITLE: "two"})],
+            tracks=[Track(filename="1.aiff", fields={BasicField.TITLE: "one"}), Track(filename="2.aiff", fields={BasicField.TITLE: "two"})],
         ),
     ]
 
@@ -131,7 +131,7 @@ class TestScanner:
         big_picture = PictureInfo("image/bmp", big_image_dimension, big_image_dimension, 24, 0, b"")
         album = Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp4", tag={BasicField.TITLE: "1"})],
+            tracks=[Track(filename="1.mp4", fields={BasicField.TITLE: "1"})],
             other_files=[OtherFile(filename="bonus_video.mp4")],  # create_library will make this a video because it's in other_files
             picture_files=[
                 PictureFile(filename="large.bmp", picture_info=big_picture),
@@ -285,7 +285,7 @@ class TestScanner:
         db = db_open(MEMORY)
         album = Album(
             path="foo" + os.sep,
-            tracks=[Track(filename="1.mp4", tag={BasicField.TITLE: "1"})],
+            tracks=[Track(filename="1.mp4", fields={BasicField.TITLE: "1"})],
             other_files=[OtherFile(filename="bonus_video.mp4")],  # create_library will make this a video because it's in other_files
         )
         try:
@@ -480,7 +480,7 @@ class TestScanner:
                 tracks=[
                     Track(
                         filename="1.flac",
-                        tag={BasicField.TITLE: "1"},
+                        fields={BasicField.TITLE: "1"},
                         pictures=[
                             TrackPicture(picture_info=PictureInfo("image/png", 402, 402, 24, 1, b""), picture_type=PictureType.COVER_FRONT),
                             TrackPicture(picture_info=PictureInfo("image/png", 401, 401, 24, 1, b""), picture_type=PictureType.COVER_BACK),

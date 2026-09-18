@@ -16,8 +16,8 @@ class TestCheckArtistField:
         album = Album(
             path="A" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "A"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "B"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "A"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "B"}),
             ],
         )
         result = CheckArtistField(Context()).check(album)
@@ -44,8 +44,8 @@ class TestCheckArtistField:
         album = Album(
             path=f"Foo{os.sep}Bar{os.sep}",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Baz"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Baz"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Baz"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Baz"}),
                 Track(filename="3.flac"),
             ],
         )

@@ -20,8 +20,8 @@ class TestFieldPolicy:
         album_with_all = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
             ],
         )
         album_with_none = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac")])
@@ -41,8 +41,8 @@ class TestFieldPolicy:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -62,8 +62,8 @@ class TestFieldPolicy:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2"}),
             ],
         )
 
@@ -87,7 +87,7 @@ class TestFieldPolicy:
             path="",
             tracks=[
                 Track(filename="1.flac"),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -99,8 +99,8 @@ class TestFieldPolicy:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -122,7 +122,7 @@ class TestFieldPolicy:
             path="",
             tracks=[
                 Track(filename="1.flac"),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "1"}),
             ],
         )
 
@@ -143,8 +143,8 @@ class TestFieldPolicy:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
             ],
         )
 
@@ -162,7 +162,7 @@ class TestFieldPolicy:
         assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKTOTAL, None)])
 
     def test_check_field_policy_total_without_index(self, mocker):
-        album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac", tag={BasicField.TRACKTOTAL: "1"})])
+        album = Album(path="", tracks=[Track(filename="1.flac"), Track(filename="2.flac", fields={BasicField.TRACKTOTAL: "1"})])
 
         result = self.check(album, Policy.ALWAYS)
         assert "tracktotal appears on tracks without tracknumber" in result.message

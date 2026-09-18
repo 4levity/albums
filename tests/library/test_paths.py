@@ -9,7 +9,7 @@ from albums.tagger import BasicField
 def _a1_substitution(artist: str, album: str = "Foo") -> str:
     album_entity = Album(
         path="x",
-        tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: artist, BasicField.ALBUM: album})],
+        tracks=[Track(filename="1.flac", fields={BasicField.ARTIST: artist, BasicField.ALBUM: album})],
     )
     template = Template("$A1/$a1")
     return make_template_paths(Context(), album_entity, template, Template("various"))[0]
@@ -40,7 +40,7 @@ class TestMakeTemplatePathsA1:
 class TestMakeTemplatePathsWarnings:
     def test_unknown_identifier_warns_and_is_ignored(self, caplog):
         caplog.set_level("WARNING")
-        album = Album(path="x", tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B"})])
+        album = Album(path="x", tracks=[Track(filename="1.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B"})])
         paths = make_template_paths(Context(), album, Template("$artist/$unknown/$album"), Template("various"))
         assert paths[0] == "A/$unknown/B"
         assert any("ignoring unknown template identifiers" in record.message for record in caplog.records)
@@ -50,8 +50,8 @@ class TestMakeTemplatePathsWarnings:
         album = Album(
             path="x",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "Y"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "Y"}),
             ],
         )
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("various"))
@@ -62,8 +62,8 @@ class TestMakeTemplatePathsWarnings:
         album = Album(
             path="x",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "C", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "C", BasicField.ALBUM: "B", BasicField.ALBUMARTIST: "X"}),
             ],
         )
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("$a1/various"))
@@ -74,8 +74,8 @@ class TestMakeTemplatePathsWarnings:
         album = Album(
             path="x",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "C", BasicField.ALBUM: "B"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "C", BasicField.ALBUM: "B"}),
             ],
         )
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("$a1/various"))
@@ -84,7 +84,7 @@ class TestMakeTemplatePathsWarnings:
 
     def test_no_artist_uses_unknown_album(self, caplog):
         caplog.set_level("WARNING")
-        album = Album(path="x", tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "B"})])
+        album = Album(path="x", tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "B"})])
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("various"))
         assert paths[0] == "Unknown Album/B"
         assert any("no album artist or artist fields" in record.message for record in caplog.records)
@@ -94,8 +94,8 @@ class TestMakeTemplatePathsWarnings:
         album = Album(
             path="x",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "B"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "A", BasicField.ALBUM: "C"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "B"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "A", BasicField.ALBUM: "C"}),
             ],
         )
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("various"))
@@ -104,7 +104,7 @@ class TestMakeTemplatePathsWarnings:
 
     def test_no_album_uses_unknown_album(self, caplog):
         caplog.set_level("WARNING")
-        album = Album(path="x", tracks=[Track(filename="1.flac", tag={BasicField.ARTIST: "A"})])
+        album = Album(path="x", tracks=[Track(filename="1.flac", fields={BasicField.ARTIST: "A"})])
         paths = make_template_paths(Context(), album, Template("$artist/$album"), Template("various"))
         assert paths[0] == "A/Unknown Album"
         assert any("no album field" in record.message for record in caplog.records)

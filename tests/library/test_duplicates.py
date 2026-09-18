@@ -9,7 +9,7 @@ from albums.tagger import BasicField
 
 
 def make_album(path: str, artist: str, album: str) -> Album:
-    return Album(path=path + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: album, BasicField.ARTIST: artist})])
+    return Album(path=path + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: album, BasicField.ARTIST: artist})])
 
 
 class TestDuplicateFinder:
@@ -50,8 +50,8 @@ class TestDuplicateFinder:
             Album(
                 path="One" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "B"}),
-                    Track(filename="2.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "A"}),
+                    Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "B"}),
+                    Track(filename="2.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "A"}),
                 ],
             ),
             make_album("One (2001)", "A", "The One"),

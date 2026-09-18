@@ -11,7 +11,7 @@ from ...helpers import MockTagger
 
 class TestCheckReleaseDateField:
     def test_releasedate_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac", tag={BasicField.DATE: "2020"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac", fields={BasicField.DATE: "2020"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseDateField(Context()).check(album)
         assert result is None
@@ -23,7 +23,7 @@ class TestCheckReleaseDateField:
         assert result is None
 
     def test_releasedate_inconsistent_presence(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseDateField(Context()).check(album)
         assert result is not None
@@ -47,7 +47,7 @@ class TestCheckReleaseDateField:
         assert "date policy=ALWAYS but it is not on all tracks" in result.message
 
     def test_releasedate_policy_never(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac", tag={BasicField.DATE: "2020"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac", fields={BasicField.DATE: "2020"})]
         album = Album(path="foo", tracks=tracks)
         ctx = Context()
         ctx.config.checks[CheckReleaseDateField.name]["presence"] = "never"
@@ -59,7 +59,7 @@ class TestCheckReleaseDateField:
         assert result.fixer.option_automatic_index == 0
 
     def test_releasedate_multiple_values_select(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac", tag={BasicField.DATE: "2021"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac", fields={BasicField.DATE: "2021"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseDateField(Context()).check(album)
         assert result is not None
@@ -81,7 +81,7 @@ class TestCheckReleaseDateField:
         assert mock_set_field.call_args_list == [call(BasicField.DATE, "2020")]
 
     def test_releasedate_multiple_values_free_text(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac", tag={BasicField.DATE: "2021"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac", fields={BasicField.DATE: "2021"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseDateField(Context()).check(album)
         assert result is not None
@@ -98,7 +98,7 @@ class TestCheckReleaseDateField:
         assert mock_set_field.call_args_list == [call(BasicField.DATE, "2022-03"), call(BasicField.DATE, "2022-03")]
 
     def test_releasedate_multiple_values_remove(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicField.DATE: "2020"}), Track(filename="2.flac", tag={BasicField.DATE: "2021"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.DATE: "2020"}), Track(filename="2.flac", fields={BasicField.DATE: "2021"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckReleaseDateField(Context()).check(album)
         assert result is not None

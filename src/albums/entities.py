@@ -129,12 +129,8 @@ class Track(Base):
 
         ``fields`` is a mapping of :class:`~.tagger.types.BasicField` to a ``str`` or a sequence of
         ``str`` values; it is normalized to ``list[str]`` so the in-memory form always matches the
-        stored form (fields with no values are dropped). A ``tag`` keyword with the same shape is
-        accepted as an alias for ``fields``.
+        stored form (fields with no values are dropped).
         """
-        if "fields" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
-            kw["fields"] = kw["tag"]
-            del kw["tag"]
         if "fields" in kw:
             tags: Mapping[BasicField, str | Sequence[str]] = kw["fields"]  # pyright: ignore[reportUnknownVariableType]
             kw["fields"] = {

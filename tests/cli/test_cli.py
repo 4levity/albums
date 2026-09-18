@@ -21,14 +21,14 @@ def unwrapped(output: str) -> str:
 albums = [
     Album(
         path="foo" + os.sep,
-        tracks=[Track(filename="1.mp3", tag={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
+        tracks=[Track(filename="1.mp3", fields={BasicField.TITLE: "1", BasicField.ARTIST: "a"})],
         picture_files=[PictureFile(filename="folder.png", picture_info=PictureInfo("ignored", 400, 400, 24, 0, b""))],
     ),
     Album(
         path="bar" + os.sep,
         tracks=[
-            Track(filename="1.flac", tag={BasicField.TITLE: "1"}),
-            Track(filename="2.flac", tag={BasicField.TITLE: "2"}),
+            Track(filename="1.flac", fields={BasicField.TITLE: "1"}),
+            Track(filename="2.flac", fields={BasicField.TITLE: "2"}),
         ],
     ),
 ]
@@ -253,7 +253,7 @@ class TestCli:
                 tracks=[
                     Track(
                         filename="01.flac",
-                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foobar", BasicField.ARTIST: "baz"},
+                        fields={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foobar", BasicField.ARTIST: "baz"},
                     )
                 ],
             ),
@@ -262,7 +262,7 @@ class TestCli:
                 tracks=[
                     Track(
                         filename="1.flac",
-                        tag={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "baz", BasicField.ARTIST: "baz"},
+                        fields={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "baz", BasicField.ARTIST: "baz"},
                     )
                 ],
             ),
@@ -290,7 +290,7 @@ class TestCli:
             tracks=[
                 Track(
                     filename="01 one.flac",
-                    tag={BasicField.TITLE: "one", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foo", BasicField.ARTIST: "a"},
+                    fields={BasicField.TITLE: "one", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foo", BasicField.ARTIST: "a"},
                 )
             ],
         )

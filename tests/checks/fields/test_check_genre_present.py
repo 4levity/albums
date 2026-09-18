@@ -13,7 +13,7 @@ from ...fixtures.create_library import create_library
 
 class TestCheckGenrePresent:
     def test_genre_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicField.GENRE: "Rock"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.GENRE: "Rock"}), Track(filename="2.flac", fields={BasicField.GENRE: "Rock"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is None
@@ -25,14 +25,14 @@ class TestCheckGenrePresent:
         assert result is None
 
     def test_genre_missing(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", fields={BasicField.GENRE: "Rock"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is not None
         assert "genre policy=CONSISTENT but it is on some tracks and not others" in result.message
 
     def test_genre_inconsistent(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.GENRE: "Rock"}), Track(filename="2.flac", tag={BasicField.GENRE: "Country"})]
+        tracks = [Track(filename="1.flac", fields={BasicField.GENRE: "Rock"}), Track(filename="2.flac", fields={BasicField.GENRE: "Country"})]
         album = Album(path="foo", tracks=tracks)
         result = CheckGenrePresent(Context()).check(album)
         assert result is not None
@@ -57,7 +57,7 @@ class TestCheckGenrePresent:
             CheckGenrePresent(ctx)
 
     def test_unsupported_file_type_skipped(self):
-        tracks = [Track(filename="1.xyz", tag={BasicField.GENRE: "Rock"})]
+        tracks = [Track(filename="1.xyz", fields={BasicField.GENRE: "Rock"})]
         album = Album(path="foo", tracks=tracks)
         assert CheckGenrePresent(Context()).check(album) is None
 
@@ -65,8 +65,8 @@ class TestCheckGenrePresent:
 class TestFixSetGenre:
     def test_fix_set_genre(self):
         tracks = [
-            Track(filename="1.flac", tag={BasicField.GENRE: "Jazz"}),
-            Track(filename="2.flac", tag={BasicField.GENRE: "Rock"}),
+            Track(filename="1.flac", fields={BasicField.GENRE: "Jazz"}),
+            Track(filename="2.flac", fields={BasicField.GENRE: "Rock"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
         library = create_library("genre_fix", [album])

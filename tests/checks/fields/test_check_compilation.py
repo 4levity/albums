@@ -29,8 +29,8 @@ class TestCheckCompilationField:
     def test_single_artist_no_flag_ok(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob"}),
             ]
         )
         assert _check(album) is None
@@ -38,8 +38,8 @@ class TestCheckCompilationField:
     def test_single_artist_flag_removed(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
             ]
         )
         result = _check(album)
@@ -55,8 +55,8 @@ class TestCheckCompilationField:
         # the flag must be completely removed, a falsy value is not enough
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
             ]
         )
         result = _check(album)
@@ -67,8 +67,8 @@ class TestCheckCompilationField:
         # no album artist, so the distinct artists decide
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Carol"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Carol"}),
             ]
         )
         result = _check(album)
@@ -82,8 +82,8 @@ class TestCheckCompilationField:
     def test_multiple_artists_flag_canonical_ok(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Carol", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Carol", BasicField.COMPILATION: "1"}),
             ]
         )
         assert _check(album) is None
@@ -93,8 +93,8 @@ class TestCheckCompilationField:
         for value in ("0", "false", "yes", "1 "):
             album = _album(
                 [
-                    Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: value}),
-                    Track(filename="2.flac", tag={BasicField.ARTIST: "Carol", BasicField.COMPILATION: value}),
+                    Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: value}),
+                    Track(filename="2.flac", fields={BasicField.ARTIST: "Carol", BasicField.COMPILATION: value}),
                 ]
             )
             result = _check(album)
@@ -105,8 +105,8 @@ class TestCheckCompilationField:
         # the flag must be on every track
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Carol"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Carol"}),
             ]
         )
         result = _check(album)
@@ -116,8 +116,8 @@ class TestCheckCompilationField:
     def test_single_artist_flag_partial_removed(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob"}),
             ]
         )
         result = _check(album)
@@ -128,8 +128,8 @@ class TestCheckCompilationField:
         # no album artist, so artist "Various Artists" decides
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Various Artists"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Various Artists"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Various Artists"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Various Artists"}),
             ]
         )
         result = _check(album)
@@ -140,14 +140,14 @@ class TestCheckCompilationField:
         assert result.fixer.option_automatic_index == 0
 
     def test_various_artists_canonical_ok(self):
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Various Artists", BasicField.COMPILATION: "1"})])
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Various Artists", BasicField.COMPILATION: "1"})])
         assert _check(album) is None
 
     def test_no_artists_flag_removed(self):
         # no artist information means not a compilation
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.COMPILATION: "1"}),
                 Track(filename="2.flac"),
             ]
         )
@@ -163,8 +163,8 @@ class TestCheckCompilationField:
         # case differences of the same artist name count as one artist
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "BOB", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "BOB", BasicField.COMPILATION: "1"}),
             ]
         )
         result = _check(album)
@@ -175,8 +175,8 @@ class TestCheckCompilationField:
         # "ß" and "ss" are case variants of the same letter, so these are one artist, not a compilation
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Straße"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "STRASSE"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Straße"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "STRASSE"}),
             ]
         )
         # not Various Artists, no albumartist set, not in compilation folder - but still not flagged because STRASSE is the same as Straße
@@ -187,11 +187,11 @@ class TestCheckCompilationField:
         # (e.g. an artist album with a guest appearance)
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan"}),
                 Track(
                     filename="3.flac",
-                    tag={BasicField.ARTIST: "Bob Dylan and Special Guest", BasicField.ALBUMARTIST: "Bob Dylan"},
+                    fields={BasicField.ARTIST: "Bob Dylan and Special Guest", BasicField.ALBUMARTIST: "Bob Dylan"},
                 ),
             ]
         )
@@ -202,11 +202,11 @@ class TestCheckCompilationField:
             [
                 Track(
                     filename="1.flac",
-                    tag={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan", BasicField.COMPILATION: "1"},
+                    fields={BasicField.ARTIST: "Bob Dylan", BasicField.ALBUMARTIST: "Bob Dylan", BasicField.COMPILATION: "1"},
                 ),
                 Track(
                     filename="2.flac",
-                    tag={BasicField.ARTIST: "Bob Dylan and Special Guest", BasicField.ALBUMARTIST: "Bob Dylan", BasicField.COMPILATION: "1"},
+                    fields={BasicField.ARTIST: "Bob Dylan and Special Guest", BasicField.ALBUMARTIST: "Bob Dylan", BasicField.COMPILATION: "1"},
                 ),
             ]
         )
@@ -219,11 +219,11 @@ class TestCheckCompilationField:
         # even though the tracks have different performers
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Cast of The Movie"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Cast of The Movie"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Cast of The Movie"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Cast of The Movie"}),
                 Track(
                     filename="3.flac",
-                    tag={BasicField.ARTIST: "Cast of The Movie", BasicField.ALBUMARTIST: "Cast of The Movie"},
+                    fields={BasicField.ARTIST: "Cast of The Movie", BasicField.ALBUMARTIST: "Cast of The Movie"},
                 ),
             ]
         )
@@ -234,11 +234,11 @@ class TestCheckCompilationField:
             [
                 Track(
                     filename="1.flac",
-                    tag={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Cast of The Movie", BasicField.COMPILATION: "1"},
+                    fields={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Cast of The Movie", BasicField.COMPILATION: "1"},
                 ),
                 Track(
                     filename="2.flac",
-                    tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Cast of The Movie", BasicField.COMPILATION: "1"},
+                    fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Cast of The Movie", BasicField.COMPILATION: "1"},
                 ),
             ]
         )
@@ -250,8 +250,8 @@ class TestCheckCompilationField:
         # album artist "Various Artists" decides, even if the artists differ for other reasons
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Various Artists"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Various Artists"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Alice", BasicField.ALBUMARTIST: "Various Artists"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Various Artists"}),
             ]
         )
         result = _check(album)
@@ -261,8 +261,8 @@ class TestCheckCompilationField:
     def test_album_artist_various_case_insensitive(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ALBUMARTIST: "various artists"}),
-                Track(filename="2.flac", tag={BasicField.ALBUMARTIST: "VARIOUS ARTISTS"}),
+                Track(filename="1.flac", fields={BasicField.ALBUMARTIST: "various artists"}),
+                Track(filename="2.flac", fields={BasicField.ALBUMARTIST: "VARIOUS ARTISTS"}),
             ]
         )
         result = _check(album)
@@ -273,8 +273,8 @@ class TestCheckCompilationField:
         # conflicting album artist values mean no single artist represents the album
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Carol", BasicField.ALBUMARTIST: "Carol"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Carol", BasicField.ALBUMARTIST: "Carol"}),
             ]
         )
         result = _check(album)
@@ -290,7 +290,7 @@ class TestCheckCompilationField:
     def test_parent_folder_default(self, parent_folder: str):
         # the default parent folders always mean a compilation, whatever the artist values
         album = _album(
-            [Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"})],
+            [Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"})],
             path=f"{parent_folder}/Foo",
         )
         result = _check(album)
@@ -298,14 +298,14 @@ class TestCheckCompilationField:
         assert f"compilation flag should be set on all tracks (parent folder {parent_folder})" in result.message
 
     def test_parent_folder_case_insensitive(self):
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="Compilations/Foo")
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"})], path="Compilations/Foo")
         result = _check(album)
         assert result is not None
         assert "parent folder Compilations" in result.message
 
     def test_parent_folder_unicode_casefold(self):
         # "ß" and "ss" are case variants of the same letter
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="Straße/Foo")
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"})], path="Straße/Foo")
         result = _check(album, compilation_parent_folders=["STRASSE"])
         assert result is not None
         assert "parent folder Straße" in result.message
@@ -314,8 +314,8 @@ class TestCheckCompilationField:
         # tags alone say this is a normal single-artist album, but the parent folder wins
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
             ],
             path="soundtracks/The Movie",
         )
@@ -326,8 +326,8 @@ class TestCheckCompilationField:
     def test_parent_folder_canonical_ok(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
             ],
             path="various artists/Mixes",
         )
@@ -338,8 +338,8 @@ class TestCheckCompilationField:
         for path in ("my compilations/Foo", "soundtracks and more/Foo"):
             album = _album(
                 [
-                    Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                    Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                    Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                    Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
                 ],
                 path=path,
             )
@@ -351,8 +351,8 @@ class TestCheckCompilationField:
         # an album folder with no parent within the library has no matching parent folder
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
             ],
             path="Foo",
         )
@@ -362,27 +362,27 @@ class TestCheckCompilationField:
 
     def test_parent_folders_config(self):
         # a configured list replaces the default list entirely
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="mixes/Foo")
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"})], path="mixes/Foo")
         result = _check(album, compilation_parent_folders=["mixes"])
         assert result is not None
         assert "parent folder mixes" in result.message
 
         # configured values match case-insensitively
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="MIXES/Foo")
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"})], path="MIXES/Foo")
         result = _check(album, compilation_parent_folders=["mixes"])
         assert result is not None
         assert "parent folder MIXES" in result.message
 
         # "compilations" is no longer a compilation parent folder with this configuration
-        album = _album([Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"})], path="compilations/Foo")
+        album = _album([Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"})], path="compilations/Foo")
         assert _check(album, compilation_parent_folders=["mixes"]) is None
 
     def test_parent_folders_config_invalid(self):
         # an invalid value is ignored, as if the list were empty
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
             ],
             path="compilations/Foo",
         )
@@ -393,7 +393,7 @@ class TestCheckCompilationField:
     def test_unsupported_tracks_skipped(self):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob"}),
                 Track(filename="cover.jpg"),
             ]
         )
@@ -403,8 +403,8 @@ class TestCheckCompilationField:
         # tracks that already match the canonical value are not rewritten
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Carol", BasicField.COMPILATION: "0"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Carol", BasicField.COMPILATION: "0"}),
             ]
         )
         result = _check(album)
@@ -419,8 +419,8 @@ class TestCheckCompilationField:
     def test_fix_set_parent_folder(self, mocker):
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.ALBUMARTIST: "Bob"}),
             ],
             path="compilations/Foo",
         )
@@ -440,9 +440,9 @@ class TestCheckCompilationField:
         # every track with the field, whatever its value, has it removed
         album = _album(
             [
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
-                Track(filename="3.flac", tag={BasicField.ARTIST: "Bob"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "1"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Bob", BasicField.COMPILATION: "0"}),
+                Track(filename="3.flac", fields={BasicField.ARTIST: "Bob"}),
             ]
         )
         result = _check(album)

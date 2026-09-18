@@ -27,8 +27,8 @@ class TestCheckAlbumField:
         album = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ALBUM: "A"}),
-                Track(filename="2.flac", tag={BasicField.ALBUM: "A"}),
+                Track(filename="1.flac", fields={BasicField.ALBUM: "A"}),
+                Track(filename="2.flac", fields={BasicField.ALBUM: "A"}),
                 Track(filename="3.flac"),
             ],
         )
@@ -39,9 +39,9 @@ class TestCheckAlbumField:
         album = Album(
             path="A/",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ALBUM: "A"}),
-                Track(filename="2.flac", tag={BasicField.ALBUM: "A"}),
-                Track(filename="3.flac", tag={BasicField.ALBUM: "B"}),
+                Track(filename="1.flac", fields={BasicField.ALBUM: "A"}),
+                Track(filename="2.flac", fields={BasicField.ALBUM: "A"}),
+                Track(filename="3.flac", fields={BasicField.ALBUM: "B"}),
             ],
         )
         result = CheckAlbumField(Context()).check(album)
@@ -76,8 +76,8 @@ class TestCheckAlbumField:
         album = Album(
             path="Foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ALBUM: "Bar"}),
-                Track(filename="2.flac", tag={BasicField.ALBUM: "Bar"}),
+                Track(filename="1.flac", fields={BasicField.ALBUM: "Bar"}),
+                Track(filename="2.flac", fields={BasicField.ALBUM: "Bar"}),
                 Track(filename="3.flac"),
             ],
         )
