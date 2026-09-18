@@ -16,9 +16,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.mp3", tag={BasicField.TITLE: "foo"}),
-                Track(filename="2 bar.mp3", tag={BasicField.TITLE: "bar"}),
-                Track(filename="3 baz.mp3", tag={BasicField.TITLE: "baz"}),
+                Track(filename="1 foo.mp3", fields={BasicField.TITLE: "foo"}),
+                Track(filename="2 bar.mp3", fields={BasicField.TITLE: "bar"}),
+                Track(filename="3 baz.mp3", fields={BasicField.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -54,7 +54,7 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tag={BasicField.TITLE: "foo"}),
+                Track(filename="1 foo.flac", fields={BasicField.TITLE: "foo"}),
                 Track(filename="2 bar.flac"),
                 Track(filename="3.flac"),
             ],
@@ -122,7 +122,7 @@ class TestCheckTrackTitle:
             path="Foobar" + os.sep,
             tracks=[
                 Track(filename="1 foo [live].flac"),
-                Track(filename="2 bar.flac", tag={BasicField.TITLE: "bar"}),
+                Track(filename="2 bar.flac", fields={BasicField.TITLE: "bar"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)
@@ -147,9 +147,9 @@ class TestCheckTrackTitle:
         album = Album(
             path="Foobar" + os.sep,
             tracks=[
-                Track(filename="2-1 foo.flac", tag={BasicField.TITLE: "foo"}),
+                Track(filename="2-1 foo.flac", fields={BasicField.TITLE: "foo"}),
                 Track(filename="2-2 bar.flac"),
-                Track(filename="2-3 baz.flac", tag={BasicField.TITLE: "baz"}),
+                Track(filename="2-3 baz.flac", fields={BasicField.TITLE: "baz"}),
             ],
         )
         result = CheckTrackTitle(Context()).check(album)

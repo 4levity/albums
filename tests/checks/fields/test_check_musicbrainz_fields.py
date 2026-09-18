@@ -14,12 +14,12 @@ UUID1 = "11111111-1111-1111-1111-111111111111"
 
 class TestCheckMusicBrainzFields:
     def test_none(self):
-        album = Album(path="foo", tracks=[Track(filename="1.flac", tag={BasicField.TITLE: "one"})])
+        album = Album(path="foo", tracks=[Track(filename="1.flac", fields={BasicField.TITLE: "one"})])
         result = CheckMusicBrainzFields(Context()).check(album)
         assert result is None
 
     def test_no_deprecated(self):
-        album = Album(path="foo", tracks=[Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0})])
+        album = Album(path="foo", tracks=[Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0})])
         result = CheckMusicBrainzFields(Context()).check(album)
         assert result is None
 
@@ -27,7 +27,7 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
+                Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
             ],
         )
         ctx = Context()
@@ -39,7 +39,7 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
+                Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
             ],
         )
         result = CheckMusicBrainzFields(Context()).check(album)
@@ -65,7 +65,7 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
+                Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_TRACKID: UUID0, BasicField.MUSICBRAINZ_TRMID: UUID0})
             ],
         )
         ctx = Context()
@@ -89,10 +89,10 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0}),
+                Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0}),
                 Track(
                     filename="2.flac",
-                    tag={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
+                    fields={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
                 ),
             ],
         )
@@ -116,8 +116,8 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one"}),
-                Track(filename="2.flac", tag={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMRELEASETYPE: "album"}),
+                Track(filename="1.flac", fields={BasicField.TITLE: "one"}),
+                Track(filename="2.flac", fields={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMRELEASETYPE: "album"}),
             ],
         )
         result = CheckMusicBrainzFields(Context()).check(album)
@@ -144,7 +144,7 @@ class TestCheckMusicBrainzFields:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={
+                    fields={
                         BasicField.TITLE: "one",
                         BasicField.MUSICBRAINZ_TRACKID: UUID0,
                         BasicField.MUSICBRAINZ_ALBUMRELEASETYPE: "soundtrack",
@@ -176,11 +176,11 @@ class TestCheckMusicBrainzFields:
             tracks=[
                 Track(
                     filename="1.flac",
-                    tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
+                    fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
                 ),
                 Track(
                     filename="2.flac",
-                    tag={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID1, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
+                    fields={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID1, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
                 ),
             ],
         )
@@ -203,10 +203,10 @@ class TestCheckMusicBrainzFields:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0}),
+                Track(filename="1.flac", fields={BasicField.TITLE: "one", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0}),
                 Track(
                     filename="2.flac",
-                    tag={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
+                    fields={BasicField.TITLE: "two", BasicField.MUSICBRAINZ_ALBUMARTISTID: UUID0, BasicField.MUSICBRAINZ_ALBUMID: UUID1},
                 ),
             ],
         )

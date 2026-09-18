@@ -16,9 +16,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -28,9 +28,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "3"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "3"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -41,15 +41,15 @@ class TestCheckTrackNumbering:
         album_with_all = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
             ],
         )
         album_with_none = Album(
             path="",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2"}),
             ],
         )
         ctx = Context()
@@ -78,9 +78,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -100,10 +100,10 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "3"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
-                Track(filename="2-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="1-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="1-2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
+                Track(filename="2-2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "2", BasicField.TRACKTOTAL: "1"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -127,9 +127,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "3"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -171,7 +171,7 @@ class TestCheckTrackNumbering:
             tracks=[
                 Track(filename="1-1.flac", fields={BasicField.DISCNUMBER: "1"}),
                 Track(filename="1-2.flac", fields={BasicField.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -202,9 +202,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
-                Track(filename="3.flac", tag={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "2"}),
+                Track(filename="3.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TRACKTOTAL: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -215,9 +215,9 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1 foo.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="2 bar.flac", tag={BasicField.TRACKNUMBER: "2"}),
-                Track(filename="2 baz.flac", tag={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="1 foo.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="2 bar.flac", fields={BasicField.TRACKNUMBER: "2"}),
+                Track(filename="2 baz.flac", fields={BasicField.TRACKNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -228,8 +228,8 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "4"}),
-                Track(filename="2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "4"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "4"}),
+                Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TRACKTOTAL: "4"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -240,10 +240,10 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
-                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
-                Track(filename="2-4.flac", tag={BasicField.TRACKNUMBER: "4", BasicField.DISCNUMBER: "2"}),
+                Track(filename="1-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
+                Track(filename="2-4.flac", fields={BasicField.TRACKNUMBER: "4", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)
@@ -254,8 +254,8 @@ class TestCheckTrackNumbering:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1.flac", tag={BasicField.TRACKNUMBER: "1"}),
-                Track(filename="4.flac", tag={BasicField.TRACKNUMBER: "4"}),
+                Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1"}),
+                Track(filename="4.flac", fields={BasicField.TRACKNUMBER: "4"}),
             ],
         )
         result = CheckTrackNumbering(Context()).check(album)

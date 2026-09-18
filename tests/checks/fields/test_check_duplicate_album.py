@@ -15,8 +15,8 @@ from albums.tagger import BasicField
 class TestCheckDuplicateAlbum:
     def test_duplicate_ok(self):
         albums = [
-            Album(path="one" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
-            Album(path="two" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "Two", BasicField.ARTIST: "Foo"})]),
+            Album(path="one" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="two" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "Two", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
         ctx.db = db_open(MEMORY)
@@ -30,8 +30,8 @@ class TestCheckDuplicateAlbum:
 
     def test_duplicate_exact_keep_this(self, mocker):
         albums = [
-            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
-            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
         ctx.db = db_open(MEMORY)
@@ -61,8 +61,8 @@ class TestCheckDuplicateAlbum:
 
     def test_duplicate_exact_keep_other(self, mocker):
         albums = [
-            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
-            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
         ]
         ctx = Context()
         ctx.db = db_open(MEMORY)
@@ -92,10 +92,11 @@ class TestCheckDuplicateAlbum:
 
     def test_duplicate_multiple(self):
         albums = [
-            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
-            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One (2001)" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
+            Album(path="One!" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]),
             Album(
-                path="One [Regular Edition]" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})]
+                path="One [Regular Edition]" + os.sep,
+                tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "The One", BasicField.ARTIST: "Foo"})],
             ),
         ]
         ctx = Context()
@@ -116,10 +117,10 @@ class TestCheckDuplicateAlbum:
     def test_duplicate_case_insensitive(self):
         albums = [
             Album(
-                path="One At A Time" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "One At A Time", BasicField.ARTIST: "Foo"})]
+                path="One At A Time" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "One At A Time", BasicField.ARTIST: "Foo"})]
             ),
             Album(
-                path="One at a Time" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "One at a Time", BasicField.ARTIST: "Foo"})]
+                path="One at a Time" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "One at a Time", BasicField.ARTIST: "Foo"})]
             ),
         ]
         ctx = Context()
@@ -141,15 +142,15 @@ class TestCheckDuplicateAlbum:
             Album(
                 path="Lots (2000)" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Various Artists"}),
-                    Track(filename="2.flac", tag={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists"}),
+                    Track(filename="1.flac", fields={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Various Artists"}),
+                    Track(filename="2.flac", fields={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists"}),
                 ],
             ),
             Album(
                 path="Lots" + os.sep,
                 tracks=[
-                    Track(filename="2.flac", tag={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists"}),
-                    Track(filename="1.flac", tag={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Various Artists"}),
+                    Track(filename="2.flac", fields={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Bar", BasicField.ALBUMARTIST: "Various Artists"}),
+                    Track(filename="1.flac", fields={BasicField.ALBUM: "Lots", BasicField.ARTIST: "Foo", BasicField.ALBUMARTIST: "Various Artists"}),
                 ],
             ),
         ]

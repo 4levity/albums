@@ -11,7 +11,7 @@ from ..fixtures.create_library import create_library
 
 mp3track = Track(
     filename="1.mp3",
-    tag={BasicField.TITLE: "T", BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "3"},
+    fields={BasicField.TITLE: "T", BasicField.TRACKNUMBER: "1", BasicField.TRACKTOTAL: "3"},
     pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
 )
 mp3album = Album(path="baz" + os.sep, tracks=[mp3track])

@@ -33,7 +33,7 @@ class TestCheckCoverAvailable:
         assert result.fixer is None
 
     def test_cover_missing_required_identified(self, mocker):
-        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={"artist": "Foo", "album": "Bar"})])
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", fields={"artist": "Foo", "album": "Bar"})])
         ctx = Context()
         ctx.config.checks[CheckCoverAvailable.name]["cover_required"] = True
 
@@ -160,7 +160,7 @@ class TestCheckCoverAvailable:
         assert mock_rename.call_args_list == [call(Path(".") / album.path / "other.png", Path(".") / album.path / "cover.png")]
 
     def test_cover_art_downloader(self, mocker):
-        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={"artist": "Foo", "album": "Bar"})])
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", fields={"artist": "Foo", "album": "Bar"})])
         ctx = Context()
         ctx.config.checks[CheckCoverAvailable.name]["cover_required"] = True
 
@@ -184,7 +184,7 @@ class TestCheckCoverAvailable:
         assert mock_run.call_args_list == [call(expect_cmd, cwd=Path(album.path))]
 
     def test_cover_art_downloader_fails(self, mocker):
-        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={"artist": "Foo", "album": "Bar"})])
+        album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", fields={"artist": "Foo", "album": "Bar"})])
         ctx = Context()
         ctx.config.checks[CheckCoverAvailable.name]["cover_required"] = True
 

@@ -11,7 +11,10 @@ from ...helpers import MockTagger
 
 class TestCheckPublisherField:
     def test_publisher_ok(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        tracks = [
+            Track(filename="1.flac", fields={BasicField.ORGANIZATION: "ABC"}),
+            Track(filename="2.flac", fields={BasicField.ORGANIZATION: "ABC"}),
+        ]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
         assert result is None
@@ -23,7 +26,7 @@ class TestCheckPublisherField:
         assert result is None
 
     def test_publisher_missing(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", fields={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
         assert result is not None
@@ -44,7 +47,10 @@ class TestCheckPublisherField:
         assert "organization policy=ALWAYS but it is not on all tracks" in result.message
 
     def test_publisher_different_select(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        tracks = [
+            Track(filename="1.flac", fields={BasicField.ORGANIZATION: "XYZ"}),
+            Track(filename="2.flac", fields={BasicField.ORGANIZATION: "ABC"}),
+        ]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
         assert result is not None
@@ -66,8 +72,8 @@ class TestCheckPublisherField:
     def test_publisher_different_table_escaped(self):
         # filenames and field values containing rich markup must be escaped in the table
         tracks = [
-            Track(filename="1 [bold].flac", tag={BasicField.ORGANIZATION: "Label [yellow]"}),
-            Track(filename="2.flac", tag={BasicField.ORGANIZATION: "Label [red]"}),
+            Track(filename="1 [bold].flac", fields={BasicField.ORGANIZATION: "Label [yellow]"}),
+            Track(filename="2.flac", fields={BasicField.ORGANIZATION: "Label [red]"}),
         ]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
@@ -81,7 +87,7 @@ class TestCheckPublisherField:
         ]
 
     def test_publisher_missing_table_shows_none(self):
-        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
+        tracks = [Track(filename="1.flac", fields={BasicField.ORGANIZATION: "ABC"}), Track(filename="2.flac")]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
         assert result is not None
@@ -95,7 +101,10 @@ class TestCheckPublisherField:
         ]
 
     def test_publisher_different_remove(self, mocker):
-        tracks = [Track(filename="1.flac", tag={BasicField.ORGANIZATION: "XYZ"}), Track(filename="2.flac", tag={BasicField.ORGANIZATION: "ABC"})]
+        tracks = [
+            Track(filename="1.flac", fields={BasicField.ORGANIZATION: "XYZ"}),
+            Track(filename="2.flac", fields={BasicField.ORGANIZATION: "ABC"}),
+        ]
         album = Album(path="foo", tracks=tracks)
         result = CheckPublisherField(Context()).check(album)
         assert result is not None

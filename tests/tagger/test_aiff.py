@@ -11,7 +11,7 @@ from ..fixtures.create_library import create_library, make_image_data
 
 track = Track(
     filename="1.aiff",
-    tag={
+    fields={
         BasicField.ARTIST: "A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",

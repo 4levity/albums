@@ -76,7 +76,7 @@ class TestDatabase:
         db = db_open(MEMORY)
         try:
             with Session(db) as session:
-                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", tag={BasicField.ALBUM: "foo"})])
+                album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac", fields={BasicField.ALBUM: "foo"})])
                 session.add(album)
                 session.flush()
                 track_id = album.tracks[0].track_id

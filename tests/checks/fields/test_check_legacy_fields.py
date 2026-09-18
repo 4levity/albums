@@ -17,12 +17,12 @@ class TestCheckLegacyFields:
     def test_legacy_with_standard_fields(self):
         track1 = Track(
             filename="1.flac",
-            tag={BasicField.ORGANIZATION: "ABC"},
+            fields={BasicField.ORGANIZATION: "ABC"},
             legacy_fields=["label"],
         )
         track2 = Track(
             filename="2.flac",
-            tag={BasicField.ALBUMARTIST: "Artist X"},
+            fields={BasicField.ALBUMARTIST: "Artist X"},
             legacy_fields=["album artist"],
         )
         album = Album(path="foo", tracks=[track1, track2])
@@ -38,12 +38,12 @@ class TestCheckLegacyFields:
     def test_legacy_convert(self, mocker):
         track1 = Track(
             filename="1.flac",
-            tag={BasicField.ORGANIZATION: "ABC"},
+            fields={BasicField.ORGANIZATION: "ABC"},
             legacy_fields=["label"],
         )
         track2 = Track(
             filename="2.flac",
-            tag={BasicField.ALBUMARTIST: "Artist X"},
+            fields={BasicField.ALBUMARTIST: "Artist X"},
             legacy_fields=["album artist"],
         )
         album = Album(path="foo", tracks=[track1, track2])
@@ -71,7 +71,7 @@ class TestCheckLegacyFields:
     def test_legacy_totaldiscs(self, mocker):
         track1 = Track(
             filename="1.flac",
-            tag={BasicField.DISCTOTAL: "2"},
+            fields={BasicField.DISCTOTAL: "2"},
             legacy_fields=["totaldiscs"],
         )
         album = Album(path="foo", tracks=[track1])
@@ -94,7 +94,7 @@ class TestCheckLegacyFields:
     def test_legacy_id3_tdrl(self, mocker):
         track1 = Track(
             filename="1.mp3",
-            tag={BasicField.DATE: "2020"},
+            fields={BasicField.DATE: "2020"},
             legacy_fields=["TDRL"],
         )
         album = Album(path="foo", tracks=[track1])

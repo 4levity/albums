@@ -14,8 +14,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Alice", BasicField.TITLE: "red"}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)
@@ -25,8 +25,8 @@ class TestCheckExtraWhitespace:
         album = Album(
             path="foo",
             tracks=[
-                Track(filename="1.flac", tag={BasicField.ARTIST: "Alice ", BasicField.TITLE: "blue"}),
-                Track(filename="2.flac", tag={BasicField.ARTIST: "Alice ", BasicField.TITLE: "red "}),
+                Track(filename="1.flac", fields={BasicField.ARTIST: "Alice ", BasicField.TITLE: "blue"}),
+                Track(filename="2.flac", fields={BasicField.ARTIST: "Alice ", BasicField.TITLE: "red "}),
             ],
         )
         result = CheckExtraWhitespace(Context()).check(album)

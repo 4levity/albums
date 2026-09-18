@@ -30,13 +30,13 @@ class TestSynchronizer:
             Album(
                 path="foo" + os.sep,
                 tracks=[
-                    Track(filename="1.flac", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "one"}),
-                    Track(filename="2.flac", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "two"}),
+                    Track(filename="1.flac", fields={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "one"}),
+                    Track(filename="2.flac", fields={BasicField.ARTIST: "baz", BasicField.ALBUM: "foo", BasicField.TITLE: "two"}),
                 ],
             ),
             Album(
                 path="bar" + os.sep,
-                tracks=[Track(filename="1.mp3", tag={BasicField.ARTIST: "baz", BasicField.ALBUM: "bar", BasicField.TITLE: "aaa"})],
+                tracks=[Track(filename="1.mp3", fields={BasicField.ARTIST: "baz", BasicField.ALBUM: "bar", BasicField.TITLE: "aaa"})],
             ),
         ]
         ctx = Context()
@@ -87,7 +87,9 @@ class TestSynchronizer:
                 path="foo" + os.sep,
                 tracks=[
                     Track(
-                        filename="1.flac", stream=StreamInfo(1, 900000, 2, "FLAC", 44100, 16), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"}
+                        filename="1.flac",
+                        stream=StreamInfo(1, 900000, 2, "FLAC", 44100, 16),
+                        fields={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"},
                     )
                 ],
             ),
@@ -95,20 +97,22 @@ class TestSynchronizer:
                 path="moo" + os.sep,
                 tracks=[
                     Track(
-                        filename="1.flac", stream=StreamInfo(1, 800000, 2, "FLAC", 44100, 24), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"}
+                        filename="1.flac",
+                        stream=StreamInfo(1, 800000, 2, "FLAC", 44100, 24),
+                        fields={BasicField.ARTIST: "a", BasicField.ALBUM: "foo"},
                     )
                 ],
             ),
             Album(
                 path="bar" + os.sep,
                 tracks=[
-                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 48000), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "bar"})
+                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 48000), fields={BasicField.ARTIST: "a", BasicField.ALBUM: "bar"})
                 ],
             ),
             Album(
                 path="baz" + os.sep,
                 tracks=[
-                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 44100), tag={BasicField.ARTIST: "a", BasicField.ALBUM: "baz"})
+                    Track(filename="1.mp3", stream=StreamInfo(1, 160000, 2, "MP3", 44100), fields={BasicField.ARTIST: "a", BasicField.ALBUM: "baz"})
                 ],
             ),
         ]

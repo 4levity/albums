@@ -15,9 +15,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
-                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
+                Track(filename="1-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -27,9 +27,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1-1", BasicField.DISCNUMBER: "1"}),
-                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "1-2", BasicField.DISCNUMBER: "1"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "2-1", BasicField.DISCNUMBER: "2"}),
+                Track(filename="1-1.flac", fields={BasicField.TRACKNUMBER: "1-1", BasicField.DISCNUMBER: "1"}),
+                Track(filename="1-2.flac", fields={BasicField.TRACKNUMBER: "1-2", BasicField.DISCNUMBER: "1"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "2-1", BasicField.DISCNUMBER: "2"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
@@ -39,9 +39,9 @@ class TestCheckDiscInTrackNumber:
         album = Album(
             path="foo" + os.sep,
             tracks=[
-                Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1-1"}),
-                Track(filename="1-2.flac", tag={BasicField.TRACKNUMBER: "1-2"}),
-                Track(filename="2-1.flac", tag={BasicField.TRACKNUMBER: "2-1"}),
+                Track(filename="1-1.flac", fields={BasicField.TRACKNUMBER: "1-1"}),
+                Track(filename="1-2.flac", fields={BasicField.TRACKNUMBER: "1-2"}),
+                Track(filename="2-1.flac", fields={BasicField.TRACKNUMBER: "2-1"}),
             ],
         )
         result = CheckDiscInTrackNumber(Context()).check(album)
