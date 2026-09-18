@@ -9,6 +9,7 @@ from sqlalchemy import Column, Dialect, Integer, String, Table, Text, TypeDecora
 from sqlalchemy.orm import DeclarativeBase
 
 from albums.picture import LoadIssuesType
+from albums.tagger.types import BasicField
 
 
 class Base(DeclarativeBase):
@@ -74,6 +75,38 @@ class LoadIssuesAsJson(TypeDecorator[LoadIssuesType]):
         load_issue: list[list[str | int]] | dict[str, str | int] = json.loads(value)
         kv = load_issue if isinstance(load_issue, list) else load_issue.items()  # old versions stored a dict instead of list of pairs, load either
         return tuple([(str(k), v) for [k, v] in kv])
+
+
+class BasicFieldsAsJson(TypeDecorator[dict[BasicField, list[str]]]):
+    """Serialize/deserialize track fields as a JSON object mapping field name to a list of values.
+
+    Field names that are not a valid :class:`~.tagger.types.BasicField` value (e.g. written by a
+    newer version) load as ``BasicField.UNKNOWN``, mirroring :class:`SafeStringEnum`.
+    """
+
+    impl = Text
+
+    cache_ok = True
+
+    @override
+    def process_bind_param(self, value: dict[BasicField, list[str]] | None, dialect: Dialect):
+        if value is None:
+            return None
+        return json.dumps({field.value: values for field, values in value.items()})
+
+    @override
+    def process_result_value(self, value: str | None, dialect: Dialect) -> dict[BasicField, list[str]]:
+        if not value:
+            return {}
+        raw: dict[str, list[str]] = json.loads(value)
+        fields: dict[BasicField, list[str]] = {}
+        for name, values in raw.items():
+            try:
+                field = BasicField(name)
+            except ValueError:
+                field = BasicField.UNKNOWN
+            fields.setdefault(field, []).extend(values)
+        return fields
 
 
 class SafeStringEnum[EnumType](TypeDecorator[EnumType]):

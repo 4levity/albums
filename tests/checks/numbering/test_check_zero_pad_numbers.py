@@ -3,7 +3,7 @@ from pathlib import Path
 from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
-from albums.entities import Album, FieldV, Track
+from albums.entities import Album, Track
 from albums.tagger import AlbumTagger, BasicField
 
 from ...helpers import apply_automatic_fix
@@ -126,10 +126,10 @@ class TestZeroPadNumbers:
                 album.tracks.append(
                     Track(
                         filename=f"{discnumber}-{tracknumber}.flac",
-                        fields=[
-                            FieldV(field=BasicField.DISCNUMBER, value=str(discnumber)),
-                            FieldV(field=BasicField.TRACKNUMBER, value=str(tracknumber)),
-                        ],
+                        fields={
+                            BasicField.DISCNUMBER: str(discnumber),
+                            BasicField.TRACKNUMBER: str(tracknumber),
+                        },
                     )
                 )
         assert len(album.tracks) == 100

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import humanize
 
-from albums.entities import Album, FieldV, OtherFile, PictureFile, Track, TrackPicture
+from albums.entities import Album, OtherFile, PictureFile, Track, TrackPicture
 from albums.picture import format_to_mime_type
 from albums.tagger import AUDIO_FILE_SUFFIXES, AlbumTagger
 from albums.utility import read_binary_file
@@ -28,10 +28,10 @@ def _scan_track(tagger: AlbumTagger, filename: str, stat: MiniStat, target_scan:
                 return None
 
         if target_scan is not None and FileAspect.FIELDS not in target_scan.aspects and isinstance(target_scan.source, Track):
-            fields = [FieldV(field=t.field, value=t.value) for t in target_scan.source.fields]
+            fields = dict(target_scan.source.fields)
             legacy_fields = list(target_scan.source.legacy_fields)
         else:
-            fields = [FieldV(field=field, value=value) for field, values in file.get_fields() for value in values]
+            fields = dict(file.get_fields())
             legacy_fields = [field_name for (field_name, _) in file.get_legacy_fields()]
 
         if target_scan is not None and FileAspect.IMAGES not in target_scan.aspects and isinstance(target_scan.source, Track):
