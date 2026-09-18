@@ -4,7 +4,7 @@ icon: lucide/list-checks
 
 # Checks: Path and File
 
-## duplicate-pathname
+## duplicate-filename
 
 To prevent issues with case-insensitive file systems (and software designed for
 them), filenames should not be "case-insensitive duplicates". For example, an

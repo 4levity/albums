@@ -27,8 +27,8 @@ from .numbering.check_track_numbering import CheckTrackNumbering
 from .numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from .path.check_album_under_album import CheckAlbumUnderAlbum
 from .path.check_cover_filename import CheckCoverFilename
+from .path.check_duplicate_filename import CheckDuplicateFilename
 from .path.check_duplicate_folder_name import CheckDuplicateFolderName
-from .path.check_duplicate_pathname import CheckDuplicatePathname
 from .path.check_file_extension import CheckFileExtension
 from .path.check_folder_name import CheckFolderName
 from .path.check_illegal_pathname import CheckIllegalPathname
@@ -47,7 +47,7 @@ from .picture.check_picture_metadata import CheckPictureMetadata
 # enabled checks will run on an album in this order:
 ALL_CHECKS: Final[tuple[type[Check], ...]] = (
     # path checks 1
-    CheckDuplicatePathname,
+    CheckDuplicateFilename,
     CheckDuplicateFolderName,
     CheckIllegalPathname,
     CheckFileExtension,

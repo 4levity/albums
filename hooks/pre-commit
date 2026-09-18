@@ -75,7 +75,7 @@ if [ $# -eq 0 ]; then
     hook_note "pre-commit: nothing staged; skipping checks"
 else
     require_make
-    hook_note "pre-commit: running 'make $*' (only the checks this commit can affect; may take a minute)"
+    hook_note "pre-commit: running 'make $*'"
     # QUIET=1: one line per check as it starts, full tool output only on
     # failure (see the Makefile), so the hook's output stays short but never
     # hides errors.

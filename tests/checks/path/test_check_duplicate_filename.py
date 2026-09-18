@@ -1,12 +1,12 @@
 import os
 
 from albums.app import Context
-from albums.checks.path.check_duplicate_pathname import CheckDuplicatePathname
+from albums.checks.path.check_duplicate_filename import CheckDuplicateFilename
 from albums.entities import Album, PictureFile, Track
 from albums.picture import PictureInfo
 
 
-class TestCheckDuplicatePathname:
+class TestCheckDuplicateFilename:
     def test_pathname_ok(self):
         album = Album(
             path="Foo" + os.sep,
@@ -16,7 +16,7 @@ class TestCheckDuplicatePathname:
                 PictureFile(filename="normal.png", picture_info=PictureInfo("image/png", 1, 1, 1, 1, b"")),
             ],
         )
-        assert not CheckDuplicatePathname(Context()).check(album)
+        assert not CheckDuplicateFilename(Context()).check(album)
 
     def test_pathname_duplicate_picture_file(self):
         album = Album(
@@ -27,7 +27,7 @@ class TestCheckDuplicatePathname:
                 PictureFile(filename="Filename.jpg", picture_info=PictureInfo("image/jpeg", 1, 1, 1, 1, b"")),
             ],
         )
-        result = CheckDuplicatePathname(Context()).check(album)
+        result = CheckDuplicateFilename(Context()).check(album)
         assert result is not None
         assert "2 files are variations of filename.jpg" in result.message
 
@@ -40,6 +40,6 @@ class TestCheckDuplicatePathname:
                 PictureFile(filename="normal.png", picture_info=PictureInfo("image/png", 1, 1, 1, 1, b"")),
             ],
         )
-        result = CheckDuplicatePathname(Context()).check(album)
+        result = CheckDuplicateFilename(Context()).check(album)
         assert result is not None
         assert "2 files are variations of track.flac" in result.message
