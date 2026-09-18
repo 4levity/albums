@@ -16,6 +16,12 @@ indent = 4
 [MD013]
 reflow = true
 
+# MD046 (code block style): the parser misclassifies 4-space-indented
+# admonition (!!!) content as an indented code block when the document also
+# has fenced code blocks, so the rule is disabled
+[MD046]
+enabled = false
+
 # keep table columns consistently aligned
 [MD060]
 enabled = true

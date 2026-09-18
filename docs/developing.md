@@ -39,18 +39,19 @@ used by a regular installation of `albums`).
 
 ### Project Files and Folders
 
-| Path                | Description                                          |
-| ------------------- | ---------------------------------------------------- |
-| `.github/workflows` | Github workflows (ci, build-test, release, docs)     |
-| `docs/`             | This documentation                                   |
-| `src/albums/`       | Python application (structure below)                 |
-| `scripts/`          | Development scripts (e.g. `version.py`)              |
-| `tests/`            | Tests!                                               |
-| `Makefile`          | The Makefile                                         |
-| `hooks/`            | Git hooks (commit-msg, pre-commit, pre-push)         |
-| `package.json`      | Node.js dev dependencies (lint tools)                |
-| `pyproject.toml`    | Project definition, tool configuration, dependencies |
-| `zensical.toml`     | Configuration for this documentation                 |
+| Path                | Description                                                    |
+| ------------------- | -------------------------------------------------------------- |
+| `.github/workflows` | Github workflows (ci, build-test, release, docs, runner-image) |
+| `docker/`           | Self-hosted wine runner image (Dockerfile, entrypoint)         |
+| `docs/`             | This documentation                                             |
+| `src/albums/`       | Python application (structure below)                           |
+| `scripts/`          | Development scripts (e.g. `version.py`)                        |
+| `tests/`            | Tests!                                                         |
+| `Makefile`          | The Makefile                                                   |
+| `hooks/`            | Git hooks (commit-msg, pre-commit, pre-push)                   |
+| `package.json`      | Node.js dev dependencies (lint tools)                          |
+| `pyproject.toml`    | Project definition, tool configuration, dependencies           |
+| `zensical.toml`     | Configuration for this documentation                           |
 
 (not all files/folders included)
 

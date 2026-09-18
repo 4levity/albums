@@ -31,14 +31,47 @@ No Windows runner is used: the Windows installer is built on Linux with wine
 (see below). The build/test jobs are shared between `.github/workflows/ci.yml`
 (pushes to main, pull requests, manual dispatch) and
 `.github/workflows/release.yml` (tag pushes `v*`, manual dispatch) via the
-reusable workflow `.github/workflows/build-test.yml`. Their `wine` job
-installs wine 11 from the WineHQ apt repository (the distro package is too
-old), caches the wine environment, then runs the test suite under wine
-(`make wine-pytest`), builds the installer (`make wine-build`), and tests it
-end-to-end (`make wine-e2e`). The `release` job in
-`release.yml` publishes the installer, the Linux executable, and the source
-archive as GitHub release assets: published for tag pushes, draft for manual
-dispatch.
+reusable workflow `.github/workflows/build-test.yml`. Their `wine` job runs
+on a self-hosted runner (label `wine`) in the purpose-built image from
+[`docker/`](../docker/): ubuntu 24.04 with wine 11 (WineHQ stable; the
+distro wine is too old), xvfb, and a warm wine environment (prefix, uv,
+Windows Python, Inno Setup) baked in by `scripts/wine_setup.py`. It then runs
+the test suite under wine (`make wine-pytest`), builds the installer
+(`make wine-build`), and tests it end-to-end (`make wine-e2e`). The `release`
+job in `release.yml` publishes the installer, the Linux executable, and the
+source archive as GitHub release assets: published for tag pushes, draft for
+manual dispatch.
+
+## Wine runner
+
+The runner image for the `wine` job is built by the
+`.github/workflows/runner-image.yml` workflow (manual dispatch) and published
+to `ghcr.io/4levity/albums-runner`. Rerun it after changes to `docker/` or
+the wine scripts' pins: the image bakes a warm wine environment, and the
+`wine` job links it in only while its fingerprint matches the wine scripts
+(it then builds a fresh environment).
+
+On a machine with Docker, generate a runner token (Settings > Actions >
+Runners > New self-hosted runner, Linux/x64) and start the container:
+
+```bash
+docker run -d --name albums-runner \
+  -e RUNNER_TOKEN=<token> \
+  -e RUNNER_NAME=albums-wine \
+  -v albums-runner-home:/home/runner \
+  -v albums-runner-wine:/opt/wine \
+  ghcr.io/4levity/albums-runner:latest
+```
+
+The volumes persist across container restarts: the runner config (start
+again with `docker start albums-runner`, no new token needed) and the wine
+environment (the first job creates the wine venv, later jobs reuse it, and
+`uv sync --locked` tops up lockfile changes). To pick up a new image's wine
+environment, delete the wine volume before starting a new container; until
+then, jobs build a fresh environment (the fingerprint guard makes that
+safe). Wine jobs share the `/opt/wine` environment, so they should not
+overlap; a second concurrent wine job builds a fresh environment instead
+(safe, just slower).
 
 ## Local Windows
 

@@ -78,7 +78,10 @@ jobs:
           path: dist/
 
   wine:
-    runs-on: ubuntu-latest
+    # self-hosted runner in the purpose-built image (docker/): wine 11,
+    # xvfb and a warm wine environment are already installed, so the job
+    # skips the multi-minute wine apt install that ubuntu-latest needs
+    runs-on: [self-hosted, wine]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -86,33 +89,26 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.14"
-      - name: Install wine
-        # the distro wine is too old (the scripts require 11+); WineHQ ships
-        # current releases, and the wine packages require the i386
-        # architecture. No recommends needed: headless build, and the runner
-        # image already has the display/fonts.
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq.key
-          codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
-          echo "deb [signed-by=/etc/apt/keyrings/winehq.key] https://dl.winehq.org/wine-builds/ubuntu/ ${codename} main" | sudo tee /etc/apt/sources.list.d/winehq.list
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends winehq-stable
       - name: Check wine version
         run: wine --version
       - name: Install dependencies
         run: make install
-      - name: Cache wine environment
-        uses: actions/cache@v6
-        with:
-          # cache keys are immutable, so include uv.lock: a lock change saves a
-          # fresh warm state under the new key, and the restore-keys fallback
-          # (same tool pins) gives a near-warm restore that wine_build's
-          # `uv sync --locked` tops up with the small delta
-          path: .cache/wine
-          key: wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-
+      - name: Use baked-in wine environment
+        # The runner image ships a warm wine environment (prefix, uv,
+        # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
+        # checkout while its fingerprint matches the wine scripts and no
+        # other job is using it (wineserver lock); wine-setup then builds a
+        # fresh one. The environment persists in the runner container
+        # between jobs, and wine-build's `uv sync --locked` tops up any
+        # lockfile changes.
+        run: |
+          if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
+            mkdir -p .cache
+            ln -s /opt/wine/env .cache/wine
+            echo "using baked-in wine environment"
+          else
+            echo "building a fresh wine environment"
+          fi
       - name: Run test suite under wine
         run: make wine-pytest
       - name: Build Windows installer
