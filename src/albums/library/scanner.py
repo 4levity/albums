@@ -205,7 +205,8 @@ def sync_library_folders(session: Session, walked_paths: set[str]) -> bool:
     if stored == walked:
         return False
     session.execute(delete(LibraryFolder))
-    session.execute(insert(LibraryFolder), rows)
+    if rows:  # an ORM insert with no parameter rows emits a single DEFAULT VALUES insert
+        session.execute(insert(LibraryFolder), rows)
     return True
 
 
