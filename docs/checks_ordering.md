@@ -8,7 +8,8 @@ icon: lucide/list-ordered
 
 Enabled checks will run in order on each album:
 
-1. `duplicate-pathname` check _("Path and File")_
+1. `duplicate-filename` check _("Path and File")_
+1. `duplicate-folder-name` check _("Path and File")_
 1. `illegal-pathname` check _("Path and File")_
 1. `file-extension` check _("Path and File")_
 1. `unreadable-track` check _("Path and File")_

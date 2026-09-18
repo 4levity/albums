@@ -8,8 +8,8 @@ from albums.entities import Album
 logger = logging.getLogger(__name__)
 
 
-class CheckDuplicatePathname(Check):
-    name = "duplicate-pathname"
+class CheckDuplicateFilename(Check):
+    name = "duplicate-filename"
     default_config = {"enabled": True}
 
     def check(self, album: Album):
