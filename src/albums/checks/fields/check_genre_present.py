@@ -41,9 +41,9 @@ class CheckGenrePresent(Check):
 
         if not self.per_track:
             # all tracks must have same genre(s) or none
-            match_genre = album.tracks[0].get(BasicField.GENRE, default=None)
+            match_genre = album.tracks[0].fields.get(BasicField.GENRE)
             for track in sorted(album.tracks):
-                genre = track.get(BasicField.GENRE, default=None)
+                genre = track.fields.get(BasicField.GENRE)
                 if (genre is None) != (match_genre is None) or genre != match_genre:
                     # TODO found genres first, ranked by number of matching tracks, followed by remaining select_genres
                     options = self.select_genres
@@ -54,8 +54,8 @@ class CheckGenrePresent(Check):
                         [
                             [
                                 escape(track.filename),
-                                escape("/".join(track.get(BasicField.ARTIST, default=[]))) or "[italic]none[/italic]",
-                                escape("/".join(track.get(BasicField.GENRE, default=[]))) or "[italic]none[/italic]",
+                                escape("/".join(track.fields.get(BasicField.ARTIST, []))) or "[italic]none[/italic]",
+                                escape("/".join(track.fields.get(BasicField.GENRE, []))) or "[italic]none[/italic]",
                             ]
                             for track in sorted(album.tracks)
                         ],
@@ -78,7 +78,7 @@ class CheckGenrePresent(Check):
         tagger = self.tagger.get(album.path)
         changed = False
         for track in album.tracks:
-            if "/".join(track.get(BasicField.GENRE, default=[""])) != option:
+            if "/".join(track.fields.get(BasicField.GENRE, [""])) != option:
                 self.ctx.console.print(f'Setting genre to "{option}" on {escape(track.filename)}', highlight=False)
                 with tagger.open(track.filename) as tag:
                     tag.set_field(BasicField.GENRE, option)

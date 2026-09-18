@@ -50,7 +50,7 @@ class TestAsf:
             pictures = [pic for (pic, _) in file.get_pictures()]
             fields = dict(file.get_fields())
         assert len(pictures) == 0  # not supported yet
-        track_fields = track.field_dict()
+        track_fields = track.fields
         assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
         assert fields[BasicField.ALBUMARTIST] == tuple(track_fields[BasicField.ALBUMARTIST])
         assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])

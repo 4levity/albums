@@ -10,13 +10,13 @@ class TestOrderedTracks:
             path="foo",
             tracks=[Track(filename=f"t{n:02d}.flac", tag={BasicField.TRACKNUMBER: str(n)}) for n in [10, 1, 12, 2, 11, 3, 4, 5, 6, 7, 8, 9]],
         )
-        assert [track.get(BasicField.TRACKNUMBER)[0] for track in ordered_tracks(album)] == [str(n) for n in range(1, 13)]
+        assert [track.fields[BasicField.TRACKNUMBER][0] for track in ordered_tracks(album)] == [str(n) for n in range(1, 13)]
 
     def test_sorts_disc_numbers_numerically(self):
         # 11 discs; string sort would put disc 10 before disc 2
         tracks = [Track(filename=f"t{disc}.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: str(disc)}) for disc in [10, 1, 11, 2]]
         album = Album(path="foo", tracks=tracks)
-        assert [track.get(BasicField.DISCNUMBER)[0] for track in ordered_tracks(album)] == ["1", "2", "10", "11"]
+        assert [track.fields[BasicField.DISCNUMBER][0] for track in ordered_tracks(album)] == ["1", "2", "10", "11"]
 
     def test_sorts_disc_then_track_numerically(self):
         album = Album(
@@ -30,7 +30,7 @@ class TestOrderedTracks:
                 Track(filename="1-1.flac", tag={BasicField.TRACKNUMBER: "1", BasicField.DISCNUMBER: "1"}),
             ],
         )
-        assert [(track.get(BasicField.DISCNUMBER)[0], track.get(BasicField.TRACKNUMBER)[0]) for track in ordered_tracks(album)] == [
+        assert [(track.fields[BasicField.DISCNUMBER][0], track.fields[BasicField.TRACKNUMBER][0]) for track in ordered_tracks(album)] == [
             ("1", "1"),
             ("1", "2"),
             ("1", "12"),
@@ -48,7 +48,7 @@ class TestOrderedTracks:
                 Track(filename="001.flac", tag={BasicField.TRACKNUMBER: "001"}),
             ],
         )
-        assert [track.get(BasicField.TRACKNUMBER)[0] for track in ordered_tracks(album)] == ["001", "02", "010"]
+        assert [track.fields[BasicField.TRACKNUMBER][0] for track in ordered_tracks(album)] == ["001", "02", "010"]
 
     def test_non_numeric_numbers_sort_after_numbers_without_error(self):
         album = Album(
@@ -60,7 +60,7 @@ class TestOrderedTracks:
                 Track(filename="b.flac", tag={BasicField.TRACKNUMBER: "b"}),
             ],
         )
-        assert [track.get(BasicField.TRACKNUMBER)[0] for track in ordered_tracks(album)] == ["2", "11", "b", "one"]
+        assert [track.fields[BasicField.TRACKNUMBER][0] for track in ordered_tracks(album)] == ["2", "11", "b", "one"]
 
     def test_falls_back_to_filename_sort_when_track_number_missing(self):
         album = Album(

@@ -47,9 +47,9 @@ def check_policy(
     """
     if policy == Policy.NEVER and single_value_for_album:
         raise ValueError("check_policy: Policy.NEVER cannot be used with single_value_for_album")
-    on_all_tracks = all(t.has(field) for t in album.tracks)
-    on_any_tracks = any(t.has(field) for t in album.tracks)
-    field_without_required = required_field is not None and any(t.has(field) and not t.has(required_field) for t in album.tracks)
+    on_all_tracks = all(field in t.fields for t in album.tracks)
+    on_any_tracks = any(field in t.fields for t in album.tracks)
+    field_without_required = required_field is not None and any(field in t.fields and required_field not in t.fields for t in album.tracks)
 
     if (
         (policy == Policy.ALWAYS and on_all_tracks)
@@ -58,11 +58,11 @@ def check_policy(
     ):
         return None
 
-    can_set_field_on_all_tracks = required_field is None or all(track.has(required_field) for track in album.tracks)
+    can_set_field_on_all_tracks = required_field is None or all(required_field in track.fields for track in album.tracks)
     if policy != Policy.NEVER and can_set_field_on_all_tracks:
         value_count: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
-            for value in track.get(field, default=[]):
+            for value in track.fields.get(field, []):
                 value_count[value] += 1
         options = [v for v, _ct in sorted(value_count.items(), key=lambda vc: vc[1], reverse=True)]
     else:
@@ -73,7 +73,7 @@ def check_policy(
 
     table_rows: list[list[str]] = []
     for track in ordered_tracks(album):
-        values = track.get(field, default=[])
+        values = track.fields.get(field, [])
         table_rows.append(
             [
                 describe_track_number(track),
@@ -125,11 +125,11 @@ def _fix(ctx: Context, tagger: AlbumTagger, album: Album, field: BasicField, opt
     changed = False
     for track in sorted(album.tracks):
         path = ctx.config.library / album.path / track.filename
-        if value is None and track.has(field):
+        if value is None and field in track.fields:
             ctx.console.print(f"removing {field} from {escape(track.filename)}", highlight=False)
             tagger.set_basic_fields(path, [(field, None)])
             changed = True
-        if value is not None and (not track.has(field) or track.get(field) != (value,)):
+        if value is not None and (field not in track.fields or track.fields[field] != [value]):
             ctx.console.print(f"setting {field} on {escape(track.filename)}", highlight=False)
             tagger.set_basic_fields(path, [(field, value)])
             changed = True

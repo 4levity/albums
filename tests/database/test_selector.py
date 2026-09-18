@@ -77,7 +77,7 @@ class TestSelector:
                 assert len(result) == 1
                 assert result[0].path == "foo" + os.sep
                 assert result[0].scanner == 3
-                assert sorted(result[0].tracks[0].get(BasicField.ARTIST, default=[])) == ["Bar"]
+                assert sorted(result[0].tracks[0].fields.get(BasicField.ARTIST, [])) == ["Bar"]
                 assert result[0].tracks[0].stream.length == 1.0
                 assert result[0].tracks[0].stream.codec == "FLAC"
                 assert len(result[0].tracks[0].pictures) == 1

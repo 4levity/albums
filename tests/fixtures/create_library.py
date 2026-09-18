@@ -121,7 +121,7 @@ def create_track_file(path: Path, spec: Track, audio: AudioSpec | None = None):
                 image_data = make_image_data(pic.picture_info.width, pic.picture_info.height, mime_type_to_format(pic.picture_info.mime_type))
                 picture = Picture(pic.picture_info, pic.picture_type, pic.description) if isinstance(pic, TrackPicture) else pic
                 tag.add_picture(picture, image_data)
-            spec_tags = spec.field_dict()
+            spec_tags = spec.fields
             represented_by_legacy_fields: Set[BasicField] = set()
             for field_name in spec.legacy_fields:
                 basic_field = LEGACY_TAG_MAP[field_name]

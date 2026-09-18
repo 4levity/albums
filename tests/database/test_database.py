@@ -91,7 +91,7 @@ class TestDatabase:
                 )
             with Session(db) as session:
                 (album,) = session.execute(select(Album)).tuples().one()
-                tag = album.tracks[0].field_dict()
+                tag = album.tracks[0].fields
                 assert len(tag) == 2
                 assert tag[BasicField.ALBUM] == ["foo"]
                 assert sorted(tag[BasicField.UNKNOWN]) == ["bar", "baz"]

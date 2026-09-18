@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, List, Mapping, Optional, Sequence, overload
+from typing import Any, List, Mapping, Optional, Sequence
 
 from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, Text
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
 from albums.database import (
-    NO_DEFAULT_VALUE_LIST_STR,
     Base,
     BasicFieldsAsJson,
     IntEnumAsInt,
@@ -122,47 +121,8 @@ class Track(Base):
             "modify_timestamp": self.modify_timestamp,
             "pictures": [picture.to_dict() for picture in sorted(self.pictures, key=lambda pic: pic.embed_ix)],
             "stream": self.stream.to_dict() if self.stream else {},
-            "fields": self.field_dict(),
+            "fields": self.fields,
         }
-
-    def field_dict(self) -> Mapping[BasicField, List[str]]:
-        """Return all stored fields grouped by :class:`~.tagger.types.BasicField` key.
-
-        Returns:
-            Mapping where each value is a list of frame text for that field.
-        """
-        return dict(self.fields)
-
-    def has(self, field: BasicField) -> bool:
-        """Return ``True`` when at least one value for *field* exists.
-
-        Args:
-            field: The :class:`~.tagger.types.BasicField` to check for.
-        """
-        return field in self.fields
-
-    @overload
-    def get(self, field: BasicField, default: None) -> Sequence[str] | None: ...
-    @overload
-    def get(self, field: BasicField, default: Sequence[str] = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str]: ...
-    def get(self, field: BasicField, default: Sequence[str] | None = NO_DEFAULT_VALUE_LIST_STR) -> Sequence[str] | None:
-        """Retrieve all values for *field*, optionally with a default if no values available.
-
-        If no default is specified and no values exist, raises ``KeyError``.
-
-        Args:
-            field: The :class:`~.tagger.types.BasicField` to look up.
-            default: Value returned when the field is absent; if omitted, ``KeyError`` is raised.
-
-        Returns:
-            Tuple of decoded text values or the provided fallback sequence.
-        """
-        values = self.fields.get(field)
-        if values is None:
-            if default is NO_DEFAULT_VALUE_LIST_STR:
-                raise KeyError(f"{field.value} is not in fields")
-            return default
-        return tuple(values)
 
     def __init__(self, **kw: Any):
         """Construct a track row.

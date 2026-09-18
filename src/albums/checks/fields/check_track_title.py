@@ -29,20 +29,20 @@ class CheckTrackTitle(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
-        no_title = sum(0 if track.get(BasicField.TITLE, default="") else 1 for track in album.tracks)
+        no_title = sum(0 if track.fields.get(BasicField.TITLE) else 1 for track in album.tracks)
         if no_title:
             proposed_titles = list(self._proposed_title(track) for track in sorted(album.tracks))
-            any_fixable = any(not track.get(BasicField.TITLE, default="") and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
+            any_fixable = any(not track.fields.get(BasicField.TITLE) and proposed_titles[ix] for (ix, track) in enumerate(album.tracks))
             if any_fixable:
                 table = (
                     ["filename", "title", "proposed new title"],
                     [
                         [
                             escape(track.filename),
-                            format_field_values(track.get(BasicField.TITLE, default=None)),
+                            format_field_values(track.fields.get(BasicField.TITLE)),
                             (
                                 "[bold italic]no change[/bold italic]"
-                                if track.get(BasicField.TITLE, default="")
+                                if track.fields.get(BasicField.TITLE)
                                 else f"[yellow]{escape(str(proposed_titles[ix]))}[/yellow]"
                                 if proposed_titles[ix]
                                 else "[bold italic]none[/bold italic]"
@@ -62,7 +62,7 @@ class CheckTrackTitle(Check):
         return None
 
     def _proposed_title(self, track: Track):
-        if track.get(BasicField.TITLE, default=""):
+        if track.fields.get(BasicField.TITLE):
             return None
 
         (_, _, title) = parse_filename(track.filename)

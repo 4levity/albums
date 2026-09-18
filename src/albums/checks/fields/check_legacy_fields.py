@@ -54,7 +54,7 @@ class CheckLegacyFields(Check):
         tagger = self.tagger.get(album.path)
 
         for track in sorted(track for track in album.tracks if track.legacy_fields):
-            track_fields = track.field_dict()
+            track_fields = track.fields
             with tagger.open(track.filename) as tag:
                 basic_fields = set(filter(None, (LEGACY_TO_BASIC.get(legacy_name) for legacy_name in track.legacy_fields)))
                 for field in basic_fields:

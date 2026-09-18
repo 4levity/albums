@@ -48,9 +48,9 @@ class CheckTrackFilename(Check):
             )
 
     def _table_row(self, album: Album, track: Track) -> Sequence[RenderableType]:
-        title_fields = ", ".join(track.get(BasicField.TITLE, default=[]))
-        discnum = track.get(BasicField.DISCNUMBER, default=[""])[0]
-        tracknum = track.get(BasicField.TRACKNUMBER, default=[""])[0]
+        title_fields = ", ".join(track.fields.get(BasicField.TITLE, []))
+        discnum = track.fields.get(BasicField.DISCNUMBER, [""])[0]
+        tracknum = track.fields.get(BasicField.TRACKNUMBER, [""])[0]
         new_filename = self._generate_filename(album, track)
         return [
             escape(track.filename),
@@ -61,14 +61,14 @@ class CheckTrackFilename(Check):
         ]
 
     def _generate_filename(self, album: Album, track: Track):
-        track_field = track.get(BasicField.TRACKNUMBER, default=None)
-        disc_field = track.get(BasicField.DISCNUMBER, default=None)
+        track_field = track.fields.get(BasicField.TRACKNUMBER)
+        disc_field = track.fields.get(BasicField.DISCNUMBER)
         tracknumber = track_field[0] if track_field else ""
         discnumber = disc_field[0] if disc_field else ""
 
         # for padding on m4a files
-        track_count = int(track.get(BasicField.TRACKTOTAL, default=["0"])[0]) or len(album.tracks)
-        disc_count = int(track.get(BasicField.DISCTOTAL, default=["0"])[0]) or 9
+        track_count = int(track.fields.get(BasicField.TRACKTOTAL, ["0"])[0]) or len(album.tracks)
+        disc_count = int(track.fields.get(BasicField.DISCTOTAL, ["0"])[0]) or 9
 
         already_formatted = self.tagger.get(album.path).supports(track.filename, Cap.FORMATTED_TRACK_NUMBER)
         discnumber_pad = discnumber if already_formatted else self._pad("discnumber", discnumber, disc_count)
@@ -78,10 +78,14 @@ class CheckTrackFilename(Check):
         else:
             track_auto = ""
 
-        title = self.join_multiple.join(track.get(BasicField.TITLE, default=[f"Track {tracknumber}" if tracknumber else ""]))
-        artist = self.join_multiple.join(track.get(BasicField.ARTIST, default=[""]))
+        title = self.join_multiple.join(track.fields.get(BasicField.TITLE, [f"Track {tracknumber}" if tracknumber else ""]))
+        artist = self.join_multiple.join(track.fields.get(BasicField.ARTIST, [""]))
 
-        if track.has(BasicField.ARTIST) and track.has(BasicField.ALBUMARTIST) and track.get(BasicField.ARTIST) != track.get(BasicField.ALBUMARTIST):
+        if (
+            BasicField.ARTIST in track.fields
+            and BasicField.ALBUMARTIST in track.fields
+            and track.fields[BasicField.ARTIST] != track.fields[BasicField.ALBUMARTIST]
+        ):
             title_auto = f"{artist} - {title}"
         else:
             title_auto = title

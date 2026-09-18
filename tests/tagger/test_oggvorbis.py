@@ -64,7 +64,7 @@ class TestOggVorbis:
         assert pictures[1].picture_info.mime_type == "image/jpeg"
         assert pictures[1].picture_info.width == pictures[1].picture_info.height == 300
 
-        track_fields = track.field_dict()
+        track_fields = track.fields
         assert fields[BasicField.ARTIST] == tuple(track_fields[BasicField.ARTIST])
         assert fields[BasicField.TITLE] == tuple(track_fields[BasicField.TITLE])
         assert fields[BasicField.ALBUM] == tuple(track_fields[BasicField.ALBUM])

@@ -66,7 +66,7 @@ class BaseCheckSortField(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
-        source_by_track = {track.filename: tuple(value for value in track.get(self.source_field, default=[]) if value) for track in album.tracks}
+        source_by_track = {track.filename: tuple(value for value in track.fields.get(self.source_field, []) if value) for track in album.tracks}
         generated_by_track = {filename: (make_sort_value(values) if values else None) for filename, values in source_by_track.items()}
         can_generate_all = all(value is not None for value in generated_by_track.values())
         present = [track for track in album.tracks if self._values(track) is not None]
@@ -125,7 +125,7 @@ class BaseCheckSortField(Check):
 
     def _values(self, track: Track) -> tuple[str, ...] | None:
         """The track's sort field values, or None if the field is (effectively) not present."""
-        values = tuple(value for value in track.get(self.field, default=[]) if value)
+        values = tuple(value for value in track.fields.get(self.field, []) if value)
         return values if values else None
 
     def _make_fixer(self, album: Album, generated_by_track: Mapping[str, str | None]) -> Fixer:
@@ -190,7 +190,7 @@ class BaseCheckSortField(Check):
     def _make_table(self, album: Album, generated_by_track: Mapping[str, str | None]) -> tuple[list[str], list[list[str]]]:
         rows: list[list[str]] = []
         for track in ordered_tracks(album):
-            source_values = tuple(value for value in track.get(self.source_field, default=[]) if value)
+            source_values = tuple(value for value in track.fields.get(self.source_field, []) if value)
             current = self._values(track)
             proposed = generated_by_track.get(track.filename)
             rows.append(

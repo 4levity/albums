@@ -37,12 +37,12 @@ class CheckAlbumArtist(Check):
         artists: defaultdict[str, int] = defaultdict(int)
 
         for track in sorted(album.tracks, key=lambda track: track.filename):
-            if track.has(BasicField.ARTIST):
-                for artist in track.get(BasicField.ARTIST):
+            if BasicField.ARTIST in track.fields:
+                for artist in track.fields[BasicField.ARTIST]:
                     artists[artist] += 1
 
-            if track.has(BasicField.ALBUMARTIST):
-                for albumartist in track.get(BasicField.ALBUMARTIST, default=[]):
+            if BasicField.ALBUMARTIST in track.fields:
+                for albumartist in track.fields.get(BasicField.ALBUMARTIST, []):
                     albumartists[albumartist] += 1
             else:
                 albumartists[""] += 1
@@ -110,9 +110,9 @@ class CheckAlbumArtist(Check):
             [
                 [
                     escape(track.filename),
-                    format_field_values(track.get(BasicField.ALBUM, default=None)),
-                    format_field_values(track.get(BasicField.ARTIST, default=None)),
-                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
+                    format_field_values(track.fields.get(BasicField.ALBUM)),
+                    format_field_values(track.fields.get(BasicField.ARTIST)),
+                    format_field_values(track.fields.get(BasicField.ALBUMARTIST)),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -131,18 +131,18 @@ class CheckAlbumArtist(Check):
         for track in sorted(album.tracks, key=lambda track: track.filename):
             file = self.ctx.config.library / album.path / track.filename
             if album_artist_value == OPTION_REMOVE_ALBUM_ARTIST:
-                if track.has(BasicField.ALBUMARTIST):
+                if BasicField.ALBUMARTIST in track.fields:
                     self.ctx.console.print(f"removing albumartist from {escape(track.filename)}", highlight=False)
                     self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUMARTIST, None)])
                     changed = True
                 # else nothing to remove
             elif album_artist_value == OPTION_COPY_ALBUM_ARTIST_TO_ARTIST:
-                if track.has(BasicField.ALBUMARTIST):
+                if BasicField.ALBUMARTIST in track.fields:
                     self.ctx.console.print(f"copying albumartist to artist in {escape(track.filename)}", highlight=False)
-                    albumartist = track.get(BasicField.ALBUMARTIST)[0]
+                    albumartist = track.fields[BasicField.ALBUMARTIST][0]
                     self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ARTIST, albumartist)])
                     changed = True
-            elif track.get(BasicField.ALBUMARTIST, default=[]) != (album_artist_value,):
+            elif track.fields.get(BasicField.ALBUMARTIST, []) != [album_artist_value]:
                 self.ctx.console.print(f"setting albumartist on {escape(track.filename)}", highlight=False)
                 self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUMARTIST, album_artist_value)])
                 changed = True

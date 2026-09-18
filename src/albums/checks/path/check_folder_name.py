@@ -81,9 +81,9 @@ class CheckFolderName(Check):
 
     def _can_generate_folder_name(self, album: Album) -> bool:
         ids = self.format.get_identifiers()
-        if "album" in ids and not any(t.has(BasicField.ALBUM) for t in album.tracks):
+        if "album" in ids and not any(BasicField.ALBUM in t.fields for t in album.tracks):
             return False
-        if "artist" in ids and not any(t.has(BasicField.ARTIST) or t.has(BasicField.ALBUMARTIST) for t in album.tracks):
+        if "artist" in ids and not any(BasicField.ARTIST in t.fields or BasicField.ALBUMARTIST in t.fields for t in album.tracks):
             return False
         return True
 

@@ -33,16 +33,16 @@ class TrackTotalFixer(Fixer):
         self.tracks: list[Track] = []
         for track in ordered_tracks(album):
             if discnumber is None or (
-                track.get(BasicField.DISCNUMBER, default=[""])[0].isdecimal() and int(track.get(BasicField.DISCNUMBER)[0]) == discnumber
+                track.fields.get(BasicField.DISCNUMBER, [""])[0].isdecimal() and int(track.fields[BasicField.DISCNUMBER][0]) == discnumber
             ):
                 self.tracks.append(track)
 
         self.max_tracktotal = max(
             (
-                int(track.get(BasicField.TRACKTOTAL)[0])
+                int(track.fields[BasicField.TRACKTOTAL][0])
                 for track in self.tracks
-                if track.get(BasicField.TRACKTOTAL, default=[""])[0].isdecimal()
-                and (discnumber is None or int(track.get(BasicField.DISCNUMBER)[0]) == discnumber)
+                if track.fields.get(BasicField.TRACKTOTAL, [""])[0].isdecimal()
+                and (discnumber is None or int(track.fields[BasicField.DISCNUMBER][0]) == discnumber)
             ),
             default=None,
         )
@@ -62,7 +62,7 @@ class TrackTotalFixer(Fixer):
             row = [
                 describe_track_number(track),
                 escape(track.filename),
-                format_field_values(track.get(BasicField.TRACKTOTAL, default=None)),
+                format_field_values(track.fields.get(BasicField.TRACKTOTAL)),
             ]
             if track.filename in affected:
                 row = [f"[bold]{cell}[/bold]" for cell in row]
@@ -98,9 +98,9 @@ class TrackTotalFixer(Fixer):
         for track in self.tracks:
             path = ctx.config.library / album.path / track.filename
             track_changed = False
-            if new_tracktotal is None and track.has(BasicField.TRACKTOTAL):
+            if new_tracktotal is None and BasicField.TRACKTOTAL in track.fields:
                 ctx.console.print(f"removing tracktotal from {escape(track.filename)}", highlight=False)
-            elif new_tracktotal is not None and track.get(BasicField.TRACKTOTAL, default=["0"])[0] != str(new_tracktotal):
+            elif new_tracktotal is not None and track.fields.get(BasicField.TRACKTOTAL, ["0"])[0] != str(new_tracktotal):
                 ctx.console.print(f"setting tracktotal on {escape(track.filename)}", highlight=False)
                 track_changed = True
             if track_changed:
@@ -156,13 +156,13 @@ class CheckTrackNumbering(Check):
             track_total_counts: defaultdict[int, int] = defaultdict(int)
             duplicate_tracks: list[int] = []
             for track in tracks:
-                if track.has(BasicField.TRACKNUMBER):
-                    tracknumber = int(track.get(BasicField.TRACKNUMBER)[0])
+                if BasicField.TRACKNUMBER in track.fields:
+                    tracknumber = int(track.fields[BasicField.TRACKNUMBER][0])
                     if tracknumber in actual_track_numbers:
                         duplicate_tracks.append(tracknumber)
                     actual_track_numbers.add(tracknumber)
-                if track.has(BasicField.TRACKTOTAL):
-                    tracktotal = int(track.get(BasicField.TRACKTOTAL)[0])
+                if BasicField.TRACKTOTAL in track.fields:
+                    tracktotal = int(track.fields[BasicField.TRACKTOTAL][0])
                     track_total_counts[tracktotal] += 1
                     if tracktotal > expect_track_total:
                         expect_track_total = tracktotal
@@ -203,7 +203,7 @@ class CheckTrackNumbering(Check):
     def _renumber_fixer(self, album: Album, disc_number: int, tracks: list[Track]) -> Fixer | None:
         new_tracknumbers: dict[str, str] = {}
         for track in tracks:
-            field_tracknumber = int(track.get(BasicField.TRACKNUMBER, default=["0"])[0])
+            field_tracknumber = int(track.fields.get(BasicField.TRACKNUMBER, ["0"])[0])
             (filename_discnumber, filename_tracknumber, _) = parse_filename(track.filename)
 
             if filename_discnumber and filename_discnumber != disc_number:

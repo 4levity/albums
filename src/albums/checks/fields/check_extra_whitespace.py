@@ -21,7 +21,7 @@ class CheckExtraWhitespace(Check):
         example: str | None = None
         changed_values: list[tuple[str, BasicField, list[str], list[str]]] = []
         for track in sorted(album.tracks):
-            for field, values in track.field_dict().items():
+            for field, values in track.fields.items():
                 if any(value.strip() != value for value in values):
                     if bad_value := next((value for value in values if value.strip() != value), None):
                         example = f'{field.value}="{bad_value}"'
@@ -59,7 +59,7 @@ class CheckExtraWhitespace(Check):
         tagger = self.tagger.get(album.path)
         for track in (track for track in sorted(album.tracks) if track.filename in filenames):
             with tagger.open(track.filename) as fields:
-                for field, values in track.field_dict().items():
+                for field, values in track.fields.items():
                     new_values = [v.strip() for v in values]
                     if any(new_values[ix] != v for ix, v in enumerate(values)):
                         self.ctx.console.print(f"Removing whitespace from {field.value} in {escape(track.filename)}")

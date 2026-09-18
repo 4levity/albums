@@ -96,7 +96,7 @@ class CheckZeroPadNumbers(Check):
                     (BasicField.DISCNUMBER, self.discnumber_pad, total_discs),
                     (BasicField.DISCTOTAL, self.disctotal_pad, total_discs),
                 ):
-                    values = track.get(field, default=[])
+                    values = track.fields.get(field, [])
                     if not values:
                         row.append("[italic]none[/italic]")
                         continue
@@ -156,24 +156,24 @@ class CheckZeroPadNumbers(Check):
                 file = self.ctx.config.library / album.path / track.filename
                 new_values: list[tuple[BasicField, str | list[str] | None]] = []
 
-                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and track.has(BasicField.TRACKNUMBER):
-                    new_tracknumber = apply_pad_policy(track.get(BasicField.TRACKNUMBER)[0], self.tracknumber_pad, len(disc))
-                    if new_tracknumber != track.get(BasicField.TRACKNUMBER)[0]:
+                if self.tracknumber_pad != ZeroPadPolicy.IGNORE and BasicField.TRACKNUMBER in track.fields:
+                    new_tracknumber = apply_pad_policy(track.fields[BasicField.TRACKNUMBER][0], self.tracknumber_pad, len(disc))
+                    if new_tracknumber != track.fields[BasicField.TRACKNUMBER][0]:
                         new_values.append((BasicField.TRACKNUMBER, new_tracknumber))
 
-                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and track.has(BasicField.TRACKTOTAL):
-                    new_tracktotal = apply_pad_policy(track.get(BasicField.TRACKTOTAL)[0], self.tracktotal_pad, len(disc))
-                    if new_tracktotal != track.get(BasicField.TRACKTOTAL)[0]:
+                if self.tracktotal_pad != ZeroPadPolicy.IGNORE and BasicField.TRACKTOTAL in track.fields:
+                    new_tracktotal = apply_pad_policy(track.fields[BasicField.TRACKTOTAL][0], self.tracktotal_pad, len(disc))
+                    if new_tracktotal != track.fields[BasicField.TRACKTOTAL][0]:
                         new_values.append((BasicField.TRACKTOTAL, new_tracktotal))
 
-                if self.discnumber_pad != ZeroPadPolicy.IGNORE and track.has(BasicField.DISCNUMBER):
-                    new_discnumber = apply_pad_policy(track.get(BasicField.DISCNUMBER)[0], self.discnumber_pad, total_discs)
-                    if new_discnumber != track.get(BasicField.DISCNUMBER)[0]:
+                if self.discnumber_pad != ZeroPadPolicy.IGNORE and BasicField.DISCNUMBER in track.fields:
+                    new_discnumber = apply_pad_policy(track.fields[BasicField.DISCNUMBER][0], self.discnumber_pad, total_discs)
+                    if new_discnumber != track.fields[BasicField.DISCNUMBER][0]:
                         new_values.append((BasicField.DISCNUMBER, new_discnumber))
 
-                if self.disctotal_pad != ZeroPadPolicy.IGNORE and track.has(BasicField.DISCTOTAL):
-                    new_disctotal = apply_pad_policy(track.get(BasicField.DISCTOTAL)[0], self.disctotal_pad, total_discs)
-                    if new_disctotal != track.get(BasicField.DISCTOTAL)[0]:
+                if self.disctotal_pad != ZeroPadPolicy.IGNORE and BasicField.DISCTOTAL in track.fields:
+                    new_disctotal = apply_pad_policy(track.fields[BasicField.DISCTOTAL][0], self.disctotal_pad, total_discs)
+                    if new_disctotal != track.fields[BasicField.DISCTOTAL][0]:
                         new_values.append((BasicField.DISCTOTAL, new_disctotal))
 
                 if new_values:

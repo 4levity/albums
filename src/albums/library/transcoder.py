@@ -220,7 +220,7 @@ class Transcoder:
 
         if track.fields or track.pictures:
             with self._tagger.get(dest.parent).open(dest.name) as dest_fields:
-                for field, value in track.field_dict().items():
+                for field, value in track.fields.items():
                     dest_fields.set_field(field, value)
                 if track.pictures:
                     with self._tagger.get(album_path).open(track.filename) as src_tags:

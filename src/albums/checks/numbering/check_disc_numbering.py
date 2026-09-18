@@ -53,8 +53,8 @@ class CheckDiscNumbering(Check):
 
         # we look at total before looking at the disc number values in order to extract the most value out of the totals -- a correct total helps
         # confirm disc numbering is correct, so totals that "look wrong" should ideally be fixed (or automatically removed) first.
-        all_disc_numbers = set(int(track.get(BasicField.DISCNUMBER, default=["0"])[0]) for track in album.tracks)
-        all_disc_totals = list(set(int(track.get(BasicField.DISCTOTAL, default=["0"])[0]) for track in album.tracks))
+        all_disc_numbers = set(int(track.fields.get(BasicField.DISCNUMBER, ["0"])[0]) for track in album.tracks)
+        all_disc_totals = list(set(int(track.fields.get(BasicField.DISCTOTAL, ["0"])[0]) for track in album.tracks))
         if len(all_disc_totals) > 1:
             message = "inconsistent disc total"
         else:
@@ -116,7 +116,7 @@ class CheckDiscNumbering(Check):
 
     def _check_mixed_discnumber(self, album: Album, all_disc_numbers: set[int], all_disc_totals: list[int]) -> CheckResult:
         # here, disc total is either on no tracks or on all tracks (with a single value) or the check would have reported an inconsistent total already
-        unnumbered = [track for track in album.tracks if not track.has(BasicField.DISCNUMBER)]
+        unnumbered = [track for track in album.tracks if BasicField.DISCNUMBER not in track.fields]
         disctotal = max(all_disc_totals)  # 0 if no disc total
         discs_present = all_disc_numbers - {0}
 
@@ -126,8 +126,8 @@ class CheckDiscNumbering(Check):
         filename_conflict = False
         for track in album.tracks:
             (disc, _, _) = parse_filename(track.filename)
-            if track.has(BasicField.DISCNUMBER):
-                if disc is not None and disc != int(track.get(BasicField.DISCNUMBER)[0]):
+            if BasicField.DISCNUMBER in track.fields:
+                if disc is not None and disc != int(track.fields[BasicField.DISCNUMBER][0]):
                     filename_conflict = True
             else:
                 filename_discs[track.filename] = disc
@@ -213,8 +213,8 @@ class CheckDiscNumbering(Check):
         return [
             describe_track_number(track),
             escape(track.filename),
-            escape(track.get(BasicField.DISCNUMBER, default=[""])[0]) or "[italic]none[/italic]",
-            escape(track.get(BasicField.DISCTOTAL, default=[""])[0]) or "[italic]none[/italic]",
+            escape(track.fields.get(BasicField.DISCNUMBER, [""])[0]) or "[italic]none[/italic]",
+            escape(track.fields.get(BasicField.DISCTOTAL, [""])[0]) or "[italic]none[/italic]",
         ]
 
     def _fix_disc_total(self, album: Album, option: str):
@@ -234,11 +234,11 @@ class CheckDiscNumbering(Check):
         changed = False
         for track in sorted(album.tracks):
             path = self.ctx.config.library / album.path / track.filename
-            if value is None and track.has(BasicField.DISCTOTAL):
+            if value is None and BasicField.DISCTOTAL in track.fields:
                 self.ctx.console.print(f"removing disctotal from {escape(track.filename)}", highlight=False)
                 self.tagger.get(album.path).set_basic_fields(path, [(BasicField.DISCTOTAL, None)])
                 changed = True
-            if value is not None and (not track.has(BasicField.DISCTOTAL) or int(track.get(BasicField.DISCTOTAL)[0]) != int(value)):
+            if value is not None and (BasicField.DISCTOTAL not in track.fields or int(track.fields[BasicField.DISCTOTAL][0]) != int(value)):
                 self.ctx.console.print(f"setting disctotal on {escape(track.filename)}", highlight=False)
                 self.tagger.get(album.path).set_basic_fields(path, [(BasicField.DISCTOTAL, value)])
                 changed = True
@@ -265,7 +265,7 @@ class CheckDiscNumbering(Check):
     def _fix_set_discnumber(self, album: Album, value: int) -> FixResult:
         changed = False
         for track in sorted(album.tracks):
-            if track.has(BasicField.DISCNUMBER):
+            if BasicField.DISCNUMBER in track.fields:
                 continue
             path = self.ctx.config.library / album.path / track.filename
             self.ctx.console.print(f"setting discnumber {value} on {escape(track.filename)}", highlight=False)
@@ -276,7 +276,7 @@ class CheckDiscNumbering(Check):
     def _fix_set_discnumber_from_filename(self, album: Album) -> FixResult:
         changed = False
         for track in sorted(album.tracks):
-            if track.has(BasicField.DISCNUMBER):
+            if BasicField.DISCNUMBER in track.fields:
                 continue
             (disc, _, _) = parse_filename(track.filename)
             if disc is None:
@@ -290,15 +290,15 @@ class CheckDiscNumbering(Check):
     def _fix_remove_disc_number_disc_total_1(self, album: Album):
         changed = False
         tagger = self.tagger.get(album.path)
-        for track in (track for track in album.tracks if (track.has(BasicField.DISCNUMBER) or track.has(BasicField.DISCTOTAL))):
+        for track in (track for track in album.tracks if (BasicField.DISCNUMBER in track.fields or BasicField.DISCTOTAL in track.fields)):
             remove_fields: list[BasicField] = []
-            if track.has(BasicField.DISCNUMBER):
-                if int(track.get(BasicField.DISCNUMBER)[0]) != 1:
-                    raise ValueError(f"asked to remove disc number but it was not 1: {track.get(BasicField.DISCNUMBER)}")
+            if BasicField.DISCNUMBER in track.fields:
+                if int(track.fields[BasicField.DISCNUMBER][0]) != 1:
+                    raise ValueError(f"asked to remove disc number but it was not 1: {track.fields[BasicField.DISCNUMBER]}")
                 remove_fields.append(BasicField.DISCNUMBER)
-            if track.has(BasicField.DISCTOTAL):
-                if int(track.get(BasicField.DISCTOTAL)[0]) != 1:
-                    raise ValueError(f"asked to remove disc total but it was not 1: {track.get(BasicField.DISCTOTAL)}")
+            if BasicField.DISCTOTAL in track.fields:
+                if int(track.fields[BasicField.DISCTOTAL][0]) != 1:
+                    raise ValueError(f"asked to remove disc total but it was not 1: {track.fields[BasicField.DISCTOTAL]}")
                 remove_fields.append(BasicField.DISCTOTAL)
             self.ctx.console.print(f"removing {' and '.join(remove_field.value for remove_field in remove_fields)} from {escape(track.filename)}")
             with tagger.open(track.filename) as tag:

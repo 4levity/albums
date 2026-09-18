@@ -29,8 +29,8 @@ class CheckAlbumField(Check):
 
         track_album_fields: defaultdict[str, int] = defaultdict(int)
         for track in album.tracks:
-            if track.has(BasicField.ALBUM):
-                for album_field in track.get(BasicField.ALBUM):
+            if BasicField.ALBUM in track.fields:
+                for album_field in track.fields[BasicField.ALBUM]:
                     track_album_fields[album_field] += 1
             else:
                 track_album_fields[""] += 1
@@ -55,9 +55,9 @@ class CheckAlbumField(Check):
             [
                 [
                     escape(track.filename),
-                    format_field_values(track.get(BasicField.ALBUM, default=None)),
-                    format_field_values(track.get(BasicField.ARTIST, default=None)),
-                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
+                    format_field_values(track.fields.get(BasicField.ALBUM)),
+                    format_field_values(track.fields.get(BasicField.ARTIST)),
+                    format_field_values(track.fields.get(BasicField.ALBUMARTIST)),
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -75,7 +75,7 @@ class CheckAlbumField(Check):
         changed = False
         for track in sorted(album.tracks):
             file = self.ctx.config.library / album.path / track.filename
-            if track.get(BasicField.ALBUM, default=[]) != (option,):
+            if track.fields.get(BasicField.ALBUM, []) != [option]:
                 self.ctx.console.print(f"setting album on {escape(track.filename)}", highlight=False)
                 self.tagger.get(album.path).set_basic_fields(file, [(BasicField.ALBUM, option)])
                 changed = True

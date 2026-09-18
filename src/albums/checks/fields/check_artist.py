@@ -31,12 +31,12 @@ class CheckArtistField(Check):
 
         artist_values: defaultdict[str, list[str]] = defaultdict(list)
         for track in album.tracks:
-            if track.has(BasicField.ARTIST):
-                for artist_name in track.get(BasicField.ARTIST):
+            if BasicField.ARTIST in track.fields:
+                for artist_name in track.fields[BasicField.ARTIST]:
                     artist_values[artist_name].append(track.filename)
             else:
                 artist_values[""].append(track.filename)
-            for album_artist_name in track.get(BasicField.ALBUMARTIST, default=[]):
+            for album_artist_name in track.fields.get(BasicField.ALBUMARTIST, []):
                 artist_values[album_artist_name].append(track.filename)
 
         if not artist_values[""]:  # no tracks missing artist field
@@ -55,9 +55,9 @@ class CheckArtistField(Check):
             [
                 [
                     escape(track.filename),
-                    format_field_values(track.get(BasicField.ALBUMARTIST, default=None)),
-                    format_field_values(track.get(BasicField.ARTIST, default=None)),
-                    format_field_values([candidates[0]] if candidates and not track.has(BasicField.ARTIST) else None),
+                    format_field_values(track.fields.get(BasicField.ALBUMARTIST)),
+                    format_field_values(track.fields.get(BasicField.ARTIST)),
+                    format_field_values([candidates[0]] if candidates and BasicField.ARTIST not in track.fields else None),
                 ]
                 for track in sorted(album.tracks)
             ],

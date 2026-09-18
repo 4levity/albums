@@ -74,10 +74,10 @@ class TestSynchronizer:
                 t1 = dict(file.get_fields())
             with tagger.open("2.mp3") as file:
                 t2 = dict(file.get_fields())
-            assert t1.get(BasicField.TITLE) == ("one",)
-            assert t1.get(BasicField.ALBUM) == ("foo",)
-            assert t1.get(BasicField.ARTIST) == ("baz",)
-            assert t2.get(BasicField.TITLE) == ("two",)
+            assert t1[BasicField.TITLE] == ("one",)
+            assert t1[BasicField.ALBUM] == ("foo",)
+            assert t1[BasicField.ARTIST] == ("baz",)
+            assert t2[BasicField.TITLE] == ("two",)
         finally:
             ctx.db.dispose()
 
