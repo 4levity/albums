@@ -34,7 +34,7 @@ No Windows runner is used: the Windows installer is built on Linux with wine
 reusable workflow `.github/workflows/build-test.yml`. Their `wine` job runs
 on a self-hosted runner (label `wine`) in the purpose-built image from
 [`docker/`](../docker/): ubuntu 24.04 with wine 11 (WineHQ stable; the
-distro wine is too old), xvfb, and a warm wine environment (prefix, uv,
+distro wine is too old), uv, xvfb, and a warm wine environment (prefix, uv,
 Windows Python, Inno Setup) baked in by `scripts/wine_setup.py`. It then runs
 the test suite under wine (`make wine-pytest`), builds the installer
 (`make wine-build`), and tests it end-to-end (`make wine-e2e`). The `release`
@@ -72,6 +72,17 @@ then, jobs build a fresh environment (the fingerprint guard makes that
 safe). Wine jobs share the `/opt/wine` environment, so they should not
 overlap; a second concurrent wine job builds a fresh environment instead
 (safe, just slower).
+
+### Local runner use
+
+The runner image can also run the wine job locally, on a machine with Docker but
+no runner: `docker/build-image.sh` builds it locally (tag
+`ghcr.io/4levity/albums-runner:local`), and `docker/wine-local.sh` runs the wine
+job's steps in a container from that image. The container runs as the current
+user (the image's runner user, uid 1001, would not match the checkout's
+ownership), so `.cache/`, `build/`, `dist/` and `.venv/` keep the developer's
+ownership. The preferred local procedure is still the `wine-*` make targets on
+the host without Docker (below).
 
 ## Local Windows
 

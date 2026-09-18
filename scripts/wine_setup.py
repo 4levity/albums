@@ -22,8 +22,8 @@ DOWNLOADS = wine_common.WINE_ROOT / "downloads"
 
 # Pinned releases and the sha256 of their release assets. Python is not
 # pinned: uv picks the latest 3.14.x, as the Windows CI job does.
-UV_VERSION = "0.9.26"
-UV_SHA256 = "eb02fd95d8e0eed462b4a67ecdd320d865b38c560bffcda9a0b87ec944bdf036"  # uv-x86_64-pc-windows-msvc.zip
+UV_VERSION = "0.12.16"
+UV_SHA256 = "f730454bf09019754e5e5abd71a8aa18683cb739cba0d9c720bac2e7c901160f"  # uv-x86_64-pc-windows-msvc.zip
 INNOSETUP_VERSION = "7.1.0"
 INNOSETUP_SHA256 = "0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f"  # innosetup-7.1.0-x64.exe
 PYTHON_VERSION = "3.14"

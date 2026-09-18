@@ -117,6 +117,7 @@
         "MIXERID",
         "mixtape",
         "mktemp",
+        "mkstemp",
         "monkeysaudio",
         "mscoree",
         "msvc",

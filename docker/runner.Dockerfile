@@ -25,6 +25,19 @@ RUN apt-get update && \
         ca-certificates curl git libicu74 liblttng-ust1t64 make python3 zip unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# uv for the native build tooling (`make install`, `uv run`), so the wine job
+# needs no setup-uv step. Pinned and sha256-checked, like the Windows uv in
+# scripts/wine_setup.py.
+ARG UV_VERSION=0.12.16
+ARG UV_SHA256=a01206ffbd60f3a7ee30949be1863527986f5307494a064042c69ce7e6d44799
+RUN set -eux; \
+    curl -fsSL -o /tmp/uv.tar.gz \
+        "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-musl.tar.gz"; \
+    echo "${UV_SHA256}  /tmp/uv.tar.gz" | sha256sum -c -; \
+    tar xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1; \
+    rm /tmp/uv.tar.gz; \
+    uv --version
+
 # wine 11 from WineHQ: the wine packages require the i386 architecture, and
 # the fonts are for the GUI installers under xvfb.
 RUN dpkg --add-architecture i386 && \
@@ -47,6 +60,9 @@ RUN set -eux; \
     python3 scripts/wine_setup.py; \
     mkdir -p /opt/wine; \
     mv .cache/wine /opt/wine/env; \
+    # download() writes mode-600 files (mkstemp); make the environment
+    # world-readable so any user can copy it out of the image
+    chmod -R a+rX /opt/wine/env; \
     sha256sum scripts/wine_setup.py scripts/wine_common.py > /opt/wine/env/fingerprint; \
     test -d /opt/wine/env/prefix/drive_c; \
     test -f /opt/wine/env/bin/uv.exe; \
