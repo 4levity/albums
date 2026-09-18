@@ -1,4 +1,4 @@
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
@@ -12,10 +12,14 @@ class CheckAlbumUnderAlbum(Check):
     default_config = {"enabled": True}
 
     def check(self, album: Album):
+        # Count albums whose path starts with this one. Album paths end in the platform path
+        # separator, and no byte falls between a byte and its successor, so raising the last
+        # byte by one bounds the range to exactly the paths starting with this one; this
+        # case-sensitive range uses the album path index, unlike a case-insensitive LIKE prefix,
+        # which scans the whole table for every album.
         path = album.path
-        like_path = path.replace("|", "||").replace("%", "|%").replace("_", "|_") + "%"
         (matches,) = (
-            self.session.execute(select(func.count("*")).select_from(Album).filter(and_(Album.path != path, Album.path.like(like_path, "|"))))
+            self.session.execute(select(func.count("*")).select_from(Album).where(Album.path > path, Album.path < path[:-1] + chr(ord(path[-1]) + 1)))
             .tuples()
             .one()
         )

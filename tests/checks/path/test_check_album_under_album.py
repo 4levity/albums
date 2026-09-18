@@ -58,3 +58,49 @@ class TestCheckAlbumUnderAlbum:
                 assert result is None
         finally:
             ctx.db.dispose()
+
+    def test_album_under_album_case_sensitive(self):
+        # paths that differ only in case are siblings, not parent/child: the check is case-sensitive
+        albums = [
+            Album(path=f"Casey{os.sep}Album (2001){os.sep}", tracks=[Track(filename="1.flac")]),
+            Album(path=f"CASEY{os.sep}ALBUM (2001){os.sep}Deep (2002){os.sep}", tracks=[Track(filename="1.flac")]),
+        ]
+
+        ctx = Context()
+        ctx.db = db_open(MEMORY)
+        try:
+            with Session(ctx.db) as session:
+                checker = CheckAlbumUnderAlbum(ctx, session=session)
+                session.add(albums[0])
+                session.add(albums[1])
+                session.flush()
+
+                for album in albums:
+                    result = checker.check(album)
+                    assert result is None
+        finally:
+            ctx.db.dispose()
+
+    def test_album_under_album_wildcard_characters(self):
+        # LIKE wildcard characters in paths must not affect the prefix test
+        albums = [
+            Album(path=f"100% Hits{os.sep}Vol_| 2{os.sep}", tracks=[Track(filename="1.flac")]),
+            Album(path=f"100% Hits{os.sep}Vol_| 2{os.sep}Bonus{os.sep}", tracks=[Track(filename="1.flac")]),
+        ]
+
+        ctx = Context()
+        ctx.db = db_open(MEMORY)
+        try:
+            with Session(ctx.db) as session:
+                checker = CheckAlbumUnderAlbum(ctx, session=session)
+                session.add(albums[0])
+                session.add(albums[1])
+                session.flush()
+
+                result = checker.check(albums[0])
+                assert "there is 1 album in a directory under album" in result.message
+
+                result = checker.check(albums[1])
+                assert result is None
+        finally:
+            ctx.db.dispose()
