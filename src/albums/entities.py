@@ -9,26 +9,16 @@ from sqlalchemy import REAL, Boolean, ForeignKey, Index, Integer, LargeBinary, T
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
-from albums.database import NO_DEFAULT_VALUE_LIST_STR, Base, IntEnumAsInt, LoadIssuesAsJson, LoadIssuesType, SafeStringEnum
+from albums.database import (
+    NO_DEFAULT_VALUE_LIST_STR,
+    Base,
+    BasicFieldsAsJson,
+    IntEnumAsInt,
+    LoadIssuesAsJson,
+    LoadIssuesType,
+)
 from albums.picture import PictureInfo
 from albums.tagger import BasicField, Picture, PictureType, StreamInfo
-
-
-class FieldV(Base):
-    """Single metadata field value belonging to a track.
-
-    When multiple frames share the same field name (e.g., duplicate ``TCON`` genres), each gets its own row.
-    """
-
-    __tablename__ = "track_field"
-    __table_args__ = (Index("idx_track_field_track_id", "track_id"),)
-
-    track_field_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False, primary_key=True)
-    track_id: Mapped[Optional[int]] = mapped_column(ForeignKey("track.track_id"), nullable=False)
-    track: Mapped[Optional[Track]] = relationship("Track", back_populates="fields")
-
-    field: Mapped[BasicField] = mapped_column("name", SafeStringEnum[BasicField](BasicField, BasicField.UNKNOWN), nullable=False)
-    value: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class LegacyFieldEntity(Base):
@@ -93,6 +83,7 @@ class Track(Base):
     """Represents one audio file and its embedded metadata.
 
     Attributes:
+        fields: Mapping of :class:`~.tagger.types.BasicField` to the list of stored values, persisted as a JSON object.
         stream: Composite property wrapping :class:`~.tagger.types.StreamInfo` with codec and duration details.
         legacy_fields: Association proxy mapping to non-standard :class:`LegacyFieldEntity` field names.
     """
@@ -119,7 +110,7 @@ class Track(Base):
     )
 
     pictures: Mapped[List[TrackPicture]] = relationship("TrackPicture", back_populates="track", cascade="all, delete-orphan")
-    fields: Mapped[List[FieldV]] = relationship("FieldV", back_populates="track", cascade="all, delete-orphan")
+    fields: Mapped[dict[BasicField, list[str]]] = mapped_column("fields_json", BasicFieldsAsJson, nullable=False, default=dict)
     legacy_field_entities: Mapped[List[LegacyFieldEntity]] = relationship("LegacyFieldEntity", back_populates="track", cascade="all, delete-orphan")
     legacy_fields: AssociationProxy[List[str]] = association_proxy("legacy_field_entities", "field_name")
 
@@ -140,10 +131,7 @@ class Track(Base):
         Returns:
             Mapping where each value is a list of frame text for that field.
         """
-        map_fields: dict[BasicField, List[str]] = {}
-        for tag_entity in self.fields:
-            map_fields.setdefault(tag_entity.field, []).append(tag_entity.value)
-        return map_fields
+        return dict(self.fields)
 
     def has(self, field: BasicField) -> bool:
         """Return ``True`` when at least one value for *field* exists.
@@ -151,7 +139,7 @@ class Track(Base):
         Args:
             field: The :class:`~.tagger.types.BasicField` to check for.
         """
-        return any(v.field == field for v in self.fields)
+        return field in self.fields
 
     @overload
     def get(self, field: BasicField, default: None) -> Sequence[str] | None: ...
@@ -169,19 +157,31 @@ class Track(Base):
         Returns:
             Tuple of decoded text values or the provided fallback sequence.
         """
-        result = tuple(t.value for t in self.fields if t.field == field)
-        if len(result) == 0:
+        values = self.fields.get(field)
+        if values is None:
             if default is NO_DEFAULT_VALUE_LIST_STR:
                 raise KeyError(f"{field.value} is not in fields")
             return default
-        return result
+        return tuple(values)
 
     def __init__(self, **kw: Any):
-        """Construct a track row. ``fields`` is passed through unchanged; for tests/convenience a ``tag`` keyword (BasicField to str or sequence of str) may be given and is converted to a ``fields`` entity list."""
+        """Construct a track row.
+
+        ``fields`` is a mapping of :class:`~.tagger.types.BasicField` to a ``str`` or a sequence of
+        ``str`` values; it is normalized to ``list[str]`` so the in-memory form always matches the
+        stored form (fields with no values are dropped). A ``tag`` keyword with the same shape is
+        accepted as an alias for ``fields``.
+        """
         if "fields" not in kw and "tag" in kw and isinstance(kw["tag"], Mapping):
-            t: Mapping[BasicField, str | Sequence[str]] = kw["tag"]  # pyright: ignore[reportUnknownVariableType]
-            kw["fields"] = [FieldV(field=field, value=v) for field, values in t.items() for v in ([values] if isinstance(values, str) else values)]
+            kw["fields"] = kw["tag"]
             del kw["tag"]
+        if "fields" in kw:
+            tags: Mapping[BasicField, str | Sequence[str]] = kw["fields"]  # pyright: ignore[reportUnknownVariableType]
+            kw["fields"] = {
+                field: ([value] if isinstance(value, str) else list(value)) for field, value in tags.items() if value or isinstance(value, str)
+            }
+        else:
+            kw["fields"] = {}
         super().__init__(**kw)
 
     def __lt__(self, other: Track | PictureFile | OtherFile):

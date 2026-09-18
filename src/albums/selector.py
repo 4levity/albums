@@ -3,12 +3,12 @@
 import logging
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Final, Generator, List, Mapping, Sequence, Tuple
+from typing import Any, Final, Generator, List, Mapping, Sequence, Tuple
 
-from sqlalchemy import ScalarSelect, and_, exists, not_, or_, select
-from sqlalchemy.orm import InstrumentedAttribute, Session, aliased
+from sqlalchemy import and_, exists, func, not_, or_, select
+from sqlalchemy.orm import Session
 
-from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, FieldV, IgnoreCheckEntity, Track
+from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, IgnoreCheckEntity, Track
 from albums.tagger import BasicField
 
 logger: Final = logging.getLogger(__name__)
@@ -58,9 +58,7 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
     if fields:
         track_match = select(Track.track_id).where(Album.album_id == Track.album_id)
         for field_name, matches in fields:
-            entity = aliased(FieldV)
-            clauses = [or_(*(_compare(entity.value, m.comparator, m.value) for m in matches))] if matches else []  # empty = field exists, any value
-            track_match = track_match.join(entity, and_(Track.track_id == entity.track_id, entity.field == BasicField(field_name), *clauses))
+            track_match = track_match.where(_field_values_match(BasicField(field_name), matches))
         stmt = stmt.where(not_(exists(track_match))) if invert else stmt.where(exists(track_match))
 
     for key, matches in ((k, v) for k, v in filter.items() if not k.startswith("field:")):
@@ -101,10 +99,17 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
     yield from (album[0] for album in session.execute(stmt.order_by(Album.path)))
 
 
-def _compare(
-    value: InstrumentedAttribute[str] | InstrumentedAttribute[int] | ScalarSelect[str] | ScalarSelect[int], comparator: Comparator, target: str | int
-):
-    """Build a SQLAlchemy comparison clause for the given comparator."""
+def _field_values_match(field: BasicField, matches: List[Match]):
+    """Build an EXISTS clause: some value of *field* on the track's stored fields satisfies the matches (OR'd); no matches = the field is present with any value."""
+    values = func.json_each(func.json_extract(Track.fields, f"$.{field.value}")).table_valued("value")
+    stmt = select(1).select_from(values)
+    if matches:
+        stmt = stmt.where(or_(*(_compare(values.c.value, m.comparator, m.value) for m in matches)))
+    return stmt.exists()
+
+
+def _compare(value: Any, comparator: Comparator, target: str | int):
+    """Build a SQLAlchemy comparison clause for a column expression (an instrumented attribute, a scalar select or a table-valued column)."""
     match comparator:
         case Comparator.EQ:
             return value == target

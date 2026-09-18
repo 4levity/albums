@@ -1,16 +1,22 @@
 """Find duplicate albums (same artist and album name) in the library."""
 
 from collections import defaultdict
-from typing import Sequence
+from typing import Mapping, Sequence
 
-from sqlalchemy import and_, case, func, or_, select
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session
 
 from albums.app import Context
-from albums.entities import Album, FieldV, Track
+from albums.entities import Album, Track
 from albums.tagger import BasicField
 
 from ..utility import get_album_name_from_tracks, get_artist_from_tracks
+
+
+def _has_field_value(field: BasicField, value: str):
+    """Build an EXISTS clause: some value of *field* on the track equals *value* case-insensitively."""
+    values = func.json_each(func.json_extract(Track.fields, f"$.{field.value}")).table_valued("value")
+    return select(1).select_from(values).where(func.lower(values.c.value) == value).exists()
 
 
 def album_in_library(ctx: Context, album: Album) -> str | None:
@@ -19,24 +25,21 @@ def album_in_library(ctx: Context, album: Album) -> str | None:
     album_name = get_album_name_from_tracks(album)
     artist = get_artist_from_tracks(album)
     if album_name and artist:
+        name_match = _has_field_value(BasicField.ALBUM, str.lower(album_name))
+        artist_match = or_(
+            _has_field_value(BasicField.ARTIST, str.lower(artist)),
+            _has_field_value(BasicField.ALBUMARTIST, str.lower(artist)),
+        )
         with Session(library_ctx.db) as session:
-            FieldV2 = aliased(FieldV)
-            stmt = (
-                select(FieldV)
-                .filter(and_(FieldV.field == BasicField.ALBUM, func.lower(FieldV.value) == str.lower(album_name)))
-                .join(
-                    FieldV2,
-                    and_(
-                        FieldV.track_id == FieldV2.track_id,
-                        func.lower(FieldV2.value) == str.lower(artist),
-                        or_(FieldV2.field == BasicField.ARTIST, FieldV2.field == BasicField.ALBUMARTIST),
-                    ),
-                )
-            )
-            tag_match = session.execute(stmt).tuples().first()
-            if tag_match is not None and tag_match[0].track and tag_match[0].track.album:
-                return tag_match[0].track.album.path
+            track = session.execute(select(Track).where(name_match, artist_match)).scalars().first()
+            if track is not None and track.album is not None:
+                return track.album.path
     return None
+
+
+def _most_common(counts: Mapping[str, int]) -> str:
+    """Return the most common value, breaking ties on the count by value, matching the get_*_from_tracks helpers."""
+    return sorted(counts.items(), key=lambda i: (-i[1], i[0]))[0][0]
 
 
 class DuplicateFinder:
@@ -45,44 +48,25 @@ class DuplicateFinder:
     _duplicates: dict[tuple[str, str], list[int]]
 
     def start(self, session: Session):
-        # the most common artist (ARTIST/ALBUMARTIST) and album (ALBUM) value per album, in one grouped query that
-        # loads no ORM objects; ties on the occurrence count are broken by value, matching get_artist_from_tracks
-        # and get_album_name_from_tracks. Lowercasing happens in Python because SQLite's lower() is not
-        # Unicode-aware (see LibraryFolder.name_cf).
-        is_artist = case((FieldV.field.in_([BasicField.ARTIST, BasicField.ALBUMARTIST]), 1), else_=0).label("is_artist")
-        counted = (
-            select(Track.album_id, is_artist, FieldV.value.label("value"), func.count().label("count"))
-            .where(FieldV.field.in_([BasicField.ALBUM, BasicField.ARTIST, BasicField.ALBUMARTIST]))
-            .join(Track, Track.track_id == FieldV.track_id)
-            .group_by(Track.album_id, is_artist, FieldV.value)
-        ).cte()
-        ranked = (
-            select(
-                counted.c.album_id,
-                counted.c.is_artist,
-                counted.c.value,
-                func.row_number()
-                .over(partition_by=[counted.c.album_id, counted.c.is_artist], order_by=[counted.c.count.desc(), counted.c.value])
-                .label("rank"),
-            ).select_from(counted)
-        ).cte()
-        best = (
-            select(
-                ranked.c.album_id,
-                func.max(case((ranked.c.is_artist == 1, ranked.c.value))).label("artist"),
-                func.max(case((ranked.c.is_artist == 0, ranked.c.value))).label("album_name"),
-            )
-            .where(ranked.c.rank == 1)
-            .group_by(ranked.c.album_id)
-        ).cte()
+        # the most common artist (ARTIST/ALBUMARTIST) and album (ALBUM) value per album, computed in Python
+        # over the tracks' stored fields; the queries load no ORM objects. Lowercasing happens in Python
+        # because SQLite's lower() is not Unicode-aware (see LibraryFolder.name_cf).
+        artist_counts: defaultdict[int, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
+        album_name_counts: defaultdict[int, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
+        for album_id, fields in session.execute(select(Track.album_id, Track.fields)).yield_per(1000):
+            for artist in fields.get(BasicField.ARTIST, ()):
+                artist_counts[album_id][artist] += 1
+            for albumartist in fields.get(BasicField.ALBUMARTIST, ()):
+                artist_counts[album_id][albumartist] += 1
+            for album_name in fields.get(BasicField.ALBUM, ()):
+                album_name_counts[album_id][album_name] += 1
         albums: defaultdict[tuple[str, str], list[int]] = defaultdict(list)
-        for album_id, artist, album_name, _path in session.execute(
-            select(best.c.album_id, best.c.artist, best.c.album_name, Album.path)
-            .join(Album, Album.album_id == best.c.album_id)
-            .where(best.c.artist.is_not(None), best.c.album_name.is_not(None))
-            .order_by(Album.path)
-        ).yield_per(1000):
-            albums[(str.lower(artist), str.lower(album_name))].append(album_id)
+        for album_id, _path in session.execute(select(Album.album_id, Album.path).order_by(Album.path)).yield_per(1000):
+            artists = artist_counts.get(album_id)
+            names = album_name_counts.get(album_id)
+            if not artists or not names:
+                continue
+            albums[(str.lower(_most_common(artists)), str.lower(_most_common(names)))].append(album_id)
         self._duplicates = dict((k, ids) for k, ids in albums.items() if len(ids) > 1)
         return self
 

@@ -82,8 +82,13 @@ class TestDatabase:
                 track_id = album.tracks[0].track_id
                 session.commit()
             with db.begin() as conn:
-                conn.execute(text(f"INSERT INTO track_field (track_id, name, value) VALUES ({track_id}, 'invalid1', 'bar');"))
-                conn.execute(text(f"INSERT INTO track_field (track_id, name, value) VALUES ({track_id}, 'invalid2', 'baz');"))
+                # write field names that are not a valid BasicField directly into the JSON
+                conn.execute(
+                    text(
+                        f'UPDATE track SET fields_json = \'{{"album": ["foo"], "invalid1": ["bar"], "invalid2": ["baz"]}}\''
+                        f" WHERE track_id = {track_id};"
+                    )
+                )
             with Session(db) as session:
                 (album,) = session.execute(select(Album)).tuples().one()
                 tag = album.tracks[0].field_dict()
