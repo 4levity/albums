@@ -1,0 +1,5 @@
+# Custom labels for the self-hosted wine runner (docker/), declared so
+# actionlint accepts runs-on: [self-hosted, wine]
+self-hosted-runner:
+  labels:
+    - wine
