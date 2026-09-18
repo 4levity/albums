@@ -55,10 +55,10 @@ class BaseCheckFieldPerAlbum(Check):
             return presence_issue
 
         if self.tuple_value:
-            values = set(track.get(self.field, default=()) for track in album.tracks)
+            values = set(tuple(track.fields.get(self.field, [])) for track in album.tracks)
             options = sorted(", ".join(v) for v in values) + [self.option_remove_field]
         else:
-            values = set(value for track in album.tracks for value in track.get(self.field, default=[""]))
+            values = set(value for track in album.tracks for value in track.fields.get(self.field, [""]))
             options = sorted(filter(None, values)) + [self.option_remove_field]
 
         if len(values) > 1:
@@ -69,7 +69,7 @@ class BaseCheckFieldPerAlbum(Check):
                 [
                     [
                         escape(track.filename),
-                        self._format_values(track.get(self.field, default=[])),
+                        self._format_values(track.fields.get(self.field, [])),
                     ]
                     for track in sorted(album.tracks)
                 ],
@@ -94,7 +94,7 @@ class BaseCheckFieldPerAlbum(Check):
         tagger = self.tagger.get(album.path)
         changed = False
         for track in album.tracks:
-            current_values = track.get(self.field, default=[])
+            current_values = track.fields.get(self.field, [])
             if current_values and not option:
                 self.ctx.console.print(f"Removing {self.field_description} on {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tag:

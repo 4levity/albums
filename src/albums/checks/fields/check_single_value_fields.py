@@ -39,7 +39,7 @@ class CheckSingleValueFields(Check):
         for track in sorted(album.tracks, key=lambda track: track.filename):
             for field in self.single_value_fields:
                 # check for multiple values for field
-                fields = track.field_dict()
+                fields = track.fields
                 if field in fields and len(fields[field]) > 1:
                     multiple_value_fields.append((track, field, fields[field]))
                     if len(set(fields[field])) < len(fields[field]):
@@ -82,7 +82,7 @@ class CheckSingleValueFields(Check):
         for track in sorted(album.tracks):
             file = self.ctx.config.library / album.path / track.filename
             new_values: list[tuple[BasicField, str | list[str] | None]] = []
-            fields = track.field_dict()
+            fields = track.fields
             for field in self.single_value_fields:
                 if field in fields and len(fields[field]) > 1:
                     unique_values = list(OrderedDict.fromkeys(fields[field]))

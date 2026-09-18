@@ -68,7 +68,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
         for track in album.tracks:
             track_has_problems = False
             for field in SINGLE_POSITIVE_NUMBER_FIELDS:
-                plan = NumberFieldPlan.of(track.get(field, default=[]))
+                plan = NumberFieldPlan.of(track.fields.get(field, []))
                 if plan.problems:
                     track_has_problems = True
                     field_problems.setdefault(field, set()).update(plan.problems)
@@ -105,7 +105,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
             file = self.ctx.config.library / album.path / track.filename
             new_values: list[tuple[BasicField, str | None]] = []
             for field in SINGLE_POSITIVE_NUMBER_FIELDS:
-                plan = NumberFieldPlan.of(track.get(field, default=[]))
+                plan = NumberFieldPlan.of(track.fields.get(field, []))
                 if plan.changed:
                     new_values.append((field, plan.new_value))
                     if plan.new_value is None:
@@ -131,7 +131,7 @@ class CheckInvalidTrackOrDiscNumber(Check):
     def _table_row(track: Track) -> list[str]:
         row: list[str] = [escape(track.filename)]
         for field in SINGLE_POSITIVE_NUMBER_FIELDS:
-            values = track.get(field, default=[])
+            values = track.fields.get(field, [])
             if not values:
                 row.append(format_field_values(None))
                 continue

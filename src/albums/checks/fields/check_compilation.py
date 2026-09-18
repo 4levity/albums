@@ -15,9 +15,9 @@ OPTION_REMOVE_COMPILATION: Final = ">> Remove compilation flag from all tracks"
 
 def _flag_matches(track: Track, set_flag: bool) -> bool:
     """Return True when the track's compilation flag matches the expected state: the canonical value on every track, or absent."""
-    values = track.get(BasicField.COMPILATION, default=())
+    values = track.fields.get(BasicField.COMPILATION, [])
     if set_flag:
-        return values == (CANONICAL_COMPILATION_VALUE,)
+        return values == [CANONICAL_COMPILATION_VALUE]
     return not values
 
 
@@ -74,9 +74,9 @@ class CheckCompilationField(Check):
             [
                 [
                     escape(track.filename),
-                    ", ".join(track.get(BasicField.ARTIST, default=[])) or "[italic]none[/italic]",
-                    ", ".join(track.get(BasicField.ALBUMARTIST, default=[])) or "[italic]none[/italic]",
-                    ", ".join(track.get(BasicField.COMPILATION, default=[])) or "[italic]none[/italic]",
+                    ", ".join(track.fields.get(BasicField.ARTIST, [])) or "[italic]none[/italic]",
+                    ", ".join(track.fields.get(BasicField.ALBUMARTIST, [])) or "[italic]none[/italic]",
+                    ", ".join(track.fields.get(BasicField.COMPILATION, [])) or "[italic]none[/italic]",
                 ]
                 for track in sorted(album.tracks)
             ],
@@ -109,7 +109,7 @@ class CheckCompilationField(Check):
         artists: dict[str, str] = {}
         for track in album.tracks:
             for field, values in ((BasicField.ALBUMARTIST, album_artists), (BasicField.ARTIST, artists)):
-                for value in track.get(field, default=[]):
+                for value in track.fields.get(field, []):
                     name = str.strip(value)
                     if name:
                         values.setdefault(name.casefold(), name)
@@ -139,7 +139,7 @@ class CheckCompilationField(Check):
                 with tagger.open(track.filename) as tag:
                     tag.set_field(BasicField.COMPILATION, CANONICAL_COMPILATION_VALUE)
                 changed = True
-            elif not set_flag and track.has(BasicField.COMPILATION):
+            elif not set_flag and BasicField.COMPILATION in track.fields:
                 self.ctx.console.print(f"Removing compilation flag on {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tag:
                     tag.set_field(BasicField.COMPILATION, None)

@@ -56,7 +56,7 @@ class CheckMusicBrainzFields(Check):
         if not all(AlbumTagger.supports(track.filename, Cap.BASIC_FIELDS) for track in album.tracks):
             return None
 
-        if not any(any(track.has(mbid) for mbid in ALL_MBID_FIELDS) for track in album.tracks):
+        if not any(any(mbid in track.fields for mbid in ALL_MBID_FIELDS) for track in album.tracks):
             return None
 
         if self.remove_all:
@@ -72,7 +72,7 @@ class CheckMusicBrainzFields(Check):
                     self._make_table(album, ALL_MBID_FIELDS),
                 ),
             )
-        elif self.remove_deprecated and any(any(track.has(mbid) for mbid in DEPRECATED_MBID_FIELDS) for track in album.tracks):
+        elif self.remove_deprecated and any(any(mbid in track.fields for mbid in DEPRECATED_MBID_FIELDS) for track in album.tracks):
             options = [">> Remove deprecated MusicBrainz fields"]
             option_automatic_index = 0
             return CheckResult(
@@ -94,7 +94,7 @@ class CheckMusicBrainzFields(Check):
         )
 
     def _check_consistent_field(self, album: Album, check_field: BasicField) -> CheckResult | None:
-        values = set(v for track in album.tracks for v in track.get(check_field, ["none"]))
+        values = set(v for track in album.tracks for v in track.fields.get(check_field, ["none"]))
         if len(values) > 1:
             options = [f">> Remove {check_field.name} fields", ">> Remove all MusicBrainz fields"]
             option_automatic_index = 0  # automatic/default: only remove the conflicting MBID
@@ -116,7 +116,7 @@ class CheckMusicBrainzFields(Check):
         counts: dict[str, int] = {}
         for track in album.tracks:
             for field in fields:
-                if track.has(field):
+                if field in track.fields:
                     counts[field.value] = counts.get(field.value, 0) + 1
         return (
             ["MusicBrainz field", "files"],
@@ -134,7 +134,7 @@ class CheckMusicBrainzFields(Check):
             remove_fields = sorted(default_remove_fields)
 
         for track in album.tracks:
-            remove = [field for field in remove_fields if track.has(field)]
+            remove = [field for field in remove_fields if field in track.fields]
             if remove:
                 self.ctx.console.print(f"Removing MusicBrainz fields ({', '.join(remove)}) from {escape(track.filename)}", highlight=False)
                 with tagger.open(track.filename) as tag:

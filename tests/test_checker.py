@@ -73,8 +73,8 @@ class TestChecker:
 
             with Session(ctx.db) as session:
                 album = next(ctx.select_album_entities(session))
-                assert album.tracks[0].get(BasicField.TRACKNUMBER) == ("01",)
-                assert album.tracks[0].get(BasicField.DISCNUMBER) == ("1",)
+                assert album.tracks[0].fields[BasicField.TRACKNUMBER] == ["01"]
+                assert album.tracks[0].fields[BasicField.DISCNUMBER] == ["1"]
         finally:
             ctx.db.dispose()
 

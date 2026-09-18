@@ -79,7 +79,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
 
                 # wma files
                 tracks = sorted(result[1].tracks)
@@ -88,7 +88,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicField.TITLE) == ("one",)
+                assert tracks[0].fields[BasicField.TITLE] == ["one"]
 
                 # mp4 files
                 # TODO make sure we know what codec and stream rate is in sample file
@@ -96,7 +96,7 @@ class TestScanner:
                 assert len(result[2].tracks) == 2
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
-                assert tracks[0].get(BasicField.TITLE) == ("one",)
+                assert tracks[0].fields[BasicField.TITLE] == ["one"]
 
                 # mp3 files
                 tracks = sorted(result[3].tracks)
@@ -105,7 +105,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 44100
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
 
                 # aiff files
                 tracks = sorted(result[4].tracks)
@@ -114,7 +114,7 @@ class TestScanner:
                 assert tracks[0].file_size > 1
                 assert tracks[0].modify_timestamp > 1
                 assert tracks[0].stream.sample_rate == 8000
-                assert tracks[0].get(BasicField.TITLE) == ("one",)
+                assert tracks[0].fields[BasicField.TITLE] == ["one"]
 
                 # image files in folder
                 assert len(result[0].picture_files) == 1
@@ -196,7 +196,7 @@ class TestScanner:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
                 tracks = sorted(result[0].tracks)
                 assert tracks[0].filename == "1.flac"
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
 
             file = FLAC(library / result[0].path / "1.flac")
             file[BasicField.TITLE] = "new title"
@@ -205,7 +205,7 @@ class TestScanner:
 
             with Session(db) as session:
                 result = session.execute(select(Album).where(Album.path.like("bar%"))).tuples().one()
-                assert sorted(result[0].tracks)[0].get(BasicField.TITLE) == ("new title",)
+                assert sorted(result[0].tracks)[0].fields[BasicField.TITLE] == ["new title"]
         finally:
             db.dispose()
 
@@ -365,8 +365,8 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
-                assert not tracks[0].has(BasicField.ARTIST)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
+                assert BasicField.ARTIST not in tracks[0].fields
                 track_id = tracks[0].track_id
 
                 with AlbumTagger(library / created_album.path).open(tracks[0].filename) as tags:
@@ -376,10 +376,10 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
-                assert tracks[0].get(BasicField.ARTIST) == ("test replace track",)
-                assert tracks[1].get(BasicField.TITLE) == ("2",)
-                assert tracks[2].get(BasicField.TITLE) == ("3",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
+                assert tracks[0].fields[BasicField.ARTIST] == ["test replace track"]
+                assert tracks[1].fields[BasicField.TITLE] == ["2"]
+                assert tracks[2].fields[BasicField.TITLE] == ["3"]
 
                 old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None
@@ -398,9 +398,9 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 3
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
-                assert tracks[1].get(BasicField.TITLE) == ("2",)
-                assert tracks[2].get(BasicField.TITLE) == ("3",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
+                assert tracks[1].fields[BasicField.TITLE] == ["2"]
+                assert tracks[2].fields[BasicField.TITLE] == ["3"]
                 track_id = tracks[2].track_id
 
                 os.unlink(library / created_album.path / tracks[2].filename)
@@ -409,8 +409,8 @@ class TestScanner:
                 (album,) = session.execute(select(Album)).tuples().one()
                 assert len(album.tracks) == 2
                 tracks = sorted(album.tracks)
-                assert tracks[0].get(BasicField.TITLE) == ("1",)
-                assert tracks[1].get(BasicField.TITLE) == ("2",)
+                assert tracks[0].fields[BasicField.TITLE] == ["1"]
+                assert tracks[1].fields[BasicField.TITLE] == ["2"]
 
                 old_track = session.execute(select(Track).where(Track.track_id == track_id)).one_or_none()
                 assert old_track is None

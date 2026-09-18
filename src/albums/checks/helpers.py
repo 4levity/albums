@@ -43,11 +43,11 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
     """
     if any(
         not (
-            len(track.get(BasicField.TRACKNUMBER, default=["0"])) == 1
-            and track.get(BasicField.TRACKNUMBER, default=["0"])[0].isdecimal()
-            and len(track.get(BasicField.DISCNUMBER, default=["1"])) == 1
-            and track.get(BasicField.DISCNUMBER, default=["1"])[0].isdecimal()
-            and int(track.get(BasicField.DISCNUMBER, default=["1"])[0]) > 0
+            len(track.fields.get(BasicField.TRACKNUMBER, ["0"])) == 1
+            and track.fields.get(BasicField.TRACKNUMBER, ["0"])[0].isdecimal()
+            and len(track.fields.get(BasicField.DISCNUMBER, ["1"])) == 1
+            and track.fields.get(BasicField.DISCNUMBER, ["1"])[0].isdecimal()
+            and int(track.fields.get(BasicField.DISCNUMBER, ["1"])[0]) > 0
         )
         for track in tracks
     ):
@@ -55,11 +55,11 @@ def get_tracks_by_disc(tracks: Sequence[Track]) -> Mapping[int, List[Track]] | N
 
     tracks_by_disc: defaultdict[int, list[Track]] = defaultdict(list)
     for track in tracks:
-        discnumber = int(track.get(BasicField.DISCNUMBER, default=["0"])[0])
+        discnumber = int(track.fields.get(BasicField.DISCNUMBER, ["0"])[0])
         tracks_by_disc[discnumber].append(track)
 
     for discnumber in tracks_by_disc.keys():
-        tracks_by_disc[discnumber].sort(key=lambda track: int(track.get(BasicField.TRACKNUMBER, default=["0"])[0]))
+        tracks_by_disc[discnumber].sort(key=lambda track: int(track.fields.get(BasicField.TRACKNUMBER, ["0"])[0]))
 
     return tracks_by_disc
 
@@ -74,21 +74,22 @@ def _number_sort_key(value: str) -> Tuple[int, int, str]:
 def ordered_tracks(album: Album):
     """Return album tracks in playback order: by disc/track number fields when every track has a track number, falling back to filename sort otherwise. Number fields compare numerically, so albums with ≥10 tracks or discs are ordered 1, 2, ..., 10, ... rather than lexicographically."""
     # sort by discnumber/tracknumber field if all tracks have one
-    has_discnumber = all(len(track.get(BasicField.DISCNUMBER, default=[])) == 1 for track in album.tracks)
-    if all(len(track.get(BasicField.TRACKNUMBER, default=[])) == 1 for track in album.tracks):
+    has_discnumber = all(len(track.fields.get(BasicField.DISCNUMBER, [])) == 1 for track in album.tracks)
+    if all(len(track.fields.get(BasicField.TRACKNUMBER, [])) == 1 for track in album.tracks):
         if has_discnumber:
             return sorted(
-                album.tracks, key=lambda t: (_number_sort_key(t.get(BasicField.DISCNUMBER)[0]), _number_sort_key(t.get(BasicField.TRACKNUMBER)[0]))
+                album.tracks,
+                key=lambda t: (_number_sort_key(t.fields[BasicField.DISCNUMBER][0]), _number_sort_key(t.fields[BasicField.TRACKNUMBER][0])),
             )
         else:
-            return sorted(album.tracks, key=lambda t: _number_sort_key(t.get(BasicField.TRACKNUMBER)[0]))
+            return sorted(album.tracks, key=lambda t: _number_sort_key(t.fields[BasicField.TRACKNUMBER][0]))
     else:  # default album sort is by filename
         return sorted(album.tracks)
 
 
 def describe_track_number(track: Track):
     """Format a track's disc/track number as a human-readable string, noting missing numbers."""
-    fields = track.field_dict()
+    fields = track.fields
 
     if BasicField.DISCNUMBER in fields or BasicField.DISCTOTAL in fields:
         s = f"(disc {fields.get(BasicField.DISCNUMBER, ['<no disc>'])[0]}{('/' + fields[BasicField.DISCTOTAL][0]) if BasicField.DISCTOTAL in fields else ''}) "
