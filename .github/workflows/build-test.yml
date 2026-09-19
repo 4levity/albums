@@ -99,20 +99,14 @@ jobs:
         run: make install GROUPS=none
       - name: Use baked-in wine environment
         # The runner image ships a warm wine environment (prefix, uv,
-        # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
-        # checkout while its fingerprint matches the wine scripts and no
-        # other job is using it (wineserver lock); wine-setup then builds a
-        # fresh one. The environment persists in the runner container
-        # between jobs, and the jobs' group-restricted `uv sync`/`uv run`
-        # calls top up any lockfile changes.
-        run: |
-          if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
-            mkdir -p .cache
-            ln -s /opt/wine/env .cache/wine
-            echo "using baked-in wine environment"
-          else
-            echo "building a fresh wine environment"
-          fi
+        # Windows Python, Inno Setup) at /opt/wine/env. The script links it
+        # into the checkout while its fingerprint matches the wine scripts
+        # and no other job is using it (wineserver lock); wine-setup then
+        # builds a fresh one. The environment persists in the runner
+        # container between jobs, and the jobs' group-restricted `uv
+        # sync`/`uv run` calls top up any lockfile changes. A failed guard
+        # warns (annotation, not failure) and names the likely fix.
+        run: sh docker/wine_link_env.sh
       - name: Run test suite under wine
         run: make wine-pytest GROUPS=none
 
@@ -130,20 +124,14 @@ jobs:
         run: make install GROUPS=pyinstaller
       - name: Use baked-in wine environment
         # The runner image ships a warm wine environment (prefix, uv,
-        # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
-        # checkout while its fingerprint matches the wine scripts and no
-        # other job is using it (wineserver lock); wine-setup then builds a
-        # fresh one. The environment persists in the runner container
-        # between jobs, and the jobs' group-restricted `uv sync`/`uv run`
-        # calls top up any lockfile changes.
-        run: |
-          if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
-            mkdir -p .cache
-            ln -s /opt/wine/env .cache/wine
-            echo "using baked-in wine environment"
-          else
-            echo "building a fresh wine environment"
-          fi
+        # Windows Python, Inno Setup) at /opt/wine/env. The script links it
+        # into the checkout while its fingerprint matches the wine scripts
+        # and no other job is using it (wineserver lock); wine-setup then
+        # builds a fresh one. The environment persists in the runner
+        # container between jobs, and the jobs' group-restricted `uv
+        # sync`/`uv run` calls top up any lockfile changes. A failed guard
+        # warns (annotation, not failure) and names the likely fix.
+        run: sh docker/wine_link_env.sh
       - name: Build Windows installer
         run: make wine-build GROUPS=pyinstaller
       - name: Test installer end-to-end
