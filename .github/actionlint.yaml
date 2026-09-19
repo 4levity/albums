@@ -1,5 +1,6 @@
-# Custom labels for the self-hosted wine runner (docker/), declared so
-# actionlint accepts runs-on: [self-hosted, wine]
 self-hosted-runner:
   labels:
+    # accept runs-on: [self-hosted, wine]
     - wine
+    # currently actionlint doesn't know about new GHA runners. accept runs-on: ubuntu-26.04
+    - ubuntu-26.04

@@ -103,7 +103,7 @@ installed per build, and the wine environment was cached with
 
 ```yaml
 wine:
-  runs-on: ubuntu-latest
+  runs-on: ubuntu-26.04
   steps:
     - uses: actions/checkout@v5
       with:

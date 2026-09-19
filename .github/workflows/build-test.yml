@@ -7,7 +7,7 @@ on:
         description: Codecov upload token
 jobs:
   static:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -29,7 +29,7 @@ jobs:
         run: make static GROUPS="lint test"
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +65,7 @@ jobs:
         run: 'echo "Coverage report: https://app.codecov.io/gh/4levity/albums" >> "$GITHUB_STEP_SUMMARY"'
 
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:

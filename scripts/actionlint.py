@@ -28,10 +28,10 @@ import shellcheck
 
 # Pinned release and the sha256 of its Linux assets
 # (actionlint_{VERSION}_linux_{arch}.tar.gz from the GitHub release).
-VERSION = "1.7.9"
+VERSION = "1.7.12"
 ASSET_SHA256 = {
-    "amd64": "233b280d05e100837f4af1433c7b40a5dcb306e3aa68fb4f17f8a7f45a7df7b4",
-    "arm64": "6b82a3b8c808bf1bcd39a95aced22fc1a026eef08ede410f81e274af8deadbbc",
+    "amd64": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
+    "arm64": "325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6",
 }
 # uname -m value -> release asset arch
 MACHINE_ARCH = {

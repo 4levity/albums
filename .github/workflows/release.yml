@@ -13,7 +13,7 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -34,7 +34,7 @@ jobs:
   publish:
     needs: [build-test]
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write # Use OIDC permissions for trusted publishing
       contents: read
@@ -47,7 +47,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
   release:
     needs: [build-test, build-linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
