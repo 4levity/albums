@@ -24,13 +24,22 @@ a full scan (`albums scan`) to update the check's data.
 
 ## illegal-pathname
 
-Filenames should not include invalid characters or be operating system reserved
-words. This check flags filenames that might cause a problem. What is allowed
-and how illegal filenames are sanitized depends on the `path_compatibility` and
-related settings (see [Usage](./usage.md)).
+Filenames and the folders in an album's path should not include invalid
+characters or be operating system reserved words. This check flags names that
+might cause a problem. What is allowed and how illegal names are sanitized
+depends on the `path_compatibility` and related settings (see
+[Usage](./usage.md)).
 
-**Automatic fix**: Rename any tracks with illegal names, according to
-configuration.
+**Automatic fix**: Rename any tracks or picture files with illegal names, and
+rename the album folder if its name is illegal, according to configuration. A
+target name that would collide case-insensitively with an existing file or
+sibling folder gets a number appended instead; the file system is checked for
+such collisions when the fix is applied, so a rename never clobbers another
+name.
+
+If a folder above the album folder has an illegal name, the check fails
+without a fix: renaming it would move other albums, so rename it manually,
+then run a full scan (`albums scan`).
 
 ## file-extension
 
