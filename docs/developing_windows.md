@@ -39,26 +39,65 @@ end-to-end. The `release` job in `release.yml` publishes the installer, the
 Linux executable, and the source archive as GitHub release assets: published
 for tag pushes, draft for manual dispatch.
 
-Runner setup, and local building and testing with wine, are documented in
+The self-hosted runners these jobs run on (the image, the containers, and
+running the jobs locally from the image) are documented in
 `docker/self_hosted_runner.md` (in the repo, not on this site).
 
-## Testing Windows-specific behavior
+## Linux (wine)
 
-`make` (the default target) and the commit/push hooks only run the test suite
-on the host platform. Windows only runs via `make wine-pytest` (and the
-`wine-pytest` CI job). After changes involving Windows-specific behavior, run
-`make wine-pytest` or the suite on a Windows dev machine to verify. Examples of
-Windows-specific behavior: path validation and sanitization driven by
-`path_compatibility` (e.g. reserved names like `CON`, checked by
-`illegal-pathname`), and platform path semantics (e.g. on Windows `a:b` is a
-drive-relative path resolved against drive `a:`, not a folder named `a:b`,
-which is why some `illegal-pathname` tests are Linux-only).
+No Windows machine is needed: wine runs the same Windows build.
+
+Wine prefixes are large: `.cache/wine/` (the wine environment) uses about
+2.5 GB and `build/wine-e2e/` (the e2e prefix) another 1.4 GB. `make clean`
+removes the e2e prefix but keeps `.cache/wine/`; remove it manually to
+reclaim the space, it is re-created as needed.
+
+- Prerequisites: `wine` 11.0+ (WineHQ stable; the distro's wine is too old
+  for the build scripts) and, on headless systems, `xvfb`.
+- `make wine-setup` idempotently creates the environment in the gitignored
+  `.cache/wine/` folder: a wine prefix, uv (which downloads the Windows
+  Python), and Inno Setup. The Inno Setup silent installer needs a display;
+  without one, the setup runs it under xvfb-run.
+- `make wine-build` performs the build steps above and writes
+  `dist/installer/albums_win_x86_64-<version>-setup.exe`.
 
 ## Local Windows
 
 The same steps run directly on a Windows machine. Inno Setup must be installed.
 If `make` is not installed, the commands can be run individually;
 `scripts/wine_build.py` runs the same commands in one place.
+
+## Testing
+
+Tests run natively with `make test` on Linux and Windows, and `make` (the
+default target) and the commit/push hooks only run the test suite on the host
+platform. The suite runs against Windows only via `make wine-pytest` (and the
+`wine-pytest` CI job).
+
+`make wine-pytest` runs the test suite in the wine venv. It needs the wine
+environment, so the target depends on `wine-setup`.
+
+`make wine-e2e` tests the installer in a temporary wine prefix: it installs
+it with `/VERYSILENT /SUPPRESSMSGBOXES`, checks that albums is installed,
+added to the user PATH and runs, then uninstalls it and checks that it is
+gone. Like the Inno Setup install in `make wine-setup`, installing and
+uninstalling need a display, or xvfb when headless.
+
+`make wine-e2e` does not build the installer by default: it uses the
+installer in `dist/installer/` whose name matches the current version (built
+by `make wine-build`), warns that it is an existing build that may be stale,
+and fails if no matching installer is found. Run
+`uv run python scripts/wine_e2e.py --build` to build a fresh installer first
+(the wine environment is created if needed); the stale-build warning is then
+skipped.
+
+After changes involving Windows-specific behavior, run `make wine-pytest` or
+the suite on a Windows dev machine to verify. Examples of Windows-specific
+behavior: path validation and sanitization driven by `path_compatibility`
+(e.g. reserved names like `CON`, checked by `illegal-pathname`), and platform
+path semantics (e.g. on Windows `a:b` is a drive-relative path resolved
+against drive `a:`, not a folder named `a:b`, which is why some
+`illegal-pathname` tests are Linux-only).
 
 ## Certificate
 

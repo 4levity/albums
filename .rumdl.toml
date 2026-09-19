@@ -12,9 +12,11 @@ disable = ["MD057"]
 [MD007]
 indent = 4
 
-# reflow prose to line-length when fixing
+# reflow prose to line-length when fixing; code blocks (e.g. workflow
+# excerpts) are exempt
 [MD013]
 reflow = true
+code-blocks = false
 
 # MD046 (code block style): the parser misclassifies 4-space-indented
 # admonition (!!!) content as an indented code block when the document also

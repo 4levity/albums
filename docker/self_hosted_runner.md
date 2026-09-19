@@ -1,12 +1,13 @@
 # Self-Hosted Wine Runner
 
+## CI
+
 The `wine-pytest` and `wine-build` jobs in `.github/workflows/build-test.yml`
 run on self-hosted runners (label `wine`) in a purpose-built Docker image
-from this folder: ubuntu 24.04 with wine 11 (WineHQ stable; the distro wine
-is too old for the build scripts), uv, xvfb, and a warm wine environment
-(prefix, uv, Windows Python, Inno Setup) baked in by `scripts/wine_setup.py`,
-so the jobs skip the multi-minute wine apt install that `ubuntu-latest`
-needs.
+from this folder: ubuntu 24.04 with wine 11, uv, xvfb, and a warm wine
+environment (prefix, uv, Windows Python, Inno Setup) baked in by
+`scripts/wine_setup.py`, so the jobs skip the multi-minute wine apt install
+that `ubuntu-latest` needs.
 
 The image is built by the `.github/workflows/runner-image.yml` workflow
 (manual dispatch) and published to `ghcr.io/4levity/albums-runner`. Rerun it
@@ -90,43 +91,103 @@ wine jobs' steps in a container from that image. The container runs as the
 current user (the image's runner user, uid 1001, would not match the
 checkout's ownership), so `.cache/`, `build/`, `dist/` and `.venv/` keep the
 developer's ownership. The preferred local procedure is still the `wine-*`
-make targets on the host without Docker (below).
+make targets on the host without Docker (see
+[Windows Builds](../docs/developing_windows.md)).
 
-## Linux with wine
+## Wine on default GHA runners
 
-No Windows machine is needed: wine runs the same Windows build.
+Before commit `1dd51b7f3b8`, the wine job ran on `ubuntu-latest`: wine 11 was
+installed per build, and the wine environment was cached with
+`actions/cache` (full job:
+`git show 1dd51b7f3b8^:.github/workflows/build-test.yml`):
 
-Wine prefixes are large: `.cache/wine/` (the wine environment) uses about
-2.5 GB and `build/wine-e2e/` (the e2e prefix) another 1.4 GB. `make clean`
-removes the e2e prefix but keeps `.cache/wine/`; remove it manually to
-reclaim the space, it is re-created as needed.
+```yaml
+wine:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@v10.0.1
+      with:
+        python-version: "3.14"
+    - name: Install wine
+      # the distro wine is too old (the scripts require 11+); WineHQ ships
+      # current releases, and the wine packages require the i386
+      # architecture. No recommends needed: headless build, and the runner
+      # image already has the display/fonts.
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo curl -fsSL https://dl.winehq.org/wine-builds/winehq.key -o /etc/apt/keyrings/winehq.key
+        codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+        echo "deb [signed-by=/etc/apt/keyrings/winehq.key] https://dl.winehq.org/wine-builds/ubuntu/ ${codename} main" | sudo tee /etc/apt/sources.list.d/winehq.list
+        sudo apt-get update
+        sudo apt-get install --no-install-recommends winehq-stable
+    - name: Check wine version
+      run: wine --version
+    - name: Install dependencies
+      run: make install
+    - name: Cache wine environment
+      uses: actions/cache@v6
+      with:
+        # cache keys are immutable, so include uv.lock: a lock change saves a
+        # fresh warm state under the new key, and the restore-keys fallback
+        # (same tool pins) gives a near-warm restore that wine_build's
+        # `uv sync --locked` tops up with the small delta
+        path: .cache/wine
+        key: wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-${{ hashFiles('uv.lock') }}
+        restore-keys: |
+          wine-${{ runner.os }}-${{ hashFiles('scripts/wine_setup.py', 'scripts/wine_common.py') }}-
+    - name: Run test suite under wine
+      run: make wine-pytest
+    - name: Build Windows installer
+      run: make wine-build
+    - name: Test installer end-to-end
+      run: make wine-e2e
+```
 
-- Prerequisites: `wine` 11.0+ and, on headless systems, `xvfb`.
-- `make wine-setup` idempotently creates the environment in the gitignored
-  `.cache/wine/` folder: a wine prefix, uv (which downloads the Windows
-  Python), and Inno Setup. The Inno Setup silent installer needs a display;
-  without one, the setup runs it under xvfb-run.
-- `make wine-build` performs the build steps from
-  [Windows Builds](../docs/developing_windows.md) and writes
-  `dist/installer/albums_win_x86_64-<version>-setup.exe`.
+## Windows GHA runners
 
-## Testing
+Before commit `1b6aaa33143`, the installer was built on `windows-latest` with
+its preinstalled Inno Setup (`iscc` on PATH), no wine. The Windows runner image
+has no `make`, so the build steps ran directly (full job:
+`git show 1b6aaa33143^:.github/workflows/pyinstaller.yml`). There was no Windows
+testing.
 
-Tests run natively with `make test` on Linux and Windows.
-
-`make wine-pytest` runs the test suite in the wine venv. It needs the wine
-environment, so the target depends on `wine-setup`.
-
-`make wine-e2e` tests the installer in a temporary wine prefix: it installs
-it with `/VERYSILENT /SUPPRESSMSGBOXES`, checks that albums is installed,
-added to the user PATH and runs, then uninstalls it and checks that it is
-gone. Like the Inno Setup install in `make wine-setup`, installing and
-uninstalling need a display, or xvfb when headless.
-
-`make wine-e2e` does not build the installer by default: it uses the
-installer in `dist/installer/` whose name matches the current version (built
-by `make wine-build`), warns that it is an existing build that may be stale,
-and fails if no matching installer is found. Run
-`uv run python scripts/wine_e2e.py --build` to build a fresh installer first
-(the wine environment is created if needed); the stale-build warning is then
-skipped.
+```yaml
+build-win:
+  runs-on: windows-latest
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@v10.0.1
+      with:
+        python-version: "3.14"
+    # the windows runner image has no make, so run the make pyinstaller steps directly
+    - name: Install dependencies
+      run: uv sync --locked
+      shell: bash
+    - name: Render project icon
+      run: uv run python scripts/render_icon.py
+      shell: bash
+    - name: Build executable
+      run: |
+        uv run python scripts/version.py write
+        platform=$(uv run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))")
+        uv run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
+          --collect-data albums \
+          --icon "$(pwd)/build/icon.ico" \
+          --workpath "build/$platform" --distpath "dist/pyinstaller/$platform" \
+          --specpath "build/$platform/.specs" --contents-directory _albums_internal
+        ls -l "dist/pyinstaller/$platform/albums"
+      shell: bash
+    - name: Create installer script
+      run: uv run python scripts/render_iss.py
+      shell: bash
+    - name: Build installer
+      run: |
+        iscc build/albums.iss
+        ls -l dist/installer
+      shell: bash
+```
