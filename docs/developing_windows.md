@@ -42,6 +42,18 @@ for tag pushes, draft for manual dispatch.
 Runner setup, and local building and testing with wine, are documented in
 `docker/self_hosted_runner.md` (in the repo, not on this site).
 
+## Testing Windows-specific behavior
+
+`make` (the default target) and the commit/push hooks only run the test suite
+on the host platform. Windows only runs via `make wine-pytest` (and the
+`wine-pytest` CI job). After changes involving Windows-specific behavior, run
+`make wine-pytest` or the suite on a Windows dev machine to verify. Examples of
+Windows-specific behavior: path validation and sanitization driven by
+`path_compatibility` (e.g. reserved names like `CON`, checked by
+`illegal-pathname`), and platform path semantics (e.g. on Windows `a:b` is a
+drive-relative path resolved against drive `a:`, not a folder named `a:b`,
+which is why some `illegal-pathname` tests are Linux-only).
+
 ## Local Windows
 
 The same steps run directly on a Windows machine. Inno Setup must be installed.

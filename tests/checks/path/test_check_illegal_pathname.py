@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from unittest.mock import call
 
+import pytest
+
 from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.path.check_illegal_pathname import CheckIllegalPathname
@@ -10,6 +12,9 @@ from albums.entities import Album, PictureFile, Track
 from albums.picture import PictureInfo
 
 from ...helpers import apply_automatic_fix
+
+# It's hard to deal with illegal filenames in Windows/wine (that's why they're illegal), so tests that actually create them on disk are only run on Linux.
+linux_only = pytest.mark.skipif(os.name == "nt", reason="illegal file/folder names like 'a:b' cannot exist on Windows")
 
 
 def ctx_in(tmp_path: Path, album_path: str) -> Context:
@@ -171,6 +176,7 @@ class TestCheckIllegalPathname:
             ["a:b.jpg", "[yellow]ab.jpg[/yellow]"],
         ]
 
+    @linux_only
     def test_pathname_illegal_album_folder(self, mocker, tmp_path):
         album = Album(path="a:b" + os.sep, tracks=[Track(filename="1.flac")])
         ctx = ctx_in(tmp_path, "a:b" + os.sep)
@@ -191,6 +197,7 @@ class TestCheckIllegalPathname:
         assert mock_rename.call_args_list == [call(tmp_path / "a:b", tmp_path / "ab")]
         assert album.path == "ab" + os.sep
 
+    @linux_only
     def test_pathname_illegal_album_folder_case_insensitive_collision(self, mocker, tmp_path):
         # the sanitized name collides case-insensitively with the sibling folder "AB", so a number is appended
         album = Album(path="a:b" + os.sep, tracks=[Track(filename="1.flac")])
@@ -210,6 +217,7 @@ class TestCheckIllegalPathname:
         assert mock_rename.call_args_list == [call(tmp_path / "a:b", tmp_path / "ab 1")]
         assert album.path == "ab 1" + os.sep
 
+    @linux_only
     def test_pathname_illegal_album_folder_collision_appears_before_fix(self, mocker, tmp_path):
         # the sibling folder is created after the table is rendered, so the fix re-checks the disk and adjusts
         album = Album(path="a:b" + os.sep, tracks=[Track(filename="1.flac")])
@@ -243,6 +251,7 @@ class TestCheckIllegalPathname:
         assert result.fixer is None
         assert result.message == 'illegal folder names in album path: "a:b", "c:d" (no automatic fix: rename manually, then run a full scan)'
 
+    @linux_only
     def test_pathname_illegal_files_and_album_folder(self, mocker, tmp_path):
         album = Album(path="a:b" + os.sep, tracks=[Track(filename="CON.flac")])
         ctx = ctx_in(tmp_path, "a:b" + os.sep)
