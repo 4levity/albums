@@ -40,9 +40,11 @@ def uv_run(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     Passes UV_GROUP_ARGS through (the Makefile exports it when GROUPS is set)
     so the host venv stays restricted to the groups this job synced with; a
     plain `uv run` would re-sync it to the default groups (all of them).
+    The group args are subcommand options of `run` (not global `uv` options),
+    so they go after it.
     """
     group_args = os.environ.get("UV_GROUP_ARGS", "").split()
-    return run(["uv", *group_args, "run", *args], cwd=ROOT, **kwargs)
+    return run(["uv", "run", *group_args, *args], cwd=ROOT, **kwargs)
 
 
 def find_wine() -> str:

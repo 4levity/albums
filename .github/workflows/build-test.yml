@@ -20,11 +20,13 @@ jobs:
           node-version: 24
           cache: npm
       # CI syncs only the dependency groups each job needs (the Makefile's
-      # GROUPS), so a job never downloads, e.g., the docs-only zensical
+      # GROUPS), so a job never downloads, e.g., the docs-only zensical. test
+      # is included too: pyright resolves imports from the venv (tests import
+      # pytest; scripts/version.py imports setuptools_scm, in the test group)
       - name: Install dependencies
-        run: make install GROUPS=lint
+        run: make install GROUPS="lint test"
       - name: Static checks
-        run: make static GROUPS=lint
+        run: make static GROUPS="lint test"
 
   test:
     runs-on: ubuntu-latest
