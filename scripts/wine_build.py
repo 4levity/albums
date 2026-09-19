@@ -8,6 +8,7 @@ and Inno Setup's iscc. Writes dist/installer/albums_win_x86_64-<version>-setup.e
 Usage: python scripts/wine_build.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -30,9 +31,10 @@ def build_setup(wine: str) -> None:
     print("syncing wine venv from uv.lock")
     # only the groups this build needs (not the defaults): the installer build
     # runs pyinstaller under wine, the host venv does the version.py steps
+    group_args = os.environ.get("UV_GROUP_ARGS", "").split()
     wine_common.run_wine(
         [wine],
-        [str(wine_common.BIN / "uv.exe"), "sync", "--locked", "--no-default-groups", "--group", "pyinstaller"],
+        [str(wine_common.BIN / "uv.exe"), "sync", "--locked", *group_args],
         prefix=wine_common.BUILD_PREFIX,
         timeout=3600,
     )
@@ -48,6 +50,7 @@ def build_setup(wine: str) -> None:
         [
             str(wine_common.BIN / "uv.exe"),
             "run",
+            *group_args,
             "pyinstaller",
             "src/albums/__main__.py",
             "--onedir",
