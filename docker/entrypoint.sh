@@ -1,38 +1,45 @@
 #!/bin/sh
 # GitHub Actions runner entrypoint.
 #
-#   docker run -d --name albums-runner \
+#   docker run -d --name albums-runner --restart unless-stopped \
 #     -e RUNNER_TOKEN=<token> -e RUNNER_NAME=albums-wine \
-#     -v albums-runner-home:/home/runner -v albums-runner-wine:/opt/wine \
+#     -v albums-runner-work:/home/runner/_work -v albums-runner-wine:/opt/wine \
 #     ghcr.io/4levity/albums-runner:latest
 #
-# Modes: register (default: configure if needed, then run), run (start an
-# already configured runner), remove (unregister). RUNNER_TOKEN is only
-# needed for the first registration; restarts reuse the stored config, so a
-# stopped container starts again with `docker start`.
+# Takes no argument in normal use: the first start registers the runner
+# (which needs RUNNER_TOKEN) and starts it, later starts (docker start,
+# host reboot) just start the already registered runner, so a stopped
+# container starts again with `docker start albums-runner`, no new token
+# needed. Pass `remove` to unregister the runner:
+#
+#   docker run --rm ghcr.io/4levity/albums-runner:latest remove
 
 set -eu
 
-case "${1:-register}" in
-  register)
-    if [ ! -d .runner ]; then
+cd "$(dirname "$0")" || exit 1
+
+case "${1:-run}" in
+  run|register)
+    # the runner stores its config in the .runner file; .runner_migrated is
+    # the newer config file name (both checked, as the runner does)
+    if [ ! -e .runner ] && [ ! -e .runner_migrated ]; then
       : "${RUNNER_TOKEN:?create one under Settings > Actions > Runners > New self-hosted runner}"
+      echo "registering runner ${RUNNER_NAME:-$(hostname)}"
       ./config.sh --replace --unattended \
-        --url "${RUNNER_URL:-https://github.com/4levity/albums}" \
+        --url "${REPO_URL:-https://github.com/4levity/albums}" \
         --token "${RUNNER_TOKEN}" \
         --name "${RUNNER_NAME:-$(hostname)}" \
         --labels "${RUNNER_LABELS:-wine}"
+    else
+      echo "runner already registered, starting"
     fi
-    exec ./run.sh
-    ;;
-  run)
     exec ./run.sh
     ;;
   remove)
     exec ./config.sh remove
     ;;
   *)
-    echo "usage: entrypoint.sh [register|run|remove]" >&2
+    echo "usage: entrypoint.sh [run|register|remove]" >&2
     exit 1
     ;;
 esac
