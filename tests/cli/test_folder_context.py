@@ -19,7 +19,9 @@ class TestFolderContext:
     def setup_tests(self):
         TestFolderContext.library = create_library("cli", [album1, album2])
 
-    def test_zero_config(self):
+    def test_zero_config(self, monkeypatch, tmp_path):
+        # point the default db lookup at a nonexistent file so a real user database is not loaded and migrated
+        monkeypatch.setenv("ALBUMS_DB", str(tmp_path / "albums.db"))
         result = CliRunner().invoke(entry_point.albums_group, ["--dir", str(TestFolderContext.library), "list", "--json"])
         assert result.exit_code == 0
         obj = json.loads(result.output)
