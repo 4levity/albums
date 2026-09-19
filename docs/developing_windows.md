@@ -55,23 +55,31 @@ On a machine with Docker, generate a runner token (Settings > Actions >
 Runners > New self-hosted runner, Linux/x64) and start the container:
 
 ```bash
-docker run -d --name albums-runner \
+docker run -d --name albums-runner --restart unless-stopped \
   -e RUNNER_TOKEN=<token> \
   -e RUNNER_NAME=albums-wine \
-  -v albums-runner-home:/home/runner \
+  -v albums-runner-work:/home/runner/_work \
   -v albums-runner-wine:/opt/wine \
   ghcr.io/4levity/albums-runner:latest
 ```
 
-The volumes persist across container restarts: the runner config (start
-again with `docker start albums-runner`, no new token needed) and the wine
-environment (the first job creates the wine venv, later jobs reuse it, and
-`uv sync --locked` tops up lockfile changes). To pick up a new image's wine
-environment, delete the wine volume before starting a new container; until
-then, jobs build a fresh environment (the fingerprint guard makes that
-safe). Wine jobs share the `/opt/wine` environment, so they should not
-overlap; a second concurrent wine job builds a fresh environment instead
-(safe, just slower).
+The container starts again with `docker start albums-runner` after a stop
+or host reboot: the entrypoint reuses the runner registration stored in
+the container, no new token needed. To upgrade the image, pull it and
+recreate the container with the same command: the entrypoint re-registers
+the runner by name (`config.sh --replace`), keeping its name and labels.
+Do not mount `/home/runner` itself: it would mask the runner installation
+in the image, which is pinned per image version. The work volume puts the
+job checkouts (`_work/`) on the host for inspection; a Docker volume on a
+Linux host is just a directory on the host disk, so there is no speed
+difference versus keeping them in the container. The wine volume holds the
+wine venv the first job creates (later jobs reuse it, and
+`uv sync --locked` tops up lockfile changes). To pick up a new image's
+wine environment, delete the wine volume before starting a new container;
+until then, jobs build a fresh environment (the fingerprint guard makes
+that safe). Wine jobs share the `/opt/wine` environment, so they should
+not overlap; a second concurrent wine job builds a fresh environment
+instead (safe, just slower).
 
 ### Local runner use
 
