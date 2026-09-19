@@ -17,7 +17,7 @@ case "${1:-register}" in
   register)
     if [ ! -d .runner ]; then
       : "${RUNNER_TOKEN:?create one under Settings > Actions > Runners > New self-hosted runner}"
-      ./config.sh --unattended \
+      ./config.sh --replace --unattended \
         --url "${RUNNER_URL:-https://github.com/4levity/albums}" \
         --token "${RUNNER_TOKEN}" \
         --name "${RUNNER_NAME:-$(hostname)}" \
