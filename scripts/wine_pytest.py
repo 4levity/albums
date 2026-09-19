@@ -18,9 +18,21 @@ def main() -> int:
     wine = wine_common.find_wine()
     try:
         print("running test suite under wine")
+        # only the groups this job needs (not the defaults): the wine venv is
+        # just for running pytest, unlike the host venv's GROUPS (none here)
         wine_common.run_wine(
             [wine],
-            [str(wine_common.BIN / "uv.exe"), "run", "pytest", "-o", "console_output_style=none", "--max-warnings=0"],
+            [
+                str(wine_common.BIN / "uv.exe"),
+                "run",
+                "--no-default-groups",
+                "--group",
+                "test",
+                "pytest",
+                "-o",
+                "console_output_style=none",
+                "--max-warnings=0",
+            ],
             prefix=wine_common.BUILD_PREFIX,
             timeout=3600,
         )

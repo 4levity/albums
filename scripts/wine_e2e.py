@@ -40,9 +40,8 @@ UNINSTALL_KEY = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\{d03e
 
 
 def current_version() -> str:
-    return wine_common.run(
-        ["uv", "run", "python", "scripts/version.py"],
-        cwd=wine_common.ROOT,
+    return wine_common.uv_run(
+        ["python", "scripts/version.py"],
         capture_output=True,
         text=True,
         check=True,
@@ -51,9 +50,8 @@ def current_version() -> str:
 
 def find_installer(just_built: bool) -> Path:
     """Return the installer in dist/installer/ matching the current version."""
-    file_version = wine_common.run(
-        ["uv", "run", "python", "scripts/version.py", "fileversion"],
-        cwd=wine_common.ROOT,
+    file_version = wine_common.uv_run(
+        ["python", "scripts/version.py", "fileversion"],
         capture_output=True,
         text=True,
         check=True,

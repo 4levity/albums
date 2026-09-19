@@ -23,18 +23,24 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
+docs = [
     { name = "ansi2image" },
     { name = "eralchemy", extra = ["graphviz"] },
-    { name = "pyinstaller" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
     { name = "setuptools-scm" },
     { name = "zensical" },
 ]
+lint = [
+    { name = "ruff" },
+]
+pyinstaller = [
+    { name = "pyinstaller" },
+    { name = "setuptools-scm" },
+]
 test = [
     { name = "pytest" },
+    { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "setuptools-scm" },
 ]
 
 [package.metadata]
@@ -56,18 +62,22 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
+docs = [
     { name = "ansi2image", specifier = ">=0.1.6" },
     { name = "eralchemy", extras = ["graphviz"], specifier = ">=1.6.0" },
-    { name = "pyinstaller", specifier = ">=6.19.0" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.14.10" },
     { name = "setuptools-scm", specifier = ">=8.0" },
     { name = "zensical", specifier = ">=0.0.18" },
 ]
+lint = [{ name = "ruff", specifier = ">=0.14.10" }]
+pyinstaller = [
+    { name = "pyinstaller", specifier = ">=6.19.0" },
+    { name = "setuptools-scm", specifier = ">=8.0" },
+]
 test = [
     { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "setuptools-scm", specifier = ">=8.0" },
 ]
 
 [[package]]

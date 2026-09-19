@@ -7,7 +7,8 @@
 # A warm wine environment (prefix, uv, Windows Python, Inno Setup) is baked
 # in by running scripts/wine_setup.py at image build time. The wine venv is
 # not baked in: the first job on the runner creates it, it then persists in
-# the /opt/wine volume, and `uv sync --locked` tops up lockfile changes.
+# the /opt/wine volume, and the jobs' group-restricted `uv sync`/`uv run`
+# calls top up lockfile changes.
 #
 # Built and published by the "Runner Image" workflow (manual dispatch) to
 # ghcr.io/4levity/albums-runner; see docs/developing_windows.md.

@@ -29,10 +29,12 @@ jobs:
             sudo apt-get install -y graphviz
           fi
           dot -V
+      # the docs-only groups (zensical, eralchemy, ansi2image, setuptools-scm
+      # for scripts/version.py) are this job's only reason to use Python
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=docs
       - name: Make docs site
-        run: make docs && ls -la site
+        run: make docs GROUPS=docs && ls -la site
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site

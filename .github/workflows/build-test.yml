@@ -19,10 +19,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # CI syncs only the dependency groups each job needs (the Makefile's
+      # GROUPS), so a job never downloads, e.g., the docs-only zensical
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=lint
       - name: Static checks
-        run: make static
+        run: make static GROUPS=lint
 
   test:
     runs-on: ubuntu-latest
@@ -39,17 +41,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=test
       - name: Run tests
         if: matrix.python == '3.12'
         env:
           TERM: "dumb"
-        run: make test
+        run: make test GROUPS=test
       - name: Run tests with coverage
         if: matrix.python == '3.14'
         env:
           TERM: "dumb"
-        run: make coverage
+        run: make coverage GROUPS=test
       - name: Upload to Codecov
         if: matrix.python == '3.14'
         uses: codecov/codecov-action@v5
@@ -69,6 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.14"
+      # no `make install`: uv build uses an isolated build environment
       - name: Create package
         run: make package
       - name: Upload package artifact
@@ -89,15 +92,17 @@ jobs:
           fetch-depth: 0
       - name: Check wine version
         run: wine --version
+      # the host venv only runs the (stdlib-only) wine scripts: no groups
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=none
       - name: Use baked-in wine environment
         # The runner image ships a warm wine environment (prefix, uv,
         # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
         # checkout while its fingerprint matches the wine scripts and no
         # other job is using it (wineserver lock); wine-setup then builds a
         # fresh one. The environment persists in the runner container
-        # between jobs, and `uv sync --locked` tops up any lockfile changes.
+        # between jobs, and the jobs' group-restricted `uv sync`/`uv run`
+        # calls top up any lockfile changes.
         run: |
           if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
             mkdir -p .cache
@@ -107,7 +112,7 @@ jobs:
             echo "building a fresh wine environment"
           fi
       - name: Run test suite under wine
-        run: make wine-pytest
+        run: make wine-pytest GROUPS=none
 
   wine-build:
     runs-on: [self-hosted, wine]
@@ -117,15 +122,18 @@ jobs:
           fetch-depth: 0
       - name: Check wine version
         run: wine --version
+      # the host venv runs the version/icon steps (setuptools-scm, project
+      # deps); the wine venv syncs its own pyinstaller group
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=pyinstaller
       - name: Use baked-in wine environment
         # The runner image ships a warm wine environment (prefix, uv,
         # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
         # checkout while its fingerprint matches the wine scripts and no
         # other job is using it (wineserver lock); wine-setup then builds a
         # fresh one. The environment persists in the runner container
-        # between jobs, and `uv sync --locked` tops up any lockfile changes.
+        # between jobs, and the jobs' group-restricted `uv sync`/`uv run`
+        # calls top up any lockfile changes.
         run: |
           if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
             mkdir -p .cache
@@ -135,9 +143,9 @@ jobs:
             echo "building a fresh wine environment"
           fi
       - name: Build Windows installer
-        run: make wine-build
+        run: make wine-build GROUPS=pyinstaller
       - name: Test installer end-to-end
-        run: make wine-e2e
+        run: make wine-e2e GROUPS=pyinstaller
       - name: Upload installer artifact
         uses: actions/upload-artifact@v7
         with:

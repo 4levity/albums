@@ -43,21 +43,29 @@ Changelog = "https://4levity.github.io/albums/changelog/"
 [project.scripts]
 albums = "albums.cli.entry_point:albums_group"
 
+# Granular groups so CI jobs can sync only what they need (the Makefile's
+# GROUPS variable maps to `--no-default-groups --group <name>`).
+# setuptools-scm backs scripts/version.py, which the tests and the docs,
+# pyinstaller and wine build steps run, so it goes in all of those groups.
 [dependency-groups]
-dev = [
-    "ruff >= 0.14.10",
-    "eralchemy[graphviz] >= 1.6.0",
+lint = ["ruff >= 0.14.10"]
+test = [
+    "pytest >= 9.0.3",
+    "pytest-mock >= 3.15.1",
     "pytest-cov >= 7.0.0",
+    "setuptools-scm >= 8.0",
+]
+docs = [
     "zensical >= 0.0.18",
-    "pyinstaller >= 6.19.0",
+    "eralchemy[graphviz] >= 1.6.0",
     "ansi2image >= 0.1.6",
     "setuptools-scm >= 8.0",
 ]
-test = ["pytest >= 9.0.3", "pytest-mock >= 3.15.1"]
+pyinstaller = ["pyinstaller >= 6.19.0", "setuptools-scm >= 8.0"]
 
 [tool.uv]
-# plain `uv sync` installs all dependency groups (dev + test)
-default-groups = ["dev", "test"]
+# plain `uv sync` installs all dependency groups
+default-groups = ["lint", "test", "docs", "pyinstaller"]
 
 [build-system]
 requires = ["hatchling >= 1.26", "hatch-vcs >= 0.4"]

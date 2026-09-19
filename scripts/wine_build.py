@@ -28,13 +28,20 @@ def build_setup(wine: str) -> None:
     prefix's wineserver running for the caller to kill.
     """
     print("syncing wine venv from uv.lock")
-    wine_common.run_wine([wine], [str(wine_common.BIN / "uv.exe"), "sync", "--locked"], prefix=wine_common.BUILD_PREFIX, timeout=3600)
+    # only the groups this build needs (not the defaults): the installer build
+    # runs pyinstaller under wine, the host venv does the version.py steps
+    wine_common.run_wine(
+        [wine],
+        [str(wine_common.BIN / "uv.exe"), "sync", "--locked", "--no-default-groups", "--group", "pyinstaller"],
+        prefix=wine_common.BUILD_PREFIX,
+        timeout=3600,
+    )
     print("writing version")
-    wine_common.run(["uv", "run", "python", "scripts/version.py", "write"], cwd=wine_common.ROOT, check=True)
+    wine_common.uv_run(["python", "scripts/version.py", "write"], check=True)
     print("rendering installer script")
-    wine_common.run(["uv", "run", "python", "scripts/render_iss.py"], cwd=wine_common.ROOT, check=True)
+    wine_common.uv_run(["python", "scripts/render_iss.py"], check=True)
     print("rendering project icon")
-    wine_common.run(["uv", "run", "python", "scripts/render_icon.py"], cwd=wine_common.ROOT, check=True)
+    wine_common.uv_run(["python", "scripts/render_icon.py"], check=True)
     print(f"building pyinstaller executable ({PLATFORM})")
     wine_common.run_wine(
         [wine],

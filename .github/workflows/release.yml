@@ -21,10 +21,11 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: "3.14"
+      # the pyinstaller group (with setuptools-scm for scripts/version.py)
       - name: Install dependencies
-        run: make install
+        run: make install GROUPS=pyinstaller
       - name: Build executable
-        run: make pyinstaller && ls -l dist/pyinstaller
+        run: make pyinstaller GROUPS=pyinstaller && ls -l dist/pyinstaller
       - name: Upload executable artifact
         uses: actions/upload-artifact@v7
         with:

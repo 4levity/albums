@@ -1,15 +1,31 @@
 UV := uv
+# Restrict the uv dependency groups for this invocation: space-separated group
+# names (e.g. "test"), "none" for no groups, or empty (the default) for the
+# default groups, which are all of them (see pyproject.toml). CI passes the
+# groups a job needs so each job syncs only those, e.g.
+# `make GROUPS=test install test`. Exported so the wine scripts pass the same
+# arguments to their host `uv run` calls (without them, `uv run` would
+# re-sync the venv to the default groups).
+GROUPS ?=
+ifeq ($(strip $(GROUPS)),)
+UV_GROUP_ARGS :=
+else ifeq ($(strip $(GROUPS)),none)
+UV_GROUP_ARGS := --no-default-groups
+else
+UV_GROUP_ARGS := --no-default-groups $(foreach g,$(GROUPS),--group $(g))
+endif
+export UV_GROUP_ARGS
 # Lint tools are Node.js dev dependencies, defined in package.json and
 # installed by `make install-js` (requires Node.js 22.18+).
 CSPELL := npx --no-install cspell
 RUMDL := npx --no-install rumdl
 # pyright runs via `uv run` for correct project environment
-PYRIGHT := $(UV) run npx --no-install pyright
+PYRIGHT := $(UV) run $(UV_GROUP_ARGS) npx --no-install pyright
 PYRIGHT_TESTS := $(PYRIGHT) -p tests
 # shellcheck runs via scripts/shellcheck.py, which on Linux downloads a pinned
 # release into .cache/shellcheck/ and elsewhere uses shellcheck from PATH
-SHELLCHECK := $(UV) run python scripts/shellcheck.py
-RUFF := $(UV) run ruff
+SHELLCHECK := $(UV) run $(UV_GROUP_ARGS) python scripts/shellcheck.py
+RUFF := $(UV) run $(UV_GROUP_ARGS) ruff
 RUFF_CHECK := $(RUFF) check .
 RUFF_CHECK_FIX := $(RUFF) check . --fix
 RUFF_FORMAT := $(RUFF) format
@@ -39,7 +55,7 @@ CSPELL_CHECK := $(CSPELL) lint --gitignore --exclude .git . .[!.]*
 # pinned release into .cache/actionlint/ and elsewhere uses actionlint from
 # PATH; it also ensures the pinned shellcheck (importing scripts/shellcheck.py)
 # is on its PATH, since actionlint shellchecks the workflows' run: blocks
-ACTIONLINT := $(UV) run python scripts/actionlint.py
+ACTIONLINT := $(UV) run $(UV_GROUP_ARGS) python scripts/actionlint.py
 ACTIONLINT_CHECK := $(ACTIONLINT) .github/workflows/*.yml
 
 # QUIET=1 reduces output for git hooks. Output is still shown on failure.
@@ -59,7 +75,7 @@ hooks: ## Enable git hooks (commit-msg, pre-commit, pre-push)
 	@if git rev-parse --git-dir >/dev/null 2>&1; then if [ "$$(git config --get core.hooksPath)" != "hooks" ]; then git config core.hooksPath hooks; echo "git hooks enabled (core.hooksPath=hooks)"; fi; else echo "skipping git hooks (not a git repository)"; fi
 
 install: ## Install project dependencies
-	$(STEP) 'uv sync' $(UV) sync --locked
+	$(STEP) 'uv sync' $(UV) sync --locked $(UV_GROUP_ARGS)
 
 install-js: node_modules hooks ## Install static-check Node.js dependencies
 
@@ -113,10 +129,10 @@ typecheck-tests: node_modules
 fix: install fix-python fix-markdown ## Automatically fix lint/format
 
 test: install ## Run all tests, fail on any warnings
-	$(UV) run pytest --max-warnings=0
+	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0
 
 coverage: install ## Run all tests with coverage, fail on any warnings
-	$(UV) run pytest --max-warnings=0 --cov=src/albums --cov-report=xml
+	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0 --cov=src/albums --cov-report=xml
 	@echo Coverage XML in $(CURDIR)/coverage.xml
 
 # regenerate sample db if schema or schema-creation code changed
@@ -128,11 +144,11 @@ SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \
 sample/albums.db: $(SCHEMA_FILES)
 	@rm -rf sample/albums.db
 	@mkdir -p sample
-	$(UV) run python src/albums/database/connection.py sample/albums.db
+	$(UV) run $(UV_GROUP_ARGS) python src/albums/database/connection.py sample/albums.db
 
 docs/images/database_diagram.png: sample/albums.db
 	@mkdir -p docs/images
-	$(UV) run eralchemy -i sqlite:///sample/albums.db -o docs/images/database_diagram.png
+	$(UV) run $(UV_GROUP_ARGS) eralchemy -i sqlite:///sample/albums.db -o docs/images/database_diagram.png
 	@ls -l docs/images/database_diagram.png
 
 # Render the real `albums --help` output to an image (via ansi2image, bundled JetBrains Mono font).
@@ -141,9 +157,9 @@ docs/images/database_diagram.png: sample/albums.db
 docs/images/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 	@mkdir -p docs/images
 	@rm -f $@ $@.tmp $@.txt
-	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(UV) run albums --help > $@.tmp
+	@FORCE_COLOR=1 COLUMNS=100 XDG_CONFIG_HOME='~/.config' $(UV) run $(UV_GROUP_ARGS) albums --help > $@.tmp
 	@sed 1d $@.tmp > $@.txt
-	@$(UV) run ansi2image $@.txt -o $@
+	@$(UV) run $(UV_GROUP_ARGS) ansi2image $@.txt -o $@
 	@rm -f $@.tmp $@.txt
 	@test -s $@
 	@ls -l $@
@@ -152,14 +168,14 @@ docs/images/screenshot_help.png: $(wildcard src/albums/cli/*.py)
 # the docs site favicon and header logo (docs/images/) and the Windows icon
 # (build/icon.ico) for the PyInstaller executable and Inno Setup installer.
 docs/images/favicon.png docs/images/logo.png build/icon.ico &: docs/art/icon.png scripts/render_icon.py
-	$(UV) run python scripts/render_icon.py
+	$(UV) run $(UV_GROUP_ARGS) python scripts/render_icon.py
 
 # Build a standalone executable for this platform in dist/pyinstaller/<platform>/albums/.
 pyinstaller: install build/icon.ico ## Build standalone pyinstaller executable for this platform
-	$(UV) run python scripts/version.py write
-	platform=$$($(UV) run python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))") && \
+	$(UV) run $(UV_GROUP_ARGS) python scripts/version.py write
+	platform=$$($(UV) run $(UV_GROUP_ARGS) python -c "import sysconfig; print(sysconfig.get_platform().replace('-', '_'))") && \
 	case $$platform in win*) iconopt="--icon $$(pwd)/build/icon.ico" ;; *) iconopt="" ;; esac && \
-	$(UV) run pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
+	$(UV) run $(UV_GROUP_ARGS) pyinstaller src/albums/__main__.py --onedir --name albums --noconfirm --clean \
 	--collect-data albums $$iconopt \
 	--workpath build/$$platform --distpath dist/pyinstaller/$$platform \
 	--specpath build/$$platform/.specs --contents-directory _albums_internal && \
@@ -172,30 +188,30 @@ pyinstaller: install build/icon.ico ## Build standalone pyinstaller executable f
 # wine-e2e tests the existing installer, or builds a fresh one first with
 # --build (which also creates the wine environment).
 wine-setup: ## Create the wine environment for Windows installer builds
-	$(UV) run python scripts/wine_setup.py
+	$(UV) run $(UV_GROUP_ARGS) python scripts/wine_setup.py
 
 wine-build: ## Build the Windows installer on Linux via wine (dist/installer/)
-	$(UV) run python scripts/wine_build.py
+	$(UV) run $(UV_GROUP_ARGS) python scripts/wine_build.py
 
 wine-pytest: wine-setup ## Run the test suite under wine
-	$(UV) run python scripts/wine_pytest.py
+	$(UV) run $(UV_GROUP_ARGS) python scripts/wine_pytest.py
 
 wine-e2e: ## Install, run and uninstall the installer in a temporary wine prefix
-	$(UV) run python scripts/wine_e2e.py
+	$(UV) run $(UV_GROUP_ARGS) python scripts/wine_e2e.py
 
 package: ## Create sdist and wheel in dist/
 	$(UV) build
 
 docs: install lint-markdown docs/images/favicon.png docs/images/logo.png docs/images/database_diagram.png docs/images/screenshot_help.png ## Build docs
-	$(UV) run zensical build --clean
+	$(UV) run $(UV_GROUP_ARGS) zensical build --clean
 	# portable version of sed -i (GNU-only): write to tmp file and move into place
-	@version=$$($(UV) run python scripts/version.py) && \
+	@version=$$($(UV) run $(UV_GROUP_ARGS) python scripts/version.py) && \
 	echo "injecting version $$version" && \
 	sed "s/%%version_placeholder%%/$$version/g" site/index.html > site/index.html.tmp && \
 	mv site/index.html.tmp site/index.html
 
 preview: docs/images/favicon.png docs/images/logo.png docs/images/database_diagram.png docs/images/screenshot_help.png ## Preview docs (does not automatically install)
-	$(UV) run zensical serve
+	$(UV) run $(UV_GROUP_ARGS) zensical serve
 
 clean: ## Remove build and test files
 	find . -type d -name "__pycache__" -exec rm -rf {} +

@@ -25,6 +25,14 @@ The dependency lockfile (`uv.lock`) is committed, and `make install` fails if it
 is out of date with `pyproject.toml`. After changing dependencies, run `uv lock`
 (or `uv add`/`uv remove`) and commit the updated lockfile.
 
+Dev dependencies are split into uv dependency groups (`lint`, `test`, `docs`,
+`pyinstaller`); all are default groups, so a plain `make install` (or `uv
+sync`) installs everything. To install a subset, pass the group names as
+`GROUPS` (e.g. `make GROUPS=test install test`; `GROUPS=none` installs the
+project without any groups). CI uses this so each job syncs only what it
+needs. `GROUPS` also applies to the targets' `uv run` calls, which would
+otherwise re-sync the default groups.
+
 The lint tools are Node.js dev dependencies defined in `package.json` with
 versions pinned in `package-lock.json`. `make install-js` installs them into
 `node_modules/`; `make static` and `make fix` run it automatically, and it fails
