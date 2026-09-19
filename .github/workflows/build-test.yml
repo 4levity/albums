@@ -77,10 +77,11 @@ jobs:
           name: albums-package
           path: dist/
 
-  wine:
-    # self-hosted runner in the purpose-built image (docker/): wine 11,
-    # xvfb and a warm wine environment are already installed, so the job
-    # skips the multi-minute wine apt install that ubuntu-latest needs
+  # Wine jobs: run in parallel on self-hosted runners (label wine) in the
+  # purpose-built image (docker/): wine 11, xvfb and a warm wine environment
+  # are already installed, so the jobs skip the multi-minute wine apt install
+  # that ubuntu-latest needs. See docker/self_hosted_runner.md.
+  wine-pytest:
     runs-on: [self-hosted, wine]
     steps:
       - uses: actions/checkout@v5
@@ -96,8 +97,7 @@ jobs:
         # checkout while its fingerprint matches the wine scripts and no
         # other job is using it (wineserver lock); wine-setup then builds a
         # fresh one. The environment persists in the runner container
-        # between jobs, and wine-build's `uv sync --locked` tops up any
-        # lockfile changes.
+        # between jobs, and `uv sync --locked` tops up any lockfile changes.
         run: |
           if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
             mkdir -p .cache
@@ -108,6 +108,32 @@ jobs:
           fi
       - name: Run test suite under wine
         run: make wine-pytest
+
+  wine-build:
+    runs-on: [self-hosted, wine]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Check wine version
+        run: wine --version
+      - name: Install dependencies
+        run: make install
+      - name: Use baked-in wine environment
+        # The runner image ships a warm wine environment (prefix, uv,
+        # Windows Python, Inno Setup) at /opt/wine/env. Link it into the
+        # checkout while its fingerprint matches the wine scripts and no
+        # other job is using it (wineserver lock); wine-setup then builds a
+        # fresh one. The environment persists in the runner container
+        # between jobs, and `uv sync --locked` tops up any lockfile changes.
+        run: |
+          if [ ! -e .cache/wine ] && [ -d /opt/wine/env ] && [ ! -e /opt/wine/env/prefix/.lock ] && sha256sum -c /opt/wine/env/fingerprint --quiet; then
+            mkdir -p .cache
+            ln -s /opt/wine/env .cache/wine
+            echo "using baked-in wine environment"
+          else
+            echo "building a fresh wine environment"
+          fi
       - name: Build Windows installer
         run: make wine-build
       - name: Test installer end-to-end
