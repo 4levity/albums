@@ -1,4 +1,5 @@
 from itertools import chain
+from os import scandir
 from shutil import rmtree
 from typing import Final, Sequence, override
 
@@ -14,9 +15,12 @@ from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.entities import Album, OtherFile, PictureFile, Track
 from albums.tagger import AlbumTaggerProvider
+from albums.words import plural
 
 OPTION_DELETE_OTHER: Final = ">> KEEP left (THIS album) and DELETE right (other): "
 OPTION_KEEP_OTHER: Final = ">> DELETE left (THIS album) and KEEP right (other): "
+# OS housekeeping files that would be deleted with the folder but that never appear in the database
+IGNORED_FILES: Final = frozenset({".DS_Store", "Thumbs.db"})
 
 
 class CheckDuplicateAlbum(Check):
@@ -90,22 +94,60 @@ class CheckDuplicateAlbum(Check):
             Fixer(lambda option: self._fix_delete_album(album, other, option), options, False, option_automatic_index, table),
         )
 
-    def _fix_delete_album(self, album: Album, other: Album, option: str):
+    def _fix_delete_album(self, album: Album, other: Album, option: str) -> FixResult:
         if option == f"{OPTION_DELETE_OTHER}{other.path}":
-            if self._confirm_delete(other):
+            if self._delete_album(other):
                 return FixResult.CHANGED_OTHER
         elif option == f"{OPTION_KEEP_OTHER}{other.path}":
-            if self._confirm_delete(album):
+            if self._delete_album(album):
                 return FixResult.DELETED_ALBUM
-        raise ValueError(f"invalid option {option}")
+        else:
+            raise ValueError(f"invalid option {option}")
+        return FixResult.NO_CHANGE  # deletion was not confirmed
 
-    def _confirm_delete(self, album: Album):
+    def _delete_album(self, album: Album) -> bool:
+        """Delete the album folder from disk, refusing to delete more than the album.
+
+        Refuses when the folder is a symlink or contains subfolders or symlinks (which may hold other
+        albums or data outside the album), and asks for confirmation before deleting files that are
+        not in the database. A folder that is already gone is treated as deleted.
+
+        Returns:
+            True if the album is gone from disk (deleted here or already absent), else False.
+        """
         path = self.ctx.config.library / album.path
+        if path.is_symlink():
+            self.ctx.console.print(f'Not deleting "{escape(str(path))}": the album folder is a symlink')
+            return False
+        if not path.is_dir():
+            if path.exists():
+                self.ctx.console.print(f'Not deleting "{escape(str(path))}": the path exists but is not a folder')
+                return False
+            # no rmtree, no prompt: the folder is already gone
+            self.ctx.console.print(f"[yellow]Warning:[/yellow] {escape(str(path))} does not exist, so the album is already deleted from disk")
+            self._duplicates.remove(album)
+            return True
+        with scandir(path) as it:
+            entries = [(e.name, e.is_symlink(), e.is_dir(), e.is_file()) for e in it]
+        subfolders = sorted(name for (name, is_symlink, is_dir, _is_file) in entries if is_dir and not is_symlink)
+        symlinks = sorted(name for (name, is_symlink, _is_dir, _is_file) in entries if is_symlink)
+        if subfolders or symlinks:
+            problems: list[str] = []
+            if subfolders:
+                problems.append(f"subfolders: {', '.join(subfolders)}")
+            if symlinks:
+                problems.append(f"symlinks: {', '.join(symlinks)}")
+            self.ctx.console.print(f'Not deleting "{escape(str(path))}": the folder contains ' + " and ".join(problems))
+            return False
+        known_files = {file.filename for file in chain(album.tracks, album.picture_files, album.other_files)}
+        extra_files = sorted(
+            name for (name, _is_symlink, _is_dir, is_file) in entries if is_file and name not in known_files and name not in IGNORED_FILES
+        )
+        if extra_files and not confirm(
+            f"The folder contains {plural(extra_files, 'file')} not in the database: {', '.join(extra_files)}. Delete them too?"
+        ):
+            return False
         if confirm(f'Are you sure you want to permanently delete "{str(path)}"?'):
-            num = 0
-            while (temp := path.with_suffix(f".{num}")) and temp.exists():
-                num += 1
-
             rmtree(path)
             self._duplicates.remove(album)
             self.ctx.console.print(f"Deleted {escape(album.path)}")
