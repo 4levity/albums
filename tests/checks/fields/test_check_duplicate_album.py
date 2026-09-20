@@ -290,7 +290,8 @@ class TestCheckDuplicateAlbum:
             assert fix_result == FixResult.CHANGED_OTHER
             assert mock_confirm.call_count == 0
             assert not mock_rmtree.called
-            assert "does not exist" in console.export_text()
+            # collapse line wraps: on Windows the long tmp path can wrap the warning mid-phrase
+            assert "does not exist" in " ".join(console.export_text().split())
 
     def test_duplicate_delete_this_missing(self, mocker, tmp_path):
         albums = [
@@ -317,7 +318,8 @@ class TestCheckDuplicateAlbum:
             assert fix_result == FixResult.DELETED_ALBUM
             assert mock_confirm.call_count == 0
             assert not mock_rmtree.called
-            assert "does not exist" in console.export_text()
+            # collapse line wraps: on Windows the long tmp path can wrap the warning mid-phrase
+            assert "does not exist" in " ".join(console.export_text().split())
 
     def test_duplicate_multiple(self):
         albums = [

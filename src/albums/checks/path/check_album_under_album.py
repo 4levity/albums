@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Final
 
-from rich.markup import escape
 from sqlalchemy.orm import Session
 
 from albums.app import Context
@@ -43,6 +42,7 @@ class CheckAlbumUnderAlbum(Check):
         # (a re-run after a fix sees its own path again)
         path = album.path
         if self._under is not None and path.startswith(self._under) and path != self._under:
-            return CheckResult(f"in a directory under album {escape(self._under)}")
+            # the message is escaped where displayed, so the path is left raw (rich.markup.escape would double backslashes)
+            return CheckResult(f"in a directory under album {self._under}")
         self._under = path
         return None
