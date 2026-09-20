@@ -12,7 +12,7 @@ from albums.app import Context
 from albums.entities import Album
 from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
-from albums.selector import Match, load_album_entities
+from albums.selector import Match, load_album_entities, preload_albums
 from albums.tagger import AlbumTaggerProvider
 
 from .all import ALL_CHECKS, implicitly_ignored_checks
@@ -90,11 +90,18 @@ class Checker:
         issues_displayed = 0
         albums_checked = 0
 
-        for album in self.ctx.select_album_entities(session):
+        albums = list(self.ctx.select_album_entities(session))
+        # checks read track pictures and legacy fields per track; preload so the run
+        # issues a handful of batched queries instead of one per track per album. Commits
+        # expire the loaded relationships, so after one the remainder is preloaded again.
+        preload_albums(session, (album.album_id for album in albums))
+
+        for ix, album in enumerate(albums):
             if not (self.ctx.config.library / album.path).is_dir():
                 logger.info(f"album was deleted: {album.path}")
                 run_scan(self.ctx, session, iter([album]))
                 session.commit()
+                preload_albums(session, (other.album_id for other in albums[ix + 1 :]))
                 continue
             albums_checked += 1
             logger.info(f"checking album: {album.path}")
@@ -131,6 +138,7 @@ class Checker:
                             if disposition.maybe_changed:
                                 logger.debug(f"commit changes after running {check.name}")
                                 session.commit()
+                                preload_albums(session, (other.album_id for other in albums[ix:]))
                                 check_all = True  # re-run all checks
                                 break
                             elif disposition.passed:

@@ -3,11 +3,12 @@ import re
 
 import pytest
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import instance_dict
 
 from albums.database import MEMORY, db_open
 from albums.entities import Album, PictureFile, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.selector import Comparator, Match, load_album_entities
+from albums.selector import Comparator, Match, load_album_entities, preload_albums
 from albums.tagger import BasicField, PictureType, StreamInfo
 
 
@@ -55,6 +56,49 @@ class TestSelector:
             collections=["bar"],
             ignore_checks=["album"],
         )
+
+    def test_preload_albums(self):
+        db = db_open(MEMORY)
+        try:
+            with Session(db) as session:
+                TestSelector.album.tracks[0].legacy_fields.append("label")
+                session.add(TestSelector.album)
+                session.commit()
+            # a fresh session loads the album without its relationships
+            with Session(db) as session:
+                (album,) = list(load_album_entities(session))
+                state = instance_dict(album)
+                assert "tracks" not in state
+                assert "picture_files" not in state
+                assert "other_files" not in state
+                assert "ignore_check_entities" not in state
+                preload_albums(session, [album.album_id])
+                assert "tracks" in instance_dict(album)
+                assert "picture_files" in instance_dict(album)
+                assert "other_files" in instance_dict(album)
+                assert album.ignore_checks == ["artist", "album"]
+                track = album.tracks[0]
+                assert "pictures" in instance_dict(track)
+                assert "legacy_field_entities" in instance_dict(track)
+                assert [pic.picture_info.mime_type for pic in track.pictures] == ["image/jpeg"]
+                assert track.legacy_fields == ["label"]
+        finally:
+            db.dispose()
+
+    def test_preload_albums_batches(self):
+        db = db_open(MEMORY)
+        try:
+            with Session(db) as session:
+                session.add(TestSelector.album)
+                session.add(TestSelector.album2)
+                session.commit()
+            with Session(db) as session:
+                albums = list(load_album_entities(session))
+                preload_albums(session, [album.album_id for album in albums], batch_size=1)  # one album per batch
+                assert all("tracks" in instance_dict(album) for album in albums)
+                assert all("picture_files" in instance_dict(album) for album in albums)
+        finally:
+            db.dispose()
 
     def test_select_empty(self):
         db = db_open(MEMORY)

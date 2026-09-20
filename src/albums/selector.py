@@ -3,10 +3,10 @@
 import logging
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Final, Generator, List, Mapping, Sequence, Tuple
+from typing import Any, Final, Generator, Iterable, List, Mapping, Sequence, Tuple
 
 from sqlalchemy import and_, exists, func, not_, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, IgnoreCheckEntity, Track
 from albums.tagger import BasicField
@@ -97,6 +97,31 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
         stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
 
     yield from (album[0] for album in session.execute(stmt.order_by(Album.path)))
+
+
+def preload_albums(session: Session, album_ids: Iterable[int | None], batch_size: int = 500) -> None:
+    """Eagerly load the track, picture and file relationships of the given albums.
+
+    Checks read ``track.pictures`` and ``track.legacy_fields`` for every track; without this preload
+    each access issues its own query (one per track per album). Albums already in the session are
+    updated in place (identity map), so this is safe to call after the albums have been selected,
+    and again after a commit, which expires the previously loaded relationships.
+    None ids (albums not yet persisted) are skipped.
+    """
+    ids = [album_id for album_id in album_ids if album_id is not None]
+    for start in range(0, len(ids), batch_size):
+        # the result must be consumed: eager loads are applied while rows are fetched
+        session.execute(
+            select(Album)
+            .where(Album.album_id.in_(ids[start : start + batch_size]))
+            .options(
+                selectinload(Album.tracks).selectinload(Track.pictures),
+                selectinload(Album.tracks).selectinload(Track.legacy_field_entities),
+                selectinload(Album.picture_files),
+                selectinload(Album.other_files),
+                selectinload(Album.ignore_check_entities),
+            )
+        ).all()
 
 
 def _field_values_match(field: BasicField, matches: List[Match]):

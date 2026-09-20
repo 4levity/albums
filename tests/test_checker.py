@@ -3,17 +3,19 @@ import os
 import pytest
 from rich.console import Console
 from rich.text import Text
+from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.all import ALL_CHECKS
 from albums.checks.checker import Checker
 from albums.database import MEMORY, db_open
-from albums.entities import Album, Track
+from albums.entities import Album, Track, TrackPicture
 from albums.interactive.interact import OPTION_DO_NOTHING
 from albums.library import run_scan
+from albums.picture import PictureInfo
 from albums.selector import load_album_entities
-from albums.tagger import BasicField
+from albums.tagger import BasicField, PictureType
 
 from .fixtures.create_library import create_library
 
@@ -244,6 +246,53 @@ class TestChecker:
             quiet = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False)
             quiet.run_enabled(session)
             assert quiet.timings == {}
+        finally:
+            ctx.db.dispose()
+
+    def test_run_enabled_preloads_track_data(self):
+        # checks read track pictures and legacy fields; these must come from the batched preload
+        # (one query per table), not one lazy query per track
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[
+                Track(
+                    filename=f"{n} {name}.flac",
+                    fields={
+                        BasicField.ARTIST: "A",
+                        BasicField.ALBUM: "Foo",
+                        BasicField.TITLE: name,
+                        BasicField.TRACKNUMBER: str(n),
+                        BasicField.TRACKTOTAL: "3",
+                    },
+                    pictures=[TrackPicture(picture_info=PictureInfo("image/png", 400, 400, 24, 1, b""), picture_type=PictureType.COVER_FRONT)],
+                )
+                for n, name in enumerate(["one", "two", "three"], start=1)
+            ],
+        )
+        ctx = Context()
+        ctx.config.library = create_library("checker_preload", [album])
+        ctx.db = db_open(MEMORY, True)
+        try:
+            with Session(ctx.db) as session:
+                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                run_scan(ctx, session)
+                session.commit()
+
+                counts = {"track_picture": 0, "track_legacy_field": 0}
+
+                def count_queries(conn, cursor, statement, *args):
+                    if "FROM track_picture" in statement:
+                        counts["track_picture"] += 1
+                    if "FROM track_legacy_field" in statement:
+                        counts["track_legacy_field"] += 1
+
+                event.listen(ctx.db, "before_cursor_execute", count_queries)
+                try:
+                    Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                finally:
+                    event.remove(ctx.db, "before_cursor_execute", count_queries)
+
+            assert counts == {"track_picture": 1, "track_legacy_field": 1}
         finally:
             ctx.db.dispose()
 
