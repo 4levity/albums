@@ -1,10 +1,12 @@
 import os
 
 import pytest
+from rich.console import Console
 from rich.text import Text
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.checks.all import ALL_CHECKS
 from albums.checks.checker import Checker
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
@@ -190,6 +192,58 @@ class TestChecker:
             with Session(ctx.db) as session:
                 album_entity = next(ctx.select_album_entities(session))
                 assert album_entity.ignore_checks == ["invalid-track-or-disc-number"]
+        finally:
+            ctx.db.dispose()
+
+    def test_run_enabled_timing(self):
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[
+                Track(
+                    filename="1-01 one.flac",
+                    fields={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1-01", BasicField.TITLE: "one"},
+                )
+            ],
+        )
+        ctx = Context()
+        ctx.config.library = create_library("checker_timing", [album])
+        ctx.db = db_open(MEMORY, True)
+        console = Console(record=True, width=120)
+        ctx.console = console
+        try:
+            with Session(ctx.db) as session:
+                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                run_scan(ctx, session)
+                session.commit()
+
+                checker = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
+                checker.run_enabled(session)
+
+            # every enabled check was initialized and timed, and all stats are consistent
+            assert set(checker.timings) == {check.name for check in ALL_CHECKS if ctx.config.checks[check.name]["enabled"]}
+            for timing in checker.timings.values():
+                assert timing.init_seconds >= 0
+                assert timing.pass_seconds >= 0
+                assert timing.fail_seconds >= 0
+                assert timing.total_seconds == pytest.approx(timing.init_seconds + timing.pass_seconds + timing.fail_seconds)
+
+            # disc-in-track-number is the only problem; the checks before it passed; its dependents never ran
+            assert checker.timings["disc-in-track-number"].fail_count == 1
+            assert checker.timings["disc-in-track-number"].pass_count == 0
+            assert sum(timing.fail_count for timing in checker.timings.values()) == 1
+            assert checker.timings["duplicate-filename"].pass_count == 1
+            assert checker.timings["invalid-track-or-disc-number"].call_count == 0
+
+            # the report shows the per-check stats and the size estimates
+            output = console.export_text()
+            assert "check timings" in output
+            assert "disc-in-track-number" in output
+            assert "100k" in output
+
+            # timing is opt-in
+            quiet = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False)
+            quiet.run_enabled(session)
+            assert quiet.timings == {}
         finally:
             ctx.db.dispose()
 

@@ -156,10 +156,10 @@ seconds):
 2. **Checks should be stateless, holding only configuration.** Instance
    attributes should be set in `init()` from the check configuration (or be the
    injected `ctx`/`tagger`/`session`), and `check()` must not set any state on
-   the Check object. The one exception is `duplicate-album`, which holds an
-   in-memory index of the duplicate (artist, album name) groups, built in
-   `__init__` by a single grouped query, to compare albums across the whole
-   library; see its docstring for the justification.
+   the Check object. The exceptions are `duplicate-album` and
+   `duplicate-folder-name`, which hold in-memory indexes built in `__init__` by
+   whole-library queries, to compare albums against the rest of the library;
+   see each check's docstring for the justification.
 
 Related guidance:
 

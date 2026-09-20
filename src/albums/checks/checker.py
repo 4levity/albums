@@ -1,6 +1,7 @@
 """Run the enabled checks (and fixes) against selected albums, in automatic, fix or interactive modes."""
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Final, Mapping, Sequence
 
@@ -16,6 +17,7 @@ from albums.tagger import AlbumTaggerProvider
 
 from .all import ALL_CHECKS, implicitly_ignored_checks
 from .base_check import Check
+from .check_timing import CheckTiming, check_timing_table, estimate_seconds, format_album_count, format_seconds
 from .check_types import CheckResult, FixResult
 from .helpers import album_display_name
 
@@ -34,20 +36,28 @@ class CheckDisposition:
 
 
 class Checker:
-    """Orchestrate the enabled checks for a context, fixing issues and re-running checks until the album is stable."""
+    """Orchestrate the enabled checks for a context, fixing issues and re-running checks until the album is stable.
+
+    With ``timing=True``, ``run_enabled`` measures each enabled check's init time and every
+    ``check(album)`` call (pass or fail) and prints a timing report at the end of the run.
+    """
 
     ctx: Context
     _automatic: bool
     _fix: bool
     _interactive: bool
     _show_ignore_option: bool
+    _timing: bool
 
-    def __init__(self, ctx: Context, automatic: bool, fix: bool, interactive: bool, show_ignore_option: bool):
+    def __init__(self, ctx: Context, automatic: bool, fix: bool, interactive: bool, show_ignore_option: bool, timing: bool = False):
         self.ctx = ctx
         self._automatic = automatic
         self._fix = fix
         self._interactive = interactive
         self._show_ignore_option = show_ignore_option
+        self._timing = timing
+        # per-check timing stats, populated by run_enabled when timing is enabled
+        self.timings: dict[str, CheckTiming] = {}
 
     def run_enabled(self, session: Session) -> int:
         """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
@@ -64,9 +74,21 @@ class Checker:
                 self.ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
             raise SystemExit(1)
         tagger = AlbumTaggerProvider(self.ctx.config.library, id3v1=self.ctx.config.id3v1)
-        check_instances = [check(self.ctx, tagger=tagger, session=session) for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
+        enabled_checks: list[type[Check]] = [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
+        if self._timing:
+            self.timings = {check.name: CheckTiming() for check in enabled_checks}
+        check_instances: list[Check] = []
+        for check in enabled_checks:
+            if self._timing:
+                start = time.perf_counter()
+                instance = check(self.ctx, tagger=tagger, session=session)
+                self.timings[check.name].init_seconds = time.perf_counter() - start
+            else:
+                instance = check(self.ctx, tagger=tagger, session=session)
+            check_instances.append(instance)
 
         issues_displayed = 0
+        albums_checked = 0
 
         for album in self.ctx.select_album_entities(session):
             if not (self.ctx.config.library / album.path).is_dir():
@@ -74,6 +96,7 @@ class Checker:
                 run_scan(self.ctx, session, iter([album]))
                 session.commit()
                 continue
+            albums_checked += 1
             logger.info(f"checking album: {album.path}")
             deleted = False
             check_all = True
@@ -113,7 +136,23 @@ class Checker:
                             elif disposition.passed:
                                 checks_passed.add(check.name)
         session.commit()
+        if self._timing:
+            self._print_timings(albums_checked)
         return issues_displayed
+
+    def _print_timings(self, albums_checked: int):
+        """Print the per-check timing report: measured init and pass/fail times, plus a linear estimate for other library sizes."""
+        console = self.ctx.console
+        console.print(f"[bold]check timings[/bold] (wall clock, {albums_checked} albums)")
+        console.print(check_timing_table(self.timings, (check.name for check in ALL_CHECKS)))
+        if albums_checked:
+            estimates = ", ".join(
+                f"{format_album_count(count)}: {format_seconds(estimate_seconds(self.timings, albums_checked, count))}"
+                for count in (10_000, 100_000, 1_000_000)
+            )
+            console.print(
+                f"[dim]estimate, same per-album cost and issue rate: {estimates} (init grows with library size, e.g. duplicate-album)[/dim]"
+            )
 
     def get_required_disabled_checks(self) -> Mapping[str, Sequence[str]]:
         check_classes = [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
@@ -136,7 +175,12 @@ class Checker:
         quit = False
         displayed = False
         while maybe_fixable and not passed and not quit and not deleted:
-            check_result = check.check(album)
+            if self._timing:
+                start = time.perf_counter()
+                check_result = check.check(album)
+                self.timings[check.name].record(check_result is not None, time.perf_counter() - start)
+            else:
+                check_result = check.check(album)
             if check_result:
                 disposition = self._handle_check_result(session, check, check_result, album)
                 displayed |= disposition.displayed
