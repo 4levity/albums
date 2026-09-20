@@ -158,8 +158,10 @@ seconds):
    injected `ctx`/`tagger`/`session`), and `check()` must not set any state on
    the Check object. The exceptions are `duplicate-album` and
    `duplicate-folder-name`, which hold in-memory indexes built in `__init__` by
-   whole-library queries, to compare albums against the rest of the library;
-   see each check's docstring for the justification.
+   whole-library queries, to compare albums against the rest of the library, and
+   `album-under-album`, which keeps the most recent passing album path across
+   `check()` calls, which is enough because checks run in path order; see each
+   check's docstring for the justification.
 
 Related guidance:
 

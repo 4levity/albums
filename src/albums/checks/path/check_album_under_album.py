@@ -1,30 +1,48 @@
-from sqlalchemy import func, select
+import logging
+from typing import Any, Final
 
+from rich.markup import escape
+from sqlalchemy.orm import Session
+
+from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult
-from albums.checks.helpers import album_display_name
 from albums.entities import Album
-from albums.words import a_plural, count_phrase
+from albums.tagger import AlbumTaggerProvider
+
+logger: Final = logging.getLogger(__name__)
 
 
 class CheckAlbumUnderAlbum(Check):
+    """Check that no album folder is inside another album folder.
+
+    Deliberately breaks the stateless check guideline (see docs/developing.md): albums are checked
+    in path order, and a path that is under an earlier album is also under the most recent passing
+    album (a path sorted between an album path and a longer path sharing it must share it too), so
+    the check keeps just that one path and needs no queries. A filtered run may miss albums whose
+    parent album is not part of the run.
+    """
+
     name = "album-under-album"
     default_config = {"enabled": True}
+    must_pass_checks = {"duplicate-folder-name"}
 
-    def check(self, album: Album):
-        # Count albums whose path starts with this one. Album paths end in the platform path
-        # separator, and no byte falls between a byte and its successor, so raising the last
-        # byte by one bounds the range to exactly the paths starting with this one; this
-        # case-sensitive range uses the album path index, unlike a case-insensitive LIKE prefix,
-        # which scans the whole table for every album.
+    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
+        super().__init__(ctx, tagger, session)
+        # most recent album path that is not under another album; None before the first album
+        self._under: str | None = None
+
+    def init(self, check_config: dict[str, Any]):
+        # the CLI always sets ctx.is_filtered; contexts built for tests may not have it
+        if getattr(self.ctx, "is_filtered", False):
+            logger.info("filtered run: album-under-album only sees included albums and may not find nested albums")
+
+    def check(self, album: Album) -> CheckResult | None:
+        # a failing album never changes _under, so every album in the current run of child albums
+        # is reported against the album their run started under; an album is never under itself
+        # (a re-run after a fix sees its own path again)
         path = album.path
-        (matches,) = (
-            self.session.execute(select(func.count("*")).select_from(Album).where(Album.path > path, Album.path < path[:-1] + chr(ord(path[-1]) + 1)))
-            .tuples()
-            .one()
-        )
-
-        if matches > 0:
-            return CheckResult(
-                f"there {count_phrase(matches, 'album')} in {a_plural(matches, 'directory')} under album {album_display_name(self.ctx, album)}"
-            )
+        if self._under is not None and path.startswith(self._under) and path != self._under:
+            return CheckResult(f"in a directory under album {escape(self._under)}")
+        self._under = path
+        return None

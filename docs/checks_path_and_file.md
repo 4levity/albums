@@ -147,8 +147,10 @@ it according to the options.
 
 ## album-under-album
 
-This check reports when an album has another album in a subfolder. Maybe they
+This check reports an album that is in a subfolder of another album. Maybe they
 should be in separate folders or this check should be disabled. No fix offered.
+The check only looks at the albums included in the check run, so a filtered run
+may not catch an album nested in an album that is not included.
 
 ## unreadable-track
 

@@ -96,6 +96,8 @@ def load_album_entities(session: Session, filter: Mapping[str, List[Match]] = {}
             raise ValueError(f"invalid filter key {key}")
         stmt = stmt.where(not_(clause)) if invert else stmt.where(clause)
 
+    # albums are yielded in path order and some checks (album-under-album) depend on that order,
+    # so keep the order_by
     yield from (album[0] for album in session.execute(stmt.order_by(Album.path)))
 
 

@@ -37,6 +37,7 @@ INSERT INTO _check_dep (child, parent) VALUES
     ('cover-embedded', 'conflicting-embedded'),
     ('folder-name', 'album'),
     ('folder-name', 'artist'),
+    ('album-under-album', 'duplicate-folder-name'),
     ('track-filename', 'album-artist'),
     ('track-filename', 'artist'),
     ('track-filename', 'track-numbering'),
