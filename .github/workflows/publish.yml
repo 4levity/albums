@@ -77,11 +77,6 @@ jobs:
           # with that file and scripts/wine_e2e.py
           name: albums_win_x86_64-${{ steps.get-version.outputs.ALBUMS_FILEVERSION }}-setup.exe
           path: albums_win_x86_64/
-      - name: Download package
-        uses: actions/download-artifact@v8
-        with:
-          name: albums-package
-          path: dist/
       - name: Create Linux executable archive
         run: zip -r albums_linux_executable_x86_64.zip albums_linux_x86_64
       - name: Create release
@@ -101,4 +96,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
-        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_executable_x86_64.zip dist/*.tar.gz --clobber
+        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_executable_x86_64.zip --clobber
