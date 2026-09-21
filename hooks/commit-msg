@@ -2,12 +2,13 @@
 # albums commit-msg hook.
 #
 # Commit messages must follow Conventional Commits (type, optional scope,
-# subject) with a subject of at most 50 characters. The final message is
-# checked with commitlint (@commitlint/cli, config in commitlint.config.js,
-# which extends @commitlint/config-conventional and sets header-max-length
-# to 50). Git-generated messages that are not conventional style (e.g.
-# "Merge branch ..." and "Revert ..." messages) are accepted by commitlint
-# itself.
+# subject) with a subject of at most 50 characters, and be spelled
+# correctly. The final message is checked with commitlint (@commitlint/cli,
+# config in commitlint.config.js, which extends
+# @commitlint/config-conventional and sets header-max-length to 50) and with
+# cspell (word list in cspell.json, shared with the rest of the repo).
+# Git-generated messages that are not conventional style (e.g. "Merge branch
+# ..." and "Revert ..." messages) are accepted by commitlint itself.
 
 set -u
 root=$(git rev-parse --show-toplevel) || exit 1
@@ -24,13 +25,16 @@ msg_file=${1-}
     "This hook expects the commit message file as its first argument; this
 should not happen. Re-run the git commit command."
 
-# commitlint is a Node.js dev dependency (make install-js installs it). The
-# pre-commit hook runs first and ensures dev dependencies are installed, but
-# be explicit if it is missing anyway (e.g. after a fresh clone).
-[ -x node_modules/.bin/commitlint ] || hook_fail "commitlint is not installed" \
-    "Install the Node.js dev dependencies, then re-run the git commit command:
+# commitlint and cspell are Node.js dev dependencies (make install-js
+# installs them). The pre-commit hook runs first and ensures dev dependencies
+# are installed, but be explicit if they are missing anyway (e.g. after a
+# fresh clone).
+for tool in commitlint cspell; do
+    [ -x "node_modules/.bin/$tool" ] || hook_fail "$tool is not installed" \
+"Install the Node.js dev dependencies, then re-run the git commit command:
   make install-js  # or: npm ci
   git commit -m '<type>: <subject>'"
+done
 
 # Commit messages must not contain co-author attribution lines.
 if grep -qi 'co-authored-by' "$msg_file"; then
@@ -45,4 +49,17 @@ if ! npx --no-install commitlint --edit "$msg_file"; then
 most 50 characters. Refer to docs/developing.md.
 Then re-run the git commit command, e.g.:
   git commit -m '<conventional commit subject of at most 50 characters>'"
+fi
+
+# Spellcheck the message. It is checked from a copy in the repo root,
+# because the message file may live outside the repo (linked worktrees),
+# where cspell would skip it. Comment lines are stripped: git removes them
+# from the final message (commitlint ignores them too).
+msg_copy=$(mktemp ./.commit-msg-spell.XXXXXX) || exit 1
+trap 'rm -f "$msg_copy"' EXIT
+grep -v '^#' "$msg_file" > "$msg_copy" || exit 1
+if ! npx --no-install cspell lint --no-progress "$msg_copy"; then
+    hook_fail "the commit message has spelling errors" \
+"Fix the spelling (add correct unusual words to cspell.json if needed),
+then re-run the git commit command."
 fi

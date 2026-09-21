@@ -286,17 +286,18 @@ commits and pushes on commit message style, a clean working tree plus the
 relevant checks. The hooks are enabled when any lint operation runs and Node.js
 dependencies are installed. (The project can be built and tested without these.)
 
-| Hook         | Requires                                                       |
-| ------------ | -------------------------------------------------------------- |
-| `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint) |
-| `pre-commit` | clean working tree + the checks the commit can affect pass     |
-| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)    |
+| Hook         | Requires                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint), no spelling errors (cspell) |
+| `pre-commit` | clean working tree + the checks the commit can affect pass                                  |
+| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)                                 |
 
 `commit-msg` checks the final commit message with
 [commitlint](https://commitlint.js.org/) (`@commitlint/cli`), configured in
 `commitlint.config.js` (extends `@commitlint/config-conventional`, 50 character
-subject limit). Standard git-generated messages (e.g. `Merge branch ...` and
-`Revert ...`) are accepted by commitlint itself.
+subject limit), and spellchecks it with cspell against the shared
+`cspell.json` word list. Standard git-generated messages (e.g.
+`Merge branch ...` and `Revert ...`) are accepted by commitlint itself.
 
 `pre-commit` runs only the checks the commit can affect, chosen by the staged
 files' types: ruff (fix) for `*.py`, rumdl (fix) for `*.md`, shellcheck for

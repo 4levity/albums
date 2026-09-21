@@ -262,6 +262,7 @@
         "wmav",
         "WORKID",
         "workpath",
+        "worktrees",
         "xxhash",
         "zbrush"
     ]
