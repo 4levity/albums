@@ -149,7 +149,7 @@ jobs:
         with:
           # archive: false makes the artifact name the installer filename
           # (albums_win_x86_64-<fileversion>-setup.exe, scripts/albums.iss);
-          # release.yml downloads the artifact by that name
+          # publish.yml downloads the artifact by that name
           path: dist/installer/*.exe
           archive: false
       - name: Artifact link

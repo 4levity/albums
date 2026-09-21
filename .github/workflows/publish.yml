@@ -1,4 +1,5 @@
-name: Release
+# This file must be named publish.yml to satisfy PyPi trusted publisher configuration
+name: Publish PyPi / Release GitHub
 on:
   push:
     tags:

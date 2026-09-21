@@ -52,7 +52,7 @@ def find_installer(just_built: bool) -> Path:
     """Return the installer in dist/installer/ matching the current version.
 
     The name pattern is a contract with scripts/albums.iss (OutputBaseFilename)
-    and .github/workflows/release.yml (which downloads the artifact by this
+    and .github/workflows/publish.yml (which downloads the artifact by this
     name); only the file version (scripts/fileversion.py) in it may vary.
     """
     file_version = wine_common.uv_run(

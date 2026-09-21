@@ -23,7 +23,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=..\dist\installer
 ; the installer filename is a contract: the CI artifact is named after it
-; (archive: false upload) and .github/workflows/release.yml downloads it by
+; (archive: false upload) and .github/workflows/publish.yml downloads it by
 ; this name; change it together with scripts/wine_e2e.py and the workflows
 OutputBaseFilename=albums_win_x86_64-0.0.0.0-setup
 Compression=lzma2

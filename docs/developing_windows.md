@@ -30,12 +30,12 @@ the rendered icon (`build/icon.ico`) next to the rendered script.
 No Windows runner is used: the Windows installer is built on Linux with wine.
 The build/test jobs are shared between `.github/workflows/ci.yml` (pushes to
 main, pull requests, manual dispatch) and
-`.github/workflows/release.yml` (tag pushes `v*`, manual dispatch) via the
+`.github/workflows/publish.yml` (tag pushes `v*`, manual dispatch) via the
 reusable workflow `.github/workflows/build-test.yml`. Its `wine-pytest` and
 `wine-build` jobs run in parallel on self-hosted runners (label `wine`) in
 the purpose-built image from [`docker/`](../docker/): the test job runs the
 test suite under wine, and the build job builds the installer and tests it
-end-to-end. The `release` job in `release.yml` publishes the installer, the
+end-to-end. The `release` job in `publish.yml` publishes the installer, the
 Linux executable, and the source archive as GitHub release assets: published
 for tag pushes, draft for manual dispatch.
 

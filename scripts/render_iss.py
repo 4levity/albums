@@ -30,7 +30,7 @@ def render_installer_script(template: str, app_version: str, file_version: str) 
     first so 0.0.0 does not match inside it. Comment lines are skipped so
     the placeholder documentation survives rendering. The 0.0.0.0 in
     OutputBaseFilename produces the installer filename, which is a contract
-    with .github/workflows/release.yml and scripts/wine_e2e.py (they use it
+    with .github/workflows/publish.yml and scripts/wine_e2e.py (they use it
     by name); change it only together with those.
     """
     lines: list[str] = []

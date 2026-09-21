@@ -1,7 +1,7 @@
 # albums
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/ci.yml?label=build-test)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/release.yml?label=release)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/publish.yml?label=release)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/docs.yml?label=docs)
 [![codecov](https://codecov.io/gh/4levity/albums/graph/badge.svg?token=TVAL3PMCGY)](https://codecov.io/gh/4levity/albums)
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)
