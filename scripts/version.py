@@ -13,7 +13,7 @@ from setuptools_scm import dump_version, get_version
 # allow package imports (scripts.fileversion) when run as a plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import fileversion  # noqa: E402
+from scripts import fileversion  # noqa: E402 (import not at top of file, see above)
 
 
 def get_albums_version() -> str:

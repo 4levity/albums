@@ -1,7 +1,5 @@
 """Sync albums from the library to a destination (digital audio player or portable storage), copying or transcoding as needed."""
 
-from __future__ import annotations
-
 import logging
 import os
 import shutil

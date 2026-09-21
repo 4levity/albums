@@ -1,6 +1,6 @@
 """ORM entity types for albums, tracks, pictures, etc."""
 
-from __future__ import annotations
+from __future__ import annotations  # forward reference Track; removable once minimum Python is 3.14 (PEP 649)
 
 from datetime import UTC, datetime
 from typing import Any, List, Mapping, Optional, Sequence

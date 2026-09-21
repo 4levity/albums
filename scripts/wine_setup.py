@@ -16,7 +16,7 @@ from pathlib import Path
 # allow package imports (scripts.wine_common) when run as a plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import wine_common  # noqa: E402
+from scripts import wine_common  # noqa: E402 (import not at top of file, see above)
 
 DOWNLOADS = wine_common.WINE_ROOT / "downloads"
 

@@ -19,7 +19,7 @@ from pathlib import Path
 # allow package imports (scripts.*) when run as a plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import wine_common, wine_setup  # noqa: E402
+from scripts import wine_common, wine_setup  # noqa: E402 (import not at top of file, see above)
 
 # sysconfig.get_platform() of the 64-bit Windows Python; the .iss [Files]
 # source path expects dist/pyinstaller/win_amd64

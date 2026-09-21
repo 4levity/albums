@@ -4,7 +4,7 @@ Configuration values are persisted to the SQLite database as JSON-encoded rows
 in the ``setting`` table and reloaded into a ``Configuration`` dataclass at startup.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # self-reference SyncDestination; removable once minimum Python is 3.14 (PEP 649)
 
 import json
 import logging

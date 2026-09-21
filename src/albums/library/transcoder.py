@@ -1,6 +1,6 @@
 """Transcode audio into a persistent, size-managed cache of transcoded files."""
 
-from __future__ import annotations
+from __future__ import annotations  # AudioCodecContext under TYPE_CHECKING; removable once minimum Python is 3.14 (PEP 649)
 
 import glob
 import json

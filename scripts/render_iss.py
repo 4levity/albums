@@ -17,7 +17,7 @@ from pathlib import Path
 # plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import fileversion, version  # noqa: E402
+from scripts import fileversion, version  # noqa: E402 (import not at top of file, see above)
 
 TEMPLATE = "scripts/albums.iss"
 OUTPUT = "build/albums.iss"

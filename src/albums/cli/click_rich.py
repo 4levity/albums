@@ -15,8 +15,6 @@ panel. Import this module as ``click`` (e.g. ``import albums.cli.click_rich as
 click``) to get the same behavior without the rich-click dependency.
 """
 
-from __future__ import annotations
-
 import inspect
 import os
 import sys
