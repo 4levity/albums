@@ -54,15 +54,23 @@ jobs:
         env:
           TERM: "dumb"
         run: make coverage GROUPS=test
+      - name: Upload coverage artifact
+        id: artifact-coverage-html
+        uses: actions/upload-artifact@v7
+        with:
+          name: albums-coverage-html
+          path: build/coverage.html
+          archive: false
       - name: Upload to Codecov
         if: matrix.python == '3.14'
         uses: codecov/codecov-action@v7
         with:
-          files: coverage.xml
+          files: build/coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Add coverage link to job summary
         if: matrix.python == '3.14'
-        run: 'echo "Coverage report: https://app.codecov.io/gh/4levity/albums" >> "$GITHUB_STEP_SUMMARY"'
+        run: |
+          echo "Coverage report: [html](${{ steps.artifact-coverage-html.outputs.artifact-url }}) / [codecov](https://app.codecov.io/gh/4levity/albums)" >> "$GITHUB_STEP_SUMMARY"
 
   package:
     runs-on: ubuntu-26.04
@@ -80,20 +88,19 @@ jobs:
         id: artifact-wheel
         uses: actions/upload-artifact@v7
         with:
-          name: albums-package
+          name: albums-wheel
           path: dist/*.whl
           archive: false
       - name: Upload source artifact
         id: artifact-source
         uses: actions/upload-artifact@v7
         with:
-          name: albums-package
+          name: albums-source
           path: dist/*.tar.gz
           archive: false
       - name: Artifact links
         run: |
-          echo "🚀 Python wheel - [download artifact](${{ steps.artifact-wheel.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
-          echo "🚀 Python source - [download artifact](${{ steps.artifact-source.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "🚀 Python - [wheel](${{ steps.artifact-wheel.outputs.artifact-url }}) / [source](${{ steps.artifact-source.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
 
   # Wine jobs: run in parallel on self-hosted runners (label wine) in the
   # purpose-built image (docker/): wine 11, xvfb and a warm wine environment
@@ -150,12 +157,12 @@ jobs:
       - name: Test installer end-to-end
         run: make wine-e2e GROUPS=pyinstaller
       - name: Upload installer artifact
-        id: artifact-windows
+        id: artifact-windows-installer
         uses: actions/upload-artifact@v7
         with:
-          name: albums-installer-win
+          name: albums-windows-installer
           path: dist/installer/*.exe
           archive: false
       - name: Artifact link
         run: |
-          echo "🚀 Windows installer - [download artifact](${{ steps.artifact-windows.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "🚀 Windows installer - [download artifact](${{ steps.artifact-windows-installer.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"

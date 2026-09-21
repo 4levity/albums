@@ -132,8 +132,7 @@ test: install ## Run all tests, fail on any warnings
 	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0
 
 coverage: install ## Run all tests with coverage, fail on any warnings
-	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0 --cov=src/albums --cov-report=xml
-	@echo Coverage XML in $(CURDIR)/coverage.xml
+	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0 --cov=src/albums --cov-report=xml:build/coverage.xml --cov-report=html:build/coverage.html
 
 # regenerate sample db if schema or schema-creation code changed
 SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \
