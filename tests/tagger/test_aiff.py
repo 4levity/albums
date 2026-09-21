@@ -1,13 +1,19 @@
 import os
 
 import pytest
-import xxhash
 
 from albums.entities import Album, Track, TrackPicture
 from albums.picture import PictureInfo
-from albums.tagger import AlbumTagger, BasicField, Picture, PictureType
+from albums.tagger import AlbumTagger, BasicField, PictureType
 
-from ..fixtures.create_library import create_library, make_image_data
+from ..fixtures.create_library import create_library
+
+# AIFF tagging shares all ID3 behavior with MP3 through AbstractId3Tagger (file_types/aiff.py
+# differs from file_types/mp3.py only in the mutagen file IO). The ID3 frame-level behavior
+# (sort frames, TRCK/TPOS numbered values, genre, MusicBrainz track ID, APIC pictures) is
+# covered by the MP3 tests in test_mp3.py, which act as a proxy for AbstractId3Tagger, and by
+# test_id3_helpers.py for the shared helpers. This file only smoke-tests the AIFF-specific
+# parts: opening files and reading/writing basic fields and pictures.
 
 track = Track(
     filename="1.aiff",
@@ -86,85 +92,6 @@ class TestAiff:
         assert fields[BasicField.ORGANIZATION] == ("Q",)
         assert fields[BasicField.DATE] == ("2021",)
 
-    def test_remove_aiff_release_date(self):
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DATE] == ("2020",)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.DATE, None)
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert BasicField.DATE not in fields
-
-    def test_write_aiff_tracktotal(self):
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert fields[BasicField.TRACKNUMBER] == ("1",)
-        assert fields[BasicField.TRACKTOTAL] == ("3",)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.TRACKTOTAL, "02")
-            fields = dict(file.get_fields())
-        assert fields[BasicField.TRACKNUMBER] == ("1",)
-        assert fields[BasicField.TRACKTOTAL] == ("02",)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.TRACKNUMBER, "3")
-            fields = dict(file.get_fields())
-        assert fields[BasicField.TRACKNUMBER] == ("3",)
-        assert fields[BasicField.TRACKTOTAL] == ("02",)
-
-        # write both at once
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.TRACKNUMBER, "2")
-            file.set_field(BasicField.TRACKTOTAL, "3")
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert fields[BasicField.TRACKNUMBER] == ("2",)
-        assert fields[BasicField.TRACKTOTAL] == ("3",)
-
-        # remove total
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.TRACKTOTAL, None)
-            fields = dict(file.get_fields())
-        assert fields[BasicField.TRACKNUMBER] == ("2",)
-        assert BasicField.TRACKTOTAL not in fields
-
-    def test_write_aiff_disctotal(self):
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DISCNUMBER] == ("2",)
-        assert fields[BasicField.DISCTOTAL] == ("2",)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.DISCTOTAL, "1")
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DISCNUMBER] == ("2",)
-        assert fields[BasicField.DISCTOTAL] == ("1",)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.DISCNUMBER, "1")
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DISCNUMBER] == ("1",)
-        assert fields[BasicField.DISCTOTAL] == ("1",)
-
-        # write both at once
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.DISCNUMBER, "2")
-            file.set_field(BasicField.DISCTOTAL, "2")
-        with TestAiff.tagger.open(track.filename) as file:
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DISCNUMBER] == ("2",)
-        assert fields[BasicField.DISCTOTAL] == ("2",)
-
-        # remove total
-        with TestAiff.tagger.open(track.filename) as file:
-            file.set_field(BasicField.DISCTOTAL, None)
-            fields = dict(file.get_fields())
-        assert fields[BasicField.DISCNUMBER] == ("2",)
-        assert BasicField.DISCTOTAL not in fields
-
     def test_remove_one_aiff_pic(self):
         with TestAiff.tagger.open(track.filename) as file:
             pictures = [pic for (pic, _) in file.get_pictures()]
@@ -190,22 +117,3 @@ class TestAiff:
         assert pictures[0].type == PictureType.COVER_BACK
         assert pictures[0].picture_info.width == pictures[0].picture_info.height == 400
         assert pictures[0].picture_info.mime_type == "image/png"
-
-    def test_replace_one_aiff_pic(self):
-        with TestAiff.tagger.open(track.filename) as file:
-            pictures = [pic for (pic, _) in file.get_pictures()]
-        assert len(pictures) == 2
-        assert pictures[0].type == PictureType.COVER_FRONT
-        front = pictures[0]
-        assert pictures[1].type == PictureType.COVER_BACK
-        back = pictures[1]
-
-        image_data = make_image_data(600, 600, "JPEG")
-        replacement = Picture(PictureInfo("image/jpeg", 600, 600, 24, len(image_data), xxhash.xxh32_digest(image_data)), PictureType.FISH, "")
-
-        with TestAiff.tagger.open(track.filename) as file:
-            file.remove_picture(front)
-            file.add_picture(replacement, image_data)
-
-        with TestAiff.tagger.open(track.filename) as file:
-            assert set(pic for (pic, _) in file.get_pictures()) == {replacement, back}

@@ -38,7 +38,8 @@ def parse_numbered_value(value: str | None) -> Tuple[str | None, str | None]:
         return (None, None)
     if value.count("/") == 1:
         first, second = value.split("/")
-        return (first, second)
+        # an empty part means that value is not set, matching the writer which never writes empty parts
+        return (first or None, second or None)
     return (value, None)
 
 

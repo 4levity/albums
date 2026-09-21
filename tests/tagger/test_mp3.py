@@ -20,9 +20,12 @@ track = Track(
     filename="1.mp3",
     fields={
         BasicField.ARTIST: "A",
+        BasicField.ARTISTSORT: "Art, A",
         BasicField.TITLE: "T",
         BasicField.ALBUM: "baz",
+        BasicField.ALBUMSORT: "Baz, B",
         BasicField.ALBUMARTIST: "baz+foo",
+        BasicField.ALBUMARTISTSORT: "Baz+Foo, B",
         BasicField.TRACKNUMBER: "1",
         BasicField.TRACKTOTAL: "3",
         BasicField.DISCNUMBER: "2",
@@ -46,7 +49,9 @@ track_tdrl = Track(
     fields={BasicField.DATE: "2019"},
     legacy_fields=["TDRL"],
 )
-album = Album(path="baz" + os.sep, tracks=[track, track_tdrl])
+# file with no ID3 tag at all
+track_no_tags = Track(filename="3.mp3")
+album = Album(path="baz" + os.sep, tracks=[track, track_tdrl, track_no_tags])
 
 
 class TestMp3:
@@ -73,8 +78,11 @@ class TestMp3:
         assert pictures[0].picture_info.mime_type == pictures[1].picture_info.mime_type == "image/png"
         track_tags = track.fields
         assert fields[BasicField.ARTIST] == tuple(track_tags[BasicField.ARTIST])
-        assert fields[BasicField.ALBUMARTIST] == tuple(track_tags[BasicField.ALBUMARTIST])
+        assert fields[BasicField.ARTISTSORT] == tuple(track_tags[BasicField.ARTISTSORT])
         assert fields[BasicField.ALBUM] == tuple(track_tags[BasicField.ALBUM])
+        assert fields[BasicField.ALBUMSORT] == tuple(track_tags[BasicField.ALBUMSORT])
+        assert fields[BasicField.ALBUMARTIST] == tuple(track_tags[BasicField.ALBUMARTIST])
+        assert fields[BasicField.ALBUMARTISTSORT] == tuple(track_tags[BasicField.ALBUMARTISTSORT])
         assert fields[BasicField.TITLE] == tuple(track_tags[BasicField.TITLE])
         assert fields[BasicField.GENRE] == tuple(track_tags[BasicField.GENRE])
         assert fields[BasicField.MUSICBRAINZ_ALBUMID] == tuple(track_tags[BasicField.MUSICBRAINZ_ALBUMID])
@@ -114,6 +122,38 @@ class TestMp3:
         assert fields[BasicField.BARCODE] == ("0000",)
         assert fields[BasicField.MUSICBRAINZ_ALBUMRELEASECOUNTRY] == ("UK",)
         assert fields[BasicField.DATE] == ("2021-05",)
+
+    def test_update_id3_sort_fields(self):
+        # sort fields roundtrip to the dedicated sort frames (TSOA/TSO2/TSOP)
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.ALBUMSORT, "Beatles, The")
+            file.set_field(BasicField.ALBUMARTISTSORT, "Beatles, The / Wings")
+            file.set_field(BasicField.ARTISTSORT, "Starr, Ringo")
+            id3 = file._ensure_id3()
+            assert id3["TSOA"].text == ["Beatles, The"]
+            assert id3["TSO2"].text == ["Beatles, The / Wings"]
+            assert id3["TSOP"].text == ["Starr, Ringo"]
+        with TestMp3.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.ALBUMSORT] == ("Beatles, The",)
+        assert fields[BasicField.ALBUMARTISTSORT] == ("Beatles, The / Wings",)
+        assert fields[BasicField.ARTISTSORT] == ("Starr, Ringo",)
+
+    def test_remove_id3_genre(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.GENRE, None)
+        with TestMp3.tagger.open(track.filename) as file:
+            id3 = file._ensure_id3()
+            assert "TCON" not in id3
+            fields = dict(file.get_fields())
+        assert BasicField.GENRE not in fields
+
+    def test_remove_id3_musicbrainz_trackid(self):
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.MUSICBRAINZ_TRACKID, None)
+        with TestMp3.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.MUSICBRAINZ_TRACKID not in fields
 
     def test_remove_id3_release_date(self):
         with TestMp3.tagger.open(track.filename) as file:
@@ -284,6 +324,17 @@ class TestMp3:
         assert fields[BasicField.TRACKNUMBER] == ("2",)
         assert BasicField.TRACKTOTAL not in fields
 
+    def test_remove_id3_track_number(self):
+        # removing the number must keep the total
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.TRACKNUMBER, None)
+        with TestMp3.tagger.open(track.filename) as file:
+            id3 = file._ensure_id3()
+            assert id3["TRCK"].text == ["/3"]
+            fields = dict(file.get_fields())
+        assert BasicField.TRACKNUMBER not in fields
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
+
     def test_write_id3_disctotal(self):
         with TestMp3.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
@@ -317,6 +368,17 @@ class TestMp3:
             fields = dict(file.get_fields())
         assert fields[BasicField.DISCNUMBER] == ("2",)
         assert BasicField.DISCTOTAL not in fields
+
+    def test_remove_id3_disc_number(self):
+        # removing the number must keep the total
+        with TestMp3.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DISCNUMBER, None)
+        with TestMp3.tagger.open(track.filename) as file:
+            id3 = file._ensure_id3()
+            assert id3["TPOS"].text == ["/2"]
+            fields = dict(file.get_fields())
+        assert BasicField.DISCNUMBER not in fields
+        assert fields[BasicField.DISCTOTAL] == ("2",)
 
     def test_remove_one_id3_pic(self):
         with TestMp3.tagger.open(track.filename) as file:
@@ -362,3 +424,9 @@ class TestMp3:
 
         with TestMp3.tagger.open(track.filename) as file:
             assert set(pic for (pic, _) in file.get_pictures()) == {replacement, back}
+
+    def test_remove_pic_no_tags_warns(self, mocker):
+        mock_logger = mocker.patch("albums.tagger.base_id3.logger")
+        with TestMp3.tagger.open(track_no_tags.filename) as file:
+            file.remove_picture(Picture(PictureInfo("image/png", 400, 400, 24, 1, b""), PictureType.COVER_FRONT, ""))
+        assert mock_logger.warning.call_count == 1
