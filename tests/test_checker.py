@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.all import ALL_CHECKS
+from albums.checks.check_types import FixResult
 from albums.checks.checker import Checker
+from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track, TrackPicture
 from albums.interactive.interact import OPTION_DO_NOTHING
@@ -81,6 +83,50 @@ class TestChecker:
                 assert album.tracks[0].fields[BasicField.DISCNUMBER] == ["1"]
         finally:
             ctx.db.dispose()
+
+    def test_run_enabled_automatic_fix_no_effect(self, mocker):
+        # an automatic fix that changes nothing leaves the issue in place and must say so,
+        # otherwise the user would assume the fix succeeded
+        album = Album(
+            path="Foo" + os.sep,
+            tracks=[
+                Track(
+                    filename="01 one.flac",
+                    fields={BasicField.ARTIST: "A", BasicField.ALBUM: "Foo", BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"},
+                )
+            ],
+        )
+        ctx = Context()
+        ctx.config.library = create_library("checker_automatic_no_effect", [album])
+        for check in ALL_CHECKS:  # only run zero-pad-numbers and its required dependencies
+            if check.name not in {"legacy-fields", "disc-in-track-number", "invalid-track-or-disc-number", "zero-pad-numbers"}:
+                ctx.config.checks[check.name]["enabled"] = False
+        ctx.db = db_open(MEMORY, True)
+        try:
+            print_spy = mocker.spy(ctx.console, "print")
+            mocker.patch.object(CheckZeroPadNumbers, "_fix", return_value=FixResult.NO_CHANGE)
+            with Session(ctx.db) as session:
+                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                run_scan(ctx, session)
+                session.commit()
+
+                showed_issues = Checker(ctx, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+
+                album_entity = next(ctx.select_album_entities(session))
+                assert album_entity.tracks[0].fields[BasicField.TRACKNUMBER] == ["1"]  # the fix changed nothing
+            assert showed_issues == 1
+        finally:
+            ctx.db.dispose()
+
+        output = " ".join(
+            (
+                Text.from_markup(call_args.args[0]).plain
+                for call_args in print_spy.call_args_list
+                if call_args.args and isinstance(call_args.args[0], str)
+            )
+        )
+        assert "automatically fixing zero-pad-numbers" in output
+        assert f'fix had no effect; issue remains for check zero-pad-numbers on "Foo{os.sep}"' in output
 
     def test_run_enabled_dependent_check_failures(self, mocker):
         album = Album(

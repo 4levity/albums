@@ -222,6 +222,11 @@ class Checker:
             )
             self.ctx.console.print(f"    {fixer.prompt}: {fixer.options[fixer.option_automatic_index]}", highlight=False)
             fix_result = fixer.fix(fixer.options[fixer.option_automatic_index])
+            if fix_result == FixResult.NO_CHANGE:
+                self.ctx.console.print(
+                    f'[bold red]fix had no effect; issue remains[/bold red] for check [bold]{check.name}[/bold] on "{album_display_name(self.ctx, album)}"',
+                    highlight=False,
+                )
             maybe_changed = fix_result != FixResult.NO_CHANGE
             deleted = fix_result == FixResult.DELETED_ALBUM
             displayed_any = True
