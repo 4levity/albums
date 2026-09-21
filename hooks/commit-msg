@@ -32,6 +32,13 @@ should not happen. Re-run the git commit command."
   make install-js  # or: npm ci
   git commit -m '<type>: <subject>'"
 
+# Commit messages must not contain co-author attribution lines.
+if grep -qi 'co-authored-by' "$msg_file"; then
+    hook_fail "the commit message contains a 'co-authored-by' line" \
+"Commit messages should not contain additional attribution.
+Remove the line, then re-run the git commit command."
+fi
+
 if ! npx --no-install commitlint --edit "$msg_file"; then
     hook_fail "the commit message is not Conventional Commits style" \
 "Write the subject as '<type>(<scope>): <subject>' with a subject of at
