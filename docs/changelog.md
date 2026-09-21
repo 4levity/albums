@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.33 - case-variant folder check, path sanitizing, timing, faster duplicates
+
 v0.9.32 - remove check --preview, in-process transcoding, Windows installer
 
 v0.9.31 - faster library scan, WAL mode, case-insensitive ignore_folders, fixes
