@@ -3,7 +3,11 @@
 Creates the wine environment if needed (scripts/wine_setup.py), then runs the
 same steps as the Windows CI job: `uv sync` from uv.lock into the wine venv,
 write the version, render the installer script and project icon, pyinstaller,
-and Inno Setup's iscc. Writes dist/installer/albums_win_x86_64-<version>-setup.exe.
+and Inno Setup's iscc. Writes dist/installer/albums_win_x86_64-<fileversion>-setup.exe,
+where <fileversion> is the 4-part file version (scripts/fileversion.py). The
+filename is a contract: CI artifacts are named after it (archive: false upload)
+and .github/workflows/release.yml downloads it by that name, so change it only
+together with scripts/albums.iss and scripts/wine_e2e.py.
 
 Usage: python scripts/wine_build.py
 """

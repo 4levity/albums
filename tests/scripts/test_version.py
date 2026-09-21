@@ -1,22 +1,6 @@
 import sys
 
-import pytest
-
 from scripts import version
-
-
-class TestGetFileVersion:
-    @pytest.mark.parametrize(
-        ("release", "file_version"),
-        [
-            ("0.9.30", "0.9.30.0"),
-            ("0.9.30.post5+g1234abcd", "0.9.30.5"),
-            ("0.9.30.post5+g1234abcd.d20260901", "0.9.30.5"),
-            ("0.9.30.dev3", "0.9.30.3"),
-        ],
-    )
-    def test_file_version(self, release, file_version):
-        assert version.get_file_version(release) == file_version
 
 
 class TestMain:

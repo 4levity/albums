@@ -5,10 +5,15 @@ section in pyproject.toml so that this script computes the same version as
 building or installing the package.
 """
 
-import re
 import sys
+from pathlib import Path
 
 from setuptools_scm import dump_version, get_version
+
+# allow package imports (scripts.fileversion) when run as a plain script
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from scripts import fileversion  # noqa: E402
 
 
 def get_albums_version() -> str:
@@ -22,22 +27,10 @@ def get_albums_version() -> str:
     )
 
 
-def get_file_version(version: str) -> str:
-    """Return a 4-part numeric file version (e.g. 1.2.3.0) for Windows file metadata.
-
-    The fourth part is the post/dev release number (at least 1) if present,
-    else 0, so file versions sort with the releases they came from.
-    """
-    match = re.search(r"\.(post|dev)(\d+)", version)
-    core = version[: match.start()] if match else version
-    fourth = max(int(match.group(2)), 1) if match else 0
-    parts = core.split(".") + [str(fourth)] * 5
-    return ".".join(parts[:4])
-
-
 def main() -> int:
-    """Print the version, the 4-part file version with ``fileversion``, or write
-    the version to src/albums/_version.py with ``write``."""
+    """Print the version, the 4-part file version (the Windows installer
+    filename part, scripts/fileversion.py) with ``fileversion``, or write the
+    version to src/albums/_version.py with ``write``."""
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     version = get_albums_version()
     if command == "write":
@@ -45,7 +38,7 @@ def main() -> int:
         dump_version(".", version, "src/albums/_version.py", scm_version=None)
         print(f"wrote src/albums/_version.py: {version}")
     elif command == "fileversion":
-        print(get_file_version(version))
+        print(fileversion.file_version(version))
     else:
         print(version)
     return 0

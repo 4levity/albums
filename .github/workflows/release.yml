@@ -58,21 +58,29 @@ jobs:
         with:
           name: albums-pyinstaller-linux
           path: albums_linux_x86_64/
+      - name: Get version
+        id: get-version
+        run: |
+          chmod a+x albums_linux_x86_64/albums
+          # the file version also names the Windows installer, which is
+          # downloaded by name below, so compute it before the downloads
+          version=$(albums_linux_x86_64/albums --version | awk -F ' ' '{ print $3 }')
+          echo "ALBUMS_VERSION=${version}" >> "$GITHUB_OUTPUT"
+          echo "ALBUMS_FILEVERSION=$(python3 scripts/fileversion.py "${version}")" >> "$GITHUB_OUTPUT"
       - name: Download Windows installer
         uses: actions/download-artifact@v8
         with:
-          name: albums-windows-installer
+          # the wine-build upload uses archive: false, so the artifact name is
+          # the installer filename itself; the pattern is a contract with
+          # scripts/albums.iss (OutputBaseFilename) - rename it only together
+          # with that file and scripts/wine_e2e.py
+          name: albums_win_x86_64-${{ steps.get-version.outputs.ALBUMS_FILEVERSION }}-setup.exe
           path: albums_win_x86_64/
       - name: Download package
         uses: actions/download-artifact@v8
         with:
           name: albums-package
           path: dist/
-      - name: Get version
-        id: get-version
-        run: |
-          chmod a+x albums_linux_x86_64/albums
-          echo "ALBUMS_VERSION=$(albums_linux_x86_64/albums --version | awk -F ' ' '{ print $3 }')" >> "$GITHUB_OUTPUT"
       - name: Create Linux executable archive
         run: zip -r albums_linux_executable_x86_64.zip albums_linux_x86_64
       - name: Create release

@@ -13,10 +13,11 @@ import re
 import sys
 from pathlib import Path
 
-# allow package imports (scripts.version) when run as a plain script
+# allow package imports (scripts.fileversion, scripts.version) when run as a
+# plain script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import version  # noqa: E402
+from scripts import fileversion, version  # noqa: E402
 
 TEMPLATE = "scripts/albums.iss"
 OUTPUT = "build/albums.iss"
@@ -27,7 +28,10 @@ def render_installer_script(template: str, app_version: str, file_version: str) 
 
     The lookarounds match standalone placeholders only, and 0.0.0.0 goes
     first so 0.0.0 does not match inside it. Comment lines are skipped so
-    the placeholder documentation survives rendering.
+    the placeholder documentation survives rendering. The 0.0.0.0 in
+    OutputBaseFilename produces the installer filename, which is a contract
+    with .github/workflows/release.yml and scripts/wine_e2e.py (they use it
+    by name); change it only together with those.
     """
     lines: list[str] = []
     for line in template.split("\n"):
@@ -58,7 +62,7 @@ def main() -> int:
     app_version = display_version(full_version)
     output = Path(OUTPUT)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_installer_script(template_text, app_version, version.get_file_version(full_version)))
+    output.write_text(render_installer_script(template_text, app_version, fileversion.file_version(full_version)))
     print(f"wrote {output}: {app_version}")
     return 0
 
