@@ -54,23 +54,24 @@ jobs:
         env:
           TERM: "dumb"
         run: make coverage GROUPS=test
-      - name: Upload coverage artifact
-        id: artifact-coverage-html
-        uses: actions/upload-artifact@v7
-        with:
-          name: albums-coverage-html
-          path: build/coverage.html
-          archive: false
-      - name: Upload to Codecov
-        if: matrix.python == '3.14'
+      - name: Upload coverage to Codecov
+        if: (success() || failure()) && matrix.python == '3.14'
         uses: codecov/codecov-action@v7
         with:
           files: build/coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
+          report-type: coverage
+      - name: Upload test results to Codecov
+        if: (success() || failure()) && matrix.python == '3.14'
+        uses: codecov/codecov-action@v7
+        with:
+          files: build/junit.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report-type: test_results
       - name: Add coverage link to job summary
-        if: matrix.python == '3.14'
+        if: (success() || failure()) && matrix.python == '3.14'
         run: |
-          echo "Coverage report: [html](${{ steps.artifact-coverage-html.outputs.artifact-url }}) / [codecov](https://app.codecov.io/gh/4levity/albums)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Test results and coverage report: https://app.codecov.io/gh/4levity/albums" >> "$GITHUB_STEP_SUMMARY"
 
   package:
     runs-on: ubuntu-26.04
