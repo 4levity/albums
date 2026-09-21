@@ -1,4 +1,4 @@
-"""Post-maintenance of the database: clean up orphaned rows and reclaim disk space."""
+"""Post-maintenance of the database: clean up stale rows and reclaim disk space."""
 
 import logging
 from typing import Final
@@ -10,12 +10,17 @@ from sqlalchemy.engine import Engine
 logger: Final = logging.getLogger(__name__)
 
 SQL_CLEANUP: Final = "DELETE FROM collection WHERE collection_id NOT IN (SELECT collection_id FROM album_collection);"
+SQL_PRUNE_SCAN_HISTORY: Final = (
+    "DELETE FROM scan_history WHERE scan_history_id NOT IN "
+    "(SELECT scan_history_id FROM scan_history ORDER BY timestamp DESC, scan_history_id DESC LIMIT 1000);"
+)
 
 
 def maintain(db: Engine):
-    """Delete orphan collections, log the database size, and VACUUM when wasted space exceeds a threshold."""
+    """Delete orphan collections, prune scan history to the 1000 most recent rows, and VACUUM when wasted space exceeds a threshold."""
     with db.begin() as conn:
         conn.execute(text(SQL_CLEANUP))
+        conn.execute(text(SQL_PRUNE_SCAN_HISTORY))
 
     # determine wasted space in db
     with db.connect() as conn:
