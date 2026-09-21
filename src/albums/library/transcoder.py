@@ -11,12 +11,13 @@ from itertools import chain
 from os import makedirs, mkdir, unlink
 from pathlib import Path
 from shutil import rmtree
-from typing import Final, cast
+from typing import TYPE_CHECKING, Final, cast
 
-import av
+if TYPE_CHECKING:
+    from av.audio.codeccontext import AudioCodecContext
+
 import humanize
 import xxhash
-from av.audio.codeccontext import AudioCodecContext
 from rich.markup import escape
 
 from albums.app import Context
@@ -190,6 +191,9 @@ class Transcoder:
         return (self._this_cache / album_path / source_filename).with_suffix(f".{self.file_type}")
 
     def _transcode(self, album_path: Path, track: Track, dest: Path):
+        # deferred: importing av loads the bundled FFmpeg libraries (~15 MB RSS); only needed when transcoding
+        import av
+
         source = album_path / track.filename
         try:
             with av.open(str(source)) as src:

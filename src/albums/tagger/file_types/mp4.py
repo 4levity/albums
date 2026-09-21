@@ -5,7 +5,6 @@ from copy import copy
 from pathlib import Path
 from typing import Callable, Final, Generator, Iterable, List, Tuple, override
 
-import av
 from mutagen._tags import PaddingInfo
 from mutagen.mp4 import MP4, AtomDataType, MP4Cover, MP4FreeForm, MP4Tags
 
@@ -277,5 +276,8 @@ def _get_mp4_tuple(tags: MP4Tags | None, key: str) -> Tuple[int | None, int | No
 
 
 def _mp4_has_video(path: Path) -> bool:
+    # deferred: importing av loads the bundled FFmpeg libraries (~15 MB RSS); only needed to inspect video streams
+    import av
+
     with av.open(path) as container:
         return len(container.streams.video) > 0
