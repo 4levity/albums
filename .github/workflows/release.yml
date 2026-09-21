@@ -61,7 +61,7 @@ jobs:
       - name: Download Windows installer
         uses: actions/download-artifact@v8
         with:
-          name: albums-installer-win
+          name: albums-windows-installer
           path: albums_win_x86_64/
       - name: Download package
         uses: actions/download-artifact@v8
@@ -73,8 +73,8 @@ jobs:
         run: |
           chmod a+x albums_linux_x86_64/albums
           echo "ALBUMS_VERSION=$(albums_linux_x86_64/albums --version | awk -F ' ' '{ print $3 }')" >> "$GITHUB_OUTPUT"
-      - name: Create archive
-        run: zip -r albums_linux_x86_64.zip albums_linux_x86_64
+      - name: Create Linux executable archive
+        run: zip -r albums_linux_executable_x86_64.zip albums_linux_x86_64
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -92,4 +92,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALBUMS_VERSION: ${{ steps.get-version.outputs.ALBUMS_VERSION }}
-        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_x86_64.zip dist/*.tar.gz --clobber
+        run: gh release upload "v${ALBUMS_VERSION}" albums_win_x86_64/*.exe albums_linux_executable_x86_64.zip dist/*.tar.gz --clobber
