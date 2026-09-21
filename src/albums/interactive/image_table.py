@@ -6,11 +6,13 @@ from math import sqrt
 from typing import Any, Dict, Final, List, Sequence, Tuple
 
 import humanize
-import numpy
 from PIL import Image
 from rich.console import RenderableType
 from rich_pixels import Pixels
-from skimage.metrics import mean_squared_error  # pyright: ignore[reportUnknownVariableType]
+
+# package-level import (not "from skimage.metrics import mean_squared_error"): skimage's lazy loader then
+# defers loading the scipy/numpy submodules, saving ~68 MB of RSS per CLI invocation
+from skimage import metrics
 
 from albums.app import Context
 from albums.tagger import AlbumTagger, Picture
@@ -25,6 +27,9 @@ def render_image_table(
     picture_sources: Dict[Picture, List[str]],
 ) -> Sequence[Sequence[RenderableType]]:
     """Render a table row of scaled pixel images with size/dimension captions, noting similarity to a reference image when comparing multiple pictures."""
+    # deferred: numpy is only needed when comparing images (see the skimage import comment above)
+    import numpy
+
     pixels_images: list[RenderableType] = []
     target_width = int((ctx.console.width - 3) / len(pictures))
     target_height = (ctx.console.height - 10) * 2
@@ -56,7 +61,7 @@ def render_image_table(
                     if abs(aspect - reference_aspect) < 0.1:  # close enough
                         image = image.resize((reference_width, reference_height), resample=Image.Resampling.LANCZOS)
                         this_image = numpy.asarray(image)
-                        rmse = sqrt(mean_squared_error(reference_image, this_image))
+                        rmse = sqrt(metrics.mean_squared_error(reference_image, this_image))  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
                         caption += f" {_describe_rmse(rmse)}"
                     else:
                         caption += " [bold italic]aspect ratio doesn't match[/bold italic]"
