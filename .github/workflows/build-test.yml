@@ -76,11 +76,24 @@ jobs:
       # no `make install`: uv build uses an isolated build environment
       - name: Create package
         run: make package
-      - name: Upload package artifact
+      - name: Upload wheel artifact
+        id: artifact-wheel
         uses: actions/upload-artifact@v7
         with:
           name: albums-package
-          path: dist/
+          path: dist/*.whl
+          archive: false
+      - name: Upload source artifact
+        id: artifact-source
+        uses: actions/upload-artifact@v7
+        with:
+          name: albums-package
+          path: dist/*.tar.gz
+          archive: false
+      - name: Artifact links
+        run: |
+          echo "🚀 Python wheel - [download artifact](${{ steps.artifact-wheel.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "🚀 Python source - [download artifact](${{ steps.artifact-source.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
 
   # Wine jobs: run in parallel on self-hosted runners (label wine) in the
   # purpose-built image (docker/): wine 11, xvfb and a warm wine environment
@@ -137,7 +150,12 @@ jobs:
       - name: Test installer end-to-end
         run: make wine-e2e GROUPS=pyinstaller
       - name: Upload installer artifact
+        id: artifact-windows
         uses: actions/upload-artifact@v7
         with:
           name: albums-installer-win
           path: dist/installer/*.exe
+          archive: false
+      - name: Artifact link
+        run: |
+          echo "🚀 Windows installer - [download artifact](${{ steps.artifact-windows.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
