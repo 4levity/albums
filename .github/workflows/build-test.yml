@@ -1,10 +1,6 @@
 name: Build / Test
 on:
   workflow_call:
-    secrets:
-      CODECOV_TOKEN:
-        required: true
-        description: Codecov upload token
 jobs:
   static:
     runs-on: ubuntu-26.04
@@ -59,14 +55,12 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           files: build/coverage.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
           report_type: coverage
       - name: Upload test results to Codecov
         if: (success() || failure()) && matrix.python == '3.14'
         uses: codecov/codecov-action@v7
         with:
           files: build/junit.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
       - name: Add coverage link to job summary
         if: (success() || failure()) && matrix.python == '3.14'
