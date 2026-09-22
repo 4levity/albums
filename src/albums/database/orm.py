@@ -3,7 +3,7 @@
 import json
 from typing import Any, Final, override
 
-from sqlalchemy import Column, Dialect, Integer, String, Table, Text, TypeDecorator
+from sqlalchemy import Column, Dialect, Integer, Table, Text, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase
 
 from albums.picture import LoadIssuesType
@@ -76,7 +76,7 @@ class BasicFieldsAsJson(TypeDecorator[dict[BasicField, list[str]]]):
     """Serialize/deserialize track fields as a JSON object mapping field name to a list of values.
 
     Field names that are not a valid :class:`~.tagger.types.BasicField` value (e.g. written by a
-    newer version) load as ``BasicField.UNKNOWN``, mirroring :class:`SafeStringEnum`.
+    newer version) load as ``BasicField.UNKNOWN``.
     """
 
     impl = Text
@@ -102,28 +102,3 @@ class BasicFieldsAsJson(TypeDecorator[dict[BasicField, list[str]]]):
                 field = BasicField.UNKNOWN
             fields.setdefault(field, []).extend(values)
         return fields
-
-
-class SafeStringEnum[EnumType](TypeDecorator[EnumType]):
-    """Persist enum as string, returning a fallback value for unknown strings."""
-
-    impl = String
-
-    cache_ok = True
-
-    @override
-    def __init__(self, enum_type: type, unknown_value: EnumType, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        self._enum_type = enum_type
-        self._unknown_value = unknown_value
-
-    @override
-    def process_bind_param(self, value: EnumType | None, dialect: Dialect):  # pyright: ignore[reportUnknownParameterType]
-        return None if value is None else value.value  # type: ignore
-
-    @override
-    def process_result_value(self, value: str | None, dialect: Dialect) -> EnumType:
-        try:
-            return self._enum_type(value)
-        except ValueError:
-            return self._unknown_value

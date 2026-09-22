@@ -7,7 +7,6 @@ from albums.database.orm import (
     BasicFieldsAsJson,
     IntEnumAsInt,
     LoadIssuesAsJson,
-    SafeStringEnum,
     SerializableValueAsJson,
 )
 from albums.picture import LoadIssuesType
@@ -19,7 +18,6 @@ __all__ = [
     "LoadIssuesAsJson",
     "LoadIssuesType",
     "MEMORY",
-    "SafeStringEnum",
     "SerializableValueAsJson",
     "db_open",
     "get_init_schema",
