@@ -406,6 +406,24 @@ class TestCli:
 
         assert len(json.loads(self.run(["list", "-j"]).output)) == 2
 
+    def test_import_does_not_rename_source(self):
+        self.run(["scan"], init=True)
+        new_album = Album(
+            path="source" + os.sep,
+            tracks=[
+                Track(
+                    filename="01.flac",
+                    fields={BasicField.TITLE: "1", BasicField.TRACKNUMBER: "01", BasicField.ALBUM: "foobar", BasicField.ARTIST: "baz"},
+                )
+            ],
+        )
+        src = create_library("cli_import_rename", [new_album])
+        result = self.run(["-v", "import", "--automatic", str(src)])
+        assert result.exit_code == 0
+        assert (src / "source").is_dir()  # the folder-name check must not rename the source folder
+        result = self.run(["list"])
+        assert "foobar" in result.output
+
     def test_sql(self):
         self.run(["scan"], init=True)
         result = self.run(["sql", "--json", "SELECT * from album ORDER BY path;"])

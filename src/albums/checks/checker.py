@@ -38,6 +38,7 @@ class CheckDisposition:
 class Checker:
     """Orchestrate the enabled checks for a context, fixing issues and re-running checks until the album is stable.
 
+    Checks named in ``disabled_checks`` are skipped even when enabled in the configuration.
     With ``timing=True``, ``run_enabled`` measures each enabled check's init time and every
     ``check(album)`` call (pass or fail) and prints a timing report at the end of the run.
     """
@@ -48,16 +49,31 @@ class Checker:
     _interactive: bool
     _show_ignore_option: bool
     _timing: bool
+    _disabled_checks: frozenset[str]
 
-    def __init__(self, ctx: Context, automatic: bool, fix: bool, interactive: bool, show_ignore_option: bool, timing: bool = False):
+    def __init__(
+        self,
+        ctx: Context,
+        automatic: bool,
+        fix: bool,
+        interactive: bool,
+        show_ignore_option: bool,
+        timing: bool = False,
+        disabled_checks: Sequence[str] = (),
+    ):
         self.ctx = ctx
         self._automatic = automatic
         self._fix = fix
         self._interactive = interactive
         self._show_ignore_option = show_ignore_option
         self._timing = timing
+        self._disabled_checks = frozenset(disabled_checks)
         # per-check timing stats, populated by run_enabled when timing is enabled
         self.timings: dict[str, CheckTiming] = {}
+
+    def _enabled_checks(self) -> list[type[Check]]:
+        """Check classes enabled in the context config and not in ``disabled_checks``."""
+        return [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"] and check.name not in self._disabled_checks]
 
     def run_enabled(self, session: Session) -> int:
         """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
@@ -74,7 +90,7 @@ class Checker:
                 self.ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
             raise SystemExit(1)
         tagger = AlbumTaggerProvider(self.ctx.config.library, id3v1=self.ctx.config.id3v1)
-        enabled_checks: list[type[Check]] = [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
+        enabled_checks = self._enabled_checks()
         if self._timing:
             self.timings = {check.name: CheckTiming() for check in enabled_checks}
         check_instances: list[Check] = []
@@ -163,7 +179,7 @@ class Checker:
             )
 
     def get_required_disabled_checks(self) -> Mapping[str, Sequence[str]]:
-        check_classes = [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"]]
+        check_classes = self._enabled_checks()
         enabled = set(check.name for check in check_classes)
         required_disabled: dict[str, list[str]] = {}
         for check in check_classes:

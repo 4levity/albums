@@ -28,9 +28,6 @@ class CheckFolderName(Check):
         self.ignore_folders = valid_folder_list(check_config, "folder-name", "ignore_folders", CheckFolderName.default_config["ignore_folders"])
 
     def check(self, album: Album):
-        if self.ctx.importing:
-            return None  # don't rename folders while importing
-
         if Path(album.path).name.casefold() in self.ignore_folders:
             return None
 

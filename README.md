@@ -1,10 +1,14 @@
 # albums
 
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)
+![Windows](https://img.shields.io/badge/Windows-0078D4?style=flat&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+V2luZG93cyAxMTwvdGl0bGU+PHBhdGggZD0iTTAsMEgxMS4zNzdWMTEuMzcySDBaTTEyLjYyMywwSDI0VjExLjM3MkgxMi42MjNaTTAsMTIuNjIzSDExLjM3N1YyNEgwWm0xMi42MjMsMEgyNFYyNEgxMi42MjMiLz48L3N2Zz4=)
+![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
+![Python Versions](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2F4levity%2Falbums%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/ci.yml?label=build-test)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/publish.yml?label=release)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/docs.yml?label=docs)
 [![codecov](https://codecov.io/gh/4levity/albums/graph/badge.svg?token=TVAL3PMCGY)](https://codecov.io/gh/4levity/albums)
-![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/docs.yml?label=docs)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/publish.yml?label=release&event=push)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/4levity/albums/publish.yml?label=publish&event=push)
 ![PyPI - Version](https://img.shields.io/pypi/v/albums)
 ![PyPI - Status](https://img.shields.io/pypi/status/albums)
 [![Buy Me a Coffee](https://img.shields.io/badge/donate-bb6600?&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/4levity)

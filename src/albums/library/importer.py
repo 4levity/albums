@@ -40,7 +40,6 @@ class Importer:
         if child_context.parent is None:
             raise RuntimeError("Importer must be created in child context")
 
-        child_context.importing = True
         self.ctx = child_context
         self._parent_context = child_context.parent
         self._library = child_context.config.library
@@ -68,8 +67,10 @@ class Importer:
         """Check and fix each scanned album interactively, then copy it into the library at a chosen path."""
         from albums.checks.checker import Checker  # avoid circular dependency
 
-        checker = Checker(self.ctx, self._automatic, fix=False, interactive=True, show_ignore_option=True)
-        non_interactive_checker = Checker(self.ctx, False, False, False, False)
+        # import copies folders to their destination paths, so the folder-name check must not rename the source folders
+        disabled_checks = ("folder-name",)
+        checker = Checker(self.ctx, self._automatic, fix=False, interactive=True, show_ignore_option=True, disabled_checks=disabled_checks)
+        non_interactive_checker = Checker(self.ctx, False, False, False, False, disabled_checks=disabled_checks)
         with Session(self.ctx.db) as session:
             for album in self.ctx.select_album_entities(session):
                 (exists, ok) = self._check_existing_destination(album, self._make_library_paths(album))
