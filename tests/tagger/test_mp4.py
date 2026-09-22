@@ -256,6 +256,19 @@ class TestMp4:
         assert fields[BasicField.TRACKNUMBER] == ("2",)
         assert BasicField.TRACKTOTAL not in fields
 
+    def test_remove_mp4_tracknumber(self):
+        with TestMp4.tagger.open(track1.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("1",)
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
+
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.TRACKNUMBER, None)
+        with TestMp4.tagger.open(track1.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.TRACKNUMBER not in fields
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
+
     def test_write_mp4_disctotal(self):
         with TestMp4.tagger.open(track1.filename) as file:
             fields = dict(file.get_fields())
@@ -289,6 +302,22 @@ class TestMp4:
             fields = dict(file.get_fields())
         assert fields[BasicField.DISCNUMBER] == ("2",)
         assert BasicField.DISCTOTAL not in fields
+
+    def test_remove_mp4_discnumber(self):
+        # distinct number and total so a swapped write would be detectable
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.DISCNUMBER, "1")
+            file.set_field(BasicField.DISCTOTAL, "4")
+            fields = dict(file.get_fields())
+        assert fields[BasicField.DISCNUMBER] == ("1",)
+        assert fields[BasicField.DISCTOTAL] == ("4",)
+
+        with TestMp4.tagger.open(track1.filename) as file:
+            file.set_field(BasicField.DISCNUMBER, None)
+        with TestMp4.tagger.open(track1.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DISCNUMBER not in fields
+        assert fields[BasicField.DISCTOTAL] == ("4",)
 
     def test_remove_one_m4a_pic(self):
         with TestMp4.tagger.open(track1.filename) as file:
