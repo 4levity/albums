@@ -34,6 +34,27 @@ albums = [
 ]
 
 
+class CheckboxListStub:
+    """Stand-in for prompt_toolkit's checkboxlist dialog, selecting the presented albums whose paths are in ``select_paths`` (or closing the dialog without a selection)."""
+
+    def __init__(self, select_paths: set[str] | None):
+        self.select_paths = select_paths
+        self.title: str | None = None
+        self.values: list[tuple[int, str]] = []
+        self.default_values: list[int] = []
+
+    def __call__(self, title: str, *, values: list[tuple[int, str]], default_values: list[int]):
+        self.title = title
+        self.values = values
+        self.default_values = default_values
+        return self
+
+    def run(self) -> list[int] | None:
+        if self.select_paths is None:
+            return None
+        return [album_id for album_id, path in self.values if path in self.select_paths]
+
+
 class TestCli:
     @pytest.fixture(scope="function", autouse=True)
     def setup_tests(self):
@@ -240,6 +261,71 @@ class TestCli:
         obj = json.loads(result.output)
         assert len(obj) == 1
         assert obj[0]["path"] == "bar" + os.sep  # foo was removed
+
+    def mock_select_dialog(self, mocker, select_paths: set[str] | None) -> CheckboxListStub:
+        dialog = CheckboxListStub(select_paths)
+        mocker.patch("albums.cli.collections_select.checkboxlist_dialog", side_effect=dialog)
+        return dialog
+
+    def test_collections_select_requires_collection_name(self):
+        self.run(["scan"], init=True)
+        result = self.run(["select"])
+        assert result.exit_code == 1
+        assert "must specify at least one collection name" in result.output
+
+    def test_collections_select_add_and_remove(self, mocker):
+        self.run(["scan"], init=True)
+        self.run(["-rp", "foo", "add", "one", "two"])
+        self.run(["-rp", "bar", "add", "one"])
+
+        dialog = self.mock_select_dialog(mocker, {albums[1].path})
+        result = self.run(["select", "one", "two"])
+        assert result.exit_code == 0
+        assert dialog.title == "add albums to: one, two"
+        ids_by_path = {path: album_id for album_id, path in dialog.values}
+        assert dialog.default_values == [ids_by_path[albums[0].path]]  # only foo is in all the named collections
+        assert f"added album {albums[1].path} to collection two" in result.output
+        assert f"added album {albums[1].path} to collection one" not in result.output  # bar was already in one
+        assert f"removed album {albums[0].path} from collection one" in result.output
+        assert f"removed album {albums[0].path} from collection two" in result.output
+
+        # bar is now in both collections, foo is in neither
+        one = json.loads(self.run(["-m", "collection=one", "list", "--json"]).output)
+        two = json.loads(self.run(["-m", "collection=two", "list", "--json"]).output)
+        assert [a["path"] for a in one] == [albums[1].path]
+        assert [a["path"] for a in two] == [albums[1].path]
+
+    def test_collections_select_no_change(self, mocker):
+        self.run(["scan"], init=True)
+        self.run(["-rp", "foo", "add", "one", "two"])
+        self.run(["-rp", "bar", "add", "one", "two"])
+
+        dialog = self.mock_select_dialog(mocker, {album.path for album in albums})
+        result = self.run(["select", "one", "two"])
+        assert result.exit_code == 0
+        assert len(dialog.values) == 2
+        assert len(dialog.default_values) == 2  # both albums are preselected, and selecting both changes nothing
+        assert "added album" not in result.output
+        assert "removed album" not in result.output
+
+        one = json.loads(self.run(["-m", "collection=one", "list", "--json"]).output)
+        assert [a["path"] for a in one] == [albums[1].path, albums[0].path]
+
+    def test_collections_select_dialog_cancelled(self, mocker):
+        self.run(["scan"], init=True)
+        self.run(["-rp", "foo", "add", "one"])
+
+        self.mock_select_dialog(mocker, None)  # dialog closed without a selection
+        result = self.run(["select", "one", "two"])
+        assert result.exit_code == 0
+        assert "added album" not in result.output
+        assert "removed album" not in result.output
+
+        # membership is unchanged: foo remains in one only
+        one = json.loads(self.run(["-m", "collection=one", "list", "--json"]).output)
+        two = json.loads(self.run(["-m", "collection=two", "list", "--json"]).output)
+        assert [a["path"] for a in one] == [albums[0].path]
+        assert two == []
 
     def test_import_automatic(self):
         self.run(["scan"], init=True)
