@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.check_types import FixResult
@@ -43,8 +44,17 @@ class TestZeroPadNumbers:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)
         assert fix_result == FixResult.CHANGED_ALBUM
-        assert mock_set_basic_fields.call_count == 9
-        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[8].filename, [(BasicField.TRACKNUMBER, "09")])
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKNUMBER, "01")]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicField.TRACKNUMBER, "02")]),
+            call(Path(album.path) / album.tracks[2].filename, [(BasicField.TRACKNUMBER, "03")]),
+            call(Path(album.path) / album.tracks[3].filename, [(BasicField.TRACKNUMBER, "04")]),
+            call(Path(album.path) / album.tracks[4].filename, [(BasicField.TRACKNUMBER, "05")]),
+            call(Path(album.path) / album.tracks[5].filename, [(BasicField.TRACKNUMBER, "06")]),
+            call(Path(album.path) / album.tracks[6].filename, [(BasicField.TRACKNUMBER, "07")]),
+            call(Path(album.path) / album.tracks[7].filename, [(BasicField.TRACKNUMBER, "08")]),
+            call(Path(album.path) / album.tracks[8].filename, [(BasicField.TRACKNUMBER, "09")]),
+        ]
 
     def test_check_pad_remove_all_unnecessary(self, mocker):
         album = Album(
@@ -113,11 +123,16 @@ class TestZeroPadNumbers:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)
         assert fix_result == FixResult.CHANGED_ALBUM
-        assert mock_set_basic_fields.call_count == 2
-        assert mock_set_basic_fields.call_args.args == (
-            Path(album.path) / album.tracks[1].filename,
-            [(BasicField.TRACKNUMBER, "2"), (BasicField.TRACKTOTAL, "2"), (BasicField.DISCNUMBER, "1"), (BasicField.DISCTOTAL, "1")],
-        )
+        assert mock_set_basic_fields.call_args_list == [
+            call(
+                Path(album.path) / album.tracks[0].filename,
+                [(BasicField.TRACKNUMBER, "1"), (BasicField.TRACKTOTAL, "2"), (BasicField.DISCNUMBER, "1"), (BasicField.DISCTOTAL, "1")],
+            ),
+            call(
+                Path(album.path) / album.tracks[1].filename,
+                [(BasicField.TRACKNUMBER, "2"), (BasicField.TRACKTOTAL, "2"), (BasicField.DISCNUMBER, "1"), (BasicField.DISCTOTAL, "1")],
+            ),
+        ]
 
     def test_check_pad_tracknumber_and_discnumber_if_needed(self, mocker):
         album = Album(path="a")
@@ -151,8 +166,19 @@ class TestZeroPadNumbers:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)
         assert fix_result == FixResult.CHANGED_ALBUM
-        assert mock_set_basic_fields.call_count == 99  # all tracks on discs 1-9 get discnumber padded, 9 tracks on disc 10 get tracknumber padded
-        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[98].filename, [(BasicField.TRACKNUMBER, "09")])
+        # discs 1-9: tracks 1-9 get tracknumber and discnumber padded, track 10 gets only discnumber padded;
+        # disc 10: tracks 1-9 get tracknumber padded, track 10 needs no change (99 calls total)
+        expected_calls = []
+        for disc in range(1, 11):
+            for track in range(1, 11):
+                new_values = []
+                if track < 10:
+                    new_values.append((BasicField.TRACKNUMBER, f"{track:02d}"))
+                if disc < 10:
+                    new_values.append((BasicField.DISCNUMBER, f"{disc:02d}"))
+                if new_values:
+                    expected_calls.append(call(Path(album.path) / f"{disc}-{track}.flac", new_values))
+        assert mock_set_basic_fields.call_args_list == expected_calls
 
     def test_check_pad_two_digit_minimum(self, mocker):
         album = Album(
@@ -200,11 +226,13 @@ class TestZeroPadNumbers:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)
         assert fix_result == FixResult.CHANGED_ALBUM
-        assert mock_set_basic_fields.call_count == 2
-        assert mock_set_basic_fields.call_args.args == (
-            Path(album.path) / album.tracks[1].filename,
-            [(BasicField.TRACKNUMBER, "02"), (BasicField.TRACKTOTAL, "02"), (BasicField.DISCNUMBER, "01"), (BasicField.DISCTOTAL, "01")],
-        )
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicField.TRACKTOTAL, "02"), (BasicField.DISCTOTAL, "01")]),
+            call(
+                Path(album.path) / album.tracks[1].filename,
+                [(BasicField.TRACKNUMBER, "02"), (BasicField.TRACKTOTAL, "02"), (BasicField.DISCNUMBER, "01"), (BasicField.DISCTOTAL, "01")],
+            ),
+        ]
 
     def test_check_pad_with_id3(self, mocker):
         album = Album(path="", tracks=[Track(filename="1.mp3", fields={BasicField.TRACKNUMBER: "01", BasicField.TRACKTOTAL: "2"})])

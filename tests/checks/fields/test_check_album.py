@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from unittest.mock import call
 
 from albums.app import Context
 from albums.checks.check_types import FixResult
@@ -68,8 +69,11 @@ class TestCheckAlbumField:
         mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
         fix_result = apply_automatic_fix(result)
         assert fix_result == FixResult.CHANGED_ALBUM
-        assert mock_set_basic_fields.call_count == 3
-        assert mock_set_basic_fields.call_args.args == (Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")])
+        assert mock_set_basic_fields.call_args_list == [
+            call(Path(album.path) / album.tracks[0].filename, [(BasicField.ALBUM, "Foo")]),
+            call(Path(album.path) / album.tracks[1].filename, [(BasicField.ALBUM, "Foo")]),
+            call(Path(album.path) / album.tracks[2].filename, [(BasicField.ALBUM, "Foo")]),
+        ]
 
     def test_check_needs_album__fix_interactive(self, mocker):
         # not all tracks have album field, where present it is different than folder name, no automatic fix
