@@ -4,6 +4,8 @@ icon: lucide/scroll-text
 
 # Changelog
 
+v0.9.34 - 68 MB less startup memory, prune scan history, folder config fix
+
 v0.9.33 - case-variant folder check, path sanitizing, timing, faster duplicates
 
 v0.9.32 - remove check --preview, in-process transcoding, Windows installer
