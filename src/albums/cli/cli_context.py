@@ -85,7 +85,6 @@ def setup(
         ``True`` when an initial full library scan should be run first (a ``--dir`` folder context was used, or the
         rescan policy is ``ALWAYS``).
     """
-    app_context.click_ctx = ctx
     app_context.verbose = verbose
     _setup_logging(app_context, verbose)
     logger.info("starting albums")
@@ -110,13 +109,10 @@ def setup(
         # create selector for folder context
         app_context.select_album_entities = lambda session: load_album_entities(session)
     elif not has_database:
-        # it's simpler to always give app_context a database than to allow it to be Engine | None
+        # it's simpler to always give app_context a database than to allow it to be Engine | None.
+        # the in-memory engine has no file to release: it is cleaned up when the process exits, so no dispose is needed
         app_context.is_persistent = False
-        mem_db = db_open(MEMORY, echo=False)
-        app_context.db = mem_db
-        # bind dispose to this engine object: commands (e.g. `init`) may reassign app_context.db,
-        # and a late-bound `app_context.db.dispose` would then dispose the new engine and leak this one
-        ctx.call_on_close(mem_db.dispose)
+        app_context.db = db_open(MEMORY, echo=False)
     return bool(dir) or app_context.config.rescan == RescanOption.ALWAYS
 
 
@@ -145,9 +141,6 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
     # as in a library context
     config_save(folder_db, ctx.config)
     ctx.db = folder_db
-    if ctx.click_ctx:
-        # bind dispose to this engine object, same reason as in setup()
-        ctx.click_ctx.call_on_close(folder_db.dispose)
     ctx.is_filtered = False
     ctx.is_persistent = False
     return parent

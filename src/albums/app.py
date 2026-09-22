@@ -8,7 +8,6 @@ import logging
 from pathlib import Path
 from typing import Any, Callable, Final, Iterator, Self
 
-import click
 from rich.console import Console
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
@@ -28,7 +27,6 @@ class Context(dict[Any, Any]):
     Attributes:
         parent: Parent context if this command operates in a separate context, or ``None``.
         console: Shared rich ``Console`` instance used for all terminal output.
-        click_ctx: The underlying Click ``Context`` (``None`` only during tests).
         db: SQLite ``Engine`` connected to the albums database.
         db_path: Absolute path to the on-disk database file.
         select_album_entities: Callable returning an iterator over ``Album`` objects for
@@ -52,7 +50,6 @@ class Context(dict[Any, Any]):
     config: Configuration
 
     # attributes that must be set after instantiation
-    click_ctx: click.Context | None
     db: Engine
     db_path: Path
     select_album_entities: Callable[[Session], Iterator[Album]]

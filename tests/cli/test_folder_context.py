@@ -51,7 +51,6 @@ class TestFolderContext:
         # enter_folder_context copies the context config into the in-memory database, so checks that read
         # settings from the db (e.g. track-filename borrowing zero-pad-numbers) see the persisted values
         ctx = Context()
-        ctx.click_ctx = None
         ctx.db = db_open(MEMORY)
         ctx.config.checks["zero-pad-numbers"]["enabled"] = False  # differs from the default
         config_save(ctx.db, ctx.config)
