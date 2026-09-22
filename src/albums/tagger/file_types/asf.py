@@ -295,5 +295,6 @@ def _get_asf_split_value(tags: ASFTags | None, prop: str) -> Tuple[str | None, s
     value = str(values[0])  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
     if str.count(value, "/") == 1:
         (number, total) = value.split("/")
-        return (number, total)
+        # an empty part means that value is not set, matching the writer which never writes empty parts
+        return (number or None, total or None)
     return (value, None)

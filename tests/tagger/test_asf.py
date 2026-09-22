@@ -2,15 +2,16 @@
 import os
 import shutil
 import struct
+from typing import cast
 
 import pytest
-from mutagen.asf import ASF
+from mutagen.asf import ASF, ASFTags
 from mutagen.asf._attrs import ASFBoolAttribute, ASFByteArrayAttribute
 
 from albums.entities import Album, Track
 from albums.picture import PictureScanner
 from albums.tagger import AlbumTagger, BasicField, PictureType
-from albums.tagger.file_types.asf import AsfTagger, WmPicture
+from albums.tagger.file_types.asf import AsfTagger, WmPicture, _get_asf_split_value
 
 from ..fixtures.create_library import create_library, make_image_data
 
@@ -223,6 +224,45 @@ class TestAsf:
         assert fields[BasicField.TRACKNUMBER] == ("2",)
         assert BasicField.TRACKTOTAL not in fields
 
+    def test_remove_asf_track_number(self):
+        # removing the number must keep the total
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.TRACKNUMBER, None)
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert [attr.value for attr in asf.tags["WM/TrackNumber"]] == ["/3"]
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.TRACKNUMBER not in fields
+        assert fields[BasicField.TRACKTOTAL] == ("3",)
+
+    def test_write_asf_track_total_only(self):
+        # with no track number, the total is written alone and removing it clears the whole tag
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.TRACKNUMBER, None)
+            file.set_field(BasicField.TRACKTOTAL, None)
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert asf.tags is not None
+        assert "WM/TrackNumber" not in asf.tags
+
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.TRACKTOTAL, "5")
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert [attr.value for attr in asf.tags["WM/TrackNumber"]] == ["/5"]
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.TRACKNUMBER not in fields
+        assert fields[BasicField.TRACKTOTAL] == ("5",)
+
+    def test_read_asf_track_number_without_total(self):
+        # a number-only WM/TrackNumber (no slash) reads back as a track number with no total
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.TRACKNUMBER, "7")
+            file.set_field(BasicField.TRACKTOTAL, None)
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert fields[BasicField.TRACKNUMBER] == ("7",)
+        assert BasicField.TRACKTOTAL not in fields
+
     def test_write_asf_disctotal(self):
         with TestAsf.tagger.open(track.filename) as file:
             fields = dict(file.get_fields())
@@ -256,6 +296,35 @@ class TestAsf:
             fields = dict(file.get_fields())
         assert fields[BasicField.DISCNUMBER] == ("2",)
         assert BasicField.DISCTOTAL not in fields
+
+    def test_remove_asf_disc_number(self):
+        # removing the number must keep the total
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DISCNUMBER, None)
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert [attr.value for attr in asf.tags["WM/PartOfSet"]] == ["/2"]
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DISCNUMBER not in fields
+        assert fields[BasicField.DISCTOTAL] == ("2",)
+
+    def test_write_asf_disc_total_only(self):
+        # with no disc number, the total is written alone and removing it clears the whole tag
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DISCNUMBER, None)
+            file.set_field(BasicField.DISCTOTAL, None)
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert asf.tags is not None
+        assert "WM/PartOfSet" not in asf.tags
+
+        with TestAsf.tagger.open(track.filename) as file:
+            file.set_field(BasicField.DISCTOTAL, "4")
+        asf = ASF(str(TestAsf.library / album.path / track.filename))
+        assert [attr.value for attr in asf.tags["WM/PartOfSet"]] == ["/4"]
+        with TestAsf.tagger.open(track.filename) as file:
+            fields = dict(file.get_fields())
+        assert BasicField.DISCNUMBER not in fields
+        assert fields[BasicField.DISCTOTAL] == ("4",)
 
     @staticmethod
     def wm_picture_blob(picture_type: int, mime_type: str, description: str, image_data: bytes) -> bytes:
@@ -328,3 +397,17 @@ class TestAsf:
             (PictureType.ILLUSTRATION, "illustration", "image/png", 32, 48),
         ]
         assert [data for _, data in pictures] == [red, green]
+
+
+class TestGetAsfSplitValue:
+    def test_invalid_values_read_as_absent(self):
+        # missing tags, a missing property, an empty value list, or a non-list value all read as absent
+        assert _get_asf_split_value(None, "WM/TrackNumber") == (None, None)
+        assert _get_asf_split_value(cast("ASFTags", {}), "WM/TrackNumber") == (None, None)
+        assert _get_asf_split_value(cast("ASFTags", {"WM/TrackNumber": []}), "WM/TrackNumber") == (None, None)
+        assert _get_asf_split_value(cast("ASFTags", {"WM/TrackNumber": "1/2"}), "WM/TrackNumber") == (None, None)
+
+    def test_empty_parts_read_as_unset(self):
+        # an empty number or total part is not set
+        assert _get_asf_split_value(cast("ASFTags", {"WM/TrackNumber": ["/3"]}), "WM/TrackNumber") == (None, "3")
+        assert _get_asf_split_value(cast("ASFTags", {"WM/TrackNumber": ["1/"]}), "WM/TrackNumber") == ("1", None)
