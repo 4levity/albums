@@ -5,10 +5,26 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.path.check_track_filename import CheckTrackFilename
+from albums.config import Configuration, config_save
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
 from ...helpers import apply_automatic_fix
+
+
+def make_ctx(zero_pad_enabled: bool = True) -> Context:
+    """Context backed by an in-memory database whose persisted config has zero-pad-numbers *zero_pad_enabled*.
+
+    The check reads the persisted zero-pad-numbers setting from the database in init()
+    (see CheckTrackFilename), so tests control it here; all other settings are defaults.
+    """
+    ctx = Context()
+    ctx.db = db_open(MEMORY)
+    config = Configuration()
+    config.checks["zero-pad-numbers"]["enabled"] = zero_pad_enabled
+    config_save(ctx.db, config)
+    return ctx
 
 
 class TestCheckTrackFilename:
@@ -17,14 +33,14 @@ class TestCheckTrackFilename:
             Track(filename="1 foo.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
             Track(filename="2 bar.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
         ]
-        assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        assert not CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_ok_custom_format(self):
         tracks = [
             Track(filename="1 - foo.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
             Track(filename="2 - bar.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "bar"}),
         ]
-        ctx = Context()
+        ctx = make_ctx()
         ctx.config.checks["track-filename"]["format"] = "$track_auto - $title_auto"
         assert not CheckTrackFilename(ctx).check(Album(path="", tracks=tracks))
 
@@ -39,7 +55,7 @@ class TestCheckTrackFilename:
                 fields={BasicField.DISCNUMBER: "1", BasicField.TRACKNUMBER: "2", BasicField.ARTIST: "baz", BasicField.TITLE: "bar"},
             ),
         ]
-        ctx = Context()
+        ctx = make_ctx()
         ctx.config.checks["track-filename"]["format"] = "[disc $discnumber track $tracknumber] $artist / $title"  # "/" will become "-"
         assert not CheckTrackFilename(ctx).check(Album(path="", tracks=tracks))
 
@@ -48,7 +64,7 @@ class TestCheckTrackFilename:
             Track(filename="1 Track 1.flac", fields={BasicField.TRACKNUMBER: "1"}),
             Track(filename="2 Track 2.flac", fields={BasicField.TRACKNUMBER: "2"}),
         ]
-        assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        assert not CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_disc_ok(self):
         tracks = [
@@ -62,7 +78,7 @@ class TestCheckTrackFilename:
                 },
             ),
         ]
-        assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        assert not CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_albumartist_ok(self):
         tracks = [
@@ -85,7 +101,7 @@ class TestCheckTrackFilename:
                 },
             ),
         ]
-        assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        assert not CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_guest_artist_ok(self):
         tracks = [
@@ -108,14 +124,14 @@ class TestCheckTrackFilename:
                 },
             ),
         ]
-        assert not CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        assert not CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
 
     def test_track_filename_not_unique(self):
         tracks = [
             Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
             Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
         ]
-        result = CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        result = CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
         assert result
         assert "unable to generate unique filenames" in result.message
 
@@ -124,7 +140,7 @@ class TestCheckTrackFilename:
             Track(filename="1.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
             Track(filename="2.flac"),
         ]
-        result = CheckTrackFilename(Context()).check(Album(path="", tracks=tracks))
+        result = CheckTrackFilename(make_ctx()).check(Album(path="", tracks=tracks))
         assert result
         assert "cannot generate filenames that start with . character" in result.message
 
@@ -135,7 +151,7 @@ class TestCheckTrackFilename:
             Track(filename="3 is correct.flac", fields={BasicField.TRACKNUMBER: "3", BasicField.TITLE: "is correct"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(Context()).check(album)
+        result = CheckTrackFilename(make_ctx()).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -162,7 +178,7 @@ class TestCheckTrackFilename:
             Track(filename="9.m4a", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(Context()).check(album)
+        result = CheckTrackFilename(make_ctx()).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -186,10 +202,8 @@ class TestCheckTrackFilename:
         # replicates "albums check track-filename -f": the temporary runtime config disables
         # zero-pad-numbers, but the persisted (stored) config still has it enabled. _pad must
         # "fake it" and pad, as it would in a normal full check run.
-        ctx = Context()
+        ctx = make_ctx()  # persisted config has zero-pad-numbers enabled
         ctx.config.checks["zero-pad-numbers"]["enabled"] = False  # temporary runtime override
-        # ctx.stored_checks["zero-pad-numbers"]["enabled"] is still True (set from defaults at Context creation)
-        assert ctx.stored_checks["zero-pad-numbers"]["enabled"]
         tracks = [
             Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
             Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
@@ -226,9 +240,8 @@ class TestCheckTrackFilename:
     def test_track_filename_pad_m4a_stored_config_disabled(self, mocker):
         # the persisted (stored) config has zero-pad-numbers disabled, so _pad must not pad -
         # even though the runtime config has it enabled (proving the stored config is authoritative)
-        ctx = Context()
-        ctx.stored_checks["zero-pad-numbers"]["enabled"] = False
-        ctx.config.checks["zero-pad-numbers"]["enabled"] = True
+        ctx = make_ctx(zero_pad_enabled=False)  # persisted config has zero-pad-numbers disabled
+        ctx.config.checks["zero-pad-numbers"]["enabled"] = True  # runtime config is enabled, but the persisted setting wins
         tracks = [
             Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
             Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
@@ -277,7 +290,7 @@ class TestCheckTrackFilename:
             Track(filename="10.mp3", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(Context()).check(album)
+        result = CheckTrackFilename(make_ctx()).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -303,7 +316,7 @@ class TestCheckTrackFilename:
             Track(filename="2 bar.flac", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "foo"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(Context()).check(album)
+        result = CheckTrackFilename(make_ctx()).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -323,7 +336,7 @@ class TestCheckTrackFilename:
             Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(Context()).check(album)
+        result = CheckTrackFilename(make_ctx()).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -341,7 +354,7 @@ class TestCheckTrackFilename:
             Track(filename="2.flac", fields={BasicField.TRACKNUMBER: "2", BasicField.TITLE: "baz/baz"}),
         ]
         album = Album(path="foobar" + os.sep, tracks=tracks)
-        ctx = Context()
+        ctx = make_ctx()
         ctx.config.path_replace_invalid = "_"
         ctx.config.path_replace_slash = ", "
         result = CheckTrackFilename(ctx).check(album)
