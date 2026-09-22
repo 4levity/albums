@@ -65,7 +65,7 @@ else
 STEP := @step() { shift; printf '%s\n' "$$*"; "$$@"; }; step
 endif
 
-.PHONY: build install install-js hooks static lint lint-python lint-markdown shellcheck actionlint jsonc js typecheck typecheck-src typecheck-tests spelling fix fix-python fix-markdown test preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
+.PHONY: build install install-js hooks static lint lint-python lint-markdown shellcheck actionlint jsonc js typecheck typecheck-src typecheck-tests spelling fix fix-python fix-markdown test coverage ensure-coverage preview docs package pyinstaller wine-setup wine-build wine-pytest wine-e2e clean extraclean
 
 build: install static test
 	@echo "build complete"
@@ -132,8 +132,10 @@ test: install ## Run all tests, fail on any warnings
 	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0
 
 coverage: install ## Run all tests with coverage, fail on any warnings
-	$(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0 --junit-xml=build/junit.xml -o junit_family=legacy --cov=src/albums --cov-report=xml:build/coverage.xml --cov-report=html:build/coverage
-	@echo Coverage report: file://./build/coverage/index.html
+	$(STEP) test-coverage $(UV) run $(UV_GROUP_ARGS) pytest --max-warnings=0 --junit-xml=build/junit.xml -o junit_family=legacy --cov=src/albums --cov-report=xml:build/coverage.xml --cov-report=html:build/coverage --cov-report=term --cov-precision=2
+
+ensure-coverage: coverage ## Run all tests with coverage, fail if coverage below baseline
+	$(STEP) ensure-coverage $(UV) run $(UV_GROUP_ARGS) python scripts/ensure_coverage.py
 
 # regenerate sample db if schema or schema-creation code changed
 SCHEMA_FILES := $(wildcard src/albums/database/migrations/*.sql) \

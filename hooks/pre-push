@@ -4,7 +4,8 @@
 # A push that updates or creates refs is only allowed when:
 #   1. the working tree is fully clean (nothing staged, unstaged or
 #      untracked), and
-#   2. `make test` passes
+#   2. `make ensure-coverage` passes (tests with coverage, and coverage
+#      not below the last codecov value for the branch)
 #
 # Git passes the refs being pushed on stdin. Pushes that update nothing
 # (all refs already up to date) or only delete refs skip the tests.
@@ -39,12 +40,12 @@ fi
 require_push_tree_clean
 
 require_make
-hook_note "pre-push: running 'make test' (may take a minute)"
+hook_note "pre-push: running 'make ensure-coverage' (may take a minute)"
 # QUIET=1: quiet steps (e.g. uv sync) print one line as they start, full tool
 # output only on failure (see the Makefile). The pytest run itself keeps its
 # full output, since that is what you want to watch while it runs.
-if ! QUIET=1 make test; then
-    hook_fail "make test failed" \
-"Fix the failing tests, commit, and push again"
+if ! QUIET=1 make ensure-coverage; then
+    hook_fail "make ensure-coverage failed" \
+"Fix the failing tests or coverage, commit, and push again"
 fi
 hook_note "pre-push: OK"

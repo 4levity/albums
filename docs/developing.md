@@ -290,7 +290,7 @@ dependencies are installed. (The project can be built and tested without these.)
 | ------------ | ------------------------------------------------------------------------------------------- |
 | `commit-msg` | Conventional Commits message, subject <= 50 chars (commitlint), no spelling errors (cspell) |
 | `pre-commit` | clean working tree + the checks the commit can affect pass                                  |
-| `pre-push`   | clean working tree + `make test` passes (no-op pushes skip)                                 |
+| `pre-push`   | clean working tree + `make ensure-coverage` passes (no-op pushes skip)                      |
 
 `commit-msg` checks the final commit message with
 [commitlint](https://commitlint.js.org/) (`@commitlint/cli`), configured in
