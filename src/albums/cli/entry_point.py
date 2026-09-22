@@ -61,9 +61,9 @@ def albums_group(
     )
     initial_scan = setup(ctx, app_context, verbose, filter_criteria, dir, invert, db_file)
 
-    if initial_scan:
+    # the scan command runs its own scan (respecting filters and --reread), so skip the automatic prescan for it
+    if initial_scan and ctx.invoked_subcommand != "scan":
         run_scan(app_context)
-        app_context.prescanned = True
 
 
 albums_group.add_command(scan)

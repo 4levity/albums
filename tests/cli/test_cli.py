@@ -100,6 +100,24 @@ class TestCli:
         result = self.run(["list"])
         assert "foo" not in result.output
 
+    def test_scan_rescan_always(self, mocker):
+        self.run(["config", "settings.rescan=always"], init=True)
+        prescan = mocker.patch("albums.cli.entry_point.run_scan")
+        scan = mocker.patch("albums.cli.scan.run_scan", return_value=(2, False))
+        result = self.run(["scan"])
+        assert result.exit_code == 0
+        prescan.assert_not_called()  # the automatic prescan is suppressed for the scan command
+        scan.assert_called_once()
+
+    def test_list_rescan_always(self, mocker):
+        self.run(["config", "settings.rescan=always"], init=True)
+        prescan = mocker.patch("albums.cli.entry_point.run_scan")
+        scan = mocker.patch("albums.cli.scan.run_scan")
+        result = self.run(["list"])
+        assert result.exit_code == 0
+        prescan.assert_called_once()  # other commands still get the automatic prescan
+        scan.assert_not_called()
+
     def test_check(self):
         result = self.run(["check", "--default", "album"], init=True)
         assert result.exit_code == 0

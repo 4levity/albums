@@ -35,7 +35,6 @@ class Context(dict[Any, Any]):
         config: Loaded application configuration (defaults + CLI overrides).
         verbose: Logging verbosity level (number of ``-v`` flags on the command line).
         is_persistent: Always ``True`` for this context class so Click keeps it alive between groups.
-        prescanned: Whether a full-library scan has already been performed in this session.
         importing: ``True`` while running album import commands that mutate library folders.
     """
 
@@ -45,7 +44,6 @@ class Context(dict[Any, Any]):
     # attributes initialized with default values that may need to be changed after instantiation
     parent: Self | None
     verbose: int
-    prescanned: bool
     importing: bool
     config: Configuration
 
@@ -63,6 +61,5 @@ class Context(dict[Any, Any]):
         super(Context, self).__init__(*args, **kwargs)
         self.parent = None
         self.verbose = 0
-        self.prescanned = False
         self.importing = False
         self.config = Configuration()

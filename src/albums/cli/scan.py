@@ -1,6 +1,3 @@
-import logging
-from typing import Final
-
 from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
@@ -8,8 +5,6 @@ from albums.app import Context
 from albums.library import run_scan
 
 from .cli_context import pass_context, require_configured, require_library
-
-logger: Final = logging.getLogger(__name__)
 
 
 @click.command(help="scan and update database", add_help_option=False)
@@ -19,9 +14,6 @@ logger: Final = logging.getLogger(__name__)
 def scan(ctx: Context, reread: bool):
     require_configured(ctx)
     require_library(ctx)
-    if ctx.prescanned:
-        logger.debug("scan already done, not scanning again")
-        return
     with Session(ctx.db) as session:
         (_, any_changes) = run_scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
         if any_changes:
