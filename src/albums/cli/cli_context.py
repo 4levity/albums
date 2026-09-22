@@ -13,7 +13,7 @@ import click
 from rich.logging import RichHandler
 
 from albums.app import Context
-from albums.config import PLATFORM_DIRS, RescanOption, config_load
+from albums.config import PLATFORM_DIRS, RescanOption, config_load, config_save
 from albums.database import MEMORY, db_open
 from albums.selector import Comparator, Match, load_album_entities
 
@@ -124,7 +124,9 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
     """Reconfigure *ctx* to operate on *folder* with a fresh in-memory database.
 
     A shallow copy of the original context is taken before any changes and stored in ``ctx.parent``; that untouched
-    parent copy (not the reconfigured context) is returned.
+    parent copy (not the reconfigured context) is returned. The context's configuration is copied into the in-memory
+    database so checks that read settings from the database see the same values in a folder context as in a
+    library context.
     """
     if ctx.parent:
         raise RuntimeError("enter_folder_context called on subcontext")
@@ -138,6 +140,10 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
     logger.info(f"using in-memory context, library is {folder}")
 
     folder_db = db_open(MEMORY, echo=ctx.verbose > 1)
+    # copy the context config (still the persisted one at this point) into the in-memory database, so checks
+    # that read settings from the db (e.g. track-filename borrowing zero-pad-numbers) see the same values here
+    # as in a library context
+    config_save(folder_db, ctx.config)
     ctx.db = folder_db
     if ctx.click_ctx:
         # bind dispose to this engine object, same reason as in setup()

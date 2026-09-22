@@ -4,7 +4,11 @@ import os
 import pytest
 from click.testing import CliRunner
 
+from albums.app import Context
 from albums.cli import entry_point
+from albums.cli.cli_context import enter_folder_context
+from albums.config import config_load, config_save
+from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 
 from .. import helpers
@@ -42,3 +46,16 @@ class TestFolderContext:
         assert len(obj) == 1
         assert obj[0]["path"] == "."
         assert obj[0]["tracks"][0]["filename"] == album2.tracks[0].filename
+
+    def test_folder_db_has_context_config(self, tmp_path):
+        # enter_folder_context copies the context config into the in-memory database, so checks that read
+        # settings from the db (e.g. track-filename borrowing zero-pad-numbers) see the persisted values
+        ctx = Context()
+        ctx.click_ctx = None
+        ctx.db = db_open(MEMORY)
+        ctx.config.checks["zero-pad-numbers"]["enabled"] = False  # differs from the default
+        config_save(ctx.db, ctx.config)
+        folder = tmp_path / "album"
+        folder.mkdir()
+        enter_folder_context(ctx, str(folder))
+        assert config_load(ctx.db).checks["zero-pad-numbers"]["enabled"] is False
