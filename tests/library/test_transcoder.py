@@ -156,17 +156,20 @@ class TestTranscoder:
         transcoder.get_transcoded(album, album.tracks[0])
         assert spy_transcode.call_count == 1
 
-    def test_new_transcoder_uses_cache(self):
+    def test_new_transcoder_uses_cache(self, mocker):
         album = Album(path="foo" + os.sep, tracks=[Track(filename="1.flac")])
         ctx = Context()
         ctx.config.library = create_library("test_reuse_transcoder_cache", [album], audio=AudioSpec())  # Transcoder uses library to validate cache
         ctx.config.transcoder_cache = TestTranscoder.transcoder_cache
 
         transcoder = Transcoder(ctx, _dest("mp3", "vbr"))
-        transcoder.get_transcoded(album, album.tracks[0])
+        cached_mp3 = transcoder.get_transcoded(album, album.tracks[0])
 
         transcoder = Transcoder(ctx, _dest("mp3", "vbr"))
-        transcoder.get_transcoded(album, album.tracks[0])  # cached, not re-transcoded
+        spy_transcode = mocker.spy(transcoder, "_transcode")
+        mp3 = transcoder.get_transcoded(album, album.tracks[0])  # cached, not re-transcoded
+        assert mp3 == cached_mp3
+        assert spy_transcode.call_count == 0
 
     def test_transcoder_copies_tags(self):
         album = Album(
