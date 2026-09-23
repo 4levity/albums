@@ -92,6 +92,20 @@ class TestFromValues:
         assert changed is True
         assert any("unknown configuration item" in record.message for record in caplog.records)
 
+    def test_follow_symlinks_bool_accepted(self):
+        """A boolean follow_symlinks value is accepted as-is."""
+        config, changed = Configuration.from_values([("settings.follow_symlinks", False)])
+        assert changed is False
+        assert config.follow_symlinks is False
+
+    def test_follow_symlinks_not_bool_warns(self, caplog):
+        """A non-boolean follow_symlinks triggers a warning and keeps the default."""
+        caplog.set_level("WARNING")
+        config, changed = Configuration.from_values([("settings.follow_symlinks", "nope")])
+        assert changed is True
+        assert config.follow_symlinks is True
+        assert any("not a boolean" in record.message for record in caplog.records)
+
 
 class TestConfigLoad:
     def test_config_load_saves_repaired_config(self):

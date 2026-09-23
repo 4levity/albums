@@ -36,6 +36,8 @@ class TestCliConfig:
         assert "settings.library = ." in result.output
         result = self.run(["config", "settings.rescan=never"])
         assert "settings.rescan = never" in result.output
+        result = self.run(["config", "settings.follow_symlinks=false"])
+        assert "settings.follow_symlinks = False" in result.output
         result = self.run(["config", "settings.tagger=mp3tag"])
         assert "settings.tagger = mp3tag" in result.output
         result = self.run(["config", "settings.open_folder_command=xdg-open"])
@@ -51,6 +53,7 @@ class TestCliConfig:
         result = self.run(["config", "--show"])
         assert_setting(result.output, "settings.library", ".")
         assert_setting(result.output, "settings.rescan", "never")
+        assert_setting(result.output, "settings.follow_symlinks", "False")
         assert_setting(result.output, "settings.tagger", "mp3tag")
         assert_setting(result.output, "settings.open_folder_command", "xdg-open")
         assert_setting(result.output, "cover-dimensions.min_pixels", "42")
@@ -115,6 +118,10 @@ class TestCliConfig:
         result = self.run(["config", "cover-dimensions.min_pixels=99.9"])
         assert result.exit_code == 1
         assert "cover-dimensions.min_pixels must be a non-negative integer" in result.output
+
+        result = self.run(["config", "settings.follow_symlinks=maybe"])
+        assert result.exit_code == 1
+        assert "settings.follow_symlinks must be true or false" in result.output
 
     def test_config_export(self):
         path = TestCliConfig.library / "export.json"

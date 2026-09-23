@@ -119,20 +119,21 @@ individual checks are described on the individual check pages (see
 
 <!-- pyml disable line-length -->
 
-| Name                          | Default                                      | Description                                       |
-| ----------------------------- | -------------------------------------------- | ------------------------------------------------- |
-| `library`                     | OS default                                   | Location of the music library                     |
-| `open_folder_command`         | OS default                                   | If not blank, program to browse files in an album |
-| `path_compatibility`          | `"universal"`                                | Configure what is allowed in filenames            |
-| `path_replace_slash`          | `"-"` _(a dash)_                             | Replace a "/" character in path element with this |
-| `path_replace_invalid`        | `""` _(nothing)_                             | Replace any other illegal character with this     |
-| `rescan`                      | `"auto"`                                     | When to automatically rescan the library          |
-| `tagger`                      | `"easytag"` (if installed)                   | External program to view and set tags in an album |
-| `id3v1`                       | `"UPDATE"`                                   | Policy for ID3 version 1 tags                     |
-| `default_import_path`         | `"$artist/$album"`                           | Import command option - see [Import](./import.md) |
-| `default_import_path_various` | `"Compilations/$album"`                      | Import command option                             |
-| `more_import_paths`           | `"$A1/$artist/$album", "Soundtracks/$album"` | Import command option                             |
-| `import_scan_max_paths`       | **250**                                      | Import command option                             |
+| Name                          | Default                                      | Description                                        |
+| ----------------------------- | -------------------------------------------- | -------------------------------------------------- |
+| `library`                     | OS default                                   | Location of the music library                      |
+| `open_folder_command`         | OS default                                   | If not blank, program to browse files in an album  |
+| `path_compatibility`          | `"universal"`                                | Configure what is allowed in filenames             |
+| `path_replace_slash`          | `"-"` _(a dash)_                             | Replace a "/" character in path element with this  |
+| `path_replace_invalid`        | `""` _(nothing)_                             | Replace any other illegal character with this      |
+| `rescan`                      | `"auto"`                                     | When to automatically rescan the library           |
+| `follow_symlinks`             | `true`                                       | Follow symlinked folders when scanning the library |
+| `tagger`                      | `"easytag"` (if installed)                   | External program to view and set tags in an album  |
+| `id3v1`                       | `"UPDATE"`                                   | Policy for ID3 version 1 tags                      |
+| `default_import_path`         | `"$artist/$album"`                           | Import command option - see [Import](./import.md)  |
+| `default_import_path_various` | `"Compilations/$album"`                      | Import command option                              |
+| `more_import_paths`           | `"$A1/$artist/$album", "Soundtracks/$album"` | Import command option                              |
+| `import_scan_max_paths`       | **250**                                      | Import command option                              |
 
 <!-- pyml enable line-length -->
 
@@ -158,6 +159,12 @@ operation is filtered then only selected albums will be re-scanned. Options:
 - `never`: never automatically scan the library, you must run "albums scan" if
   it has changed
 - `auto` _(default)_: scan on first run and before "check" or "sync" operations
+
+**`follow_symlinks`**: By default, symlinked folders in the library are
+followed when scanning, so albums reachable through a symlink are scanned as
+if they were in the library. Set to `false` to skip symlinked folders and
+their contents (for example, if a symlink would otherwise cause the same
+albums to be scanned twice).
 
 **`tagger`**: If this option is set or if EasyTAG is installed, the fix menu
 will have an option to execute an external tagging program. The path of the

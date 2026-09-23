@@ -71,6 +71,12 @@ def set_setting(ctx: Context, setting_name: str, value: str) -> bool:
         elif name == "import_scan_max_paths":
             ctx.config.import_scan_max_paths = int(value)
             config_save(ctx.db, ctx.config)
+        elif name == "follow_symlinks":
+            if str.lower(value) not in {"true", "false", "t", "f"}:
+                ctx.console.print(f"{setting_name} must be true or false")
+                return False
+            ctx.config.follow_symlinks = str.lower(value) in {"true", "t"}
+            config_save(ctx.db, ctx.config)
         elif name == "library":
             set_library(ctx, value)
         elif name == "more_import_paths":

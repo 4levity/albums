@@ -37,3 +37,12 @@ class TestWalkPaths:
             pytest.skip("symlinks not supported here")
         sep = os.sep
         assert sorted(walk_paths(tmp_path)) == [".", f"link{sep}", f"link{sep}album{sep}", f"real{sep}", f"real{sep}album{sep}"]
+
+    def test_symlinked_folder_not_followed(self, tmp_path: Path):
+        (tmp_path / "real" / "album").mkdir(parents=True)
+        try:
+            (tmp_path / "link").symlink_to(tmp_path / "real", target_is_directory=True)
+        except OSError:
+            pytest.skip("symlinks not supported here")
+        sep = os.sep
+        assert sorted(walk_paths(tmp_path, follow_symlinks=False)) == [".", f"real{sep}", f"real{sep}album{sep}"]

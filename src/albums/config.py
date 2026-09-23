@@ -288,6 +288,7 @@ class Configuration:
         more_import_paths: Extra path template options shown to user when importing.
         import_scan_max_paths: Limit on directories explored by ``import`` scan.
         library: Root directory scanned and managed as the music library.
+        follow_symlinks: Whether symlinked folders are followed when scanning the library.
         transcoder_cache: On-disk folder caching transcoded audio files to avoid repeated work.
         transcoder_cache_size: Maximum cache size in bytes (default 16 GiB).
         open_folder_command: Shell command used to open a folder in a file manager.
@@ -306,6 +307,7 @@ class Configuration:
     more_import_paths: Sequence[Template] = DEFAULT_MORE_IMPORT_PATHS
     import_scan_max_paths: int = DEFAULT_IMPORT_SCAN_MAX_PATHS
     library: Path = Path(".")
+    follow_symlinks: bool = True
     transcoder_cache: Path = PLATFORM_DIRS.user_data_path / "albums_transcoder_cache"
     transcoder_cache_size: int = 16 * pow(2, 30)  # 16 GiB
     open_folder_command: str = ""
@@ -333,6 +335,7 @@ class Configuration:
             "settings.more_import_paths": [path_T.template for path_T in self.more_import_paths],
             "settings.import_scan_max_paths": self.import_scan_max_paths,
             "settings.library": str(self.library),
+            "settings.follow_symlinks": self.follow_symlinks,
             "settings.transcoder_cache": str(self.transcoder_cache),
             "settings.transcoder_cache_size": self.transcoder_cache_size,
             "settings.open_folder_command": self.open_folder_command,
@@ -401,6 +404,12 @@ class Configuration:
                         changed_values = True
                 elif name == "library":
                     config.library = Path(str(value))
+                elif name == "follow_symlinks":
+                    if isinstance(value, bool):
+                        config.follow_symlinks = value
+                    else:
+                        logger.warning(f"ignoring {k}={str(value)}, not a boolean - using default {config.follow_symlinks}")
+                        changed_values = True
                 elif name == "transcoder_cache":
                     config.transcoder_cache = Path(str(value))
                 elif name == "transcoder_cache_size":

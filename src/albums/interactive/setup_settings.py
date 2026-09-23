@@ -25,6 +25,7 @@ def configure_settings(ctx: Context):
                 ("path_replace_slash", f"path_replace_slash ({ctx.config.path_replace_slash})"),
                 ("path_replace_invalid", f"path_replace_invalid ({ctx.config.path_replace_invalid})"),
                 ("rescan", f"rescan ({ctx.config.rescan})"),
+                ("follow_symlinks", f"follow_symlinks ({ctx.config.follow_symlinks})"),
                 ("tagger", f"tagger ({ctx.config.tagger if ctx.config.tagger else 'not set'})"),
                 (
                     "open_folder_command",
@@ -60,6 +61,7 @@ def _configure_setting(
         "path_replace_slash",
         "path_replace_invalid",
         "rescan",
+        "follow_symlinks",
         "tagger",
         "open_folder_command",
         "default_import_path",
@@ -91,6 +93,13 @@ def _configure_setting(
             options = [(opt, opt.value) for opt in RescanOption]
             option = choice(message="select when to rescan the library", options=options, default=ctx.config.rescan.value)
             ctx.config.rescan = RescanOption(option)
+            config_save(ctx.db, ctx.config)
+        case "follow_symlinks":
+            ctx.config.follow_symlinks = choice(
+                message="Follow symlinked folders when scanning the library? (set to False to skip them)",
+                options=[(True, "True"), (False, "False")],
+                default=ctx.config.follow_symlinks,
+            )
             config_save(ctx.db, ctx.config)
         case "tagger":
             ctx.config.tagger = prompt("Command to run external tagger: ", default=ctx.config.tagger)

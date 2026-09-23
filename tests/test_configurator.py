@@ -26,14 +26,25 @@ class TestConfigurator:
         try:
             mocker.patch("albums.interactive.configurator.choice").side_effect = ["settings", "exit"]
             mock_choice = mocker.patch("albums.interactive.setup_settings.choice")
-            mock_choice.side_effect = ["path_compatibility", "Linux", "rescan", "always", "id3v1", ID3v1Policy.CREATE, "back"]
+            mock_choice.side_effect = [
+                "path_compatibility",
+                "Linux",
+                "rescan",
+                "always",
+                "follow_symlinks",
+                False,
+                "id3v1",
+                ID3v1Policy.CREATE,
+                "back",
+            ]
 
             interactive_config(ctx)
 
-            assert mock_choice.call_count == 7
+            assert mock_choice.call_count == 9
             config = config_load(ctx.db)
             assert config.path_compatibility == PathCompatibilityOption.LINUX
             assert config.rescan == RescanOption.ALWAYS
+            assert config.follow_symlinks is False
             assert config.id3v1 == ID3v1Policy.CREATE
         finally:
             ctx.db.dispose()

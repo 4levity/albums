@@ -19,11 +19,12 @@ class MiniStat:
     modify_timestamp: int  # seconds
 
 
-def walk_paths(root: Path) -> Generator[str, None, None]:
+def walk_paths(root: Path, follow_symlinks: bool = True) -> Generator[str, None, None]:
     """Yield ``root`` and every folder beneath it as relative paths with a trailing path separator.
 
-    Symlinked folders are followed (matching the previous glob-based behavior); folder symlinks that
-    form a cycle will loop forever.
+    When *follow_symlinks* is true, symlinked folders are followed (matching the previous
+    glob-based behavior); folder symlinks that form a cycle will loop forever. When false,
+    symlinked folders are skipped entirely.
     """
     yield "."
     stack: List[Tuple[str, str]] = [(str(root), "")]
@@ -38,6 +39,8 @@ def walk_paths(root: Path) -> Generator[str, None, None]:
                 if entry.name.startswith("."):  # glob does not descend into hidden folders
                     continue
                 try:
+                    if not follow_symlinks and entry.is_symlink():
+                        continue
                     if not entry.is_dir():
                         continue
                 except OSError:
