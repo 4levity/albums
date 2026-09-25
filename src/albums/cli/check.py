@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_library, require_real_context
 from albums.checks.all import ALL_CHECK_NAMES
 from albums.checks.checker import Checker
 from albums.config import RescanOption
 from albums.library import run_scan
 
-from .cli_context import pass_context, require_library, require_real_context
+from .cli_context import pass_context
 
 
 @click.command(

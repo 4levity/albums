@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from albums.app import Context
 from albums.entities import Album, LibraryFolder, ScanHistoryEntity, Track
+from albums.errors import OperationCancelled
 from albums.library.album_scanner import scan_album
 from albums.tagger import AlbumTagger
 from albums.words import plural
@@ -104,8 +105,7 @@ def run_scan(
         session.flush()
     except KeyboardInterrupt:
         session.commit()  # nested transaction should have rolled back, but commit completed scans
-        logger.error("scan interrupted, exiting")
-        raise SystemExit(1)
+        raise OperationCancelled("scan interrupted")
 
     if ctx.verbose:
         ctx.console.print(f"scanned {plural(scanned, 'folder')} in {escape(str(ctx.config.library))} in {int(time.perf_counter() - start_time)}s.")

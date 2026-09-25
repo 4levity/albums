@@ -1,23 +1,21 @@
 import json
-import logging
 import os
 from itertools import chain
 from pathlib import Path
-from typing import Final, Mapping
+from typing import Mapping
 
 from prompt_toolkit.shortcuts import confirm
 from rich.markup import escape
 from rich.table import Table
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_configured, require_persistent_context
 from albums.config import Configuration, SettingValueType, config_save
+from albums.errors import OperationCancelled, OperationError
 from albums.interactive import interactive_config
 
-from .cli_context import pass_context, require_configured, require_persistent_context
+from .cli_context import pass_context
 from .config_settings import render_setting, set_setting
-
-logger: Final = logging.getLogger(__name__)
 
 
 @click.command(
@@ -77,14 +75,12 @@ def _import(ctx: Context, import_file: str):
     try:
         contents = Path(import_file).read_text(encoding="utf-8")
     except Exception as ex:
-        logger.error(f'error reading file "{import_file}": {repr(ex)}')
-        raise SystemExit(1)
+        raise OperationError(f'error reading file "{escape(import_file)}": {escape(repr(ex))}') from ex
     try:
         config_map: Mapping[str, SettingValueType] = json.loads(contents)
         config_items = config_map.items()
     except Exception as ex:
-        logger.error(f'error parsing file "{import_file}": {repr(ex)}')
-        raise SystemExit(1)
+        raise OperationError(f'error parsing file "{escape(import_file)}": {escape(repr(ex))}') from ex
 
     (new_config, changed) = Configuration.from_values(chain(ctx.config.to_values().items(), ((k, v) for k, v in config_items)))
     if (
@@ -94,8 +90,7 @@ def _import(ctx: Context, import_file: str):
             "Some values from a different version of albums were changed (ignored or migrated). Are you sure you want to import this configuration?"
         )
     ):
-        ctx.console.print("Aborted")
-        raise SystemExit(1)
+        raise OperationCancelled("configuration import aborted")
 
     if new_config.library != ctx.config.library:
         ctx.console.print(
@@ -105,8 +100,7 @@ def _import(ctx: Context, import_file: str):
             new_config.library = ctx.config.library
 
         if not new_config.library.is_dir():
-            ctx.console.print(f"Aborted configuration import: cannot access library directory at {str(new_config.library)}")
-            raise SystemExit(1)
+            raise OperationError(f"configuration import aborted: cannot access library directory at {escape(str(new_config.library))}")
 
     config_save(ctx.db, new_config)
     ctx.console.print(f"imported configuration from {escape(import_file)}")
@@ -116,19 +110,17 @@ def _export(ctx: Context, export_file: str):
     config_json = json.dumps(ctx.config.to_values(), indent=4) + os.linesep
     path = Path(export_file)
     if path.exists():
-        ctx.console.print(f"file already exists, not overwriting: {escape(export_file)}")
-        raise SystemExit(1)
+        raise OperationError(f"file already exists, not overwriting: {escape(export_file)}")
     try:
         path.write_text(config_json, encoding="utf-8")
         ctx.console.print(f"wrote {escape(export_file)}")
     except Exception as ex:
-        logger.error(f'error writing to file "{export_file}": {repr(ex)}')
-        raise SystemExit(1)
+        raise OperationError(f'error writing to file "{escape(export_file)}": {escape(repr(ex))}') from ex
 
 
 def _reset(ctx: Context):
     if ctx.console.is_interactive and not confirm("Are you sure you want to reset the configuration?"):
-        raise SystemExit(1)
+        raise OperationCancelled("configuration reset aborted")
     new_config = Configuration()
     new_config.library = ctx.config.library
     config_save(ctx.db, new_config)

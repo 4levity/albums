@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.config import ALL_ALBUMS, SyncDestination
 from albums.entities import Album
+from albums.errors import OperationError
 from albums.library.paths import make_template_path
 from albums.library.transcoder import Transcoder
 from albums.selector import Match, load_album_entities
@@ -91,8 +92,7 @@ class Synchronizer:
             tmp_dest_path = dest_path
             while tmp_dest_path.relative_to(self._dest.path_root).name != "":
                 if tmp_dest_path.exists() and not tmp_dest_path.is_dir():
-                    logger.error(f"destination {str(tmp_dest_path)} exists, but is not a directory. Aborting.")
-                    raise SystemExit(1)
+                    raise OperationError(f"destination {escape(str(tmp_dest_path))} exists, but is not a directory")
                 existing_dest_paths.discard(tmp_dest_path)
                 tmp_dest_path = tmp_dest_path.parent
 
@@ -108,8 +108,7 @@ class Synchronizer:
                 dest_track_path: Path = dest_path / dest_filename
                 if dest_track_path.exists():
                     if not dest_track_path.is_file():
-                        logger.error(f"destination {str(dest_track_path)} exists, but is not a file. Aborting.")
-                        raise SystemExit(1)
+                        raise OperationError(f"destination {escape(str(dest_track_path))} exists, but is not a file")
                     existing_dest_paths.remove(dest_track_path)
                     if use_transcoded:
                         # TODO if transcode, check dest file stat, should be newer than source library file

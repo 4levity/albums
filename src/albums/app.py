@@ -1,21 +1,21 @@
 """Application context containing shared state used by application commands.
 
 This module defines the ``Context`` type that carries settings, database access
-and console output between the various album-checking and management subcommands.
+and console output between the various album-checking and management subcommands, plus
+precondition checks (``require_*``) shared by every frontend.
 """
 
-import logging
 from pathlib import Path
-from typing import Any, Callable, Final, Iterator, Self
+from typing import Any, Callable, Iterator, Self
 
 from rich.console import Console
+from rich.markup import escape
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
 from .config import Configuration
 from .entities import Album
-
-logger: Final = logging.getLogger(__name__)
+from .errors import OperationError
 
 
 class Context(dict[Any, Any]):
@@ -61,3 +61,29 @@ class Context(dict[Any, Any]):
         self.parent = None
         self.verbose = 0
         self.config = Configuration()
+
+
+def require_configured(ctx: Context) -> None:
+    """Raise OperationError if the albums database file does not exist yet (run ``albums init``)."""
+    if not ctx.db_path.is_file():
+        raise OperationError("This command requires albums to be configured - run [bold]albums init[/bold] to continue")
+
+
+def require_library(ctx: Context) -> None:
+    """Raise OperationError if the configured library directory does not exist."""
+    if not ctx.config.library.is_dir():
+        raise OperationError(f"Library directory does not exist: {escape(str(ctx.config.library))}")
+
+
+def require_persistent_context(ctx: Context) -> None:
+    """Raise OperationError if the context is a transient (``--dir``) context the command cannot use."""
+    if not ctx.is_persistent:
+        raise OperationError("This command cannot be used with the [bold]--dir[/bold] option")
+
+
+def require_real_context(ctx: Context) -> None:
+    """Raise OperationError if the command has neither a persistent database nor a ``--dir`` folder context."""
+    if not ctx.is_persistent and ctx.parent is None:
+        raise OperationError(
+            "This command requires specifying a folder with [bold]--dir[/bold] or setting up a library with [bold]albums init[/bold]"
+        )

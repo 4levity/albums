@@ -23,6 +23,7 @@ from rich.markup import escape
 from albums.app import Context
 from albums.config import SyncDestination
 from albums.entities import Album, Track
+from albums.errors import OperationError
 from albums.tagger import AUDIO_FILE_SUFFIXES, AlbumTaggerProvider
 
 logger: Final = logging.getLogger(__name__)
@@ -219,8 +220,7 @@ class Transcoder:
                     for packet in out_stream.encode(None):  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
                         dst.mux(packet)  # pyright: ignore[reportUnknownMemberType]
         except Exception as ex:  # a per-file failure is reported and aborts the sync, not a PyAV internals traceback
-            logger.error(f"failed to transcode {str(source)}: {ex}")
-            raise SystemExit(1)
+            raise OperationError(f"failed to transcode {escape(str(source))}: {escape(str(ex))}") from ex
 
         if track.fields or track.pictures:
             with self._tagger.get(dest.parent).open(dest.name) as dest_fields:

@@ -13,6 +13,7 @@ from albums.checks.checker import Checker
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers
 from albums.database import MEMORY, db_open
 from albums.entities import Album, Track, TrackPicture
+from albums.errors import OperationError
 from albums.interactive.interact import OPTION_DO_NOTHING
 from albums.library import run_scan
 from albums.picture import PictureInfo
@@ -345,19 +346,18 @@ class TestChecker:
         finally:
             ctx.db.dispose()
 
-    def test_run_invalid_config(self, mocker):
+    def test_run_invalid_config(self):
         ctx = Context()
         working_config = ctx.config.copy()
         working_config.checks["invalid-track-or-disc-number"] = {"enabled": False}
-        print_spy = mocker.spy(ctx.console, "print")
         ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
-                with pytest.raises(SystemExit):
+                with pytest.raises(OperationError) as ex:
                     Checker(ctx, working_config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
         finally:
             ctx.db.dispose()
-        output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
+        output = " ".join(Text.from_markup(str(ex.value)).plain.split())
         assert "Configuration error" in output
         assert "invalid-track-or-disc-number required by" in output
 

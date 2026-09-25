@@ -11,10 +11,12 @@ from typing import Final, List, Sequence
 
 import click
 from rich.logging import RichHandler
+from rich.markup import escape
 
 from albums.app import Context
 from albums.config import PLATFORM_DIRS, RescanOption, config_load
 from albums.database import MEMORY, db_open
+from albums.errors import OperationError
 from albums.selector import Comparator, Match, load_album_entities
 
 logger: Final = logging.getLogger(__name__)
@@ -40,30 +42,6 @@ class FilterCriteria:
         comparator = next((comparator for comparator in Comparator if comparator.value in expr), None)
         (field, _, value) = expr.partition(comparator.value) if comparator else (expr, "", "")
         return cls(field, value, comparator or Comparator.EQ)
-
-
-def require_configured(ctx: Context) -> None:
-    if not ctx.db_path.is_file():
-        ctx.console.print("This command requires albums to be configured - run [bold]albums init[/bold] to continue")
-        raise SystemExit(1)
-
-
-def require_library(ctx: Context) -> None:
-    if not ctx.config.library.is_dir():
-        logger.error(f"Library directory does not exist: {str(ctx.config.library)}")
-        raise SystemExit(1)
-
-
-def require_persistent_context(ctx: Context) -> None:
-    if not ctx.is_persistent:
-        ctx.console.print("This command cannot be used with the [bold]--dir[/bold] option")
-        raise SystemExit(1)
-
-
-def require_real_context(ctx: Context) -> None:
-    if not ctx.is_persistent and ctx.parent is None:
-        ctx.console.print("This command requires specifying a folder with [bold]--dir[/bold] or setting up a library with [bold]albums init[/bold]")
-        raise SystemExit(1)
 
 
 def setup(
@@ -130,8 +108,7 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
     ctx.config = copy(parent.config)
     ctx.config.library = Path(folder)
     if not ctx.config.library.is_dir():
-        logger.error(f"directory does not exist: {str(ctx.config.library)}")
-        raise SystemExit(1)
+        raise OperationError(f"directory does not exist: {escape(str(ctx.config.library))}")
     logger.info(f"using in-memory context, library is {folder}")
 
     ctx.db = db_open(MEMORY, echo=ctx.verbose > 1)

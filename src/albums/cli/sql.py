@@ -7,9 +7,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_real_context
 
-from .cli_context import pass_context, require_real_context
+from .cli_context import pass_context
 
 
 @click.command(help="run a SQL command against albums db", add_help_option=False)

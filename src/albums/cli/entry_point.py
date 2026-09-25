@@ -1,10 +1,14 @@
 """CLI entry point: the root ``albums`` click group and its global options."""
 
+from typing import Any
+
 import rich.traceback
 
 import albums
 import albums.cli.click_rich as click
 from albums import app
+from albums.app import Context
+from albums.errors import OperationError, QuitApp
 from albums.library import run_scan
 from albums.selector import Comparator
 
@@ -27,7 +31,33 @@ from .sync import sync
 rich.traceback.install(show_locals=True, locals_max_string=150, locals_max_length=10)
 
 
-@click.group(epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
+class AlbumsGroup(click.RichGroup):
+    """RichGroup whose ``main`` translates an operation's outcome into the one-shot CLI behavior.
+
+    A TUI instead catches :class:`OperationError` (including :class:`OperationCancelled`) around each
+    operation and stays running; here the process is the operation, so the message is printed and the
+    app exits non-zero. :class:`QuitApp` exits cleanly.
+    """
+
+    def main(
+        self,
+        args: Any = None,
+        prog_name: Any = None,
+        complete_var: Any = None,
+        standalone_mode: bool = True,
+        windows_expand_args: bool = True,
+        **extra: Any,
+    ) -> Any:
+        try:
+            return super().main(args, prog_name, complete_var, standalone_mode, windows_expand_args, **extra)
+        except QuitApp:
+            raise SystemExit(0)
+        except OperationError as ex:
+            Context.console.print(f"[bold red]{str(ex)}[/bold red]")
+            raise SystemExit(1)
+
+
+@click.group(cls=AlbumsGroup, epilog=f"if --db-file is not specified, albums will use {DEFAULT_DB_LOCATION}", add_help_option=False)
 @click.option("--match", "-m", "matchers", metavar="K[op]V", multiple=True, help="filter key=value like -m path=Soundtracks/ or -m field:artist=Foo")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--invert", "-n", is_flag=True, help="invert match (return albums that DO NOT match)")  # pyright: ignore[reportUnknownMemberType]
 @click.option("--collection", "-c", "collections", metavar="NAME", multiple=True, help="match collection name (same as -m collection=...)")  # pyright: ignore[reportUnknownMemberType]

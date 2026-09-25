@@ -2,12 +2,12 @@ from prompt_toolkit.shortcuts import confirm
 from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_configured, require_persistent_context
 from albums.checks.all import ALL_CHECK_NAMES, check_run_order, implicitly_ignored_checks, transitive_dependencies
 from albums.checks.helpers import album_display_name
 from albums.words import pluralize
 
-from .cli_context import pass_context, require_configured, require_persistent_context
+from .cli_context import pass_context
 
 
 @click.command("notice", help="selected albums stop ignoring specified checks", add_help_option=False)

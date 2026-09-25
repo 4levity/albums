@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from albums.app import Context
 from albums.config import Configuration
 from albums.entities import Album
+from albums.errors import OperationError
 from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
 from albums.selector import Match, load_album_entities, preload_albums
@@ -96,10 +97,12 @@ class Checker:
         """
         need_checks = self.get_required_disabled_checks()
         if need_checks:
-            self.ctx.console.print("[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]")
-            for check, deps in need_checks.items():
-                self.ctx.console.print(f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}")
-            raise SystemExit(1)
+            lines = ["[bold red]Configuration error: some enabled checks depend on checks that are disabled:[/bold red]"]
+            lines.extend(
+                f"  [italic]{check}[/italic] required by {' and '.join(f'[italic]{dep}[/italic]' for dep in deps)}"
+                for check, deps in need_checks.items()
+            )
+            raise OperationError("\n".join(lines))
         tagger = AlbumTaggerProvider(self.ctx.config.library, id3v1=self.ctx.config.id3v1)
         enabled_checks = self._enabled_checks()
         if self._timing:

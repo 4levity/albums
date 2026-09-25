@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_configured, require_library
 from albums.library import run_scan
 
-from .cli_context import pass_context, require_configured, require_library
+from .cli_context import pass_context
 
 
 @click.command(help="scan and update database", add_help_option=False)

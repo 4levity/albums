@@ -112,6 +112,13 @@ checkout, and `write` writes the `_version.py` file:
   type.
 - **`Fixer`/`CheckResult`** (`checks/check_types.py`) - Problem reporting and
   fix contracts (see [Fixers](#fixers)).
+- **`OperationError`/`OperationCancelled`/`QuitApp`** (`errors.py`) - The
+  error/cancel protocol for long-running operations. Operation code (scan,
+  check, import, sync, config) raises these instead of `SystemExit` so a
+  frontend can handle the outcome per-operation; the one-shot CLI converts
+  them at its entry point into "print the message and exit". `QuitApp` is not
+  an `OperationError`, so per-operation handlers let it reach the app's main
+  loop.
 
 ## Adding Functionality
 

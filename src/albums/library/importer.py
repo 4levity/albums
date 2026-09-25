@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.entities import Album
+from albums.errors import OperationError
 from albums.library.duplicates import DuplicateFinder, album_in_library
 from albums.library.paths import make_template_paths
 from albums.library.scanner import run_scan
@@ -51,13 +52,11 @@ class Importer:
         """Scan the import folder into the child context's database and initialize the duplicate finder."""
         (albums_total, _) = run_scan(self.ctx, check_first_full_scan_path_count=lambda ct: self._check_path_count(ct))
         if albums_total == 0:
-            self.ctx.console.print(f"Album not found at {escape(str(self.ctx.config.library))}")
-            raise SystemExit(1)
+            raise OperationError(f"Album not found at {escape(str(self.ctx.config.library))}")
         if albums_total > 1 and self._recursive:
-            self.ctx.console.print(
+            raise OperationError(
                 f"The [bold]--recursive[/bold] option cannot be used because there is more than one album at {escape(str(self.ctx.config.library))}"
             )
-            raise SystemExit(1)
         with self.ctx.console.status("Initializing duplicate album finder", spinner="bouncingBar"):
             with Session(self._parent_context.db) as session:
                 self._duplicate_finder.start(session)
@@ -127,23 +126,20 @@ class Importer:
 
     def _check_path_count(self, path_count: int) -> None:
         if path_count > self.ctx.config.import_scan_max_paths:
-            self.ctx.console.print(
+            raise OperationError(
                 f"found {path_count} paths, but import command is limited to {self.ctx.config.import_scan_max_paths} (controlled by global setting [bold]import_scan_max_paths[/bold])"
             )
-            raise SystemExit(1)
 
     def import_album(self, source_path: Path, destination_path_in_library: str, album: Album):
         """Copy the album's files (tracks, picture files, optionally extras) into the library at the destination path."""
         src = source_path.resolve()
         if not src.is_dir():
-            logger.error(f"import_album: not a directory: {str(src)}")
-            raise SystemExit(1)
+            raise OperationError(f"import source is not a directory: {escape(str(src))}")
 
         destination_path = self._parent_context.config.library / destination_path_in_library
         dest = Path(destination_path).resolve()
         if dest.exists():
-            logger.error(f"import_album: destination already exists: {str(dest)}")
-            raise SystemExit(1)
+            raise OperationError(f"import destination already exists: {escape(str(dest))}")
         if self._extra or self._recursive:
             filenames = glob.iglob("**", root_dir=src, recursive=self._recursive)
         else:

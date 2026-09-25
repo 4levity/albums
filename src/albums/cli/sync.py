@@ -6,11 +6,11 @@ from typing import Final
 from prompt_toolkit import choice
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_configured, require_library, require_persistent_context
 from albums.config import RescanOption, SyncDestination
 from albums.library import Synchronizer, run_scan
 
-from .cli_context import pass_context, require_configured, require_library, require_persistent_context
+from .cli_context import pass_context
 
 logger: Final = logging.getLogger(__name__)
 

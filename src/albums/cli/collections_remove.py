@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 
 import albums.cli.click_rich as click
-from albums.app import Context
+from albums.app import Context, require_configured, require_persistent_context
 from albums.checks.helpers import album_display_name
 
-from .cli_context import pass_context, require_configured, require_persistent_context
+from .cli_context import pass_context
 
 
 @click.command("remove", help="remove selected albums from collections", add_help_option=False)
