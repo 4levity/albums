@@ -82,6 +82,10 @@ class Checker:
         """Check classes enabled in the working config and not in ``disabled_checks``."""
         return [check for check in ALL_CHECKS if self._working_config.checks[check.name]["enabled"] and check.name not in self._disabled_checks]
 
+    def _enabled_check_names(self) -> frozenset[str]:
+        """Names of the checks enabled in the working config and not in ``disabled_checks``."""
+        return frozenset(check.name for check in self._enabled_checks())
+
     def run_enabled(self, session: Session) -> int:
         """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
 
@@ -148,7 +152,7 @@ class Checker:
                                 highlight=False,
                             )
                             if self._interactive and album.album_id is not None:
-                                prompt_ignore_checks(self.ctx, session, album.album_id, check.name)
+                                prompt_ignore_checks(self.ctx, session, album.album_id, check.name, self._enabled_check_names())
 
                             issues_displayed += 1
 
@@ -257,7 +261,9 @@ class Checker:
         elif self._interactive or (fixer and self._fix):
             self.ctx.console.print()
             self.ctx.console.print(f'>> [bold cyan]"{album_display_name(self.ctx, album)}"[/bold cyan]', highlight=False)
-            (maybe_changed, deleted, user_quit) = interact(self.ctx, session, check.name, check_result, album, self._show_ignore_option)
+            (maybe_changed, deleted, user_quit) = interact(
+                self.ctx, session, check.name, check_result, album, self._show_ignore_option, self._enabled_check_names()
+            )
             displayed_any = True
         else:
             message = f'[bold]{check.name}[/bold] [bold yellow]{escape(check_result.message)}[/bold yellow] : [bold cyan]"{album_display_name(self.ctx, album)}"[/bold cyan]'

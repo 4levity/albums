@@ -33,7 +33,7 @@ class TestCheckFixInteractive:
         mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=fixer.options[0])
 
         with Session(ctx.db) as session:
-            (changed, deleted, quit) = interact(ctx, session, "", CheckResult("hello", fixer), album, True)
+            (changed, deleted, quit) = interact(ctx, session, "", CheckResult("hello", fixer), album, True, frozenset(ctx.config.checks))
             assert changed
             assert not deleted
             assert not quit
@@ -52,7 +52,7 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True)
+                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True, frozenset(ctx.config.checks))
                 assert changed
                 assert quit
                 assert mock_confirm.call_count == 1
@@ -78,7 +78,7 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                interact(ctx, session, "disc-in-track-number", CheckResult("hello", fixer), album, True)
+                interact(ctx, session, "disc-in-track-number", CheckResult("hello", fixer), album, True, frozenset(ctx.config.checks))
 
             output = buffer.getvalue()
             assert 'Ignoring check "disc-in-track-number" will also implicitly ignore these checks for this album:' in output
@@ -88,6 +88,36 @@ class TestCheckFixInteractive:
                 for name in ("invalid-track-or-disc-number", "disc-numbering", "track-numbering", "zero-pad-numbers", "track-filename")
             ]
             assert positions == sorted(positions)
+            assert mock_confirm.call_count == 1
+        finally:
+            ctx.db.dispose()
+
+    def test_fix_ignore_check_not_enabled_in_this_run(self, mocker):
+        album = Album(path=os.sep, tracks=[Track(filename="1.flac")])
+        ctx = Context()
+        ctx.db = db_open(MEMORY)
+        buffer = io.StringIO()
+        ctx.console = Console(file=buffer, width=200)  # wide enough that messages are not wrapped
+        try:
+            with Session(ctx.db) as session:
+                session.add(album)
+                session.flush()
+
+                fixer = MockFixer(ctx, album)
+                mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
+                mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
+
+                # a single-check run enables only disc-in-track-number and its dependencies
+                enabled = frozenset({"disc-in-track-number", "invalid-track-or-disc-number"})
+                interact(ctx, session, "disc-in-track-number", CheckResult("hello", fixer), album, True, enabled)
+
+            output = buffer.getvalue()
+            assert 'Ignoring check "disc-in-track-number" will also implicitly ignore these checks for this album:' in output
+            # a check that is enabled in this run is listed without a note
+            assert "  - invalid-track-or-disc-number\n" in output
+            # checks that are normally enabled but not enabled in this run are noted as such
+            for name in ("disc-numbering", "track-numbering", "zero-pad-numbers", "track-filename"):
+                assert f"- {name} (not enabled in this run)" in output
             assert mock_confirm.call_count == 1
         finally:
             ctx.db.dispose()
@@ -108,7 +138,9 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                (changed, deleted, quit) = interact(ctx, session, "invalid-track-or-disc-number", CheckResult("hello", fixer), album, True)
+                (changed, deleted, quit) = interact(
+                    ctx, session, "invalid-track-or-disc-number", CheckResult("hello", fixer), album, True, frozenset(ctx.config.checks)
+                )
                 # the check is (implicitly) ignored, so the prompt reports it as ignored and does not confirm or add a row
                 assert changed
                 assert quit
@@ -138,7 +170,7 @@ class TestCheckFixInteractive:
                 mocker.patch("albums.interactive.interact.choice").side_effect = [OPTION_MORE_OPTIONS, OPTION_IGNORE_CHECK]
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
 
-                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True)
+                (changed, deleted, quit) = interact(ctx, session, "album", CheckResult("hello", fixer), album, True, frozenset(ctx.config.checks))
                 assert mock_confirm.call_count == 1
                 assert mock_confirm.call_args.args[0] == ('Do you want to ignore the check "album" for this album?')
 

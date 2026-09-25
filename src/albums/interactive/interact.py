@@ -31,7 +31,13 @@ OPTION_IGNORE_CHECK: Final = ">> Ignore this check for this album"
 
 
 def interact(
-    ctx: Context, session: Session, check_name: str, check_result: CheckResult, album: Album, show_ignore_option: bool
+    ctx: Context,
+    session: Session,
+    check_name: str,
+    check_result: CheckResult,
+    album: Album,
+    show_ignore_option: bool,
+    enabled_checks: frozenset[str],
 ) -> Tuple[bool, bool, bool]:
     """Prompt the user to fix a check issue (fixer options, free text, ignore, open folder, etc.) until resolved or skipped.
 
@@ -98,7 +104,7 @@ def interact(
                     maybe_changed = True
                     done = True
                 elif selection == OPTION_IGNORE_CHECK:
-                    done = prompt_ignore_checks(ctx, session, album.album_id, check_name) if album.album_id is not None else False
+                    done = prompt_ignore_checks(ctx, session, album.album_id, check_name, enabled_checks) if album.album_id is not None else False
                     maybe_changed |= done
                     user_quit = done
                 elif selection == OPTION_OPEN_FOLDER:
@@ -134,11 +140,13 @@ def interact(
     return (maybe_changed, deleted, user_quit)
 
 
-def prompt_ignore_checks(ctx: Context, session: Session, album_id: int, check_name: str):
+def prompt_ignore_checks(ctx: Context, session: Session, album_id: int, check_name: str, enabled_checks: frozenset[str]):
     """Ask whether to ignore the given check for the album, persisting the choice; returns whether the check is now ignored.
 
     Refuses to ignore a check that is already implicitly ignored because it depends on an ignored check,
-    and shows the other enabled checks that ignoring the check will also implicitly ignore.
+    and shows the other enabled checks that ignoring the check will also implicitly ignore. A check that is
+    enabled in the stored configuration but not in *enabled_checks* (the checks enabled for this run) is
+    noted as not enabled in this run.
     """
     # deferred import to avoid a circular import: albums.checks.all imports a check class that imports this module
     from albums.checks.all import check_run_order, implicitly_ignored_checks, transitive_dependencies
@@ -161,7 +169,8 @@ def prompt_ignore_checks(ctx: Context, session: Session, album_id: int, check_na
     if also_ignored:
         ctx.console.print(f'Ignoring check "{check_name}" will also implicitly ignore these checks for this album:')
         for name in also_ignored:
-            ctx.console.print(f"  - {name}")
+            note = "" if name in enabled_checks else " (not enabled in this run)"
+            ctx.console.print(f"  - {name}{note}")
     if confirm(f'Do you want to ignore the check "{check_name}" for this album?'):
         album.ignore_checks.append(check_name)
         session.commit()

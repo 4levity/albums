@@ -291,7 +291,9 @@ class TestCheckInvalidTrackOrDiscNumberInteractive:
             mock_set_basic_fields = mocker.patch.object(AlbumTagger, "set_basic_fields")
 
             with Session(ctx.db) as session:
-                (changed, deleted, quit) = interact(ctx, session, CheckInvalidTrackOrDiscNumber.name, result, album, True)
+                (changed, deleted, quit) = interact(
+                    ctx, session, CheckInvalidTrackOrDiscNumber.name, result, album, True, frozenset(ctx.config.checks)
+                )
                 assert changed
                 assert not deleted
                 assert not quit
