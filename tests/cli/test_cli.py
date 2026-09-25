@@ -119,7 +119,7 @@ class TestCli:
         scan.assert_not_called()
 
     def test_check(self):
-        result = self.run(["check", "--default", "album"], init=True)
+        result = self.run(["check", "album"], init=True)
         assert result.exit_code == 0
         assert f'1 track missing album field : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
@@ -135,7 +135,7 @@ class TestCli:
         assert result.exit_code == 0
         assert f"album foo{os.sep} - ignore album" in result.output
 
-        result = self.run(["check", "--default", "album"])
+        result = self.run(["check", "album"])
         assert result.exit_code == 0
         assert "foo" + os.sep not in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
@@ -172,11 +172,11 @@ class TestCli:
 
     def test_notice_check(self):
         self.run(["scan"], init=True)
-        result = self.run(["check", "--default"])
+        result = self.run(["check"])
         assert f'1 track missing album field : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
         self.run(["-p", "foo" + os.sep, "ignore", "album"])
-        result = self.run(["check", "--default"])
+        result = self.run(["check"])
         assert f'1 track missing album field : "foo{os.sep}"' not in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 
@@ -184,7 +184,7 @@ class TestCli:
         assert result.exit_code == 0
         assert f"album foo{os.sep} will stop ignoring album" in result.output
 
-        result = self.run(["check", "--default"])
+        result = self.run(["check"])
         assert f'1 track missing album field : "foo{os.sep}"' in result.output
         assert f'2 tracks missing album field : "bar{os.sep}"' in result.output
 

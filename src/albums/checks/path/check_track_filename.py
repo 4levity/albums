@@ -155,8 +155,7 @@ class CheckTrackFilename(Check):
         # zero-pad-numbers check so these filenames stay consistent with the tags that check/fix
         # would otherwise write for ID3/Vorbis files. Whether to pad at all follows the persisted
         # zero-pad-numbers setting (see init()), and the pad policy itself is read from the runtime
-        # config so explicit per-run options (e.g. --default, which replaces the check config with
-        # the defaults) are still honored.
+        # config.
         if not self.zero_pad_enabled:
             return value
         policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{field_name}_pad"]))
