@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.base_check import Check
-from albums.checks.check_types import CheckResult, Fixer, FixResult
+from albums.checks.check_types import CheckConfiguration, CheckResult, Fixer, FixResult
 from albums.entities import Album, OtherFile, PictureFile, Track
 from albums.tagger import AlbumTaggerProvider
 from albums.words import plural
@@ -44,8 +44,14 @@ class CheckDuplicateAlbum(Check):
     default_config = {"enabled": True}
     must_pass_checks = {"album", "artist"}
 
-    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
-        super().__init__(ctx, tagger, session)
+    def __init__(
+        self,
+        ctx: Context,
+        tagger: AlbumTaggerProvider | None = None,
+        session: Session | None = None,
+        check_config: CheckConfiguration | None = None,
+    ):
+        super().__init__(ctx, tagger, session, check_config)
 
         from albums.library import DuplicateFinder  # avoid circular import when all checks are imported
 

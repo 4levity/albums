@@ -1,17 +1,15 @@
 from os import rename
 from pathlib import Path
 from string import Template
-from typing import Any, Literal, Sequence, cast
+from typing import Any, Literal, Sequence
 
 from pathvalidate import sanitize_filename
 from rich.console import RenderableType
 from rich.markup import escape
-from sqlalchemy import Engine
 
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckResult, Fixer, FixResult
 from albums.checks.numbering.check_zero_pad_numbers import CheckZeroPadNumbers, ZeroPadPolicy, apply_pad_policy
-from albums.config import config_load
 from albums.entities import Album, Track
 from albums.tagger import BasicField, Cap
 
@@ -27,17 +25,15 @@ class CheckTrackFilename(Check):
             if identifier not in {"tracknumber", "discnumber", "track_auto", "title", "artist", "title_auto"}:
                 raise ValueError(f"invalid substitution '{identifier}' in track-filename.format")
         self.join_multiple = str(check_config.get("join_multiple", self.default_config["join_multiple"]))
-        # Whether to pad at all is decided from the PERSISTED zero-pad-numbers setting, not the
-        # runtime config (check_config). A single-check invocation such as
-        # "albums check track-filename -f" builds a temporary runtime config that disables every
-        # other check - including zero-pad-numbers - even when the user normally enables it. We
-        # don't want to force-enable zero-pad-numbers in that temporary config (the user may keep
-        # it disabled), but track-filename should still behave as it would in a normal full check
-        # run. So when zero-pad-numbers is persisted as enabled we "fake it" and pad; when it is
-        # persisted as disabled we leave the numbers unpadded. The session is always bound to an
-        # engine (never a bare connection).
-        stored_config = config_load(cast(Engine, self.session.get_bind()))
-        self.zero_pad_enabled = bool(stored_config.checks[CheckZeroPadNumbers.name]["enabled"])
+        # Whether to pad at all is decided from the PERSISTED zero-pad-numbers setting (in the
+        # context's stored config), not the working config (check_config). A single-check
+        # invocation such as "albums check track-filename -f" runs with a working config that
+        # disables every other check - including zero-pad-numbers - even when the user normally
+        # enables it. We don't want to force-enable zero-pad-numbers in that working config (the
+        # user may keep it disabled), but track-filename should still behave as it would in a
+        # normal full check run. So when zero-pad-numbers is persisted as enabled we "fake it"
+        # and pad; when it is persisted as disabled we leave the numbers unpadded.
+        self.zero_pad_enabled = bool(self.ctx.config.checks[CheckZeroPadNumbers.name]["enabled"])
 
     def check(self, album: Album):
         generated_filenames = [self._generate_filename(album, track) for track in sorted(album.tracks)]
@@ -153,9 +149,8 @@ class CheckTrackFilename(Check):
         # _pad is only reached for formats that cannot store zero padding in the track/disc number
         # fields (e.g. M4A), so the generated filename must be padded here. We mirror the
         # zero-pad-numbers check so these filenames stay consistent with the tags that check/fix
-        # would otherwise write for ID3/Vorbis files. Whether to pad at all follows the persisted
-        # zero-pad-numbers setting (see init()), and the pad policy itself is read from the runtime
-        # config.
+        # would otherwise write for ID3/Vorbis files. Whether to pad at all and the pad policy
+        # itself both follow the persisted zero-pad-numbers setting (see init()).
         if not self.zero_pad_enabled:
             return value
         policy = ZeroPadPolicy.from_str(str(self.ctx.config.checks[CheckZeroPadNumbers.name][f"{field_name}_pad"]))

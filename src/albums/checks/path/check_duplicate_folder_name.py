@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.base_check import Check
-from albums.checks.check_types import CheckResult
+from albums.checks.check_types import CheckConfiguration, CheckResult
 from albums.entities import Album, LibraryFolder
 from albums.tagger import AlbumTaggerProvider
 
@@ -38,8 +38,14 @@ class CheckDuplicateFolderName(Check):
 
     _conflicts: dict[str, set[str]]
 
-    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
-        super().__init__(ctx, tagger, session)
+    def __init__(
+        self,
+        ctx: Context,
+        tagger: AlbumTaggerProvider | None = None,
+        session: Session | None = None,
+        check_config: CheckConfiguration | None = None,
+    ):
+        super().__init__(ctx, tagger, session, check_config)
         # parent path -> names of the folders in it that have a case-differing sibling
         self._conflicts = {}
         for parent_path, name_cf in self.session.execute(

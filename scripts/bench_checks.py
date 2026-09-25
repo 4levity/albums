@@ -120,7 +120,7 @@ def main() -> int:
 
                 ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
                 start = time.perf_counter()
-                checker = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
+                checker = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
                 issues = checker.run_enabled(session)
                 print(f"checked {n_albums} albums, found {issues} issues, in {time.perf_counter() - start:.1f}s")
         finally:

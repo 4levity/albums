@@ -32,7 +32,8 @@ class Context(dict[Any, Any]):
         select_album_entities: Callable returning an iterator over ``Album`` objects for
             the current command invocation, respecting any active collection or album filters.
         is_filtered: Whether a user-provided filter narrowed the selection.
-        config: Loaded application configuration (defaults + CLI overrides).
+        config: Stored application configuration, loaded from the database. Only commands that
+            change the persistent configuration mutate it; check runs use a working copy.
         verbose: Logging verbosity level (number of ``-v`` flags on the command line).
         is_persistent: Always ``True`` for this context class so Click keeps it alive between groups.
     """

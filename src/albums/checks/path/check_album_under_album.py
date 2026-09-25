@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from albums.app import Context
 from albums.checks.base_check import Check
-from albums.checks.check_types import CheckResult
+from albums.checks.check_types import CheckConfiguration, CheckResult
 from albums.entities import Album
 from albums.tagger import AlbumTaggerProvider
 
@@ -26,8 +26,14 @@ class CheckAlbumUnderAlbum(Check):
     default_config = {"enabled": True}
     must_pass_checks = {"duplicate-folder-name"}
 
-    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
-        super().__init__(ctx, tagger, session)
+    def __init__(
+        self,
+        ctx: Context,
+        tagger: AlbumTaggerProvider | None = None,
+        session: Session | None = None,
+        check_config: CheckConfiguration | None = None,
+    ):
+        super().__init__(ctx, tagger, session, check_config)
         # most recent album path that is not under another album; None before the first album
         self._under: str | None = None
 

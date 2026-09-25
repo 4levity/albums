@@ -5,8 +5,6 @@ from unittest.mock import call
 from albums.app import Context
 from albums.checks.check_types import FixResult
 from albums.checks.path.check_track_filename import CheckTrackFilename
-from albums.config import Configuration, config_save
-from albums.database import MEMORY, db_open
 from albums.entities import Album, Track
 from albums.tagger import BasicField
 
@@ -14,16 +12,13 @@ from ...helpers import apply_automatic_fix
 
 
 def make_ctx(zero_pad_enabled: bool = True) -> Context:
-    """Context backed by an in-memory database whose persisted config has zero-pad-numbers *zero_pad_enabled*.
+    """Context whose stored config has zero-pad-numbers *zero_pad_enabled*; all other settings are defaults.
 
-    The check reads the persisted zero-pad-numbers setting from the database in init()
-    (see CheckTrackFilename), so tests control it here; all other settings are defaults.
+    The check reads the stored zero-pad-numbers setting from the context's config in init()
+    (see CheckTrackFilename), so tests control it here.
     """
     ctx = Context()
-    ctx.db = db_open(MEMORY)
-    config = Configuration()
-    config.checks["zero-pad-numbers"]["enabled"] = zero_pad_enabled
-    config_save(ctx.db, config)
+    ctx.config.checks["zero-pad-numbers"]["enabled"] = zero_pad_enabled
     return ctx
 
 
@@ -199,11 +194,14 @@ class TestCheckTrackFilename:
         ]
 
     def test_track_filename_pad_m4a_stored_config_enabled(self, mocker):
-        # replicates "albums check track-filename -f": the temporary runtime config disables
-        # zero-pad-numbers, but the persisted (stored) config still has it enabled. _pad must
-        # "fake it" and pad, as it would in a normal full check run.
-        ctx = make_ctx()  # persisted config has zero-pad-numbers enabled
-        ctx.config.checks["zero-pad-numbers"]["enabled"] = False  # temporary runtime override
+        # replicates "albums check track-filename -f": the working config only enables
+        # track-filename and its dependencies (zero-pad-numbers is disabled), but the stored
+        # config still has zero-pad-numbers enabled. _pad must "fake it" and pad, as it would in
+        # a normal full check run.
+        ctx = make_ctx()  # stored config has zero-pad-numbers enabled
+        working_config = ctx.config.copy()
+        for check_name, check_config in working_config.checks.items():
+            check_config["enabled"] = check_name == CheckTrackFilename.name or check_name in CheckTrackFilename.must_pass_checks
         tracks = [
             Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
             Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),
@@ -217,7 +215,7 @@ class TestCheckTrackFilename:
             Track(filename="9.m4a", fields={BasicField.TRACKNUMBER: "9", BasicField.TITLE: "nine"}),
         ]
         album = Album(path="foo" + os.sep, tracks=tracks)
-        result = CheckTrackFilename(ctx).check(album)
+        result = CheckTrackFilename(ctx, check_config=working_config.checks[CheckTrackFilename.name]).check(album)
         assert result
         assert "track filenames do not match configured pattern" in result.message
         assert result.fixer
@@ -238,10 +236,9 @@ class TestCheckTrackFilename:
         ]
 
     def test_track_filename_pad_m4a_stored_config_disabled(self, mocker):
-        # the persisted (stored) config has zero-pad-numbers disabled, so _pad must not pad -
-        # even though the runtime config has it enabled (proving the stored config is authoritative)
-        ctx = make_ctx(zero_pad_enabled=False)  # persisted config has zero-pad-numbers disabled
-        ctx.config.checks["zero-pad-numbers"]["enabled"] = True  # runtime config is enabled, but the persisted setting wins
+        # the stored config has zero-pad-numbers disabled, so _pad must not pad, even when a
+        # normal full working config has it enabled (proving the stored config is authoritative)
+        ctx = make_ctx(zero_pad_enabled=False)  # stored config has zero-pad-numbers disabled
         tracks = [
             Track(filename="1.m4a", fields={BasicField.TRACKNUMBER: "1", BasicField.TITLE: "one"}),
             Track(filename="10.m4a", fields={BasicField.TRACKNUMBER: "10", BasicField.TITLE: "ten"}),

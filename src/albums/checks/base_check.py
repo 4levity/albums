@@ -36,9 +36,17 @@ class Check:
     def init(self, check_config: CheckConfiguration):
         pass
 
-    def __init__(self, ctx: Context, tagger: AlbumTaggerProvider | None = None, session: Session | None = None):
+    def __init__(
+        self,
+        ctx: Context,
+        tagger: AlbumTaggerProvider | None = None,
+        session: Session | None = None,
+        check_config: CheckConfiguration | None = None,
+    ):
         self.ctx = ctx
         # note "real" non-test code should always provide tagger and managed session
         self.tagger = tagger if tagger else AlbumTaggerProvider(ctx.config.library, id3v1=ctx.config.id3v1)
         self.session = session if session else (Session(ctx.db) if hasattr(ctx, "db") else Session())
-        self.init(ctx.config.checks[self.name])
+        # check_config is this check's section of the run's working configuration; when omitted
+        # (e.g. tests constructing a check directly) the stored configuration in ctx is used
+        self.init(check_config if check_config is not None else ctx.config.checks[self.name])

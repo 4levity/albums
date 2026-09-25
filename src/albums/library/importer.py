@@ -69,8 +69,10 @@ class Importer:
 
         # import copies folders to their destination paths, so the folder-name check must not rename the source folders
         disabled_checks = ("folder-name",)
-        checker = Checker(self.ctx, self._automatic, fix=False, interactive=True, show_ignore_option=True, disabled_checks=disabled_checks)
-        non_interactive_checker = Checker(self.ctx, False, False, False, False, disabled_checks=disabled_checks)
+        checker = Checker(
+            self.ctx, self.ctx.config, self._automatic, fix=False, interactive=True, show_ignore_option=True, disabled_checks=disabled_checks
+        )
+        non_interactive_checker = Checker(self.ctx, self.ctx.config, False, False, False, False, disabled_checks=disabled_checks)
         with Session(self.ctx.db) as session:
             for album in self.ctx.select_album_entities(session):
                 (exists, ok) = self._check_existing_destination(album, self._make_library_paths(album))

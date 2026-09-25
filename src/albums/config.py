@@ -6,6 +6,7 @@ in the ``setting`` table and reloaded into a ``Configuration`` dataclass at star
 
 from __future__ import annotations  # self-reference SyncDestination; removable once minimum Python is 3.14 (PEP 649)
 
+import copy
 import json
 import logging
 from dataclasses import dataclass, field
@@ -89,7 +90,7 @@ DEFAULT_MORE_IMPORT_PATHS: Final = (Template("$A1/$artist/$album"), Template("So
 DEFAULT_IMPORT_SCAN_MAX_PATHS: Final = 250
 
 
-def default_checks_config() -> Mapping[str, CheckConfiguration]:
+def default_checks_config() -> Dict[str, CheckConfiguration]:
     """Return a fresh dict of factory-default check configurations keyed by check name.
 
     Returns:
@@ -301,7 +302,7 @@ class Configuration:
         sync_destinations: Destination folders to which albums can be synced.
     """
 
-    checks: Mapping[str, CheckConfiguration] = field(default_factory=default_checks_config)
+    checks: Dict[str, CheckConfiguration] = field(default_factory=default_checks_config)
     default_import_path: Template = DEFAULT_IMPORT_PATH
     default_import_path_various: Template = DEFAULT_IMPORT_PATH_VARIOUS
     more_import_paths: Sequence[Template] = DEFAULT_MORE_IMPORT_PATHS
@@ -318,6 +319,17 @@ class Configuration:
     tagger: str = ""
     id3v1: ID3v1Policy = ID3v1Policy.UPDATE
     sync_destinations: List[SyncDestination] = field(default_factory=list[SyncDestination])
+
+    def copy(self) -> Configuration:
+        """Return a copy of this configuration with an independent, mutable checks section.
+
+        The copy shares all other values with the original, but ``checks`` is a new mapping with
+        a new dict for each check, so the copy's check settings can be changed (e.g. to build a
+        working configuration for a check run) without affecting the original.
+        """
+        new_config = copy.copy(self)
+        new_config.checks = {name: dict(check) for name, check in self.checks.items()}
+        return new_config
 
     def to_values(self) -> Mapping[str, SettingValueType]:
         """Serialize configuration into a flat dict of dotted keys for database storage.

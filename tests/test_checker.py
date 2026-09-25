@@ -48,7 +48,7 @@ class TestChecker:
             with Session(ctx.db) as session:
                 session.add(album)
                 session.commit()
-                showed_issues = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
             assert showed_issues == 0
         finally:
             ctx.db.dispose()
@@ -72,7 +72,7 @@ class TestChecker:
                 run_scan(ctx, session)
                 session.commit()
 
-                showed_issues = Checker(ctx, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
 
             # there is only 1 issue "disc-in-tracknumber" and if "invalid-track-or-disc-number" check sees the FIXED album it will report no problem
             assert showed_issues == 1
@@ -98,9 +98,10 @@ class TestChecker:
         )
         ctx = Context()
         ctx.config.library = create_library("checker_automatic_no_effect", [album])
+        working_config = ctx.config.copy()
         for check in ALL_CHECKS:  # only run zero-pad-numbers and its required dependencies
             if check.name not in {"legacy-fields", "disc-in-track-number", "invalid-track-or-disc-number", "zero-pad-numbers"}:
-                ctx.config.checks[check.name]["enabled"] = False
+                working_config.checks[check.name]["enabled"] = False
         ctx.db = db_open(MEMORY, True)
         try:
             print_spy = mocker.spy(ctx.console, "print")
@@ -110,7 +111,9 @@ class TestChecker:
                 run_scan(ctx, session)
                 session.commit()
 
-                showed_issues = Checker(ctx, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, working_config, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(
+                    session
+                )
 
                 album_entity = next(ctx.select_album_entities(session))
                 assert album_entity.tracks[0].fields[BasicField.TRACKNUMBER] == ["1"]  # the fix changed nothing
@@ -147,7 +150,7 @@ class TestChecker:
                 session.commit()
 
                 print_spy = mocker.spy(ctx.console, "print")
-                Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
 
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
@@ -181,7 +184,7 @@ class TestChecker:
                 album_entity.ignore_checks.append("disc-in-track-number")
                 session.commit()
 
-                showed_issues = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
 
             assert showed_issues == 0
         finally:
@@ -211,7 +214,7 @@ class TestChecker:
                 mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_DO_NOTHING)
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
                 print_spy = mocker.spy(ctx.console, "print")
-                showed_issues = Checker(ctx, automatic=False, fix=False, interactive=True, show_ignore_option=True).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=True, show_ignore_option=True).run_enabled(session)
 
             output = " ".join(
                 (
@@ -264,7 +267,7 @@ class TestChecker:
                 run_scan(ctx, session)
                 session.commit()
 
-                checker = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
+                checker = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
                 checker.run_enabled(session)
 
             # every enabled check was initialized and timed, and all stats are consistent
@@ -289,7 +292,7 @@ class TestChecker:
             assert "100k" in output
 
             # timing is opt-in
-            quiet = Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False)
+            quiet = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False)
             quiet.run_enabled(session)
             assert quiet.timings == {}
         finally:
@@ -334,7 +337,7 @@ class TestChecker:
 
                 event.listen(ctx.db, "before_cursor_execute", count_queries)
                 try:
-                    Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                    Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
                 finally:
                     event.remove(ctx.db, "before_cursor_execute", count_queries)
 
@@ -344,15 +347,14 @@ class TestChecker:
 
     def test_run_invalid_config(self, mocker):
         ctx = Context()
-        checks = dict(ctx.config.checks)
-        checks["invalid-track-or-disc-number"] = {"enabled": False}
-        ctx.config.checks = checks
+        working_config = ctx.config.copy()
+        working_config.checks["invalid-track-or-disc-number"] = {"enabled": False}
         print_spy = mocker.spy(ctx.console, "print")
         ctx.db = db_open(MEMORY)
         try:
             with Session(ctx.db) as session:
                 with pytest.raises(SystemExit):
-                    Checker(ctx, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                    Checker(ctx, working_config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
         finally:
             ctx.db.dispose()
         output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
@@ -388,7 +390,7 @@ class TestChecker:
                     return_value=f">> KEEP left (THIS album) and DELETE right (other): One{os.sep}",
                 )
                 mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
-                showed_issues = Checker(ctx, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
 
                 assert mock_choice.call_count == 1
                 assert mock_confirm.call_count == 1
@@ -434,7 +436,7 @@ class TestChecker:
                     return_value=f">> DELETE left (THIS album) and KEEP right (other): One{os.sep}",
                 )
                 mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
-                showed_issues = Checker(ctx, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
 
                 assert mock_choice.call_count == 1
                 assert mock_confirm.call_count == 1

@@ -29,24 +29,27 @@ def check(ctx: Context, automatic: bool, fix: bool, interactive: bool, timing: b
         ctx.console.print("Scanning library before check (see config settings.rescan to disable this)")
         run_scan(ctx)
 
-    checker = Checker(ctx, automatic, fix, interactive, show_ignore_option=ctx.is_persistent, timing=timing)
+    # when specific checks are requested, only those (plus their dependencies) are enabled in a
+    # working copy of the configuration, leaving the stored configuration in the context unchanged
+    working_config = ctx.config
     if len(checks) > 0:
         # validate check names
         for check_name in checks:
             if check_name not in ALL_CHECK_NAMES:
                 ctx.console.print(f"invalid check name: {check_name}")
                 return
-        # enable only specified checks
+        working_config = ctx.config.copy()
         for check_name in ALL_CHECK_NAMES:
-            enabled = check_name in checks
-            ctx.config.checks[check_name]["enabled"] = enabled
+            working_config.checks[check_name]["enabled"] = check_name in checks
 
+    checker = Checker(ctx, working_config, automatic, fix, interactive, show_ignore_option=ctx.is_persistent, timing=timing)
+    if len(checks) > 0:
         while len(dependent_checks := checker.get_required_disabled_checks()) > 0:
             for dep, required_by in dependent_checks.items():
                 ctx.console.print(
                     f"automatically enabling check [italic]{dep}[/italic] required by {' and '.join(f'[italic]{check}[/italic]' for check in required_by)}"
                 )
-                ctx.config.checks[dep]["enabled"] = True
+                working_config.checks[dep]["enabled"] = True
     with Session(ctx.db) as session:
         issues_displayed = checker.run_enabled(session)
 

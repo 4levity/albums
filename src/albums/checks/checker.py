@@ -9,6 +9,7 @@ from rich.markup import escape
 from sqlalchemy.orm import Session
 
 from albums.app import Context
+from albums.config import Configuration
 from albums.entities import Album
 from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
@@ -36,14 +37,18 @@ class CheckDisposition:
 
 
 class Checker:
-    """Orchestrate the enabled checks for a context, fixing issues and re-running checks until the album is stable.
+    """Orchestrate the checks enabled in the working config for a context, fixing issues and re-running until stable.
 
-    Checks named in ``disabled_checks`` are skipped even when enabled in the configuration.
+    The context carries the stored configuration; the working config is the configuration to use
+    for this run. Checks are enabled per the working config, and each check is initialized with
+    its own section of it (a check never sees the working config of other checks).
+    Checks named in ``disabled_checks`` are skipped even when enabled in the working config.
     With ``timing=True``, ``run_enabled`` measures each enabled check's init time and every
     ``check(album)`` call (pass or fail) and prints a timing report at the end of the run.
     """
 
     ctx: Context
+    _working_config: Configuration
     _automatic: bool
     _fix: bool
     _interactive: bool
@@ -54,6 +59,7 @@ class Checker:
     def __init__(
         self,
         ctx: Context,
+        working_config: Configuration,
         automatic: bool,
         fix: bool,
         interactive: bool,
@@ -62,6 +68,7 @@ class Checker:
         disabled_checks: Sequence[str] = (),
     ):
         self.ctx = ctx
+        self._working_config = working_config
         self._automatic = automatic
         self._fix = fix
         self._interactive = interactive
@@ -72,8 +79,8 @@ class Checker:
         self.timings: dict[str, CheckTiming] = {}
 
     def _enabled_checks(self) -> list[type[Check]]:
-        """Check classes enabled in the context config and not in ``disabled_checks``."""
-        return [check for check in ALL_CHECKS if self.ctx.config.checks[check.name]["enabled"] and check.name not in self._disabled_checks]
+        """Check classes enabled in the working config and not in ``disabled_checks``."""
+        return [check for check in ALL_CHECKS if self._working_config.checks[check.name]["enabled"] and check.name not in self._disabled_checks]
 
     def run_enabled(self, session: Session) -> int:
         """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
@@ -95,12 +102,13 @@ class Checker:
             self.timings = {check.name: CheckTiming() for check in enabled_checks}
         check_instances: list[Check] = []
         for check in enabled_checks:
+            check_config = self._working_config.checks[check.name]
             if self._timing:
                 start = time.perf_counter()
-                instance = check(self.ctx, tagger=tagger, session=session)
+                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config)
                 self.timings[check.name].init_seconds = time.perf_counter() - start
             else:
-                instance = check(self.ctx, tagger=tagger, session=session)
+                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config)
             check_instances.append(instance)
 
         issues_displayed = 0
