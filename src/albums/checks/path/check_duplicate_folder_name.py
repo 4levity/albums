@@ -10,6 +10,7 @@ from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckConfiguration, CheckResult
 from albums.entities import Album, LibraryFolder
+from albums.selector import AlbumSelector
 from albums.tagger import AlbumTaggerProvider
 
 logger = logging.getLogger(__name__)
@@ -44,8 +45,9 @@ class CheckDuplicateFolderName(Check):
         tagger: AlbumTaggerProvider | None = None,
         session: Session | None = None,
         check_config: CheckConfiguration | None = None,
+        album_selector: AlbumSelector | None = None,
     ):
-        super().__init__(ctx, tagger, session, check_config)
+        super().__init__(ctx, tagger, session, check_config, album_selector)
         # parent path -> names of the folders in it that have a case-differing sibling
         self._conflicts = {}
         for parent_path, name_cf in self.session.execute(

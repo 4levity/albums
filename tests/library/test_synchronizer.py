@@ -12,6 +12,7 @@ from albums.config import ALL_ALBUMS, SyncDestination
 from albums.database import MEMORY, db_open
 from albums.entities import Album, AlbumCollectionAssociation, CollectionEntity, Track
 from albums.library.synchronizer import Synchronizer
+from albums.selector import AlbumSelector
 from albums.tagger import AlbumTagger, BasicField, StreamInfo
 
 from ..fixtures.create_library import AudioSpec, create_library, create_track_file
@@ -56,7 +57,7 @@ class TestSynchronizer:
             dest = SyncDestination(
                 "test", TestSynchronizer.destination, Template(f"$artist{os.sep}$album"), Template(""), ["mp3"], convert_bitrate="192"
             )
-            Synchronizer(ctx, dest).do_sync(True, True)
+            Synchronizer(ctx, dest, AlbumSelector()).do_sync(True, True)
 
             cache_index: dict[str, str] = json.loads((TestSynchronizer.transcoder_cache / "index.json").read_text())
             foo_cache_path = TestSynchronizer.transcoder_cache / cache_index["mp3:192"] / "foo"
@@ -136,7 +137,7 @@ class TestSynchronizer:
                 max_sample_rate=44100,
                 max_bits_per_sample=16,
             )
-            Synchronizer(ctx, dest).do_sync(True, True)
+            Synchronizer(ctx, dest, AlbumSelector()).do_sync(True, True)
 
             # foo (over max_kbps), moo (over max_bits_per_sample) and bar (over max_sample_rate) are transcoded;
             # baz fits all caps and is copied as-is (foo and moo share an album tag, hence the same destination path)

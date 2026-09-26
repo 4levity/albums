@@ -6,16 +6,15 @@ precondition checks (``require_*``) shared by every frontend.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Iterator, Self
+from typing import Any, List, Mapping, Self
 
 from rich.console import Console
 from rich.markup import escape
 from sqlalchemy import Engine
-from sqlalchemy.orm import Session
 
 from .config import Configuration
-from .entities import Album
 from .errors import OperationError
+from .selector import AlbumSelector, Match
 
 
 class Context(dict[Any, Any]):
@@ -29,13 +28,12 @@ class Context(dict[Any, Any]):
         console: Shared rich ``Console`` instance used for all terminal output.
         db: SQLite ``Engine`` connected to the albums database.
         db_path: Absolute path to the on-disk database file.
-        select_album_entities: Callable returning an iterator over ``Album`` objects for
-            the current command invocation, respecting any active collection or album filters.
-        is_filtered: Whether a user-provided filter narrowed the selection.
         config: Stored application configuration, loaded from the database. Only commands that
             change the persistent configuration mutate it; check runs use a working copy.
         verbose: Logging verbosity level (number of ``-v`` flags on the command line).
         is_persistent: Always ``True`` for this context class so Click keeps it alive between groups.
+        _album_filter: Album filter criteria from the command line (private; used by :meth:`album_selector` only).
+        _album_invert: Whether the command line album filter is inverted (private; used by :meth:`album_selector` only).
     """
 
     is_persistent = True  # required by Click to propagate context across group subcommands
@@ -45,12 +43,12 @@ class Context(dict[Any, Any]):
     parent: Self | None
     verbose: int
     config: Configuration
+    _album_filter: Mapping[str, List[Match]]
+    _album_invert: bool
 
     # attributes that must be set after instantiation
     db: Engine
     db_path: Path
-    select_album_entities: Callable[[Session], Iterator[Album]]
-    is_filtered: bool
 
     def __init__(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Initialize a fresh application context with default configuration.
@@ -61,6 +59,22 @@ class Context(dict[Any, Any]):
         self.parent = None
         self.verbose = 0
         self.config = Configuration()
+        self._album_filter = {}
+        self._album_invert = False
+
+    def set_album_selection(self, filter: Mapping[str, List[Match]] | None = None, invert: bool = False) -> None:
+        """Store the command line album selection parameters for the current command; no arguments selects all albums."""
+        self._album_filter = filter if filter is not None else {}
+        self._album_invert = invert
+
+    def album_selector(self) -> AlbumSelector:
+        """Build the :class:`~albums.selector.AlbumSelector` for the current command from the stored command line parameters.
+
+        Albums command functions in ``albums.cli`` only should call this; other code should take an
+        ``AlbumSelector`` as a parameter, so the album selection stays a command parameter rather
+        than application state.
+        """
+        return AlbumSelector(self._album_filter, self._album_invert)
 
 
 def require_configured(ctx: Context) -> None:

@@ -25,9 +25,10 @@ def collections_select(ctx: Context, collection_names: list[str]):
         raise SystemExit(1)
 
     with Session(ctx.db) as session:
+        selector = ctx.album_selector()
         values: List[Tuple[int, str]] = []
         already_in_collections: List[int] = []
-        for album in ctx.select_album_entities(session):
+        for album in selector.albums(session):
             values.append((album.album_id or 0, album.path))
             if all(c in album.collections for c in collection_names):
                 already_in_collections.append(album.album_id or 0)

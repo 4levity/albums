@@ -14,7 +14,7 @@ from albums.entities import Album
 from albums.errors import OperationError
 from albums.interactive import interact, prompt_ignore_checks
 from albums.library import run_scan
-from albums.selector import Match, load_album_entities, preload_albums
+from albums.selector import AlbumSelector, Match, load_album_entities, preload_albums
 from albums.tagger import AlbumTaggerProvider
 
 from .all import ALL_CHECKS, implicitly_ignored_checks
@@ -87,8 +87,8 @@ class Checker:
         """Names of the checks enabled in the working config and not in ``disabled_checks``."""
         return frozenset(check.name for check in self._enabled_checks())
 
-    def run_enabled(self, session: Session) -> int:
-        """Run all enabled checks on each selected album, honoring dependencies, ignoring and fixes; returns the issue count displayed.
+    def run_enabled(self, session: Session, album_selector: AlbumSelector) -> int:
+        """Run all enabled checks on each album selected by *album_selector*, honoring dependencies, ignoring and fixes; returns the issue count displayed.
 
         ``_run_check`` flushes (not commits) after each applied fix so the post-fix re-scan
         sees the changes; the ``Checker`` commits after the re-scan and at the end of the run
@@ -112,16 +112,16 @@ class Checker:
             check_config = self._working_config.checks[check.name]
             if self._timing:
                 start = time.perf_counter()
-                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config)
+                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config, album_selector=album_selector)
                 self.timings[check.name].init_seconds = time.perf_counter() - start
             else:
-                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config)
+                instance = check(self.ctx, tagger=tagger, session=session, check_config=check_config, album_selector=album_selector)
             check_instances.append(instance)
 
         issues_displayed = 0
         albums_checked = 0
 
-        albums = list(self.ctx.select_album_entities(session))
+        albums = list(album_selector.albums(session))
         # checks read track pictures and legacy fields per track; preload so the run
         # issues a handful of batched queries instead of one per track per album. Commits
         # expire the loaded relationships, so after one the remainder is preloaded again.

@@ -28,7 +28,7 @@ from albums.app import Context
 from albums.checks.checker import Checker
 from albums.database import db_open
 from albums.entities import Album, LibraryFolder, Track
-from albums.selector import load_album_entities
+from albums.selector import AlbumSelector
 from albums.tagger import BasicField
 
 TRACK_COUNT = 10
@@ -118,10 +118,10 @@ def main() -> int:
                 session.commit()
                 print(f"generated {n_albums} albums in {time.perf_counter() - start:.1f}s")
 
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 start = time.perf_counter()
                 checker = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
-                issues = checker.run_enabled(session)
+                issues = checker.run_enabled(session, selector)
                 print(f"checked {n_albums} albums, found {issues} issues, in {time.perf_counter() - start:.1f}s")
         finally:
             ctx.db.dispose()

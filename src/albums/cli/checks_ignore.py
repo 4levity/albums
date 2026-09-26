@@ -19,7 +19,8 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
     require_configured(ctx)
     require_persistent_context(ctx)
     with Session(ctx.db) as session:
-        for album in ctx.select_album_entities(session):
+        selector = ctx.album_selector()
+        for album in selector.albums(session):
             changed = False
             error = False
             for target_check in check_names:
@@ -36,11 +37,11 @@ def checks_ignore(ctx: Context, force: bool, check_names: list[str]):
                 else:
                     album.ignore_checks.append(target_check)
                     changed = True
-                    if ctx.is_filtered:  # don't show individual albums if operating on all albums (confirm below)
+                    if selector.is_filtered():  # don't show individual albums if operating on all albums (confirm below)
                         ctx.console.print(f"album {album_display_name(ctx, album)} - ignore {target_check}")
 
             if changed and not error:
-                if force or ctx.is_filtered or confirm(f"ignore {pluralize('check', check_names)} {', '.join(check_names)} for all albums?"):
+                if force or selector.is_filtered() or confirm(f"ignore {pluralize('check', check_names)} {', '.join(check_names)} for all albums?"):
                     session.commit()
             elif error:
                 ctx.console.print("changes not saved because some options were invalid")

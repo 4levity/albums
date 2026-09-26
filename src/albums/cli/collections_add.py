@@ -21,8 +21,9 @@ def collections_add(ctx: Context, collection_names: list[str]):
         raise SystemExit(1)
 
     with Session(ctx.db) as session:
+        selector = ctx.album_selector()
         collections = collections_by_name(session, collection_names)
-        for album in ctx.select_album_entities(session):
+        for album in selector.albums(session):
             for target_collection in collection_names:
                 if target_collection in album.collections:
                     ctx.console.print(f"album {album_display_name(ctx, album)} is already in collection {target_collection}", markup=False)

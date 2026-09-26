@@ -15,7 +15,8 @@ def collections_remove(ctx: Context, collection_names: list[str]):
     require_configured(ctx)
     require_persistent_context(ctx)
     with Session(ctx.db) as session:
-        for album in ctx.select_album_entities(session):
+        selector = ctx.album_selector()
+        for album in selector.albums(session):
             for target_collection in collection_names:
                 if target_collection in album.collections:
                     album.collections.remove(target_collection)

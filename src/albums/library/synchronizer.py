@@ -20,7 +20,7 @@ from albums.entities import Album
 from albums.errors import OperationError
 from albums.library.paths import make_template_path
 from albums.library.transcoder import Transcoder
-from albums.selector import Match, load_album_entities
+from albums.selector import AlbumSelector, Match, load_album_entities
 from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
@@ -42,13 +42,15 @@ class Synchronizer:
 
     _ctx: Context
     _dest: SyncDestination
+    _album_selector: AlbumSelector
     _transcoder: Transcoder
 
-    def __init__(self, ctx: Context, dest: SyncDestination):
+    def __init__(self, ctx: Context, dest: SyncDestination, album_selector: AlbumSelector):
         if str(ctx.config.library) in {"", "."}:
             raise RuntimeError("Synchronizer cannot be initialized without library path")
         self._ctx = ctx
         self._dest = dest
+        self._album_selector = album_selector
         self._transcoder = Transcoder(self._ctx, self._dest)
 
     def do_sync(self, delete: bool, force: bool):
@@ -80,7 +82,7 @@ class Synchronizer:
         elif self._dest.collection:
             source_albums = load_album_entities(session, {"collection": [Match(self._dest.collection)]})
         else:
-            source_albums = self._ctx.select_album_entities(session)
+            source_albums = self._album_selector.albums(session)
 
         skipped_tracks = 0
         ops = SyncOperations()

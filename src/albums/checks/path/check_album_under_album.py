@@ -7,6 +7,7 @@ from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckConfiguration, CheckResult
 from albums.entities import Album
+from albums.selector import AlbumSelector
 from albums.tagger import AlbumTaggerProvider
 
 logger: Final = logging.getLogger(__name__)
@@ -32,14 +33,15 @@ class CheckAlbumUnderAlbum(Check):
         tagger: AlbumTaggerProvider | None = None,
         session: Session | None = None,
         check_config: CheckConfiguration | None = None,
+        album_selector: AlbumSelector | None = None,
     ):
-        super().__init__(ctx, tagger, session, check_config)
+        super().__init__(ctx, tagger, session, check_config, album_selector)
         # most recent album path that is not under another album; None before the first album
         self._under: str | None = None
 
     def init(self, check_config: dict[str, Any]):
-        # the CLI always sets ctx.is_filtered; contexts built for tests may not have it
-        if getattr(self.ctx, "is_filtered", False):
+        # checks constructed directly (e.g. tests) have no album selector
+        if self.album_selector is not None and self.album_selector.is_filtered():
             logger.info("filtered run: album-under-album only sees included albums and may not find nested albums")
 
     def check(self, album: Album) -> CheckResult | None:

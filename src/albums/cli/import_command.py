@@ -19,7 +19,7 @@ def import_command(ctx: Context, extra: bool, recursive: bool, automatic: bool, 
     require_library(ctx)
 
     parent_context = enter_folder_context(ctx, scan_folder)
-    importer = Importer(ctx, extra, recursive, automatic)
+    importer = Importer(ctx, extra, recursive, automatic, ctx.album_selector())
     albums_total = importer.scan()
     ctx.console.print(f"Ready to try importing {plural(albums_total, 'album')}")
 

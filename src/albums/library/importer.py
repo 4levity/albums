@@ -21,6 +21,7 @@ from albums.errors import OperationError
 from albums.library.duplicates import DuplicateFinder, album_in_library
 from albums.library.paths import make_template_paths
 from albums.library.scanner import run_scan
+from albums.selector import AlbumSelector
 from albums.words import plural
 
 logger: Final = logging.getLogger(__name__)
@@ -32,18 +33,20 @@ class Importer:
     ctx: Context
     _parent_context: Context
     _library: Path
+    _album_selector: AlbumSelector
     _extra: bool
     _recursive: bool
     _automatic: bool
     _duplicate_finder = DuplicateFinder()
 
-    def __init__(self, child_context: Context, extra: bool, recursive: bool, automatic: bool):
+    def __init__(self, child_context: Context, extra: bool, recursive: bool, automatic: bool, album_selector: AlbumSelector):
         if child_context.parent is None:
             raise RuntimeError("Importer must be created in child context")
 
         self.ctx = child_context
         self._parent_context = child_context.parent
         self._library = child_context.config.library
+        self._album_selector = album_selector
         self._extra = extra
         self._recursive = recursive
         self._automatic = automatic
@@ -73,17 +76,17 @@ class Importer:
         )
         non_interactive_checker = Checker(self.ctx, self.ctx.config, False, False, False, False, disabled_checks=disabled_checks)
         with Session(self.ctx.db) as session:
-            for album in self.ctx.select_album_entities(session):
+            for album in self._album_selector.albums(session):
                 (exists, ok) = self._check_existing_destination(album, self._make_library_paths(album))
                 if not ok:
                     continue
                 issues = 0
                 quit = False
-                self.ctx.select_album_entities = lambda _: iter([album])
+                album_selector = AlbumSelector.for_album(album)
                 self.ctx.console.print(f"Starting import: {escape(album.path)}", highlight=False)
-                while not quit and checker.run_enabled(session):
+                while not quit and checker.run_enabled(session, album_selector):
                     self.ctx.console.print("Remaining issues:")
-                    issues = non_interactive_checker.run_enabled(session)
+                    issues = non_interactive_checker.run_enabled(session, album_selector)
                     if issues == 0:
                         self.ctx.console.print("No issues")
                     quit = issues == 0 or confirm("There are still issues. Do you want to skip importing this album?")

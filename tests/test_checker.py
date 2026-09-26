@@ -17,7 +17,7 @@ from albums.errors import OperationError
 from albums.interactive.interact import OPTION_DO_NOTHING
 from albums.library import run_scan
 from albums.picture import PictureInfo
-from albums.selector import load_album_entities
+from albums.selector import AlbumSelector
 from albums.tagger import BasicField, PictureType
 
 from .fixtures.create_library import create_library
@@ -44,12 +44,14 @@ class TestChecker:
         )
         ctx = Context()
         ctx.db = db_open(MEMORY)
-        ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+        selector = AlbumSelector()
         try:
             with Session(ctx.db) as session:
                 session.add(album)
                 session.commit()
-                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(
+                    session, selector
+                )
             assert showed_issues == 0
         finally:
             ctx.db.dispose()
@@ -69,17 +71,19 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
-                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(
+                    session, selector
+                )
 
             # there is only 1 issue "disc-in-tracknumber" and if "invalid-track-or-disc-number" check sees the FIXED album it will report no problem
             assert showed_issues == 1
 
             with Session(ctx.db) as session:
-                album = next(ctx.select_album_entities(session))
+                album = next(selector.albums(session))
                 assert album.tracks[0].fields[BasicField.TRACKNUMBER] == ["01"]
                 assert album.tracks[0].fields[BasicField.DISCNUMBER] == ["1"]
         finally:
@@ -108,15 +112,15 @@ class TestChecker:
             print_spy = mocker.spy(ctx.console, "print")
             mocker.patch.object(CheckZeroPadNumbers, "_fix", return_value=FixResult.NO_CHANGE)
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
                 showed_issues = Checker(ctx, working_config, automatic=True, fix=False, interactive=False, show_ignore_option=False).run_enabled(
-                    session
+                    session, selector
                 )
 
-                album_entity = next(ctx.select_album_entities(session))
+                album_entity = next(selector.albums(session))
                 assert album_entity.tracks[0].fields[BasicField.TRACKNUMBER] == ["1"]  # the fix changed nothing
             assert showed_issues == 1
         finally:
@@ -143,7 +147,7 @@ class TestChecker:
         )
         ctx = Context()
         ctx.db = db_open(MEMORY)
-        ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+        selector = AlbumSelector()
         ctx.config.library = create_library("dependent_check_failures", [album])
         try:
             with Session(ctx.db) as session:
@@ -151,7 +155,7 @@ class TestChecker:
                 session.commit()
 
                 print_spy = mocker.spy(ctx.console, "print")
-                Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session, selector)
 
             output = " ".join((Text.from_markup(call_args.args[0]).plain for call_args in print_spy.call_args_list))
             assert f'track numbers formatted as number-dash-number, probably discnumber and tracknumber : "foo{os.sep}"' in output
@@ -177,15 +181,17 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
-                album_entity = next(ctx.select_album_entities(session))
+                album_entity = next(selector.albums(session))
                 album_entity.ignore_checks.append("disc-in-track-number")
                 session.commit()
 
-                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(
+                    session, selector
+                )
 
             assert showed_issues == 0
         finally:
@@ -208,14 +214,16 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
                 mock_choice = mocker.patch("albums.interactive.interact.choice", return_value=OPTION_DO_NOTHING)
                 mock_confirm = mocker.patch("albums.interactive.interact.confirm", return_value=True)
                 print_spy = mocker.spy(ctx.console, "print")
-                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=True, show_ignore_option=True).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=True, show_ignore_option=True).run_enabled(
+                    session, selector
+                )
 
             output = " ".join(
                 (
@@ -242,7 +250,7 @@ class TestChecker:
             assert mock_confirm.call_count == 1
 
             with Session(ctx.db) as session:
-                album_entity = next(ctx.select_album_entities(session))
+                album_entity = next(selector.albums(session))
                 assert album_entity.ignore_checks == ["invalid-track-or-disc-number"]
         finally:
             ctx.db.dispose()
@@ -264,12 +272,12 @@ class TestChecker:
         ctx.console = console
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
                 checker = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False, timing=True)
-                checker.run_enabled(session)
+                checker.run_enabled(session, selector)
 
             # every enabled check was initialized and timed, and all stats are consistent
             assert set(checker.timings) == {check.name for check in ALL_CHECKS if ctx.config.checks[check.name]["enabled"]}
@@ -294,7 +302,7 @@ class TestChecker:
 
             # timing is opt-in
             quiet = Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False)
-            quiet.run_enabled(session)
+            quiet.run_enabled(session, selector)
             assert quiet.timings == {}
         finally:
             ctx.db.dispose()
@@ -324,7 +332,7 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
 
@@ -338,7 +346,7 @@ class TestChecker:
 
                 event.listen(ctx.db, "before_cursor_execute", count_queries)
                 try:
-                    Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                    Checker(ctx, ctx.config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session, selector)
                 finally:
                     event.remove(ctx.db, "before_cursor_execute", count_queries)
 
@@ -351,10 +359,13 @@ class TestChecker:
         working_config = ctx.config.copy()
         working_config.checks["invalid-track-or-disc-number"] = {"enabled": False}
         ctx.db = db_open(MEMORY)
+        selector = AlbumSelector()
         try:
             with Session(ctx.db) as session:
                 with pytest.raises(OperationError) as ex:
-                    Checker(ctx, working_config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(session)
+                    Checker(ctx, working_config, automatic=False, fix=False, interactive=False, show_ignore_option=False).run_enabled(
+                        session, selector
+                    )
         finally:
             ctx.db.dispose()
         output = " ".join(Text.from_markup(str(ex.value)).plain.split())
@@ -382,7 +393,7 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda session, order_by="path": load_album_entities(session)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
@@ -390,13 +401,15 @@ class TestChecker:
                     return_value=f">> KEEP left (THIS album) and DELETE right (other): One{os.sep}",
                 )
                 mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
-                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(
+                    session, selector
+                )
 
                 assert mock_choice.call_count == 1
                 assert mock_confirm.call_count == 1
                 assert showed_issues == 1
 
-                after = list(ctx.select_album_entities(session))
+                after = list(selector.albums(session))
                 assert len(after) == 1
                 assert after[0].path == "One!" + os.sep
         finally:
@@ -428,7 +441,7 @@ class TestChecker:
         ctx.db = db_open(MEMORY, True)
         try:
             with Session(ctx.db) as session:
-                ctx.select_album_entities = lambda s: load_album_entities(s)
+                selector = AlbumSelector()
                 run_scan(ctx, session)
                 session.commit()
                 mock_choice = mocker.patch(
@@ -436,13 +449,15 @@ class TestChecker:
                     return_value=f">> DELETE left (THIS album) and KEEP right (other): One{os.sep}",
                 )
                 mock_confirm = mocker.patch("albums.checks.fields.check_duplicate_album.confirm", return_value=True)
-                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(session)
+                showed_issues = Checker(ctx, ctx.config, automatic=True, fix=True, interactive=False, show_ignore_option=False).run_enabled(
+                    session, selector
+                )
 
                 assert mock_choice.call_count == 1
                 assert mock_confirm.call_count == 1
                 assert showed_issues == 1
 
-                after = list(ctx.select_album_entities(session))
+                after = list(selector.albums(session))
                 assert len(after) == 1
                 assert after[0].path == "One" + os.sep
         finally:

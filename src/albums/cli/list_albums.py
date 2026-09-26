@@ -46,7 +46,8 @@ def list_albums(ctx: Context, json: bool, order: str, reverse: bool):
     table = Table(*(name for name, _ in columns))
     rows: List[Tuple[str | int, ...]] = []
     with Session(ctx.db) as session:
-        for album in ctx.select_album_entities(session):
+        selector = ctx.album_selector()
+        for album in selector.albums(session):
             tracks_size = reduce(lambda sum, track: sum + track.file_size, album.tracks, 0)
             tracks_length = reduce(
                 lambda sum, track: sum + (track.stream.length if track.stream and hasattr(track.stream, "length") else 0), album.tracks, 0

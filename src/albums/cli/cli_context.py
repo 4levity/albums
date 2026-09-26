@@ -17,7 +17,7 @@ from albums.app import Context
 from albums.config import PLATFORM_DIRS, RescanOption, config_load
 from albums.database import MEMORY, db_open
 from albums.errors import OperationError
-from albums.selector import Comparator, Match, load_album_entities
+from albums.selector import Comparator, Match
 
 logger: Final = logging.getLogger(__name__)
 
@@ -56,8 +56,9 @@ def setup(
     """Prepare the application context for a command run.
 
     Configures logging, resolves and opens the albums database (falling back to an in-memory database when none is
-    found), and installs the album-entity filter built from *filter_criteria*. When *dir* is given, the context is
-    reconfigured via :func:`enter_folder_context` to operate on that folder instead of the library database.
+    found), and stores the command line album selection parameters built from *filter_criteria* and *invert*.
+    When *dir* is given, the context is reconfigured via :func:`enter_folder_context` to operate on that folder
+    instead of the library database.
 
     Returns:
         ``True`` when an initial full library scan should be run first (a ``--dir`` folder context was used, or the
@@ -76,16 +77,11 @@ def setup(
         if not dir:
             logger.info("the --dir option is not specified and albums database is not found")
 
-    app_context.is_filtered = bool(filter_criteria)
     filter: defaultdict[str, List[Match]] = defaultdict(list)
     filter = reduce(lambda acc, kv: acc[kv.field].append(Match(kv.value, kv.comparator)) or acc, filter_criteria, filter)
-    app_context.select_album_entities = lambda session: load_album_entities(session, filter, invert=invert)
+    app_context.set_album_selection(filter, invert)
     if dir:
-        if "path" in filter:
-            del filter["path"]
         enter_folder_context(app_context, dir)
-        # create selector for folder context
-        app_context.select_album_entities = lambda session: load_album_entities(session)
     elif not has_database:
         # it's simpler to always give app_context a database than to allow it to be Engine | None.
         # the in-memory engine has no file to release: it is cleaned up when the process exits, so no dispose is needed
@@ -99,7 +95,8 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
 
     A shallow copy of the original context is taken before any changes and stored in ``ctx.parent``; that untouched
     parent copy (not the reconfigured context) is returned. The context's configuration is shallow-copied with its
-    library set to *folder*; the stored configuration is not changed.
+    library set to *folder*; the stored configuration is not changed. The album selection is reset to all albums in
+    the folder; any command line filter is ignored.
     """
     if ctx.parent:
         raise RuntimeError("enter_folder_context called on subcontext")
@@ -112,7 +109,7 @@ def enter_folder_context(ctx: Context, folder: str) -> Context:
     logger.info(f"using in-memory context, library is {folder}")
 
     ctx.db = db_open(MEMORY, echo=ctx.verbose > 1)
-    ctx.is_filtered = False
+    ctx.set_album_selection()  # a folder context selects all albums in the folder, ignoring any filter
     ctx.is_persistent = False
     return parent
 

@@ -51,7 +51,7 @@ def check(ctx: Context, automatic: bool, fix: bool, interactive: bool, timing: b
                 )
                 working_config.checks[dep]["enabled"] = True
     with Session(ctx.db) as session:
-        issues_displayed = checker.run_enabled(session)
+        issues_displayed = checker.run_enabled(session, ctx.album_selector())
 
     if issues_displayed == 0:
         ctx.console.print("no issues")

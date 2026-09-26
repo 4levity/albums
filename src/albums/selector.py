@@ -1,9 +1,9 @@
 """Query the database for albums and collections, including filterable album selection."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Final, Generator, Iterable, List, Mapping, Sequence, Tuple
+from typing import Any, Final, Generator, Iterable, List, Mapping, Self, Sequence, Tuple
 
 from sqlalchemy import and_, exists, func, not_, or_, select
 from sqlalchemy.orm import Session, selectinload
@@ -32,6 +32,32 @@ class Match:
 
     value: str
     comparator: Comparator = Comparator.EQ
+
+
+@dataclass(frozen=True)
+class AlbumSelector:
+    """Selects the albums a command run operates on.
+
+    Built from the command line filter parameters (see ``Context.album_selector``); an empty
+    filter selects all albums. Albums are yielded in path order by :meth:`albums`, and
+    :meth:`is_filtered` reports whether a user-provided filter narrowed the selection.
+    """
+
+    filter: Mapping[str, List[Match]] = field(default_factory=dict[str, List[Match]], compare=False)
+    invert: bool = False
+
+    def is_filtered(self) -> bool:
+        """Whether a user-provided filter narrowed the selection."""
+        return bool(self.filter)
+
+    def albums(self, session: Session) -> Generator[Album, None, None]:
+        """Yield the selected albums in path order."""
+        return load_album_entities(session, self.filter, self.invert)
+
+    @classmethod
+    def for_album(cls, album: Album) -> Self:
+        """A selector for a single album, e.g. one album being imported."""
+        return cls({"path": [Match(album.path)]})
 
 
 _TRACK_COLUMNS: Final = {

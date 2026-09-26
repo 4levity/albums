@@ -37,8 +37,9 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
         if destination in [sync_destination.collection, str(sync_destination.path_root)]
     ]
 
+    selector = ctx.album_selector()
     confirm = False
-    if ctx.is_filtered:
+    if selector.is_filtered():
         if not destination:
             ctx.console.print("To sync a dynamically filtered set of albums, specify the destination directory.")
             raise SystemExit(1)
@@ -78,4 +79,4 @@ def sync(ctx: Context, destination: str, delete: bool, force: bool):
         ctx.console.print("Scanning library before sync (see config settings.rescan to disable this)")
         run_scan(ctx)
 
-    Synchronizer(ctx, dest).do_sync(delete, force)
+    Synchronizer(ctx, dest, selector).do_sync(delete, force)

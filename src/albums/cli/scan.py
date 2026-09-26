@@ -15,6 +15,7 @@ def scan(ctx: Context, reread: bool):
     require_configured(ctx)
     require_library(ctx)
     with Session(ctx.db) as session:
-        (_, any_changes) = run_scan(ctx, session, ctx.select_album_entities(session) if ctx.is_filtered else None, reread)
+        selector = ctx.album_selector()
+        (_, any_changes) = run_scan(ctx, session, selector.albums(session) if selector.is_filtered() else None, reread)
         if any_changes:
             session.commit()

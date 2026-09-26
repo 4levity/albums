@@ -14,6 +14,7 @@ from albums.app import Context
 from albums.checks.base_check import Check
 from albums.checks.check_types import CheckConfiguration, CheckResult, Fixer, FixResult
 from albums.entities import Album, OtherFile, PictureFile, Track
+from albums.selector import AlbumSelector
 from albums.tagger import AlbumTaggerProvider
 from albums.words import plural
 
@@ -50,8 +51,9 @@ class CheckDuplicateAlbum(Check):
         tagger: AlbumTaggerProvider | None = None,
         session: Session | None = None,
         check_config: CheckConfiguration | None = None,
+        album_selector: AlbumSelector | None = None,
     ):
-        super().__init__(ctx, tagger, session, check_config)
+        super().__init__(ctx, tagger, session, check_config, album_selector)
 
         from albums.library import DuplicateFinder  # avoid circular import when all checks are imported
 
